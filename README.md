@@ -110,8 +110,7 @@ Then, you can compile and run the project as follows:
 
 ```bash
 # Clone the repository
-git clone git@github.com:josejachuf/mvt-rs.git
-
+git clone https://github.com/mvt-proj/mvt-rs.git
 # Navigate to the project directory
 cd mvt-rs
 
