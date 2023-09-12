@@ -108,7 +108,7 @@ https://www.rust-lang.org/tools/install
 
 Then, you can compile and run the project as follows:
 
-```bash
+```sh
 # Clone the repository
 git clone https://github.com/mvt-proj/mvt-rs.git
 # Navigate to the project directory
