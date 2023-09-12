@@ -25,6 +25,14 @@
 {% block scripts %}
 <script>
 
+  var protocol = window.location.protocol;
+  var host = window.location.hostname;
+  var port = window.location.port;
+
+  if (port === '') {
+    port = protocol === 'https:' ? '443' : '80';
+  }
+
   var paint;
   if ('{{ geometry}}' === 'circle') {
     paint = {
@@ -46,6 +54,7 @@
   var map = new maplibregl.Map({
     container: 'map',
     style: 'https://demotiles.maplibre.org/style.json',
+    // style: '{}',
     center: [0, 0], // starting position [lng, lat]
     zoom: 1
   });
@@ -67,7 +76,7 @@
       type: '{{ geometry }}',
       source: {
         type: 'vector',
-        tiles: [`http://127.0.0.1:5887/tiles/{{ name }}/{z}/{x}/{y}.pbf`],
+        tiles: [`${protocol}//${host}:${port}/tiles/{{ name }}/{z}/{x}/{y}.pbf`],
         minzoom: 0,
         maxzoom: 22
       },
