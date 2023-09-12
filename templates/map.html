@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+{% block head %}
+  <link href='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css' rel='stylesheet' />
+  <script src='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js'></script>
+  <style>
+    #map {
+      height: 700px;
+      width: 1000px;
+      min-height: 0;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+  <section>
+    <div class="column is-10">
+      <h1 class="title is-3">MVT-RS Server {{ alias }} </h1>
+      <div id="map"></div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+  var paint;
+  if ('{{ geometry}}' === 'circle') {
+    paint = {
+      'circle-radius': 5,
+      'circle-color': '#0000FF'
+    };
+  } else if ('{{ geometry}}'  === 'line') {
+    paint = {
+      'line-width': 2,
+      'line-color': '#0000FF'
+    };
+  } else if ('{{ geometry}}'  === 'fill') {
+    paint = {
+      'fill-opacity': 0.5,
+      'fill-color': '#0000FF'
+    };
+  }
+
+  var map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://demotiles.maplibre.org/style.json',
+    center: [0, 0], // starting position [lng, lat]
+    zoom: 1
+  });
+
+  map.on('load', function () {
+    map.addLayer({
+      id: "osm",
+      type: "raster",
+      source: {
+        type: "raster",
+        tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        attribution: "&copy; OpenStreetMap Contributors",
+        maxzoom: 22
+      }
+    });
+    map.addLayer({
+      id: '{{ name }}',
+      type: '{{ geometry }}',
+      source: {
+        type: 'vector',
+        tiles: [`http://127.0.0.1:5887/tiles/{{ name }}/{z}/{x}/{y}.pbf`],
+        minzoom: 0,
+        maxzoom: 22
+      },
+      'source-layer': '{{ name }}',
+      paint: paint
+    });
+
+    map.addControl(
+      new maplibregl.NavigationControl({
+      visualizePitch: true,
+      showZoom: true,
+      showCompass: true
+      })
+    );
+  });
+
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <h1 class="title is-3">MVT-RS Server</h1>
+  <h2 class="title is-4">List of published layers</h2>
+
+  <table class="table is-fullwidth">
+    <thead>
+      <tr>
+        <th scope="col">Layer</th>
+        <th scope="col">Alias</th>
+        <th scope="col">URL</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for layer in layers_config.layers %}
+        <tr>
+          <td>{{ layer.name }}</td>
+          <td>{{ layer.alias }}</td>
+          <td class="has-text-info">
+            <span class="server"></span>/tiles/{{ layer.name }}/{z}/{x}/{y}.pbf
+          </td>
+          <td class="has-text-info">
+            <a href="/map/{{ layer.name }}" class="button is-link" target="_blank">
+              show map
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function initializePage() {
+    var protocol = window.location.protocol;
+    var host = window.location.hostname;
+    var port = window.location.port;
+
+    if (port === '') {
+      port = protocol === 'https:' ? '443' : '80';
+    }
+
+    var servers = document.getElementsByClassName("server");
+    for (var i = 0; i < servers.length; i++) {
+      servers[i].textContent = `${protocol}//${host}:${port}`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', initializePage);
+</script>
+{% endblock %}
