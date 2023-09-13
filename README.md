@@ -104,7 +104,8 @@ Regarding caching and filter application, it will only be saved when the filter 
 
 ## To-Do List
 
-- [ ] Admin Interface.
+- [ ] Configuration administration web interface.
+- [ ] Hot reload.
 - [ ] Basic Auth or JWT security.
 - [ ] Publish maplibre styles.
 - [ ] Server FlatGeoBuf data.
