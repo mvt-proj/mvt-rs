@@ -1787,9 +1787,9 @@ checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
 
 [[package]]
 name = "salvo"
-version = "0.54.3"
+version = "0.55.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc0f93ee6e16dce0c87cc3c4f03eca1fc0cbeec5294c65a33b12725db6a621cf"
+checksum = "21c547bf83c4330323004366b89323d0cb4fc50f28b5cbf75c667b6e2b48872b"
 dependencies = [
  "salvo-cache",
  "salvo-cors",
@@ -1799,9 +1799,9 @@ dependencies = [
 
 [[package]]
 name = "salvo-cache"
-version = "0.54.3"
+version = "0.55.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eb6bf9f88d40c7ecf25ebd691f4d538e42c63f8d6ae3361069293043a977c78"
+checksum = "ccfbfb926d1a077b5eb8b5198ac2f09d8c2a832b00f9be0fdc5e0be3325f7815"
 dependencies = [
  "bytes",
  "lru",
@@ -1812,9 +1812,9 @@ dependencies = [
 
 [[package]]
 name = "salvo-cors"
-version = "0.54.3"
+version = "0.55.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "469976b94b21e74bca66c5b752a7b9a1bff775f3b8537b35657a9e1b4cbff3ba"
+checksum = "7b2ea979ec4559e3855150eebb5abe9951df33d658d14764c31dcbbbc4679a84"
 dependencies = [
  "bytes",
  "salvo_core",
@@ -1835,9 +1835,9 @@ dependencies = [
 
 [[package]]
 name = "salvo_core"
-version = "0.54.3"
+version = "0.55.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea68f2bb62548bda63f9752197d14dbe7fa0645aab0ea7f322efda1cacfa5af0"
+checksum = "2c8cc7306374d61360d747e078587fc45375d37fc63fd90f478caceafa213d70"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1884,9 +1884,9 @@ dependencies = [
 
 [[package]]
 name = "salvo_extra"
-version = "0.54.3"
+version = "0.55.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccae2a3db479d338ebc95e00d9a36c58d89f51743799cbfae1cf5c4c63f01d41"
+checksum = "c12289379a6494055f82fdf7919fab36d7cb5e0a1d3e9b71197f150f9c80ed94"
 dependencies = [
  "base64 0.21.2",
  "etag",
@@ -1904,9 +1904,9 @@ dependencies = [
 
 [[package]]
 name = "salvo_macros"
-version = "0.54.3"
+version = "0.55.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a896f7117c5ebcae078ac1110086f4fc269ef843dba097f79797dad95fb3302"
+checksum = "b8b1173ee5be52d6b0d58210fef5742218923021a8e7baa65efdbc96e27c43fe"
 dependencies = [
  "cruet",
  "proc-macro-crate",
