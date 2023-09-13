@@ -102,6 +102,13 @@ There are two ways to perform caching:
 
 Regarding caching and filter application, it will only be saved when the filter is provided in the layer's configuration and will not be applied when it comes from a request to the server.
 
+## To-Do List
+
+- [ ] Admin Interface.
+- [ ] Basic Auth or JWT security.
+- [ ] Publish maplibre styles.
+- [ ] Server FlatGeoBuf data.
+
 ## Running
 
 To run the server, ensure you have Rust installed on your system.
