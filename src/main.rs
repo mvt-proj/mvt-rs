@@ -9,6 +9,7 @@ mod config;
 mod db;
 mod routes;
 mod tiles;
+mod health;
 use config::LayersConfig;
 use db::make_db_pool;
 

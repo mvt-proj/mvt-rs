@@ -7,7 +7,7 @@ use salvo::http::Method;
 use salvo::logging::Logger;
 use salvo::prelude::*;
 
-use crate::{index, mapview, tiles, Config};
+use crate::{index, mapview, tiles, health, Config};
 
 pub fn app_router(config: Config) -> salvo::Router {
     let cache_30s = Cache::new(
@@ -37,6 +37,7 @@ pub fn app_router(config: Config) -> salvo::Router {
         .hoop(affix::inject(config.clone()))
         .get(index)
         .push(Router::with_path("/map/<layer>").get(mapview))
+        .push(Router::with_path("/health").get(health::get_health))
         .push(Router::with_path("/tiles").get(tiles::mvt))
         .push(
             Router::with_path("/tiles/<layer>/<z>/<x>/<y>.pbf")
