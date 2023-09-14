@@ -1,4 +1,5 @@
 use askama::Template;
+use clap::{Arg, Command};
 use dotenv;
 use once_cell::sync::OnceCell;
 use salvo::prelude::*;
@@ -36,7 +37,6 @@ struct MapTemplate<'a> {
     geometry: &'a str,
 }
 
-
 #[handler]
 async fn index(depot: &mut Depot, res: &mut Response) {
     let config = depot.obtain::<Config>().unwrap();
@@ -73,20 +73,6 @@ async fn mapview(req: &mut Request, res: &mut Response, depot: &mut Depot) {
     res.render(Text::Html(template.render().unwrap()));
 }
 
-
-// #[handler]
-// async fn index(depot: &mut Depot, res: &mut Response) {
-//     let config = depot.obtain::<Config>().unwrap();
-//     let config = config.clone();
-//     let layers_config: LayersConfig = config.layers_config;
-//
-//     let hello_tmpl = IndexTemplate {
-//         layers_config: &layers_config,
-//     };
-//     res.render(Text::Html(hello_tmpl.render().unwrap()));
-// }
-
-
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
@@ -99,7 +85,7 @@ async fn main() {
     dotenv::dotenv().ok();
     let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
     let port = std::env::var("PORT").unwrap_or("5887".to_string());
-    let db_url = std::env::var("DATABASE_URL").expect("Falta definir DATABASE_URL");
+    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL needs to be defined");
     let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
     // let cache_dir = std::env::var("CACHE_DIR").expect("Falta definir directorio cache");
@@ -109,13 +95,26 @@ async fn main() {
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
     let delete_cache: u8 = delete_cache.parse().unwrap();
 
+
+    let matches = Command::new("mvt-rs vector tiles server")
+        .arg(Arg::new("layers")
+            .short('l')
+            .long("layers")
+            .value_name("LAYERS")
+            .default_value("layers")
+            .help("Directory where the layer configuration files are placed")
+        )
+        .get_matches();
+
+    let layers_dir = matches.get_one::<String>("layers").expect("required");
+    let layers_config = LayersConfig::new(layers_dir).await.expect(
+        "You must have a layers directory to place the layer files to be served.",
+        );
+
     CACHE_DIR.set("./cache").unwrap();
 
     // CACHE_DIR.set(cache_dir).unwrap();
 
-    let layers_config = LayersConfig::new().await.expect(
-        "Debe tener un directorio de layers para colocar los archivos de las capas a publicar",
-    );
 
     if delete_cache != 0 {
         cache::delete_cache_dir(CACHE_DIR.get().unwrap(), layers_config.clone()).await;
@@ -124,8 +123,8 @@ async fn main() {
     let db_pool = match make_db_pool(&db_url, db_pool_size_min, db_pool_size_max).await {
         Ok(pool) => pool,
         Err(e) => {
-            tracing::error!("No se pudo conectar a la base de datos db_pool_serv");
-            panic!("Error base de datos: {}", e);
+            tracing::error!("Could not connect to the database {}", &db_url);
+            panic!("Database connection error: {}", e);
         }
     };
 

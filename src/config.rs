@@ -40,11 +40,10 @@ pub struct LayersConfig {
 }
 
 impl LayersConfig {
-    pub async fn new() -> Result<Self, io::Error> {
-        let directory_layers = "layers";
+    pub async fn new(layers_dir: &str) -> Result<Self, io::Error> {
         let mut layers: Vec<Layer> = Vec::new();
 
-        let entries = fs::read_dir(directory_layers)?;
+        let entries = fs::read_dir(layers_dir)?;
 
         for entry in entries {
             if let Ok(entry) = entry {
