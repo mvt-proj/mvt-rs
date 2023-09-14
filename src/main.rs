@@ -1,7 +1,6 @@
 use askama::Template;
 use clap::{Arg, Command};
 use dotenv;
-use once_cell::sync::OnceCell;
 use salvo::prelude::*;
 use sqlx::PgPool;
 
@@ -14,13 +13,11 @@ mod health;
 use config::LayersConfig;
 use db::make_db_pool;
 
-// pub const CACHE_DIR: &str = "./cache";
-pub static CACHE_DIR: OnceCell<&str> = OnceCell::new();
-
 #[derive(Clone)]
 pub struct Config {
     pub db_pool: PgPool,
     pub layers_config: LayersConfig,
+    pub disk_cache: cache::DiskCache,
 }
 
 #[derive(Template)]
@@ -88,7 +85,6 @@ async fn main() {
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL needs to be defined");
     let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
-    // let cache_dir = std::env::var("CACHE_DIR").expect("Falta definir directorio cache");
     let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
 
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
@@ -104,20 +100,25 @@ async fn main() {
             .default_value("layers")
             .help("Directory where the layer configuration files are placed")
         )
+        .arg(Arg::new("cachedir")
+            .short('c')
+            .long("cachedir")
+            .value_name("CACHEDIR")
+            .default_value("cache")
+            .help("Directory where cache files are placed")
+        )
         .get_matches();
 
     let layers_dir = matches.get_one::<String>("layers").expect("required");
+    let cache_dir = matches.get_one::<String>("cachedir").expect("required");
+
     let layers_config = LayersConfig::new(layers_dir).await.expect(
         "You must have a layers directory to place the layer files to be served.",
         );
 
-    CACHE_DIR.set("./cache").unwrap();
-
-    // CACHE_DIR.set(cache_dir).unwrap();
-
-
+    let disk_cache = cache::DiskCache::new(cache_dir.into());
     if delete_cache != 0 {
-        cache::delete_cache_dir(CACHE_DIR.get().unwrap(), layers_config.clone()).await;
+        disk_cache.delete_cache_dir(layers_config.clone()).await;
     }
 
     let db_pool = match make_db_pool(&db_url, db_pool_size_min, db_pool_size_max).await {
@@ -131,6 +132,7 @@ async fn main() {
     let config = Config {
         db_pool,
         layers_config,
+        disk_cache,
     };
 
     let acceptor = TcpListener::new(format!("{host}:{port}")).bind().await;

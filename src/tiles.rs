@@ -2,12 +2,10 @@ use bytes::Bytes;
 use salvo::prelude::*;
 use sqlx::PgPool;
 
-use std::path::PathBuf;
-
 use crate::{
-    cache,
+    cache::DiskCache,
     config::{Layer, LayersConfig},
-    Config, CACHE_DIR,
+    Config,
 };
 
 async fn query_database(
@@ -22,12 +20,6 @@ async fn query_database(
     let schema = layer_conf.schema.unwrap_or(String::from("public"));
     let table = layer_conf.table;
     let fields = layer_conf.fields.join(", ");
-
-    // let query: String = if !filter.is_empty() {
-    //     filter
-    // } else {
-    //     layer_conf.filter.unwrap_or(String::new())
-    // };
 
     let geom = layer_conf.geom.unwrap_or(String::from("geom"));
     let srid = layer_conf.srid.unwrap_or(4326);
@@ -101,13 +93,13 @@ async fn query_database(
 
 async fn get_tile(
     pg_pool: PgPool,
+    disk_cache: DiskCache,
     layer_conf: Layer,
     x: u32,
     y: u32,
     z: u32,
     filter: String,
 ) -> Result<Bytes, anyhow::Error> {
-    let cache_dir: PathBuf = CACHE_DIR.get().unwrap().into();
     let name = &layer_conf.name;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
 
@@ -118,13 +110,15 @@ async fn get_tile(
         layer_conf.clone().filter.unwrap_or(String::new())
     };
 
-    let tilefolder = cache_dir
+    let tilefolder = disk_cache.cache_dir
         .join(name.to_string())
         .join(&z.to_string())
         .join(&x.to_string());
-    let tilepath = tilefolder.join(&y.to_string()).with_extension("pbf");
+    let tilepath = tilefolder
+        .join(&y.to_string())
+        .with_extension("pbf");
 
-    if let Ok(cached_tile) = cache::get_cache(tilepath.clone(), max_cache_age).await {
+    if let Ok(cached_tile) = disk_cache.get_cache(tilepath.clone(), max_cache_age).await {
         return Ok(cached_tile);
     }
 
@@ -133,7 +127,7 @@ async fn get_tile(
         .into();
 
     if write_cache {
-        cache::write_tile_to_file(&tilepath, &tile).await?;
+        disk_cache.write_tile_to_file(&tilepath, &tile).await?;
     }
     Ok(tile.into())
 }
@@ -154,6 +148,7 @@ pub async fn mvt(
     let config = config.clone();
     let pg_pool: PgPool = config.db_pool;
     let layers_config: LayersConfig = config.layers_config;
+    let disk_cache: DiskCache = config.disk_cache;
 
     let layer_conf = layers_config.find_layer_by_name(&layer);
     res.headers_mut().insert(
@@ -169,7 +164,7 @@ pub async fn mvt(
                 res.body(salvo::http::ResBody::Once(Bytes::new()));
                 return Ok(());
             }
-            let tile = get_tile(pg_pool, lyr.clone(), x, y, z, filter).await?;
+            let tile = get_tile(pg_pool, disk_cache, lyr.clone(), x, y, z, filter).await?;
             res.body(salvo::http::ResBody::Once(tile));
             Ok(())
         }

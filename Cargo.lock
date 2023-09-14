@@ -1405,7 +1405,6 @@ dependencies = [
  "chrono",
  "clap",
  "dotenv",
- "once_cell",
  "salvo",
  "serde",
  "serde_json",
