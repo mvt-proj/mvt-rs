@@ -4,6 +4,22 @@
   <h3 class="title is-3">MVT-RS Server</h3>
   <h4 class="title is-4">List of published layers</h4>
 
+  <div id="modal-js-example" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Configuration</p>
+        <button class="delete" aria-label="close"></button>
+      </header>
+      <section class="modal-card-body">
+        <div id="data-json"></div>
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-info">Ok</button>
+      </footer>
+    </div>
+  </div>
+
   <table class="table is-fullwidth">
     <thead>
       <tr>
@@ -22,6 +38,15 @@
             <span class="server"></span>/tiles/{{ layer.name }}/{z}/{x}/{y}.pbf
           </td>
           <td class="has-text-info">
+
+            <button
+              class="button is-light js-modal-trigger"
+              data-target="modal-js-example"
+              onclick="document.getElementById('data-json').innerHTML='{{format!("{:?}", layer)}}';"
+            >
+              config
+            </button>
+
             <a href="/map/{{ layer.name }}" class="button is-link" target="_blank">
               show map
             </a>
@@ -34,6 +59,50 @@
 
 {% block scripts %}
 <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Functions to open and close a modal
+    function openModal($el) {
+      $el.classList.add('is-active');
+    }
+
+    function closeModal($el) {
+      $el.classList.remove('is-active');
+    }
+
+    function closeAllModals() {
+      (document.querySelectorAll('.modal') || []).forEach(($modal) => {
+        closeModal($modal);
+      });
+    }
+
+    // Add a click event on buttons to open a specific modal
+    (document.querySelectorAll('.js-modal-trigger') || []).forEach(($trigger) => {
+      const modal = $trigger.dataset.target;
+      const $target = document.getElementById(modal);
+
+      $trigger.addEventListener('click', () => {
+        openModal($target);
+      });
+    });
+
+    // Add a click event on various child elements to close the parent modal
+    (document.querySelectorAll('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot .button') || []).forEach(($close) => {
+      const $target = $close.closest('.modal');
+
+      $close.addEventListener('click', () => {
+        closeModal($target);
+      });
+    });
+
+    // Add a keyboard event to close all modals
+    document.addEventListener('keydown', (event) => {
+      if (event.code === 'Escape') {
+        closeAllModals();
+      }
+    });
+  });
+
+
   function initializePage() {
     var protocol = window.location.protocol;
     var host = window.location.hostname;
