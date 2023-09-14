@@ -52,7 +52,7 @@ impl LayersConfig {
                 if path.is_file() {
                     match read_json_from_file(path) {
                         Ok(layer) => layers.push(layer),
-                        Err(_) => println!("Error al leer capa"),
+                        Err(_) => tracing::error!("Error reading the layer configuration"),
                     }
                 }
             }
