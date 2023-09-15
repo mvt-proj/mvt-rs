@@ -1,4 +1,3 @@
-use askama::Template;
 use clap::{Arg, Command};
 use dotenv;
 use salvo::prelude::*;
@@ -8,6 +7,7 @@ mod cache;
 mod config;
 mod db;
 mod routes;
+mod html;
 mod tiles;
 mod health;
 use config::LayersConfig;
@@ -18,56 +18,6 @@ pub struct Config {
     pub db_pool: PgPool,
     pub layers_config: LayersConfig,
     pub disk_cache: cache::DiskCache,
-}
-
-#[derive(Template)]
-#[template(path = "index.html")]
-struct IndexTemplate<'a> {
-    layers_config: &'a LayersConfig,
-}
-
-#[derive(Template)]
-#[template(path = "map.html")]
-struct MapTemplate<'a> {
-    name: &'a str,
-    alias: &'a str,
-    geometry: &'a str,
-}
-
-#[handler]
-async fn index(depot: &mut Depot, res: &mut Response) {
-    let config = depot.obtain::<Config>().unwrap();
-    let config = config.clone();
-    let layers_config: LayersConfig = config.layers_config;
-
-    let template = IndexTemplate {
-        layers_config: &layers_config,
-    };
-    res.render(Text::Html(template.render().unwrap()));
-}
-
-#[handler]
-async fn mapview(req: &mut Request, res: &mut Response, depot: &mut Depot) {
-
-    let config = depot.obtain::<Config>().unwrap();
-    let config = config.clone();
-    let layers_config: LayersConfig = config.layers_config;
-
-    let layer_name = req.param::<String>("layer").unwrap();
-    let layer = layers_config.find_layer_by_name(&layer_name).unwrap();
-    let geometry = match layer.geometry.as_str() {
-        "points" => "circle",
-        "lines" => "line",
-        "polygons" => "fill",
-        _ => &layer.geometry,
-    };
-
-    let template = MapTemplate {
-        name: &layer.name,
-        alias: &layer.alias,
-        geometry
-    };
-    res.render(Text::Html(template.render().unwrap()));
 }
 
 #[tokio::main]
@@ -90,7 +40,6 @@ async fn main() {
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
     let delete_cache: u8 = delete_cache.parse().unwrap();
-
 
     let matches = Command::new("mvt-rs vector tiles server")
         .arg(Arg::new("layers")
