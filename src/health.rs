@@ -16,5 +16,4 @@ pub async fn get_health(res: &mut Response) {
         timestamp: chrono::offset::Local::now(),
     };
     res.render(Json(&data));
-
 }

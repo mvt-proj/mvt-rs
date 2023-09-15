@@ -7,7 +7,11 @@ use salvo::http::Method;
 use salvo::logging::Logger;
 use salvo::prelude::*;
 
-use crate::{html::{index, mapview}, tiles, health, Config};
+use crate::{
+    health,
+    html::{index, mapview},
+    tiles, Config,
+};
 
 pub fn app_router(config: Config) -> salvo::Router {
     let cache_30s = Cache::new(

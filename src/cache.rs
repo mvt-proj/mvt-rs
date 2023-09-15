@@ -6,7 +6,6 @@ use bytes::Bytes;
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-
 #[derive(Clone)]
 pub struct DiskCache {
     pub cache_dir: PathBuf,
@@ -14,9 +13,7 @@ pub struct DiskCache {
 
 impl DiskCache {
     pub fn new(cache_dir: PathBuf) -> Self {
-        DiskCache {
-            cache_dir
-        }
+        DiskCache { cache_dir }
     }
 
     pub async fn delete_cache_dir(&self, layers_config: LayersConfig) {
@@ -25,7 +22,11 @@ impl DiskCache {
                 let dir_path = Path::new(&self.cache_dir).join(layer.name.to_string());
 
                 if let Err(err) = tokio::fs::remove_dir_all(&dir_path).await {
-                    tracing::warn!("Failed to delete the cache directory {:?}: {}", &dir_path, err);
+                    tracing::warn!(
+                        "Failed to delete the cache directory {:?}: {}",
+                        &dir_path,
+                        err
+                    );
                 } else {
                     tracing::warn!("Directory {:?} deleted successfully.", &dir_path);
                 }
@@ -33,7 +34,11 @@ impl DiskCache {
         }
     }
 
-    pub async fn get_cache(&self, tilepath: PathBuf, max_cache_age: u64) -> Result<Bytes, anyhow::Error> {
+    pub async fn get_cache(
+        &self,
+        tilepath: PathBuf,
+        max_cache_age: u64,
+    ) -> Result<Bytes, anyhow::Error> {
         if let Ok(metadata) = fs::metadata(&tilepath).await {
             let cache_modified = match metadata.modified() {
                 Ok(modified_time) => modified_time,
@@ -57,7 +62,11 @@ impl DiskCache {
         Err(anyhow::anyhow!("Cache not found"))
     }
 
-    pub async fn write_tile_to_file(&self, tilepath: &PathBuf, tile: &[u8]) -> Result<(), anyhow::Error> {
+    pub async fn write_tile_to_file(
+        &self,
+        tilepath: &PathBuf,
+        tile: &[u8],
+    ) -> Result<(), anyhow::Error> {
         if let Some(parent) = tilepath.parent() {
             if !fs::metadata(parent).await.is_ok() {
                 fs::create_dir_all(parent).await?;

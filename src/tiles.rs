@@ -110,13 +110,12 @@ async fn get_tile(
         layer_conf.clone().filter.unwrap_or(String::new())
     };
 
-    let tilefolder = disk_cache.cache_dir
+    let tilefolder = disk_cache
+        .cache_dir
         .join(name.to_string())
         .join(&z.to_string())
         .join(&x.to_string());
-    let tilepath = tilefolder
-        .join(&y.to_string())
-        .with_extension("pbf");
+    let tilepath = tilefolder.join(&y.to_string()).with_extension("pbf");
 
     if let Ok(cached_tile) = disk_cache.get_cache(tilepath.clone(), max_cache_age).await {
         return Ok(cached_tile);

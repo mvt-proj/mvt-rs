@@ -3,7 +3,6 @@ use salvo::prelude::*;
 
 use crate::{Config, LayersConfig};
 
-
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate<'a> {
@@ -32,7 +31,6 @@ pub async fn index(depot: &mut Depot, res: &mut Response) {
 
 #[handler]
 pub async fn mapview(req: &mut Request, res: &mut Response, depot: &mut Depot) {
-
     let config = depot.obtain::<Config>().unwrap();
     let config = config.clone();
     let layers_config: LayersConfig = config.layers_config;
@@ -49,7 +47,7 @@ pub async fn mapview(req: &mut Request, res: &mut Response, depot: &mut Depot) {
     let template = MapTemplate {
         name: &layer.name,
         alias: &layer.alias,
-        geometry
+        geometry,
     };
     res.render(Text::Html(template.render().unwrap()));
 }

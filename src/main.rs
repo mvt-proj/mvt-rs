@@ -6,10 +6,10 @@ use sqlx::PgPool;
 mod cache;
 mod config;
 mod db;
-mod routes;
-mod html;
-mod tiles;
 mod health;
+mod html;
+mod routes;
+mod tiles;
 use config::LayersConfig;
 use db::make_db_pool;
 
@@ -42,28 +42,30 @@ async fn main() {
     let delete_cache: u8 = delete_cache.parse().unwrap();
 
     let matches = Command::new("mvt-rs vector tiles server")
-        .arg(Arg::new("layers")
-            .short('l')
-            .long("layers")
-            .value_name("LAYERS")
-            .default_value("layers")
-            .help("Directory where the layer configuration files are placed")
+        .arg(
+            Arg::new("layers")
+                .short('l')
+                .long("layers")
+                .value_name("LAYERS")
+                .default_value("layers")
+                .help("Directory where the layer configuration files are placed"),
         )
-        .arg(Arg::new("cachedir")
-            .short('c')
-            .long("cachedir")
-            .value_name("CACHEDIR")
-            .default_value("cache")
-            .help("Directory where cache files are placed")
+        .arg(
+            Arg::new("cachedir")
+                .short('c')
+                .long("cachedir")
+                .value_name("CACHEDIR")
+                .default_value("cache")
+                .help("Directory where cache files are placed"),
         )
         .get_matches();
 
     let layers_dir = matches.get_one::<String>("layers").expect("required");
     let cache_dir = matches.get_one::<String>("cachedir").expect("required");
 
-    let layers_config = LayersConfig::new(layers_dir).await.expect(
-        "You must have a layers directory to place the layer files to be served.",
-        );
+    let layers_config = LayersConfig::new(layers_dir)
+        .await
+        .expect("You must have a layers directory to place the layer files to be served.");
 
     let disk_cache = cache::DiskCache::new(cache_dir.into());
     if delete_cache != 0 {
