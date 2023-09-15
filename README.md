@@ -9,7 +9,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 
 ## Table of Layer Configuration Fields
 
-Each layer intended for publication is defined as a JSON file with the fields as shown below. These files should be located in a directory named **layers** at the root of your project.
+Each layer intended for publication is defined as a JSON file with the fields as shown below. 
 
 | Field                     | Meaning                                | Required | Default  | Example                |
 |---------------------------|----------------------------------------|----------|----------|------------------------|
@@ -71,6 +71,10 @@ http://127.0.0.1:5887/
 
 ![imagen](https://github.com/mvt-proj/mvt-rs/assets/5981345/a4f0be92-873c-4e6f-ba69-3a74bd4f37c7)
 
+By default, configuration files are stored in the "layers" directory located at the root of your project. However, you can also specify a different location for these configuration files as an argument when starting the server. Example:
+
+`./mvt-rs --layers /usr/local/etc/mvt-rs/layers`
+
 
 
 ## Environment Variables (.env)
@@ -101,6 +105,10 @@ There are two ways to perform caching:
     - On disk following the layer's configuration. The disk cache is asynchronous, using `tokio::fs`
 
 Regarding caching and filter application, it will only be saved when the filter is provided in the layer's configuration and will not be applied when it comes from a request to the server.
+
+By default, the cache files are stored in the "cache" directory located at the root of your project. However, you can also specify a different location for teh cache direcory as an argument when starting the server. Example:
+
+`./mvt-rs --cache /tmp/cache`
 
 ## To-Do List
 
