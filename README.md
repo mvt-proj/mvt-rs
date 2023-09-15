@@ -36,7 +36,7 @@ Each layer intended for publication is defined as a JSON file with the fields as
 
 
 
-You can customize the layer configuration by modifying values in a specific configuration file.
+You can customize the layer configuration by modifying values in a specific JSON configuration file.
 
 Example:
 
