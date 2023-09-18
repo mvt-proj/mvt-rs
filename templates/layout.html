@@ -13,13 +13,18 @@
     }
 
     body {
-      display: flex;
-      flex-direction: column;
       min-height: 100vh;
     }
 
     .footer {
       margin-top: auto;
+    }
+
+    .fixed-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
     }
   </style>
   {% block head %}{% endblock %}
@@ -40,21 +45,18 @@
         <div class="navbar-menu">
           <div class="navbar-start">
             <a class="navbar-item" href="/">Home</a>
-        <!--     <a class="navbar-item" href="/mapas">Mapas</a> -->
-        <!--     <a class="navbar-item" href="#">Acerca de</a> -->
-        <!--     <a class="navbar-item" href="#">Contacto</a> -->
+            <a class="navbar-item" href="/admin">Admin</a>
           </div>
         </div>
       </div>
     </nav>
   </header>
-  <main class="container mt-4">
-
+  <main class="container is-max-widescreen mt-4">
     {% block content %}{% endblock %}
     {% block scripts %}{% endblock %}
   </main>
 
-  <footer class="footer has-background-dark py-2">
+  <footer class="footer has-background-dark fixed-footer py-2">
     <div class="content has-text-centered">
       <p class="has-text-grey-lighter">
         MVT-RS
