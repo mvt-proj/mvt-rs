@@ -1,7 +1,7 @@
 {% extends "layout_admin.html" %}
 
 {% block admin_content %}
-  <h4 class="title is-5 has-text-grey">Catalog of registered layers</h4>
+  <h1 class="title is-5 has-text-grey-darker">Catalog of registered layers</h1>
 
   <div id="modal-js-example" class="modal">
     <div class="modal-background"></div>
@@ -16,7 +16,7 @@
         <div id="data-json"></div>
       </section>
       <footer class="modal-card-foot">
-        <button class="button is-info">Ok</button>
+        <button class="button is-dark">Ok</button>
       </footer>
     </div>
   </div>
@@ -43,42 +43,43 @@
             <span class="server"></span>/tiles/{{ layer.name }}/{z}/{x}/{y}.pbf
           </td>
           <td class="has-text-right">
+            <div class="is-flex">
+              <button
+                class="button is-small is-dark js-modal-trigger mr-1"
+                data-target="modal-js-example"
+                onclick="document.getElementById('data-json').innerHTML='{{format!("{:?}", layer)}}';"
+                >
+                <span class="icon is-small">
+                  <i class="fas fa-cog"></i>
+                </span>
+              </button>
 
-            <button
-              class="button is-small is-info js-modal-trigger"
-              data-target="modal-js-example"
-              onclick="document.getElementById('data-json').innerHTML='{{format!("{:?}", layer)}}';"
-            >
-              <span class="icon is-small">
-                <i class="fas fa-cog"></i>
-              </span>
-            </button>
+              <a href="/map/{{ layer.name }}" class="button is-small is-dark mr-1" target="_blank">
+                <span class="icon is-small">
+                  <i class="fas fa-map"></i>
+                </span>
+              </a>
 
-            <a href="/map/{{ layer.name }}" class="button is-small is-info" target="_blank">
-              <span class="icon is-small">
-                <i class="fas fa-map"></i>
-              </span>
-            </a>
+              <a href="/map/{{ layer.name }}" class="button is-small is-dark mr-1" target="_blank">
+                <span class="icon is-small">
+                  <i class="fas fa-pen"></i>
+                </span>
+              </a>
 
-            <a href="/map/{{ layer.name }}" class="button is-small is-info" target="_blank">
-              <span class="icon is-small">
-                <i class="fas fa-pen"></i>
-              </span>
-            </a>
-
-            {% if layer.published %}
-              <a href="/map/{{ layer.name }}" class="button is-small is-success" target="_blank">
+              {% if layer.published %}
+              <a href="/map/{{ layer.name }}" class="button is-small is-dark" target="_blank">
                 <span class="icon is-small">
                   <i class="fas fa-check"></i>
                 </span>
               </a>
-            {% else %}
-              <a href="/map/{{ layer.name }}" class="button is-small is-danger" target="_blank">
+              {% else %}
+              <a href="/map/{{ layer.name }}" class="button is-small is-dark is-outlined" target="_blank">
                 <span class="icon is-small">
                   <i class="fas fa-ban"></i>
                 </span>
               </a>
-            {% endif %}
+              {% endif %}
+            </div>
           </td>
         </tr>
       {% endfor %}

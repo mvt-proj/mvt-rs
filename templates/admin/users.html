@@ -1,7 +1,16 @@
 {% extends "layout_admin.html" %}
 
 {% block admin_content %}
-  <h4 class="title is-5 has-text-grey">List Users</h4>
+  <h1 class="title is-5 has-text-grey-darker">List Users</h1>
+
+  <div class="has-text-right">
+    <a href="/admin/newuser" class="button is-light">
+      <span class="icon is-small">
+        <i class="fas fa-user-plus"></i>
+      </span>
+      <span>Add User</span>
+    </a>
+  </div>
 
   <table class="table is-fullwidth">
     <thead>
@@ -21,7 +30,7 @@
             {{ user.email }}
           </td>
           <td class="has-text-right">
-            <a href="" class="button is-small is-info">
+            <a href="" class="button is-small is-dark">
               <span class="icon is-small">
                 <i class="fas fa-pen"></i>
               </span>
