@@ -5,8 +5,8 @@ use sqlx::PgPool;
 use std::cell::OnceCell;
 
 mod auth;
-mod catalog;
 mod cache;
+mod catalog;
 mod db;
 mod health;
 mod html;
@@ -14,8 +14,8 @@ mod routes;
 mod tiles;
 
 use auth::Auth;
-use catalog::Catalog;
 use cache::DiskCache;
+use catalog::Catalog;
 use db::make_db_pool;
 
 #[derive(Debug)]

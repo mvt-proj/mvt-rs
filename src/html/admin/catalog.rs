@@ -7,10 +7,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::{
     catalog::{Catalog, Layer},
-    get_app_state,
-    get_catalog,
+    get_app_state, get_catalog,
 };
-
 
 #[derive(Template)]
 #[template(path = "catalog.html")]

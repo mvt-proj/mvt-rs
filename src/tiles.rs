@@ -3,8 +3,8 @@ use salvo::prelude::*;
 use sqlx::PgPool;
 
 use crate::{
-    catalog::{Catalog, Layer, StateLayer},
     cache::DiskCache,
+    catalog::{Catalog, Layer, StateLayer},
     get_catalog, get_db_pool, get_disk_cache,
 };
 

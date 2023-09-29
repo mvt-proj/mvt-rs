@@ -5,7 +5,10 @@ use std::path::Path;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use crate::{get_auth, auth::{Auth, User}};
+use crate::{
+    auth::{Auth, User},
+    get_auth,
+};
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]

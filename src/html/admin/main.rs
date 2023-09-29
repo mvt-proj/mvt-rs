@@ -5,7 +5,6 @@ use salvo::prelude::*;
 #[template(path = "admin/index.html")]
 struct IndexTemplate {}
 
-
 #[handler]
 pub async fn index(res: &mut Response) {
     let template = IndexTemplate {};
