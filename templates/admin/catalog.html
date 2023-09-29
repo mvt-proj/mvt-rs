@@ -1,8 +1,7 @@
-{% extends "layout.html" %}
+{% extends "layout_admin.html" %}
 
-{% block content %}
-  <h3 class="title is-3">MVT-RS Server</h3>
-  <h4 class="title is-5 has-text-grey">Catalog of published layers</h4>
+{% block admin_content %}
+  <h4 class="title is-5 has-text-grey">Catalog of registered layers</h4>
 
   <div id="modal-js-example" class="modal">
     <div class="modal-background"></div>
@@ -22,7 +21,7 @@
     </div>
   </div>
 
-  <table class="table is-fullwidth">
+  <table class="table">
     <thead>
       <tr>
         <th scope="col">Layer</th>
@@ -43,7 +42,7 @@
           <td class="has-text-info">
             <span class="server"></span>/tiles/{{ layer.name }}/{z}/{x}/{y}.pbf
           </td>
-          <td class="has-text-info">
+          <td class="has-text-right">
 
             <button
               class="button is-small is-info js-modal-trigger"
@@ -60,6 +59,26 @@
                 <i class="fas fa-map"></i>
               </span>
             </a>
+
+            <a href="/map/{{ layer.name }}" class="button is-small is-info" target="_blank">
+              <span class="icon is-small">
+                <i class="fas fa-pen"></i>
+              </span>
+            </a>
+
+            {% if layer.published %}
+              <a href="/map/{{ layer.name }}" class="button is-small is-success" target="_blank">
+                <span class="icon is-small">
+                  <i class="fas fa-check"></i>
+                </span>
+              </a>
+            {% else %}
+              <a href="/map/{{ layer.name }}" class="button is-small is-danger" target="_blank">
+                <span class="icon is-small">
+                  <i class="fas fa-ban"></i>
+                </span>
+              </a>
+            {% endif %}
           </td>
         </tr>
       {% endfor %}

@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[derive(Template)]
-#[template(path = "catalog.html")]
+#[template(path = "admin/catalog.html")]
 struct CatalogTemplate<'a> {
     layers: &'a Vec<Layer>,
 }

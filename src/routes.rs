@@ -49,6 +49,7 @@ pub fn app_router() -> salvo::Router {
                 .hoop(auth_handler)
                 .get(html::admin::main::index)
                 .push(Router::with_path("/catalog").get(html::admin::catalog::page_catalog))
+                .push(Router::with_path("/users").get(html::admin::users::list_users))
                 .push(Router::with_path("/newuser").get(html::admin::main::new_user))
                 .push(Router::with_path("/createuser").post(html::admin::users::create_user))
                 .push(Router::with_path("/newlayer").get(html::admin::main::new_layer))

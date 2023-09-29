@@ -1,0 +1,39 @@
+{% extends "layout_admin.html" %}
+
+{% block admin_content %}
+  <h4 class="title is-5 has-text-grey">List Users</h4>
+
+  <table class="table is-fullwidth">
+    <thead>
+      <tr>
+        <th scope="col">Username</th>
+        <th scope="col">Email</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <td>
+            <span class="has-text-weight-semibold">{{ user.username }}</span>
+          </td>
+          <td>
+            {{ user.email }}
+          </td>
+          <td class="has-text-right">
+            <a href="" class="button is-small is-info">
+              <span class="icon is-small">
+                <i class="fas fa-pen"></i>
+              </span>
+            </a>
+            <a href="" class="button is-small is-danger">
+              <span class="icon is-small">
+                <i class="fas fa-trash"></i>
+              </span>
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

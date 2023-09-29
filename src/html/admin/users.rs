@@ -1,4 +1,5 @@
 use salvo::macros::Extractible;
+use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -10,12 +11,27 @@ use crate::{
     get_auth,
 };
 
+#[derive(Template)]
+#[template(path = "admin/list_users.html")]
+struct ListUsersTemplate<'a> {
+    users: &'a Vec<User>,
+}
+
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]
 struct NewUser<'a> {
     username: &'a str,
     email: String,
     password: String,
+}
+
+#[handler]
+pub async fn list_users(res: &mut Response) {
+    let auth: Auth = get_auth().clone();
+    let template = ListUsersTemplate {
+        users: &auth.users,
+    };
+    res.render(Text::Html(template.render().unwrap()));
 }
 
 #[handler]
