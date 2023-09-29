@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <nav class="mb-4 navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-menu">
+      <div class="navbar-start">
+        <a class="navbar-item" href="/admin/users">Users</a>
+        <a class="navbar-item" href="/admin/catalog">Catalog</a>
+      </div>
+    </div>
+  </nav>
+  {% block admin_content %}{% endblock %}
+{% endblock %}

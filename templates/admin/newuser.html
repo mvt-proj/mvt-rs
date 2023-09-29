@@ -1,0 +1,34 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_content %}
+  <div class="columns is-centered">
+    <div class="column is-one-third">
+      <h4 class="mb-3 title is-5">New User</h4>
+      <form action="/admin/createuser" method="post">
+        <div class="field">
+          <label class="label">Username</label>
+          <div class="control">
+            <input class="input" name="username" type="text" placeholder="Username">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Email</label>
+          <div class="control">
+            <input class="input" name="email" type="email" placeholder="Email">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Password</label>
+          <div class="control">
+            <input class="input" name="password" type="password" placeholder="Password">
+          </div>
+        </div>
+        <div class="field">
+          <div class="control has-text-centered">
+            <button class="button is-fullwidth is-link">Create User</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

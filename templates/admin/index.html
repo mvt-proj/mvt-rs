@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <h3 class="title is-3">Admin</h3>
+  <!-- <h4 class="title is-4">Admin</h4> -->
+
+
+
+
+
+
+  Lorem ipsum dolor sit amet, officia excepteur ex fugiat reprehenderit enim labore culpa sint ad nisi Lorem pariatur mollit ex esse exercitation amet. Nisi anim cupidatat excepteur officia. Reprehenderit nostrud nostrud ipsum Lorem est aliquip amet voluptate voluptate dolor minim nulla est proident. Nostrud officia pariatur ut officia. Sit irure elit esse ea nulla sunt ex occaecat reprehenderit commodo officia dolor Lorem duis laboris cupidatat officia voluptate. Culpa proident adipisicing id nulla nisi laboris ex in Lorem sunt duis officia eiusmod. Aliqua reprehenderit commodo ex non excepteur duis sunt velit enim. Voluptate laboris sint cupidatat ullamco ut ea consectetur et est culpa et culpa duis.
+
+
+  <div class="my-6" x-data="{ count: 0 }">
+      <button x-on:click="count++" class="button is-danger">Increment</button>
+
+      <span x-text="count"></span>
+  </div>
+
+  <div x-data="{ activeTab: 'tab1' }">
+    <div class="tabs is-toggle is-toggle-rounded is-centered is-fullwidth">
+      <ul>
+        <li :class="{ 'is-active': activeTab === 'tab1' }">
+          <a @click="activeTab = 'tab1'">Pestaña 1</a>
+        </li>
+        <li :class="{ 'is-active': activeTab === 'tab2' }">
+          <a @click="activeTab = 'tab2'">Pestaña 2</a>
+        </li>
+        <li :class="{ 'is-active': activeTab === 'tab3' }">
+          <a @click="activeTab = 'tab3'">Pestaña 3</a>
+        </li>
+      </ul>
+    </div>
+    <div x-show="activeTab === 'tab1'">
+      <div class="notification is-primary">
+        Contenido de la Pestaña 1
+      </div>
+    </div>
+    <div x-show="activeTab === 'tab2'">
+      <div class="notification is-warning">
+        Contenido de la Pestaña 2
+      </div>
+    </div>
+    <div x-show="activeTab === 'tab3'">
+      <div class="notification is-info">
+        Contenido de la Pestaña 3
+      </div>
+    </div>
+  </div>
+
+
+<div x-data="{ isOpen: false }">
+    <button class="button is-dark my-5" @click="isOpen = !isOpen">Toggle</button>
+    <div x-show="isOpen" class="notification is-success">
+        ¡Este es un mensaje de éxito!
+    </div>
+</div>
+
+
+  {% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+  (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+    const $notification = $delete.parentNode;
+
+    $delete.addEventListener('click', () => {
+      $notification.parentNode.removeChild($notification);
+    });
+  });
+});
+</script>
+{% endblock %}

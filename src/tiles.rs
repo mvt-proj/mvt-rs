@@ -3,9 +3,9 @@ use salvo::prelude::*;
 use sqlx::PgPool;
 
 use crate::{
+    catalog::{Catalog, Layer, StateLayer},
     cache::DiskCache,
-    config::{Layer, LayersConfig},
-    Config,
+    get_catalog, get_db_pool, get_disk_cache,
 };
 
 async fn query_database(
@@ -132,30 +132,24 @@ async fn get_tile(
 }
 
 #[handler]
-pub async fn mvt(
-    req: &mut Request,
-    depot: &mut Depot,
-    res: &mut Response,
-) -> Result<(), anyhow::Error> {
-    let layer = req.param::<String>("layer").unwrap_or("".to_string());
+pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Error> {
+    let layer_name = req.param::<String>("layer_name").unwrap_or("".to_string());
     let x = req.param::<u32>("x").unwrap_or(0);
     let y = req.param::<u32>("y").unwrap_or(0);
     let z = req.param::<u32>("z").unwrap_or(0);
     let filter = req.query::<String>("filter").unwrap_or(String::from(""));
 
-    let config = depot.obtain::<Config>().unwrap();
-    let config = config.clone();
-    let pg_pool: PgPool = config.db_pool;
-    let layers_config: LayersConfig = config.layers_config;
-    let disk_cache: DiskCache = config.disk_cache;
+    let pg_pool: PgPool = get_db_pool().clone();
+    let catalog: Catalog = get_catalog().clone();
+    let disk_cache: DiskCache = get_disk_cache().clone();
 
-    let layer_conf = layers_config.find_layer_by_name(&layer);
+    let layer = catalog.find_layer_by_name(&layer_name, StateLayer::PUBLISHED);
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse().unwrap(),
     );
 
-    match layer_conf {
+    match layer {
         Some(lyr) => {
             let zmin = lyr.zmin.unwrap_or(0);
             let zmax = lyr.zmax.unwrap_or(22);

@@ -3,28 +3,21 @@
 {% block head %}
   <link href='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css' rel='stylesheet' />
   <script src='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js'></script>
-  <style>
-    #map {
-      height: 550px;
-      width: 100%;
-      min-height: 0;
-    }
-  </style>
 {% endblock %}
 
 {% block content %}
-
   <section>
       <h3 class="title is-3">
-        MVT-RS Server <span class="is-size-4 has-text-info">{{ alias }}</span>
+        MVT-RS Server <span class="is-size-5 has-text-info">{{ alias }}</span>
       </h3>
-      <div id="map"></div>
+      <figure class="image is-2by1"">
+        <div id="map" class="has-ratio"></div>
+      </figure>
   </section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-
   var protocol = window.location.protocol;
   var host = window.location.hostname;
   var port = window.location.port;
@@ -37,17 +30,17 @@
   if ('{{ geometry}}' === 'circle') {
     paint = {
       'circle-radius': 5,
-      'circle-color': '#0000FF'
+      'circle-color': '#8108ff'
     };
   } else if ('{{ geometry}}'  === 'line') {
     paint = {
       'line-width': 2,
-      'line-color': '#0000FF'
+      'line-color': '#8108ff'
     };
   } else if ('{{ geometry}}'  === 'fill') {
     paint = {
       'fill-opacity': 0.5,
-      'fill-color': '#0000FF'
+      'fill-color': '#8108ff'
     };
   }
 

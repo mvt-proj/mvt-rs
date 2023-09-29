@@ -1,4 +1,5 @@
 /target
 /cache
 /layers
+/config
 .env

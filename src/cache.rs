@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
-use crate::config::LayersConfig;
+use crate::Catalog;
 use bytes::Bytes;
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct DiskCache {
     pub cache_dir: PathBuf,
 }
@@ -16,8 +16,8 @@ impl DiskCache {
         DiskCache { cache_dir }
     }
 
-    pub async fn delete_cache_dir(&self, layers_config: LayersConfig) {
-        for layer in layers_config.layers.iter() {
+    pub async fn delete_cache_dir(&self, catalog: Catalog) {
+        for layer in catalog.layers.iter() {
             if layer.delete_cache_on_start.unwrap() {
                 let dir_path = Path::new(&self.cache_dir).join(layer.name.to_string());
 

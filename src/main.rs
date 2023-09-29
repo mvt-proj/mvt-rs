@@ -2,22 +2,50 @@ use clap::{Arg, Command};
 use dotenv;
 use salvo::prelude::*;
 use sqlx::PgPool;
+use std::cell::OnceCell;
 
+mod auth;
+mod catalog;
 mod cache;
-mod config;
 mod db;
 mod health;
 mod html;
 mod routes;
 mod tiles;
-use config::LayersConfig;
+
+use auth::Auth;
+use catalog::Catalog;
+use cache::DiskCache;
 use db::make_db_pool;
 
-#[derive(Clone)]
-pub struct Config {
-    pub db_pool: PgPool,
-    pub layers_config: LayersConfig,
-    pub disk_cache: cache::DiskCache,
+#[derive(Debug)]
+pub struct AppState {
+    db_pool: PgPool,
+    catalog: Catalog,
+    disk_cache: DiskCache,
+    auth: Auth,
+}
+
+static mut APP_STATE: OnceCell<AppState> = OnceCell::new();
+
+pub fn get_app_state() -> &'static mut AppState {
+    unsafe { APP_STATE.get_mut().unwrap() }
+}
+
+pub fn get_db_pool() -> &'static PgPool {
+    unsafe { &APP_STATE.get().unwrap().db_pool }
+}
+
+pub fn get_catalog() -> &'static Catalog {
+    unsafe { &APP_STATE.get().unwrap().catalog }
+}
+
+pub fn get_disk_cache() -> &'static DiskCache {
+    unsafe { &APP_STATE.get().unwrap().disk_cache }
+}
+
+pub fn get_auth() -> &'static Auth {
+    unsafe { &APP_STATE.get().unwrap().auth }
 }
 
 #[tokio::main]
@@ -35,6 +63,7 @@ async fn main() {
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL needs to be defined");
     let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
+    let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
     let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
 
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
@@ -43,16 +72,16 @@ async fn main() {
 
     let matches = Command::new("mvt-rs vector tiles server")
         .arg(
-            Arg::new("layers")
-                .short('l')
-                .long("layers")
-                .value_name("LAYERS")
-                .default_value("layers")
-                .help("Directory where the layer configuration files are placed"),
+            Arg::new("configdir")
+                .short('c')
+                .long("configdir")
+                .value_name("CONFIGDIR")
+                .default_value("config")
+                .help("Directory where config files are placed"),
         )
         .arg(
             Arg::new("cachedir")
-                .short('c')
+                .short('d')
                 .long("cachedir")
                 .value_name("CACHEDIR")
                 .default_value("cache")
@@ -60,16 +89,20 @@ async fn main() {
         )
         .get_matches();
 
-    let layers_dir = matches.get_one::<String>("layers").expect("required");
+    let config_dir = matches.get_one::<String>("configdir").expect("required");
     let cache_dir = matches.get_one::<String>("cachedir").expect("required");
 
-    let layers_config = LayersConfig::new(layers_dir)
+    let auth = Auth::new(config_dir, salt_string)
         .await
-        .expect("You must have a layers directory to place the layer files to be served.");
+        .expect("The 'auth' structure could not be initialized");
 
-    let disk_cache = cache::DiskCache::new(cache_dir.into());
+    let catalog = Catalog::new(config_dir)
+        .await
+        .expect("The 'layers' structure could not be initialized");
+
+    let disk_cache = DiskCache::new(cache_dir.into());
     if delete_cache != 0 {
-        disk_cache.delete_cache_dir(layers_config.clone()).await;
+        disk_cache.delete_cache_dir(catalog.clone()).await;
     }
 
     let db_pool = match make_db_pool(&db_url, db_pool_size_min, db_pool_size_max).await {
@@ -80,14 +113,17 @@ async fn main() {
         }
     };
 
-    let config = Config {
+    let app_state = AppState {
         db_pool,
-        layers_config,
+        catalog,
         disk_cache,
+        auth,
     };
 
+    unsafe {
+        APP_STATE.set(app_state).unwrap();
+    }
+
     let acceptor = TcpListener::new(format!("{host}:{port}")).bind().await;
-    Server::new(acceptor)
-        .serve(routes::app_router(config.clone()))
-        .await;
+    Server::new(acceptor).serve(routes::app_router()).await;
 }

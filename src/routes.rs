@@ -1,19 +1,15 @@
-use std::time::Duration;
-
-use salvo::affix;
+use salvo::basic_auth::BasicAuth;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::cors::{self as cors, Cors};
 use salvo::http::Method;
 use salvo::logging::Logger;
 use salvo::prelude::*;
+use salvo::serve_static::StaticDir;
+use std::time::Duration;
 
-use crate::{
-    health,
-    html::{index, mapview},
-    tiles, Config,
-};
+use crate::{health, html, tiles, auth};
 
-pub fn app_router(config: Config) -> salvo::Router {
+pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(
         MokaStore::builder()
             .time_to_live(Duration::from_secs(30))
@@ -36,19 +32,36 @@ pub fn app_router(config: Config) -> salvo::Router {
         ])
         .into_handler();
 
+    let auth_handler = BasicAuth::new(auth::Validator);
+    let static_dir = StaticDir::new(["static"])
+        .defaults("index.html")
+        .listing(true);
+
     let router = Router::new()
         .hoop(Logger::default())
-        .hoop(affix::inject(config.clone()))
-        .get(index)
-        .push(Router::with_path("/map/<layer>").get(mapview))
+        // .hoop(affix::inject(config.clone()))
+        .get(html::main::index)
+        .push(Router::with_path("/catalog").get(html::main::page_catalog))
+        .push(Router::with_path("/map/<layer_name>").get(html::main::page_map))
         .push(Router::with_path("/health").get(health::get_health))
+        .push(
+            Router::with_path("/admin")
+                .hoop(auth_handler)
+                .get(html::admin::main::index)
+                .push(Router::with_path("/catalog").get(html::admin::catalog::page_catalog))
+                .push(Router::with_path("/newuser").get(html::admin::main::new_user))
+                .push(Router::with_path("/createuser").post(html::admin::users::create_user))
+                .push(Router::with_path("/newlayer").get(html::admin::main::new_layer))
+                .push(Router::with_path("/createlayer").get(html::admin::catalog::create_layer)),
+        )
         .push(Router::with_path("/tiles").get(tiles::mvt))
         .push(
-            Router::with_path("/tiles/<layer>/<z>/<x>/<y>.pbf")
+            Router::with_path("/tiles/<layer_name>/<z>/<x>/<y>.pbf")
                 .hoop(cache_30s)
                 .hoop(cors_handler)
                 .options(handler::empty())
                 .get(tiles::mvt),
-        );
+        )
+        .push(Router::with_path("/static/<**path>").get(static_dir));
     router
 }

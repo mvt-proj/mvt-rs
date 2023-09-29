@@ -1,0 +1,215 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <h3 class="title is-3">MVT-RS Server</h3>
+  <h4 class="title is-4">Admin - New User</h4>
+
+  <div class="notification is-danger">
+    <button class="delete"></button>
+    Primar lorem ipsum dolor sit amet, consectetur
+    adipiscing elit lorem ipsum dolor. <strong>Pellentesque risus mi</strong>, tempus quis placerat ut, porta nec nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus diam, et dictum <a>felis venenatis</a> efficitur.
+  </div>
+
+  <div class="columns is-centered">
+    <div class="column is-one-third">
+      <h4 class="title is-5">New User</h4>
+      <form action="/submit" method="post">
+        <!-- geometry -->
+        <div class="field">
+            <label class="label" for="geometry">Geometry</label>
+            <div class="control">
+                <div class="select">
+                    <select name="geometry" id="geometry">
+                        <option value="points">Points</option>
+                        <option value="lines">Lines</option>
+                        <option value="polygons">Polygons</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- name -->
+        <div class="field">
+          <label class="label" for="name">Name</label>
+          <div class="control">
+            <input class="input" type="text" name="name" id="name">
+          </div>
+        </div>
+
+        <!-- alias -->
+        <div class="field">
+          <label class="label" for="alias">Alias</label>
+          <div class="control">
+            <input class="input" type="text" name="alias" id="alias">
+          </div>
+        </div>
+
+        <!-- schema -->
+        <div class="field">
+          <label class="label" for="schema">Schema</label>
+          <div class="control">
+            <input class="input" type="text" name="schema" id="schema" value="public">
+          </div>
+        </div>
+
+        <!-- table -->
+        <div class="field">
+          <label class="label" for="table">Table</label>
+          <div class="control">
+            <input class="input" type="text" name="table" id="table">
+          </div>
+        </div>
+
+        <!-- fields -->
+        <div class="field">
+          <label class="label" for="fields">Fields</label>
+          <div class="control">
+            <input class="input" type="text" name="fields" id="fields" value="[id]">
+          </div>
+        </div>
+
+        <!-- filter -->
+        <div class="field">
+          <label class="label" for="filter">Filter</label>
+          <div class="control">
+            <input class="input" type="text" name="filter" id="filter">
+          </div>
+        </div>
+
+        <!-- srid -->
+        <div class="field">
+          <label class="label" for="srid">SRID</label>
+          <div class="control">
+            <input class="input" type="text" name="srid" id="srid" value="4326">
+          </div>
+        </div>
+
+        <!-- geom -->
+        <div class="field">
+          <label class="label" for="geom">Geom</label>
+          <div class="control">
+            <input class="input" type="text" name="geom" id="geom" value="geom">
+          </div>
+        </div>
+
+        <!-- buffer -->
+        <div class="field">
+          <label class="label" for="buffer">Buffer</label>
+          <div class="control">
+            <input class="input" type="buffer" name="buffer" id="buffer" value="256">
+          </div>
+        </div>
+
+        <!-- extent -->
+        <div class="field">
+          <label class="label" for="extent">Extent</label>
+          <div class="control">
+            <input class="input" type="text" name="extent" id="extent" value="4096">
+          </div>
+        </div>
+
+        <!-- zmin -->
+        <div class="field">
+          <label class="label" for="zmin">ZMin</label>
+          <div class="control">
+            <input class="input" type="text" name="zmin" id="zmin" value="0">
+          </div>
+        </div>
+
+        <!-- zmax -->
+        <div class="field">
+          <label class="label" for="zmin">ZMax</label>
+          <div class="control">
+            <input class="input" type="text" name="zmax" id="zmax" value="22">
+          </div>
+        </div>
+
+        <!-- zmax_do_not_simplify -->
+        <div class="field">
+          <label class="label" for="zmax_do_not_simplify">ZMax do not simplify</label>
+          <div class="control">
+            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="16">
+          </div>
+        </div>
+
+        <!-- buffer_do_not_simplify -->
+        <div class="field">
+          <label class="label" for="buffer_do_not_simplify">Buffer do not simplify</label>
+          <div class="control">
+            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="256">
+          </div>
+        </div>
+
+        <!-- extent_do_not_simplify -->
+        <div class="field">
+          <label class="label" for="extent_do_not_simplify">Extent do not simplify</label>
+          <div class="control">
+            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="4096">
+          </div>
+        </div>
+
+        <!-- clip_geom -->
+        <div class="field">
+          <label class="label" for="clip_geom">Clip Geom</label>
+          <div class="control">
+            <label class="radio">
+              <input type="radio" name="clip_geom" id="clip_geom_true" value="true" checked>
+              True
+            </label>
+            <label class="radio">
+              <input type="radio" name="clip_geom" id="clip_geom_false" value="false">
+              False
+            </label>
+          </div>
+        </div>
+
+        <!-- delete_cache_on_start -->
+        <div class="field">
+          <label class="label" for="delete_cache_on_start">Delete cache on start</label>
+          <div class="control">
+            <label class="radio">
+              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_true" value="true">
+              True
+            </label>
+            <label class="radio">
+              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_false" value="false" checked>
+              False
+            </label>
+          </div>
+        </div>
+
+        <!-- max_cache_age -->
+        <div class="field">
+          <label class="label" for="max_cache_age">Max cache age</label>
+          <div class="control">
+            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="0">
+          </div>
+        </div>
+
+        <!-- published -->
+        <div class="field">
+          <label class="label" for="published">Published</label>
+          <div class="control">
+            <label class="radio">
+              <input type="radio" name="published" id="published_true" value="true" checked>
+              True
+            </label>
+            <label class="radio">
+              <input type="radio" name="published" id="published_false" value="false">
+              False
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="control has-text-centered">
+            <button class="button is-fullwidth is-link">Add Layer</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
