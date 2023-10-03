@@ -38,28 +38,26 @@ pub struct Layer {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Catalog {
     pub layers: Vec<Layer>,
-    pub published_layers: Vec<Layer>,
     pub config_dir: String,
 }
 
 impl Catalog {
     pub async fn new(config_dir: &str) -> Result<Self, anyhow::Error> {
         let file_path = Path::new(config_dir).join("catalog.json".to_string());
-        let mut file = File::open(file_path).await?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents).await?;
+        let layers: Vec<Layer>;
+        // let published_layers;
+        if file_path.exists() {
+            let mut file = File::open(file_path).await?;
+            let mut contents = String::new();
+            file.read_to_string(&mut contents).await?;
+            layers = serde_json::from_str(&contents.clone())?;
 
-        let layers: Vec<Layer> = serde_json::from_str(&contents.clone())?;
-
-        let published_layers: Vec<Layer> = layers
-            .iter()
-            .filter(|layer| layer.published)
-            .cloned()
-            .collect();
+        } else {
+            layers = Vec::new();
+        }
 
         Ok(Self {
             layers,
-            published_layers,
             config_dir: config_dir.to_string(),
         })
     }
@@ -69,12 +67,23 @@ impl Catalog {
         target_name: &'a str,
         state: StateLayer,
     ) -> Option<&'a Layer> {
+
         match state {
             StateLayer::ANY => self.layers.iter().find(|layer| layer.name == target_name),
-            StateLayer::PUBLISHED => self
-                .published_layers
-                .iter()
-                .find(|layer| layer.name == target_name),
+            StateLayer::PUBLISHED => self.layers.iter().find(|layer| layer.name == target_name && layer.published),
         }
+    }
+
+    pub fn get_published_layers(&self) -> Vec<Layer> {
+        self.layers
+            .iter()
+            .filter(|layer| layer.published)
+            .cloned()
+            .collect()
+    }
+
+    pub fn remove_layer_by_name(&mut self, target_name: &str) {
+        self.layers
+            .retain(|layer| layer.name != target_name);
     }
 }

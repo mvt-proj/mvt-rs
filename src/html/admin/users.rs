@@ -8,6 +8,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::{
     auth::{Auth, User},
+    get_app_state,
     get_auth,
 };
 
@@ -28,6 +29,7 @@ struct NewUser<'a> {
 #[handler]
 pub async fn list_users(res: &mut Response) {
     let auth: Auth = get_auth().clone();
+    // let _ = auth.refresh().await;
     let template = ListUsersTemplate {
         users: &auth.users,
     };
@@ -35,8 +37,9 @@ pub async fn list_users(res: &mut Response) {
 }
 
 #[handler]
-pub async fn create_user<'a>(new_user: NewUser<'a>) -> Result<String, anyhow::Error> {
-    let mut auth: Auth = get_auth().clone();
+pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
+    let auth: Auth = get_auth().clone();
+    let app_state = get_app_state();
     let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string()).unwrap();
     let user = User {
         username: new_user.username.to_string(),
@@ -44,12 +47,14 @@ pub async fn create_user<'a>(new_user: NewUser<'a>) -> Result<String, anyhow::Er
         password: encrypt_psw,
     };
 
-    auth.users.push(user);
+    app_state.auth.users.push(user);
 
-    let json_str = serde_json::to_string(&auth.users)?;
+    let json_str = serde_json::to_string(&auth.users).unwrap();
     let file_path = Path::new(&auth.config_dir).join("users.json");
-    let mut file = File::create(file_path).await?;
-    file.write_all(json_str.as_bytes()).await?;
-    file.flush().await?;
-    Ok(json_str)
+    let mut file = File::create(file_path).await.unwrap();
+    file.write_all(json_str.as_bytes()).await.unwrap();
+    file.flush().await.unwrap();
+    res.render(Redirect::other("/admin/users"));
+
+    // Ok(json_str)
 }

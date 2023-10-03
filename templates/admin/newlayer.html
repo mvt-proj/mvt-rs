@@ -1,21 +1,16 @@
 {% extends "layout.html" %}
 
 {% block content %}
-  <h3 class="title is-3">MVT-RS Server</h3>
-  <h4 class="title is-4">Admin - New User</h4>
+  <!-- <h3 class="title is-3">MVT-RS Server</h3> -->
+  <!-- <h4 class="title is-4">Admin - New User</h4> -->
 
-  <div class="notification is-danger">
-    <button class="delete"></button>
-    Primar lorem ipsum dolor sit amet, consectetur
-    adipiscing elit lorem ipsum dolor. <strong>Pellentesque risus mi</strong>, tempus quis placerat ut, porta nec nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus diam, et dictum <a>felis venenatis</a> efficitur.
-  </div>
 
-  <div class="columns is-centered">
+  <div class="mb-6 columns is-centered">
     <div class="column is-one-third">
 
-      <h1 class="mb-3 title is-5 has-text-grey-darker">New Layer</h1>
+      <h1 class="mb-6 title is-5 has-text-grey-darker">New Layer</h1>
 
-      <form action="/submit" method="post">
+      <form action="/admin/createlayer" method="post">
         <!-- geometry -->
         <div class="field">
             <label class="label" for="geometry">Geometry</label>
@@ -66,7 +61,15 @@
         <div class="field">
           <label class="label" for="fields">Fields</label>
           <div class="control">
-            <input class="input" type="text" name="fields" id="fields" value="[id]">
+            <input class="input" type="text" name="fields" id="fields" value="id">
+          </div>
+        </div>
+
+        <!-- geom -->
+        <div class="field">
+          <label class="label" for="geom">Geom</label>
+          <div class="control">
+            <input class="input" type="text" name="geom" id="geom" value="geom">
           </div>
         </div>
 
@@ -83,14 +86,6 @@
           <label class="label" for="srid">SRID</label>
           <div class="control">
             <input class="input" type="text" name="srid" id="srid" value="4326">
-          </div>
-        </div>
-
-        <!-- geom -->
-        <div class="field">
-          <label class="label" for="geom">Geom</label>
-          <div class="control">
-            <input class="input" type="text" name="geom" id="geom" value="geom">
           </div>
         </div>
 

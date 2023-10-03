@@ -7,7 +7,7 @@ use salvo::prelude::*;
 use salvo::serve_static::StaticDir;
 use std::time::Duration;
 
-use crate::{auth, health, html, tiles};
+use crate::{auth, health, api, html, tiles};
 
 pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(
@@ -53,7 +53,20 @@ pub fn app_router() -> salvo::Router {
                 .push(Router::with_path("/newuser").get(html::admin::main::new_user))
                 .push(Router::with_path("/createuser").post(html::admin::users::create_user))
                 .push(Router::with_path("/newlayer").get(html::admin::main::new_layer))
-                .push(Router::with_path("/createlayer").get(html::admin::catalog::create_layer)),
+                .push(Router::with_path("/createlayer").post(html::admin::catalog::create_layer))
+                .push(Router::with_path("/swichpublished/<layer_name>").get(html::admin::catalog::swich_published))
+        )
+        .push(
+            Router::with_path("/api")
+                // .(html::admin::main::index)
+                // .hoop(auth_handler)
+                .push(Router::with_path("/auth/login").post(api::auth::login))
+                // .push(Router::with_path("/users").get(html::admin::users::list_users))
+                // .push(Router::with_path("/newuser").get(html::admin::main::new_user))
+                // .push(Router::with_path("/createuser").post(html::admin::users::create_user))
+                // .push(Router::with_path("/newlayer").get(html::admin::main::new_layer))
+                // .push(Router::with_path("/createlayer").post(html::admin::catalog::create_layer))
+                // .push(Router::with_path("/swichpublished/<layer_name>").get(html::admin::catalog::swich_published))
         )
         .push(Router::with_path("/tiles").get(tiles::mvt))
         .push(

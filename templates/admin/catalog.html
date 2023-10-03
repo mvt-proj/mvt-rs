@@ -21,7 +21,18 @@
     </div>
   </div>
 
-  <table class="table">
+
+  <div class="has-text-right">
+    <a href="/admin/newlayer" class="button is-light">
+      <span class="icon is-small">
+        <i class="fas fa-layer-group"></i>
+      </span>
+      <span>Add Layer</span>
+    </a>
+  </div>
+
+
+  <table class="table is-fullwidth">
     <thead>
       <tr>
         <th scope="col">Layer</th>
@@ -67,13 +78,13 @@
               </a>
 
               {% if layer.published %}
-              <a href="/map/{{ layer.name }}" class="button is-small is-dark" target="_blank">
+              <a href="/admin/swichpublished/{{ layer.name }}" class="button is-small is-dark">
                 <span class="icon is-small">
                   <i class="fas fa-check"></i>
                 </span>
               </a>
               {% else %}
-              <a href="/map/{{ layer.name }}" class="button is-small is-dark is-outlined" target="_blank">
+              <a href="/admin/swichpublished/{{ layer.name }}" class="button is-small is-dark is-outlined">
                 <span class="icon is-small">
                   <i class="fas fa-ban"></i>
                 </span>

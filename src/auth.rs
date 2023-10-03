@@ -4,12 +4,23 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use time::{Duration, OffsetDateTime};
+
+use jsonwebtoken::{self, EncodingKey};
 
 use crate::get_auth;
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
+
+const SECRET_KEY: &str = "YOUR SECRET_KEY";
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JwtClaims {
+    username: String,
+    exp: i64,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
@@ -40,6 +51,16 @@ impl Auth {
         })
     }
 
+    // pub async fn refresh(&mut self) -> Result<(), anyhow::Error> {
+    //     let file_path = Path::new(&self.config_dir).join("users.json".to_string());
+    //     let mut file = File::open(file_path).await?;
+    //     let mut contents = String::new();
+    //     file.read_to_string(&mut contents).await?;
+    //
+    //     self.users = serde_json::from_str(&contents.clone())?;
+    //     Ok(())
+    // }
+
     pub fn get_encrypt_psw(&self, psw: String) -> Result<String, argon2::password_hash::Error> {
         let salt = SaltString::encode_b64(self.salt_string.as_bytes())?;
         let argon2 = Argon2::default();
@@ -54,7 +75,8 @@ impl Auth {
         Ok(password_hash == user.password)
     }
 
-    fn validate_user(&self, username: &str, psw: &str) -> bool {
+    pub fn validate_user(&mut self, username: &str, psw: &str) -> bool {
+        // let _ = self.refresh();
         for user in self.users.clone().into_iter() {
             if username == user.username && self.validate_psw(user, psw).unwrap() {
                 return true;
@@ -62,13 +84,36 @@ impl Auth {
         }
         false
     }
+
+    pub fn login(&mut self, username: &str, psw: &str) -> Result<String, anyhow::Error> {
+        for user in self.users.clone().into_iter() {
+            if username == user.username && self.validate_psw(user, psw).unwrap() {
+                let exp = OffsetDateTime::now_utc() + Duration::days(14);
+                let claim = JwtClaims {
+                    username: username.to_owned(),
+                    exp: exp.unix_timestamp(),
+                };
+                let token = jsonwebtoken::encode(
+                    &jsonwebtoken::Header::default(),
+                    &claim,
+                    &EncodingKey::from_secret(SECRET_KEY.as_bytes()),
+                )?;
+                return Ok(token);
+            }
+        }
+        Ok("".to_owned())
+    }
+
+
+
+
 }
 
 pub struct Validator;
 #[async_trait]
 impl BasicAuthValidator for Validator {
     async fn validate(&self, username: &str, password: &str, _depot: &mut Depot) -> bool {
-        let auth: Auth = get_auth().clone();
+        let mut auth: Auth = get_auth().clone();
         auth.validate_user(username, password)
     }
 }

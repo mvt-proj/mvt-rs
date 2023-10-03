@@ -35,7 +35,7 @@ pub async fn page_catalog(res: &mut Response) {
     let catalog: Catalog = get_catalog().clone();
 
     let template = CatalogTemplate {
-        layers: &catalog.published_layers,
+        layers: &catalog.get_published_layers(),
     };
     res.render(Text::Html(template.render().unwrap()));
 }

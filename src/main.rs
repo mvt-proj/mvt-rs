@@ -4,6 +4,7 @@ use salvo::prelude::*;
 use sqlx::PgPool;
 use std::cell::OnceCell;
 
+mod api;
 mod auth;
 mod cache;
 mod catalog;
