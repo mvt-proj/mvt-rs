@@ -9,14 +9,14 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 
 ## Table of Layer Configuration Fields
 
-Each layer intended for publication is defined as a JSON file with the fields as shown below. 
+Each layer intended for publication is defined as a JSON file with the fields as shown below.
 
 | Field                     | Meaning                                | Required | Default  | Example                |
 |---------------------------|----------------------------------------|----------|----------|------------------------|
 | `geometry`                | Geometry of layer ['points', 'lines', 'polygons'] | true   |          | `polygons`              |
 | `name`                    | Layer name used in the URL              | true   |          | `streets`              |
 | `alias`                   | Layer alias                             | true   |          | `Street Layer`         |
-| `schema`                  | PostgreSQL database schema name         | false  | `public` | `my_schema`            |
+| `schema`                  | PostgreSQL database schema name         | true   |          | `public`            |
 | `table`                   | Table or view to serve as VT            | true   |          | `my_table`             |
 | `fields`                  | List of fields to include in vector tiles | true |          | `[id, field1, field2]` |
 | `filter`                  | Data filter                             | false  |          | `field1 > 100`         |
@@ -65,15 +65,14 @@ In this case, the URL that the service publishes will be:
 http://127.0.0.1:5887/tiles/departamentos/{z}/{x}/{y}.pbf
 
 
-Can you see all the published layers at:
+Can you see all the served layers at:
 
-http://127.0.0.1:5887/
+http://127.0.0.1:5887/catalog
 
-![imagen](https://github.com/mvt-proj/mvt-rs/assets/5981345/a4f0be92-873c-4e6f-ba69-3a74bd4f37c7)
 
-By default, configuration files are stored in the "layers" directory located at the root of your project. However, you can also specify a different location for these configuration files as an argument when starting the server. Example:
+By default, the file catalog.json is in the "config" directory located at the root of your project. However, you can also specify a different location for these configuration files as an argument when starting the server. Example:
 
-`./mvt-rs --layers /usr/local/etc/mvt-rs/layers`
+`./mvt-rs --config /usr/local/etc/mvt-rs/config`
 
 
 

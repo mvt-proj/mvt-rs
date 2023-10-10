@@ -19,7 +19,7 @@ async fn query_database(
     query: String,
 ) -> Result<Bytes, anyhow::Error> {
     let name = layer_conf.name;
-    let schema = layer_conf.schema.unwrap_or(String::from("public"));
+    let schema = layer_conf.schema;
     let table = layer_conf.table;
     let fields = layer_conf.fields.join(", ");
 

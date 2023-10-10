@@ -3,7 +3,12 @@ use dotenv;
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::cell::OnceCell;
+use std::path::Path;
 
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
+
+mod storage;
 mod api;
 mod auth;
 mod cache;
@@ -49,6 +54,30 @@ pub fn get_auth() -> &'static Auth {
     unsafe { &APP_STATE.get().unwrap().auth }
 }
 
+async fn init (config_dir: &str) {
+    // Catalog
+    let path = format!("{config_dir}/catalog.json");
+    let file_path = Path::new(&path);
+
+    if !file_path.exists() {
+        let json_str = "[]";
+        let mut file = File::create(file_path).await.unwrap();
+        file.write_all(json_str.as_bytes()).await.unwrap();
+        file.flush().await.unwrap();
+    }
+
+    // Users
+    let path = format!("{config_dir}/users.json");
+    let file_path = Path::new(&path);
+
+    if !file_path.exists() {
+        let json_str = "[]";
+        let mut file = File::create(file_path).await.unwrap();
+        file.write_all(json_str.as_bytes()).await.unwrap();
+        file.flush().await.unwrap();
+    }
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
@@ -75,7 +104,7 @@ async fn main() {
         .arg(
             Arg::new("configdir")
                 .short('c')
-                .long("configdir")
+                .long("config")
                 .value_name("CONFIGDIR")
                 .default_value("config")
                 .help("Directory where config files are placed"),
@@ -83,7 +112,7 @@ async fn main() {
         .arg(
             Arg::new("cachedir")
                 .short('d')
-                .long("cachedir")
+                .long("cache")
                 .value_name("CACHEDIR")
                 .default_value("cache")
                 .help("Directory where cache files are placed"),
@@ -92,6 +121,8 @@ async fn main() {
 
     let config_dir = matches.get_one::<String>("configdir").expect("required");
     let cache_dir = matches.get_one::<String>("cachedir").expect("required");
+
+    init(config_dir).await;
 
     let auth = Auth::new(config_dir, salt_string)
         .await
@@ -120,6 +151,8 @@ async fn main() {
         disk_cache,
         auth,
     };
+
+    // storage::prueba().await;
 
     unsafe {
         APP_STATE.set(app_state).unwrap();

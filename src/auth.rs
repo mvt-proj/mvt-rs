@@ -1,15 +1,12 @@
 use salvo::basic_auth::BasicAuthValidator;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use time::{Duration, OffsetDateTime};
 
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 use jsonwebtoken::{self, EncodingKey};
 
-use crate::get_auth;
+use crate::{get_auth, storage::Storage};
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
@@ -42,27 +39,23 @@ pub struct DataToken {
     pub token: String,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Auth {
     pub users: Vec<User>,
-    pub config_dir: String,
+    config_dir: String,
+    pub storage_path: String,
     salt_string: String,
 }
 
 impl Auth {
-    pub async fn new(config_dir: &str, salt_string: String) -> Result<Self, anyhow::Error> {
-        let file_path = Path::new(config_dir).join("users.json".to_string());
+    pub async fn new(config_dir: &str, salt_string: String) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let storage_path = format!("{config_dir}/users.json");
 
-        let mut users: Vec<User>;
+        let mut storage = Storage::<Vec<User>>::new(storage_path.clone());
+        let loaded_users = storage.load().await?;
+        let mut users: Vec<User> = loaded_users.unwrap_or(Vec::new());
 
-        if file_path.exists() {
-            let mut file = File::open(file_path).await?;
-            let mut contents = String::new();
-            file.read_to_string(&mut contents).await?;
-            users = serde_json::from_str(&contents.clone())?;
-        } else {
-            users = Vec::new();
+        if users.len() == 0 {
             let salt = SaltString::encode_b64(salt_string.as_bytes())
                 .unwrap();
             let argon2 = Argon2::default();
@@ -76,17 +69,13 @@ impl Auth {
                 password: password_hash,
             };
             users.push(user);
-
-            let json_str = serde_json::to_string(&users)?;
-            let file_path = Path::new(config_dir).join("users.json");
-            let mut file = File::create(file_path).await?;
-            file.write_all(json_str.as_bytes()).await?;
-            file.flush().await?;
+            storage.save(users.clone()).await?;
         }
 
         Ok(Self {
             users,
             config_dir: config_dir.to_string(),
+            storage_path,
             salt_string,
         })
     }
@@ -106,7 +95,6 @@ impl Auth {
     }
 
     pub fn validate_user(&mut self, username: &str, psw: &str) -> bool {
-        // let _ = self.refresh();
         for user in self.users.clone().into_iter() {
             if username == user.username && self.validate_psw(user, psw).unwrap() {
                 return true;
@@ -115,18 +103,21 @@ impl Auth {
         false
     }
 
-    pub async fn create_user(&mut self, user: User) -> Result<User, anyhow::Error> {
-        // user.password = self.get_encrypt_psw(&user.password);
+    pub async fn create_user(&mut self, user: User) -> Result<User, Box<dyn std::error::Error + Send + Sync>> {
         self.users.push(user.clone());
+        let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
 
-        let json_str = serde_json::to_string(&self.users)?;
-        let file_path = Path::new(&self.config_dir).join("users.json");
-        let mut file = File::create(file_path).await?;
-        file.write_all(json_str.as_bytes()).await?;
-        file.flush().await?;
+        storage.save(self.users.clone()).await?;
         Ok(user)
-
     }
+
+     pub async fn delete_user(&mut self, username: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.users.retain(|user| user.username != username);
+        let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
+        storage.save(self.users.clone()).await?;
+        Ok(())
+    }
+
 
     pub fn login(&mut self, username: &str, psw: &str) -> Result<String, anyhow::Error> {
         for user in self.users.clone().into_iter() {
@@ -177,7 +168,7 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
 }
 
 // pub fn auth_handler(secret_key: String) -> JwtAuth<JwtClaims, ConstDecoder> {
-pub fn auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
+pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
 
     JwtAuth::new(ConstDecoder::from_secret(SECRET_KEY.as_bytes()))
         .finders(vec![
