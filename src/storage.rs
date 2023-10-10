@@ -72,9 +72,9 @@ impl<T> Storage<T> {
         Ok(self.data.take())
     }
 
-    // pub fn get_data(&mut self) -> Option<T> {
-    //     self.data.take()
-    // }
+    pub fn get_data(&mut self) -> Option<T> {
+        self.data.take()
+    }
 }
 
 #[cfg(test)]
