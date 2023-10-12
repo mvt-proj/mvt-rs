@@ -4,7 +4,7 @@ This is a simple and high-speed vector tile server developed in Rust, utilizing 
 
 Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local or remote. It relies on the use of the PostGIS function ST_AsMVT. More information can be found at https://postgis.net/docs/en/ST_AsMVT.html.
 
-**mvt-rs** will allow you to publish any table or view with a geometry field as vector tiles through the definition of a configuration file.
+**mvt-rs** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the configuration of the layers.
 
 
 ## Table of Layer Configuration Fields
@@ -32,11 +32,11 @@ Each layer intended for publication is defined as a JSON file with the fields as
 | `clip_geom`               | Is a boolean to control if geometries are clipped or encoded as-is | false | `true` | `false`                |
 | `delete_cache_on_start`   | Delete cache on server start            | false  | `false` | `true`                 |
 | `max_cache_age`           | Maximum cache age in seconds. 0 means infinite time | false | `0` | `3600`                 |
+| `published`           | A layer can be declared in the configuration, but it is not published as a service | true | true | false                 |
 
 
 
-
-You can customize the layer configuration by modifying values in a specific JSON configuration file.
+You can customize the layer configuration by modifying values in a specific JSON configuration file or through the admin using a web form.
 
 Example:
 
@@ -56,7 +56,8 @@ Example:
   "extent": 4096,
   "clip_geom": false,
   "delete_cache_on_start": true,
-  "max_cache_age": 0
+  "max_cache_age": 0,
+  "published": true
 }
 ```
 
@@ -93,6 +94,9 @@ The server uses environment variables for its configuration. Make sure to create
 
 - `DELETECACHE`:  Specifies whether to delete the cache (1 for true, 0 for false). Indicate whether you should attempt to clear the cache globally when starting the service. Also, take into consideration the delete_cache_start attribute that will be evaluated in the end.
 
+- `SALTSTRING`: User passwords are stored encrypted using Argon2. Thi variable is used to enhance the security of the password hashing process.
+
+
 Ensure that the `.env` file is kept secure and not shared in public repositories.
 
 
@@ -109,13 +113,10 @@ By default, the cache files are stored in the "cache" directory located at the r
 
 `./mvt-rs --cache /tmp/cache`
 
-## To-Do List
+## To-Do
 
-- [ ] Configuration administration web interface.
-- [ ] Hot reload.
-- [ ] Basic Auth or JWT security.
-- [ ] Publish maplibre styles.
-- [ ] Server FlatGeoBuf data.
+- Something very basic has been developed to manage users and layers using templates. Additionally, an API for the admin has been started, so that it can be developed as a standalone app.
+
 
 ## Running
 
