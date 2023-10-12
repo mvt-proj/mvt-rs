@@ -64,7 +64,6 @@ pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
     let user = User {
         username: data.username.to_string(),
         email: data.email,
-        // password: data.password,
         password: encrypt_psw,
     };
 

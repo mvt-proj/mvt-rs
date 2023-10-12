@@ -177,9 +177,6 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
         .force_passed(true)
 }
 
-
-
-
 pub struct Validator;
 #[async_trait]
 impl BasicAuthValidator for Validator {
