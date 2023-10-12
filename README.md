@@ -81,7 +81,7 @@ By default, the file catalog.json is in the "config" directory located at the ro
 
 The server uses environment variables for its configuration. Make sure to create a `.env` file at the root of your project with the following variables:
 
-- `DATABASE_URL`: The connection URL for the PostgreSQL database.
+- `DBCONN`: The connection URL for the PostgreSQL database.
   Example: `postgres://user:pass@host/db`
 
 - `POOLSIZEMIN`: Minimum size of the connection pool. Example: `3`

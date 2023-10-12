@@ -3,11 +3,11 @@ use sqlx::ConnectOptions;
 use std::str::FromStr;
 
 pub async fn make_db_pool(
-    db_url: &str,
+    db_conn: &str,
     min_connections: u32,
     max_connections: u32,
 ) -> Result<sqlx::Pool<sqlx::Postgres>, sqlx::Error> {
-    let connection_options = PgConnectOptions::from_str(db_url).unwrap();
+    let connection_options = PgConnectOptions::from_str(db_conn).unwrap();
     connection_options.clone().disable_statement_logging();
 
     let pool = match PgPoolOptions::new()

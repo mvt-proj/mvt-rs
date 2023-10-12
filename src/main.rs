@@ -90,7 +90,7 @@ async fn main() {
     dotenv::dotenv().ok();
     let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
     let port = std::env::var("PORT").unwrap_or("5887".to_string());
-    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL needs to be defined");
+    let db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
     let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
     let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
@@ -137,10 +137,10 @@ async fn main() {
         disk_cache.delete_cache_dir(catalog.clone()).await;
     }
 
-    let db_pool = match make_db_pool(&db_url, db_pool_size_min, db_pool_size_max).await {
+    let db_pool = match make_db_pool(&db_conn, db_pool_size_min, db_pool_size_max).await {
         Ok(pool) => pool,
         Err(e) => {
-            tracing::error!("Could not connect to the database {}", &db_url);
+            tracing::error!("Could not connect to the database {}", &db_conn);
             panic!("Database connection error: {}", e);
         }
     };
@@ -151,8 +151,6 @@ async fn main() {
         disk_cache,
         auth,
     };
-
-    // storage::prueba().await;
 
     unsafe {
         APP_STATE.set(app_state).unwrap();
