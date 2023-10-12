@@ -12,7 +12,7 @@ pub struct Health {
 pub async fn get_health(res: &mut Response) {
     let data = Health {
         title: "MVT-RS".to_string(),
-        message: "Simple and high-speed vector tile server developed in Rust".to_string(),
+        message: "Simple and high-speed vector tiles server developed in Rust".to_string(),
         timestamp: chrono::offset::Local::now(),
     };
     res.render(Json(&data));
