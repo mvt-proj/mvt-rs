@@ -194,6 +194,13 @@ impl Catalog {
         storage.save(self.layers.clone()).await.unwrap();
     }
 
+    pub async fn delete_layer(&mut self, name: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.layers.retain(|lyr| lyr.name != name);
+        let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
+        storage.save(self.layers.clone()).await?;
+        Ok(())
+    }
+
     pub fn get_published_layers(&self) -> Vec<Layer> {
         self.layers
             .iter()

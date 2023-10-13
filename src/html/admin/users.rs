@@ -53,15 +53,9 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
 
 #[handler]
 pub async fn delete_user<'a>(res: &mut Response, req: & mut Request) {
-    // let auth: Auth = get_auth().clone();
     let app_state = get_app_state();
 
     let username = req.param::<String>("username").unwrap();
     app_state.auth.delete_user(username).await.unwrap();
-
-    // app_state.auth.users.push(user);
-    //
-    // let mut storage = Storage::<Vec<User>>::new(auth.storage_path.clone());
-    // storage.save(app_state.auth.users.clone()).await.unwrap();
     res.render(Redirect::other("/admin/users"));
 }

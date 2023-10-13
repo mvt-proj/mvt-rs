@@ -62,40 +62,47 @@
           <td class="has-text-right">
             <div class="is-flex is-justify-content-right">
               <button
-                class="button is-small is-dark js-modal-trigger mr-1"
+                class="button is-white js-modal-trigger"
                 data-target="modal-js-example"
                 onclick="document.getElementById('data-json').innerHTML='{{ layer.info_html() }}';"
                 >
-                <span class="icon is-small">
+                <span class="icon">
                   <i class="fas fa-cog"></i>
                 </span>
               </button>
 
-              <a href="/map/{{ layer.name }}" class="button is-small is-dark mr-1" target="_blank">
-                <span class="icon is-small">
+              <a href="/map/{{ layer.name }}" class="button is-white" target="_blank">
+                <span class="icon">
                   <i class="fas fa-map"></i>
                 </span>
               </a>
 
-              <a href="/admin/editlayer/{{ layer.name }}" class="button is-small is-dark mr-1">
-                <span class="icon is-small">
+              <a href="/admin/editlayer/{{ layer.name }}" class="button is-white">
+                <span class="icon">
                   <i class="fas fa-pen"></i>
                 </span>
               </a>
 
               {% if layer.published %}
-                <a href="/admin/swichpublished/{{ layer.name }}" class="button is-small is-white">
+                <a href="/admin/swichpublished/{{ layer.name }}" class="button is-white">
                   <span class="icon">
                     <i class="far fa-check-square"></i>
                   </span>
                 </a>
               {% else %}
-                <a href="/admin/swichpublished/{{ layer.name }}" class="button is-small is-white">
+                <a href="/admin/swichpublished/{{ layer.name }}" class="button is-white">
                   <span class="icon">
                     <i class="far fa-square"></i>
                   </span>
                 </a>
               {% endif %}
+
+              <a href="/admin/deletelayer/{{ layer.name }}" class="button is-danger is-inverted">
+                <span class="icon">
+                  <i class="fas fa-trash"></i>
+                </span>
+              </a>
+
             </div>
           </td>
         </tr>

@@ -56,6 +56,7 @@ pub fn app_router() -> salvo::Router {
                 .push(Router::with_path("newlayer").get(html::admin::main::new_layer))
                 .push(Router::with_path("editlayer/<layer_name>").get(html::admin::main::edit_layer))
                 .push(Router::with_path("createlayer").post(html::admin::catalog::create_layer))
+                .push(Router::with_path("deletelayer/<name>").get(html::admin::catalog::delete_layer))
                 .push(Router::with_path("updatelayer").post(html::admin::catalog::update_layer))
                 .push(Router::with_path("swichpublished/<layer_name>").get(html::admin::catalog::swich_published))
         )

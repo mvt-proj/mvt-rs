@@ -112,6 +112,15 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
     res.render(Redirect::other("/admin/catalog"));
 }
 
+#[handler]
+pub async fn delete_layer<'a>(res: &mut Response, req: & mut Request) {
+    let app_state = get_app_state();
+
+    let name = req.param::<String>("name").unwrap();
+    app_state.catalog.delete_layer(name).await.unwrap();
+    res.render(Redirect::other("/admin/catalog"));
+}
+
 
 #[handler]
 pub async fn swich_published(req: &mut Request, res: &mut Response) {
