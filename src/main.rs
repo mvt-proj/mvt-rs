@@ -55,6 +55,9 @@ pub fn get_auth() -> &'static Auth {
 }
 
 async fn init(config_dir: &str) {
+    if !Path::new(&config_dir).exists() {
+        std::fs::create_dir(&config_dir).unwrap();
+    }
     // Catalog
     let path = format!("{config_dir}/catalog.json");
     let file_path = Path::new(&path);
