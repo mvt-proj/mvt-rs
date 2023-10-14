@@ -7,7 +7,11 @@
 
 {% block content %}
   <section>
-      <h1 class="title is-4">{{ alias }}</h1>
+      <div class="columns">
+        <div class="column"><h1 class="title is-4">{{ alias }}</h1></div>
+        <div class="column has-text-right"><p>Zoom level: <span id="zoom-level"></span></p></div>
+      </div>
+
       <figure class="image is-2by1"">
         <div id="map" class="has-ratio"></div>
       </figure>
@@ -67,6 +71,9 @@
     zoom: 1
   });
 
+  var zoomLevelElement = document.getElementById('zoom-level');
+  zoomLevelElement.innerText = 1;
+
   map.on('load', function () {
     map.addLayer({
       id: '{{ name }}',
@@ -88,6 +95,11 @@
       showCompass: true
       })
     );
+
+    map.on('zoom', function () {
+      var currentZoom = map.getZoom().toFixed(1);
+      zoomLevelElement.innerText = currentZoom;
+    });
   });
 
 </script>
