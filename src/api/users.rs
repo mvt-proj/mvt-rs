@@ -1,13 +1,11 @@
-use serde::{Deserialize, Serialize};
-use salvo::macros::Extractible;
 use salvo::http::StatusCode;
+use salvo::macros::Extractible;
 use salvo::prelude::*;
-
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, AuthorizeState, User, DataToken},
-    get_auth,
-    get_app_state,
+    auth::{Auth, AuthorizeState, DataToken, User},
+    get_app_state, get_auth,
 };
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -36,21 +34,21 @@ fn unauthorized(res: &mut Response) {
 
 #[handler]
 pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) {
-
     let mut auth: Auth = get_auth().clone();
-    let token = auth.login(&login_data.username, &login_data.password).unwrap();
+    let token = auth
+        .login(&login_data.username, &login_data.password)
+        .unwrap();
 
     if token.is_empty() {
         unauthorized(res);
     } else {
-        let data = DataToken{token};
+        let data = DataToken { token };
         res.render(Json(&data));
     }
 }
 
 #[handler]
 pub async fn index(res: &mut Response) {
-
     let auth: Auth = get_auth().clone();
     let users = auth.users;
     res.render(Json(&users));

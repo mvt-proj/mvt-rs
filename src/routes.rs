@@ -7,7 +7,7 @@ use salvo::prelude::*;
 use salvo::serve_static::StaticDir;
 use std::time::Duration;
 
-use crate::{auth, health, api, html, tiles};
+use crate::{api, auth, health, html, tiles};
 
 pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(
@@ -52,13 +52,22 @@ pub fn app_router() -> salvo::Router {
                 .push(Router::with_path("users").get(html::admin::users::list_users))
                 .push(Router::with_path("newuser").get(html::admin::main::new_user))
                 .push(Router::with_path("createuser").post(html::admin::users::create_user))
-                .push(Router::with_path("deleteuser/<username>").get(html::admin::users::delete_user))
+                .push(
+                    Router::with_path("deleteuser/<username>").get(html::admin::users::delete_user),
+                )
                 .push(Router::with_path("newlayer").get(html::admin::main::new_layer))
-                .push(Router::with_path("editlayer/<layer_name>").get(html::admin::main::edit_layer))
+                .push(
+                    Router::with_path("editlayer/<layer_name>").get(html::admin::main::edit_layer),
+                )
                 .push(Router::with_path("createlayer").post(html::admin::catalog::create_layer))
-                .push(Router::with_path("deletelayer/<name>").get(html::admin::catalog::delete_layer))
+                .push(
+                    Router::with_path("deletelayer/<name>").get(html::admin::catalog::delete_layer),
+                )
                 .push(Router::with_path("updatelayer").post(html::admin::catalog::update_layer))
-                .push(Router::with_path("swichpublished/<layer_name>").get(html::admin::catalog::swich_published))
+                .push(
+                    Router::with_path("swichpublished/<layer_name>")
+                        .get(html::admin::catalog::swich_published),
+                ),
         )
         .push(
             Router::with_path("api")
@@ -71,14 +80,18 @@ pub fn app_router() -> salvo::Router {
                         .hoop(auth::jwt_auth_handler())
                         // .get(html::admin::main::index)
                         .push(
-                            Router::with_path("users").hoop(auth::validate_token)
-                            .push(Router::new()
-                                .get(api::users::index)
-                                .post(api::users::create))
+                            Router::with_path("users").hoop(auth::validate_token).push(
+                                Router::new()
+                                    .get(api::users::index)
+                                    .post(api::users::create),
+                            ),
                         )
-                        .push(Router::with_path("catalog").hoop(auth::validate_token).get(api::catalog::prueba))
-                )
-
+                        .push(
+                            Router::with_path("catalog")
+                                .hoop(auth::validate_token)
+                                .get(api::catalog::prueba),
+                        ),
+                ),
         )
         .push(Router::with_path("tiles").get(tiles::mvt))
         .push(

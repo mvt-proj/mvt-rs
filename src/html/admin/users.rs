@@ -1,12 +1,11 @@
-use salvo::macros::Extractible;
 use askama::Template;
+use salvo::macros::Extractible;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     auth::{Auth, User},
-    get_app_state,
-    get_auth,
+    get_app_state, get_auth,
     storage::Storage,
 };
 
@@ -27,9 +26,7 @@ struct NewUser<'a> {
 #[handler]
 pub async fn list_users(res: &mut Response) {
     let auth: Auth = get_auth().clone();
-    let template = ListUsersTemplate {
-        users: &auth.users,
-    };
+    let template = ListUsersTemplate { users: &auth.users };
     res.render(Text::Html(template.render().unwrap()));
 }
 
@@ -52,7 +49,7 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
 }
 
 #[handler]
-pub async fn delete_user<'a>(res: &mut Response, req: & mut Request) {
+pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) {
     let app_state = get_app_state();
 
     let username = req.param::<String>("username").unwrap();

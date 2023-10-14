@@ -8,7 +8,6 @@ use std::path::Path;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
-mod storage;
 mod api;
 mod auth;
 mod cache;
@@ -17,6 +16,7 @@ mod db;
 mod health;
 mod html;
 mod routes;
+mod storage;
 mod tiles;
 
 use auth::Auth;
@@ -54,7 +54,7 @@ pub fn get_auth() -> &'static Auth {
     unsafe { &APP_STATE.get().unwrap().auth }
 }
 
-async fn init (config_dir: &str) {
+async fn init(config_dir: &str) {
     // Catalog
     let path = format!("{config_dir}/catalog.json");
     let file_path = Path::new(&path);

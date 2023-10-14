@@ -38,11 +38,19 @@ pub struct Layer {
 
 impl Layer {
     pub fn get_geom(&self) -> String {
-        self.geom.as_ref().map(|s| s.as_str()).unwrap_or("geom").to_string()
+        self.geom
+            .as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or("geom")
+            .to_string()
     }
 
     pub fn get_filter(&self) -> String {
-        self.filter.as_ref().map(|s| s.as_str()).unwrap_or("").to_string()
+        self.filter
+            .as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or("")
+            .to_string()
     }
 
     pub fn get_srid(&self) -> u32 {
@@ -101,11 +109,23 @@ impl Layer {
         rv += &format!("Extent: {}<br>", self.get_extent());
         rv += &format!("Zmin: {}<br>", self.get_zmin());
         rv += &format!("Zmax: {}<br>", self.get_zmax());
-        rv += &format!("Zmax do not simplify: {}<br>", self.get_zmax_do_not_simplify());
-        rv += &format!("Buffer do not simplify: {}<br>", self.get_buffer_do_not_simplify());
-        rv += &format!("Extent do not simplify: {}<br>", self.get_extent_do_not_simplify());
+        rv += &format!(
+            "Zmax do not simplify: {}<br>",
+            self.get_zmax_do_not_simplify()
+        );
+        rv += &format!(
+            "Buffer do not simplify: {}<br>",
+            self.get_buffer_do_not_simplify()
+        );
+        rv += &format!(
+            "Extent do not simplify: {}<br>",
+            self.get_extent_do_not_simplify()
+        );
         rv += &format!("Clip geom: {}<br>", self.get_clip_geom());
-        rv += &format!("Delete cache on start: {}<br>", self.get_delete_cache_on_start());
+        rv += &format!(
+            "Delete cache on start: {}<br>",
+            self.get_delete_cache_on_start()
+        );
         rv += &format!("Max cache age: {}<br>", self.get_max_cache_age());
         rv += &format!("Published: {}", self.published);
         rv
@@ -129,7 +149,7 @@ impl Catalog {
         Ok(Self {
             layers,
             config_dir: config_dir.to_string(),
-            storage_path
+            storage_path,
         })
     }
 
@@ -138,14 +158,12 @@ impl Catalog {
         target_name: &'a str,
         state: StateLayer,
     ) -> Option<&'a Layer> {
-
         match state {
             StateLayer::ANY => self.layers.iter().find(|layer| layer.name == target_name),
-            StateLayer::PUBLISHED => {
-                self.layers
-                    .iter()
-                    .find(|layer| layer.name == target_name && layer.published)
-            },
+            StateLayer::PUBLISHED => self
+                .layers
+                .iter()
+                .find(|layer| layer.name == target_name && layer.published),
         }
     }
 
@@ -155,22 +173,25 @@ impl Catalog {
         state: StateLayer,
     ) -> Option<usize> {
         match state {
-            StateLayer::ANY => self.layers.iter().position(|layer| layer.name == target_name),
-            StateLayer::PUBLISHED => {
-                self.layers
-                    .iter()
-                    .position(|layer| layer.name == target_name && layer.published)
-            }
+            StateLayer::ANY => self
+                .layers
+                .iter()
+                .position(|layer| layer.name == target_name),
+            StateLayer::PUBLISHED => self
+                .layers
+                .iter()
+                .position(|layer| layer.name == target_name && layer.published),
         }
     }
 
     pub async fn swich_layer_published(&mut self, target_name: &str) {
-        let position = self.layers.iter().position(|layer| layer.name == target_name);
+        let position = self
+            .layers
+            .iter()
+            .position(|layer| layer.name == target_name);
         match position {
-            Some(index) => {
-                self.layers[index].published = !self.layers.clone()[index].published
-            },
-            None => println!("layer not found")
+            Some(index) => self.layers[index].published = !self.layers.clone()[index].published,
+            None => println!("layer not found"),
         }
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
         storage.save(self.layers.clone()).await.unwrap();
@@ -185,16 +206,17 @@ impl Catalog {
     pub async fn update_layer(&mut self, layer: Layer) {
         let position = self.layers.iter().position(|lyr| lyr.name == layer.name);
         match position {
-            Some(index) => {
-                self.layers[index] = layer
-            },
-            None => println!("layer not found")
+            Some(index) => self.layers[index] = layer,
+            None => println!("layer not found"),
         }
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
         storage.save(self.layers.clone()).await.unwrap();
     }
 
-    pub async fn delete_layer(&mut self, name: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn delete_layer(
+        &mut self,
+        name: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.layers.retain(|lyr| lyr.name != name);
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
         storage.save(self.layers.clone()).await?;
@@ -210,7 +232,6 @@ impl Catalog {
     }
 
     pub fn remove_layer_by_name(&mut self, target_name: &str) {
-        self.layers
-            .retain(|layer| layer.name != target_name);
+        self.layers.retain(|layer| layer.name != target_name);
     }
 }

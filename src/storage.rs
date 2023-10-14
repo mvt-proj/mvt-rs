@@ -1,11 +1,11 @@
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::path::Path;
 use tokio::fs::{File, OpenOptions};
-use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-struct Person{
+struct Person {
     name: String,
     age: u32,
 }
@@ -18,7 +18,10 @@ pub struct Storage<T> {
 
 impl<T> Storage<T> {
     pub fn new(file_path: String) -> Self {
-        Self { file_path, data: None }
+        Self {
+            file_path,
+            data: None,
+        }
     }
 
     pub async fn save(&mut self, data: T) -> Result<(), Box<dyn Error + Send + Sync>>
@@ -28,11 +31,11 @@ impl<T> Storage<T> {
         let file_path = Path::new(&self.file_path);
         let mut file: File;
         file = OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(file_path)
-                .await?;
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(file_path)
+            .await?;
 
         let json = serde_json::to_string(&data)?;
         file.write_all(json.as_bytes()).await?;
@@ -50,11 +53,7 @@ impl<T> Storage<T> {
         let mut file: File;
 
         if file_path.exists() {
-            file = OpenOptions::new()
-                .read(true)
-                .open(file_path)
-                .await?;
-
+            file = OpenOptions::new().read(true).open(file_path).await?;
         } else {
             // file = File::create(file_path).await?;
             file = OpenOptions::new()
@@ -79,7 +78,7 @@ impl<T> Storage<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Storage, Person};
+    use super::{Person, Storage};
 
     #[tokio::test]
     async fn test_save() {

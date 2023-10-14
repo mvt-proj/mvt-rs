@@ -1,11 +1,10 @@
-use serde::{Deserialize, Serialize};
 use askama::Template;
 use salvo::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     catalog::{Catalog, Layer},
-    get_app_state,
-    get_catalog,
+    get_app_state, get_catalog,
 };
 
 #[derive(Template)]
@@ -51,7 +50,6 @@ pub async fn page_catalog(res: &mut Response) {
 
 #[handler]
 pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
-
     let app_state = get_app_state();
 
     let layer = Layer {
@@ -83,7 +81,6 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
 
 #[handler]
 pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
-
     let app_state = get_app_state();
     let layer = Layer {
         geometry: new_layer.geometry.to_string(),
@@ -113,14 +110,13 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
 }
 
 #[handler]
-pub async fn delete_layer<'a>(res: &mut Response, req: & mut Request) {
+pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) {
     let app_state = get_app_state();
 
     let name = req.param::<String>("name").unwrap();
     app_state.catalog.delete_layer(name).await.unwrap();
     res.render(Redirect::other("/admin/catalog"));
 }
-
 
 #[handler]
 pub async fn swich_published(req: &mut Request, res: &mut Response) {

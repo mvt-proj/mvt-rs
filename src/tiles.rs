@@ -5,9 +5,7 @@ use sqlx::PgPool;
 use crate::{
     cache::DiskCache,
     catalog::{Catalog, Layer, StateLayer},
-    get_db_pool,
-    get_catalog,
-    get_disk_cache,
+    get_catalog, get_db_pool, get_disk_cache,
 };
 
 async fn query_database(
