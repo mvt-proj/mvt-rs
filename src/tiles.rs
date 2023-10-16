@@ -103,12 +103,13 @@ async fn get_tile(
     let name = &layer_conf.name;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
 
-    let write_cache = filter.is_empty();
+    // let write_cache = filter.is_empty();
     let query: String = if !filter.is_empty() {
         filter
     } else {
         layer_conf.clone().filter.unwrap_or(String::new())
     };
+    let write_cache = query.is_empty();
 
     let tilefolder = disk_cache
         .cache_dir
