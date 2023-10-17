@@ -116,6 +116,17 @@ impl Auth {
         Ok(user)
     }
 
+    pub async fn update_user(&mut self, user: User) {
+
+        let position = self.users.iter().position(|usr| usr.username == user.username);
+        match position {
+            Some(index) => self.users[index] = user,
+            None => println!("user not found"),
+        }
+        let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
+        storage.save(self.users.clone()).await.unwrap();
+    }
+
     pub async fn delete_user(
         &mut self,
         username: String,
@@ -124,6 +135,20 @@ impl Auth {
         let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
         storage.save(self.users.clone()).await?;
         Ok(())
+    }
+
+    pub fn find_user_by_name<'a>(
+        &'a self,
+        target_name: &'a str,
+    ) -> Option<&'a User> {
+        self.users.iter().find(|usr| usr.username == target_name)
+    }
+
+    pub fn find_user_position_by_name(
+        &self,
+        target_name: &str,
+    ) -> Option<usize> {
+        self.users.iter().position(|usr| usr.username == target_name)
     }
 
     pub fn login(&mut self, username: &str, psw: &str) -> Result<String, anyhow::Error> {

@@ -1,7 +1,7 @@
 {% extends "layout_admin.html" %}
 
 {% block admin_content %}
-  <h1 class="title is-5 has-text-grey-darker">List Users</h1>
+  <h1 class="title is-5 has-text-grey-darker">List of Users</h1>
 
   <div class="has-text-right">
     <a href="/admin/newuser" class="button is-light">
@@ -30,18 +30,20 @@
             {{ user.email }}
           </td>
           <td class="has-text-right">
-            <a href="" class="button is-white">
-              <span class="icon">
-                <i class="fas fa-pen"></i>
-              </span>
-            </a>
-            {% if user.username != "admin" %}
-              <a href="/admin/deleteuser/{{ user.username}}" class="button is-inverted is-danger">
-                <span class="icon">
-                  <i class="fas fa-trash"></i>
-                </span>
-              </a>
-            {% endif %}
+            <div class="is-flex is-justify-content-right">
+              <a href="/admin/edituser/{{ user.username }}" class="button is-white">
+                  <span class="icon">
+                    <i class="fas fa-pen"></i>
+                  </span>
+                </a>
+              {% if user.username != "admin" %}
+                <a href="/admin/deleteuser/{{ user.username}}" class="button is-inverted is-danger">
+                  <span class="icon">
+                    <i class="fas fa-trash"></i>
+                  </span>
+                </a>
+              {% endif %}
+            </div>
           </td>
         </tr>
       {% endfor %}

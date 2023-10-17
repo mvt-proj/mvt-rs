@@ -53,6 +53,12 @@ pub fn app_router() -> salvo::Router {
                 .push(Router::with_path("newuser").get(html::admin::main::new_user))
                 .push(Router::with_path("createuser").post(html::admin::users::create_user))
                 .push(
+                    Router::with_path("edituser/<username>").get(html::admin::main::edit_user),
+                )
+                .push(
+                    Router::with_path("updateuser").post(html::admin::users::update_user),
+                )
+                .push(
                     Router::with_path("deleteuser/<username>").get(html::admin::users::delete_user),
                 )
                 .push(Router::with_path("newlayer").get(html::admin::main::new_layer))

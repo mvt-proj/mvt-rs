@@ -49,6 +49,20 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
 }
 
 #[handler]
+pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
+    let auth: Auth = get_auth().clone();
+    let app_state = get_app_state();
+    let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string()).unwrap();
+    let user = User {
+        username: new_user.username.to_string(),
+        email: new_user.email,
+        password: encrypt_psw,
+    };
+    app_state.auth.update_user(user).await;
+    res.render(Redirect::other("/admin/users"));
+}
+
+#[handler]
 pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) {
     let app_state = get_app_state();
 

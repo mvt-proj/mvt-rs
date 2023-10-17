@@ -1,6 +1,8 @@
 use crate::{
     catalog::{Layer, StateLayer},
+    auth::User,
     get_catalog,
+    get_auth,
 };
 use askama::Template;
 use salvo::prelude::*;
@@ -12,6 +14,12 @@ struct IndexTemplate {}
 #[derive(Template)]
 #[template(path = "admin/newuser.html")]
 struct NewUserTemplate {}
+
+#[derive(Template)]
+#[template(path = "admin/edituser.html")]
+struct EditUserTemplate {
+    user: User,
+}
 
 #[derive(Template)]
 #[template(path = "admin/newlayer.html")]
@@ -32,6 +40,19 @@ pub async fn index(res: &mut Response) {
 #[handler]
 pub async fn new_user(res: &mut Response) {
     let template = NewUserTemplate {};
+    res.render(Text::Html(template.render().unwrap()));
+}
+
+#[handler]
+pub async fn edit_user(req: &mut Request, res: &mut Response) {
+    let username = req.param::<String>("username").unwrap();
+    let auth = get_auth().clone();
+    let user = auth
+        .find_user_by_name(&username)
+        .unwrap();
+    let template = EditUserTemplate {
+        user: user.clone(),
+    };
     res.render(Text::Html(template.render().unwrap()));
 }
 
