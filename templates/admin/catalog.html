@@ -22,7 +22,7 @@
   </div>
 
   <div class="has-text-right">
-    <a href="/admin/newlayer" class="button is-light">
+    <a href="/admin/catalog/layers/new" class="button is-light">
       <span class="icon is-small">
         <i class="fas fa-layer-group"></i>
       </span>
@@ -77,27 +77,27 @@
                 </span>
               </a>
 
-              <a href="/admin/editlayer/{{ layer.name }}" class="button is-white">
+              <a href="/admin/catalog/layers/edit/{{ layer.name }}" class="button is-white">
                 <span class="icon">
                   <i class="fas fa-pen"></i>
                 </span>
               </a>
 
               {% if layer.published %}
-                <a href="/admin/swichpublished/{{ layer.name }}" class="button is-white">
+                <a href="/admin/catalog/layers/swichpublished/{{ layer.name }}" class="button is-white">
                   <span class="icon">
                     <i class="far fa-check-square"></i>
                   </span>
                 </a>
               {% else %}
-                <a href="/admin/swichpublished/{{ layer.name }}" class="button is-white">
+                <a href="/admin/catalog/layers/swichpublished/{{ layer.name }}" class="button is-white">
                   <span class="icon">
                     <i class="far fa-square"></i>
                   </span>
                 </a>
               {% endif %}
 
-              <a href="/admin/deletelayer/{{ layer.name }}" class="button is-danger is-inverted">
+              <a href="/admin/catalog/layers/delete/{{ layer.name }}" class="button is-danger is-inverted">
                 <span class="icon">
                   <i class="fas fa-trash"></i>
                 </span>

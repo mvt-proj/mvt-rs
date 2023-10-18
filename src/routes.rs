@@ -19,7 +19,11 @@ pub fn app_router() -> salvo::Router {
 
     let cors_handler = Cors::new()
         .allow_origin(cors::Any)
-        .allow_methods(vec![Method::GET, Method::OPTIONS])
+        .allow_methods(vec![
+                       Method::GET,
+                       Method::POST,
+                       Method::OPTIONS
+        ])
         .allow_headers(vec![
             "CONTENT-TYPE",
             "content-type",
@@ -48,37 +52,48 @@ pub fn app_router() -> salvo::Router {
             Router::with_path("admin")
                 .hoop(auth_handler)
                 .get(html::admin::main::index)
-                .push(Router::with_path("catalog").get(html::admin::catalog::page_catalog))
-                .push(Router::with_path("users").get(html::admin::users::list_users))
-                .push(Router::with_path("newuser").get(html::admin::main::new_user))
-                .push(Router::with_path("createuser").post(html::admin::users::create_user))
+
                 .push(
-                    Router::with_path("edituser/<username>").get(html::admin::main::edit_user),
+                    Router::with_path("users")
+                    .get(html::admin::users::list_users)
+                    .push(Router::with_path("new").get(html::admin::main::new_user))
+                    .push(Router::with_path("create").post(html::admin::users::create_user))
+                    .push(
+                        Router::with_path("edit/<username>").get(html::admin::main::edit_user),
+                    )
+                    .push(
+                        Router::with_path("update").post(html::admin::users::update_user),
+                    )
+                    .push(
+                        Router::with_path("delete/<username>").get(html::admin::users::delete_user),
+                    )
                 )
+
                 .push(
-                    Router::with_path("updateuser").post(html::admin::users::update_user),
+                    Router::with_path("catalog")
+                    .get(html::admin::catalog::page_catalog)
+                    .push(Router::with_path("layers/new").get(html::admin::main::new_layer))
+                    .push(Router::with_path("layers/create").post(html::admin::catalog::create_layer))
+                    .push(
+                        Router::with_path("layers/edit/<layer_name>").get(html::admin::main::edit_layer),
+                    )
+                    .push(
+                        Router::with_path("layers/delete/<name>").get(html::admin::catalog::delete_layer),
+                    )
+                    .push(Router::with_path("layers/update").post(html::admin::catalog::update_layer))
+                    .push(
+                        Router::with_path("layers/swichpublished/<layer_name>")
+                            .get(html::admin::catalog::swich_published),
+                    )
                 )
-                .push(
-                    Router::with_path("deleteuser/<username>").get(html::admin::users::delete_user),
-                )
-                .push(Router::with_path("newlayer").get(html::admin::main::new_layer))
-                .push(
-                    Router::with_path("editlayer/<layer_name>").get(html::admin::main::edit_layer),
-                )
-                .push(Router::with_path("createlayer").post(html::admin::catalog::create_layer))
-                .push(
-                    Router::with_path("deletelayer/<name>").get(html::admin::catalog::delete_layer),
-                )
-                .push(Router::with_path("updatelayer").post(html::admin::catalog::update_layer))
-                .push(
-                    Router::with_path("swichpublished/<layer_name>")
-                        .get(html::admin::catalog::swich_published),
-                ),
+
+
         )
         .push(
             Router::with_path("api")
                 // .(html::admin::main::index)
                 // .hoop(auth_handler)
+                .hoop(cors_handler.clone())
                 .push(Router::with_path("users/login").post(api::users::login))
                 // .push(Router::with_path("/users").get(html::admin::users::list_users))
                 .push(

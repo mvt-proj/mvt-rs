@@ -4,7 +4,7 @@
   <h1 class="title is-5 has-text-grey-darker">List of Users</h1>
 
   <div class="has-text-right">
-    <a href="/admin/newuser" class="button is-light">
+    <a href="/admin/users/new" class="button is-light">
       <span class="icon is-small">
         <i class="fas fa-user-plus"></i>
       </span>
@@ -31,13 +31,13 @@
           </td>
           <td class="has-text-right">
             <div class="is-flex is-justify-content-right">
-              <a href="/admin/edituser/{{ user.username }}" class="button is-white">
+              <a href="/admin/users/edit/{{ user.username }}" class="button is-white">
                   <span class="icon">
                     <i class="fas fa-pen"></i>
                   </span>
                 </a>
               {% if user.username != "admin" %}
-                <a href="/admin/deleteuser/{{ user.username}}" class="button is-inverted is-danger">
+                <a href="/admin/users/delete/{{ user.username}}" class="button is-inverted is-danger">
                   <span class="icon">
                     <i class="fas fa-trash"></i>
                   </span>
