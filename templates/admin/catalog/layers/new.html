@@ -1,9 +1,6 @@
-{% extends "layout.html" %}
+{% extends "admin/layout_admin.html" %}
 
 {% block content %}
-  <!-- <h3 class="title is-3">MVT-RS Server</h3> -->
-  <!-- <h4 class="title is-4">Admin - New User</h4> -->
-
 
   <div class="has-text-left">
     <a href="/admin/catalog" class="button is-light">
@@ -13,31 +10,32 @@
       <span>Back</span>
     </a>
   </div>
+
   <div class="mb-6 columns is-centered">
     <div class="column is-three-quarters">
 
-      <h1 class="mb-6 title is-5 has-text-grey-darker">Edit Layer "{{ layer.alias }}"</h1>
+      <h1 class="mb-6 title is-5 has-text-grey-darker">New Layer</h1>
 
-      <form action="/admin/catalog/layers/update" method="post">
+      <form action="/admin/catalog/layers/create" method="post">
         <!-- geometry -->
         <div class="field">
-          <label class="label" for="geometry">Geometry</label>
-          <div class="control">
-            <div class="select">
-              <select name="geometry" id="geometry">
-                <option value="points" {% if layer.geometry == "points" %}selected{% endif %}>Points</option>
-                <option value="lines" {% if layer.geometry == "lines" %}selected{% endif %}>Lines</option>
-                <option value="polygons" {% if layer.geometry == "polygons" %}selected{% endif %}>Polygons</option>
-              </select>
+            <label class="label" for="geometry">Geometry</label>
+            <div class="control">
+                <div class="select">
+                    <select name="geometry" id="geometry">
+                        <option value="points">Points</option>
+                        <option value="lines">Lines</option>
+                        <option value="polygons">Polygons</option>
+                    </select>
+                </div>
             </div>
-          </div>
         </div>
 
         <!-- name -->
         <div class="field">
           <label class="label" for="name">Name</label>
           <div class="control">
-            <input class="input" type="text" name="name" id="name" value="{{ layer.name }}">
+            <input class="input" type="text" name="name" id="name">
           </div>
         </div>
 
@@ -45,7 +43,7 @@
         <div class="field">
           <label class="label" for="alias">Alias</label>
           <div class="control">
-            <input class="input" type="text" name="alias" id="alias" value="{{ layer.alias }}">
+            <input class="input" type="text" name="alias" id="alias">
           </div>
         </div>
 
@@ -53,7 +51,7 @@
         <div class="field">
           <label class="label" for="schema">Schema</label>
           <div class="control">
-            <input class="input" type="text" name="schema" id="schema" value="{{ layer.schema }}">
+            <input class="input" type="text" name="schema" id="schema" value="public">
           </div>
         </div>
 
@@ -61,7 +59,7 @@
         <div class="field">
           <label class="label" for="table">Table</label>
           <div class="control">
-            <input class="input" type="text" name="table" id="table" value="{{ layer.table }}">
+            <input class="input" type="text" name="table" id="table">
           </div>
         </div>
 
@@ -69,7 +67,7 @@
         <div class="field">
           <label class="label" for="fields">Fields</label>
           <div class="control">
-            <input class="input" type="text" name="fields" id="fields" value="{{ layer.fields.join(", ") }}">
+            <textarea class="textarea" name="fields" id="fields" rows="3">id</textarea>
           </div>
         </div>
 
@@ -77,7 +75,7 @@
         <div class="field">
           <label class="label" for="geom">Geom</label>
           <div class="control">
-            <input class="input" type="text" name="geom" id="geom" value="{{ layer.get_geom() }}">
+            <input class="input" type="text" name="geom" id="geom" value="geom">
           </div>
         </div>
 
@@ -85,7 +83,7 @@
         <div class="field">
           <label class="label" for="filter">Filter</label>
           <div class="control">
-            <input class="input" type="text" name="filter" id="filter" value="{{ layer.get_filter() }}">
+            <textarea class="textarea" name="filter" id="filter" rows="3"></textarea>
           </div>
         </div>
 
@@ -93,7 +91,7 @@
         <div class="field">
           <label class="label" for="srid">SRID</label>
           <div class="control">
-            <input class="input" type="text" name="srid" id="srid" value="{{ layer.get_srid() }}">
+            <input class="input" type="text" name="srid" id="srid" value="4326">
           </div>
         </div>
 
@@ -101,7 +99,7 @@
         <div class="field">
           <label class="label" for="buffer">Buffer</label>
           <div class="control">
-            <input class="input" type="buffer" name="buffer" id="buffer" value="{{ layer.get_buffer() }}">
+            <input class="input" type="buffer" name="buffer" id="buffer" value="256">
           </div>
         </div>
 
@@ -109,7 +107,7 @@
         <div class="field">
           <label class="label" for="extent">Extent</label>
           <div class="control">
-            <input class="input" type="text" name="extent" id="extent" value="{{ layer.get_extent() }}">
+            <input class="input" type="text" name="extent" id="extent" value="4096">
           </div>
         </div>
 
@@ -117,7 +115,7 @@
         <div class="field">
           <label class="label" for="zmin">ZMin</label>
           <div class="control">
-            <input class="input" type="text" name="zmin" id="zmin" value="{{ layer.get_zmin() }}">
+            <input class="input" type="text" name="zmin" id="zmin" value="0">
           </div>
         </div>
 
@@ -125,7 +123,7 @@
         <div class="field">
           <label class="label" for="zmin">ZMax</label>
           <div class="control">
-            <input class="input" type="text" name="zmax" id="zmax" value="{{ layer.get_zmax() }}">
+            <input class="input" type="text" name="zmax" id="zmax" value="22">
           </div>
         </div>
 
@@ -133,7 +131,7 @@
         <div class="field">
           <label class="label" for="zmax_do_not_simplify">ZMax do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="{{ layer.get_zmax_do_not_simplify() }}">
+            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="16">
           </div>
         </div>
 
@@ -141,7 +139,7 @@
         <div class="field">
           <label class="label" for="buffer_do_not_simplify">Buffer do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="{{ layer.get_buffer_do_not_simplify() }}">
+            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="256">
           </div>
         </div>
 
@@ -149,7 +147,7 @@
         <div class="field">
           <label class="label" for="extent_do_not_simplify">Extent do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="{{ layer.get_extent_do_not_simplify() }}">
+            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="4096">
           </div>
         </div>
 
@@ -158,11 +156,11 @@
           <label class="label" for="clip_geom">Clip Geom</label>
           <div class="control">
             <label class="radio">
-              <input type="radio" name="clip_geom" id="clip_geom_true" value="true" {% if layer.get_clip_geom() %}checked{% endif %}>
+              <input type="radio" name="clip_geom" id="clip_geom_true" value="true" checked>
               True
             </label>
             <label class="radio">
-              <input type="radio" name="clip_geom" id="clip_geom_false" value="false" {% if !layer.get_clip_geom() %}checked{% endif %}>
+              <input type="radio" name="clip_geom" id="clip_geom_false" value="false">
               False
             </label>
           </div>
@@ -173,11 +171,11 @@
           <label class="label" for="delete_cache_on_start">Delete cache on start</label>
           <div class="control">
             <label class="radio">
-              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_true" value="true" {% if layer.get_delete_cache_on_start() %}checked{% endif %}>
+              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_true" value="true">
               True
             </label>
             <label class="radio">
-              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_false" value="false" {% if !layer.get_delete_cache_on_start() %}checked{% endif %}>
+              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_false" value="false" checked>
               False
             </label>
           </div>
@@ -187,7 +185,7 @@
         <div class="field">
           <label class="label" for="max_cache_age">Max cache age</label>
           <div class="control">
-            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="{{ layer.get_max_cache_age() }}">
+            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="0">
           </div>
           <p class="help is-info">Time must enter in seconds. The value of 0 means infinity</p>
         </div>
@@ -197,20 +195,19 @@
           <label class="label" for="published">Published</label>
           <div class="control">
             <label class="radio">
-              <input type="radio" name="published" id="published_true" value="true" {% if layer.published %}checked{% endif %}>
+              <input type="radio" name="published" id="published_true" value="true" checked>
               True
             </label>
             <label class="radio">
-              <input type="radio" name="published" id="published_false" value="false" {% if !layer.published %}checked{% endif %}>
+              <input type="radio" name="published" id="published_false" value="false">
               False
             </label>
           </div>
-
         </div>
 
         <div class="field">
           <div class="control has-text-centered">
-            <button class="button is-fullwidth is-link">Update Layer</button>
+            <button class="button is-fullwidth is-link">Add Layer</button>
           </div>
         </div>
       </form>

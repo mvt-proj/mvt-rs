@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Template)]
-#[template(path = "admin/users.html")]
+#[template(path = "admin/users/users.html")]
 struct ListUsersTemplate<'a> {
     users: &'a Vec<User>,
 }

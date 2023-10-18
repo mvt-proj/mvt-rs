@@ -12,21 +12,21 @@ use salvo::prelude::*;
 struct IndexTemplate {}
 
 #[derive(Template)]
-#[template(path = "admin/newuser.html")]
+#[template(path = "admin/users/new.html")]
 struct NewUserTemplate {}
 
 #[derive(Template)]
-#[template(path = "admin/edituser.html")]
+#[template(path = "admin/users/edit.html")]
 struct EditUserTemplate {
     user: User,
 }
 
 #[derive(Template)]
-#[template(path = "admin/newlayer.html")]
+#[template(path = "admin/catalog/layers/new.html")]
 struct NewLayerTemplate {}
 
 #[derive(Template)]
-#[template(path = "admin/editlayer.html")]
+#[template(path = "admin/catalog/layers/edit.html")]
 struct EditLayerTemplate {
     layer: Layer,
 }
