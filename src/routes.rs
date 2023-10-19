@@ -25,13 +25,12 @@ pub fn app_router() -> salvo::Router {
                        Method::OPTIONS
         ])
         .allow_headers(vec![
-            "CONTENT-TYPE",
-            "content-type",
+            "Content-Type",
+            "Access-Control-Allow-Methods",
+            "Access-Control-Allow-Headers",
             "Access-Control-Request-Method",
             "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Headers",
             "Access-Control-Max-Age",
-            "authorization",
             "Authorization",
         ])
         .into_handler();
@@ -94,7 +93,11 @@ pub fn app_router() -> salvo::Router {
                 // .(html::admin::main::index)
                 // .hoop(auth_handler)
                 .hoop(cors_handler.clone())
-                .push(Router::with_path("users/login").post(api::users::login))
+                .push(Router::with_path("users/login")
+                    .post(api::users::login)
+                    .options(handler::empty())
+
+                )
                 // .push(Router::with_path("/users").get(html::admin::users::list_users))
                 .push(
                     Router::with_path("admin")
@@ -111,8 +114,8 @@ pub fn app_router() -> salvo::Router {
                             Router::with_path("catalog")
                                 .hoop(auth::validate_token)
                                 .get(api::catalog::prueba),
-                        ),
-                ),
+                        )
+                )
         )
         .push(Router::with_path("tiles").get(tiles::mvt))
         .push(
