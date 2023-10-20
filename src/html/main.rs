@@ -11,6 +11,10 @@ use crate::{
 struct IndexTemplate {}
 
 #[derive(Template)]
+#[template(path = "error404.html")]
+struct E404Template {}
+
+#[derive(Template)]
 #[template(path = "catalog.html")]
 struct CatalogTemplate<'a> {
     layers: &'a Vec<Layer>,
@@ -31,6 +35,13 @@ pub async fn index(res: &mut Response) {
 }
 
 #[handler]
+pub async fn error404(res: &mut Response) {
+    let template = E404Template {};
+    res.render(Text::Html(template.render().unwrap()));
+}
+
+
+#[handler]
 pub async fn page_catalog(res: &mut Response) {
     let catalog: Catalog = get_catalog().clone();
 
@@ -41,24 +52,30 @@ pub async fn page_catalog(res: &mut Response) {
 }
 
 #[handler]
-pub async fn page_map(req: &mut Request, res: &mut Response) {
+pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), StatusError> {
     let catalog: Catalog = get_catalog().clone();
-
     let layer_name = req.param::<String>("layer_name").unwrap();
-    let layer = catalog
+
+    let lyr = catalog
         .find_layer_by_name(&layer_name, StateLayer::PUBLISHED)
-        .unwrap();
-    let geometry = match layer.geometry.as_str() {
+        .ok_or_else(|| StatusError::not_found()
+                    .brief("Layer not found")
+                    .cause("The specified layer does not exist or is not published")
+                    )?;
+
+    let geometry = match lyr.geometry.as_str() {
         "points" => "circle",
         "lines" => "line",
         "polygons" => "fill",
-        _ => &layer.geometry,
+        _ => &lyr.geometry,
     };
 
     let template = MapTemplate {
-        name: &layer.name,
-        alias: &layer.alias,
+        name: &lyr.name,
+        alias: &lyr.alias,
         geometry,
     };
+
     res.render(Text::Html(template.render().unwrap()));
+    Ok(())
 }
