@@ -19,11 +19,7 @@ pub fn app_router() -> salvo::Router {
 
     let cors_handler = Cors::new()
         .allow_origin(cors::Any)
-        .allow_methods(vec![
-                       Method::GET,
-                       Method::POST,
-                       Method::OPTIONS
-        ])
+        .allow_methods(vec![Method::GET, Method::POST, Method::OPTIONS])
         .allow_headers(vec![
             "Content-Type",
             "Access-Control-Allow-Methods",
@@ -52,52 +48,55 @@ pub fn app_router() -> salvo::Router {
             Router::with_path("admin")
                 .hoop(auth_handler)
                 .get(html::admin::main::index)
-
                 .push(
                     Router::with_path("users")
-                    .get(html::admin::users::list_users)
-                    .push(Router::with_path("new").get(html::admin::main::new_user))
-                    .push(Router::with_path("create").post(html::admin::users::create_user))
-                    .push(
-                        Router::with_path("edit/<username>").get(html::admin::main::edit_user),
-                    )
-                    .push(
-                        Router::with_path("update").post(html::admin::users::update_user),
-                    )
-                    .push(
-                        Router::with_path("delete/<username>").get(html::admin::users::delete_user),
-                    )
+                        .get(html::admin::users::list_users)
+                        .push(Router::with_path("new").get(html::admin::main::new_user))
+                        .push(Router::with_path("create").post(html::admin::users::create_user))
+                        .push(
+                            Router::with_path("edit/<username>").get(html::admin::main::edit_user),
+                        )
+                        .push(Router::with_path("update").post(html::admin::users::update_user))
+                        .push(
+                            Router::with_path("delete/<username>")
+                                .get(html::admin::users::delete_user),
+                        ),
                 )
-
                 .push(
                     Router::with_path("catalog")
-                    .get(html::admin::catalog::page_catalog)
-                    .push(Router::with_path("layers/new").get(html::admin::main::new_layer))
-                    .push(Router::with_path("layers/create").post(html::admin::catalog::create_layer))
-                    .push(
-                        Router::with_path("layers/edit/<layer_name>").get(html::admin::main::edit_layer),
-                    )
-                    .push(
-                        Router::with_path("layers/delete/<name>").get(html::admin::catalog::delete_layer),
-                    )
-                    .push(Router::with_path("layers/update").post(html::admin::catalog::update_layer))
-                    .push(
-                        Router::with_path("layers/swichpublished/<layer_name>")
-                            .get(html::admin::catalog::swich_published),
-                    )
-                )
-
-
+                        .get(html::admin::catalog::page_catalog)
+                        .push(Router::with_path("layers/new").get(html::admin::main::new_layer))
+                        .push(
+                            Router::with_path("layers/create")
+                                .post(html::admin::catalog::create_layer),
+                        )
+                        .push(
+                            Router::with_path("layers/edit/<layer_name>")
+                                .get(html::admin::main::edit_layer),
+                        )
+                        .push(
+                            Router::with_path("layers/delete/<name>")
+                                .get(html::admin::catalog::delete_layer),
+                        )
+                        .push(
+                            Router::with_path("layers/update")
+                                .post(html::admin::catalog::update_layer),
+                        )
+                        .push(
+                            Router::with_path("layers/swichpublished/<layer_name>")
+                                .get(html::admin::catalog::swich_published),
+                        ),
+                ),
         )
         .push(
             Router::with_path("api")
                 // .(html::admin::main::index)
                 // .hoop(auth_handler)
                 .hoop(cors_handler.clone())
-                .push(Router::with_path("users/login")
-                    .post(api::users::login)
-                    .options(handler::empty())
-
+                .push(
+                    Router::with_path("users/login")
+                        .post(api::users::login)
+                        .options(handler::empty()),
                 )
                 // .push(Router::with_path("/users").get(html::admin::users::list_users))
                 .push(
@@ -115,8 +114,8 @@ pub fn app_router() -> salvo::Router {
                             Router::with_path("catalog")
                                 .hoop(auth::validate_token)
                                 .get(api::catalog::prueba),
-                        )
-                )
+                        ),
+                ),
         )
         .push(Router::with_path("tiles").get(tiles::mvt))
         .push(

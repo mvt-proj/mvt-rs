@@ -1,8 +1,7 @@
 use crate::{
-    catalog::{Layer, StateLayer},
     auth::User,
-    get_catalog,
-    get_auth,
+    catalog::{Layer, StateLayer},
+    get_auth, get_catalog,
 };
 use askama::Template;
 use salvo::prelude::*;
@@ -47,12 +46,8 @@ pub async fn new_user(res: &mut Response) {
 pub async fn edit_user(req: &mut Request, res: &mut Response) {
     let username = req.param::<String>("username").unwrap();
     let auth = get_auth().clone();
-    let user = auth
-        .find_user_by_name(&username)
-        .unwrap();
-    let template = EditUserTemplate {
-        user: user.clone(),
-    };
+    let user = auth.find_user_by_name(&username).unwrap();
+    let template = EditUserTemplate { user: user.clone() };
     res.render(Text::Html(template.render().unwrap()));
 }
 

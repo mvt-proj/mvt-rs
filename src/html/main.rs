@@ -40,7 +40,6 @@ pub async fn error404(res: &mut Response) {
     res.render(Text::Html(template.render().unwrap()));
 }
 
-
 #[handler]
 pub async fn page_catalog(res: &mut Response) {
     let catalog: Catalog = get_catalog().clone();
@@ -58,10 +57,11 @@ pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), Statu
 
     let lyr = catalog
         .find_layer_by_name(&layer_name, StateLayer::PUBLISHED)
-        .ok_or_else(|| StatusError::not_found()
-                    .brief("Layer not found")
-                    .cause("The specified layer does not exist or is not published")
-                    )?;
+        .ok_or_else(|| {
+            StatusError::not_found()
+                .brief("Layer not found")
+                .cause("The specified layer does not exist or is not published")
+        })?;
 
     let geometry = match lyr.geometry.as_str() {
         "points" => "circle",
