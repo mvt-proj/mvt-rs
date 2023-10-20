@@ -71,11 +71,20 @@
                 </span>
               </button>
 
-              <a href="/map/{{ layer.name }}" class="button is-white" target="_blank">
-                <span class="icon">
-                  <i class="fas fa-map"></i>
-                </span>
-              </a>
+              {% if layer.published %}
+                <a href="/map/{{ layer.name }}" class="button is-white" target="_blank">
+                  <span class="icon">
+                    <i class="fas fa-map"></i>
+                  </span>
+                </a>
+              {% else %}
+                <a href="/map/{{ layer.name }}" class="button is-white is-static" target="_blank" disabled >
+                  <span class="icon">
+                    <i class="fas fa-map"></i>
+                  </span>
+                </a>
+              {% endif %}
+
 
               <a href="/admin/catalog/layers/edit/{{ layer.name }}" class="button is-white">
                 <span class="icon">
