@@ -44,6 +44,7 @@ pub fn app_router() -> salvo::Router {
         .hoop(Logger::default())
         // .hoop(affix::inject(config.clone()))
         .get(html::main::index)
+        .push(Router::with_path("error404").get(html::main::error404))
         .push(Router::with_path("catalog").get(html::main::page_catalog))
         .push(Router::with_path("map/<layer_name>").get(html::main::page_map))
         .push(Router::with_path("health").get(health::get_health))
