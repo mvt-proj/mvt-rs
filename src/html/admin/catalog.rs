@@ -76,6 +76,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
     };
 
     app_state.catalog.add_layer(layer).await;
+    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/catalog"));
 }
 
@@ -106,6 +107,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
     };
 
     app_state.catalog.update_layer(layer).await;
+    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/catalog"));
 }
 
@@ -124,5 +126,6 @@ pub async fn swich_published(req: &mut Request, res: &mut Response) {
 
     let layer_name = req.param::<String>("layer_name").unwrap();
     app_state.catalog.swich_layer_published(&layer_name).await;
+    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/catalog"));
 }
