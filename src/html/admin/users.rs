@@ -1,4 +1,4 @@
-use base64::decode;
+use base64::{Engine as _, engine::general_purpose};
 use std::error::Error;
 use std::fmt;
 
@@ -34,9 +34,11 @@ fn decode_basic_auth(base64_string: &str) -> Result<String, AuthError> {
         return Err(AuthError { message: "Invalid Basic Authentication format".to_string() });
     }
 
-    let decoded_bytes = decode(parts[1]).map_err(|_| AuthError { message: "Failed to decode Base64".to_string() })?;
+    let decoded_bytes = general_purpose::STANDARD
+        .decode(parts[1]).map_err(|_| AuthError { message: "Failed to decode Base64".to_string() })?;
 
-    let decoded_str = String::from_utf8(decoded_bytes).map_err(|_| AuthError { message: "Failed to convert to UTF-8".to_string() })?;
+    let decoded_str = String::from_utf8(decoded_bytes)
+        .map_err(|_| AuthError { message: "Failed to convert to UTF-8".to_string() })?;
 
     let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
 
