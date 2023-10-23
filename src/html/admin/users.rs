@@ -97,6 +97,7 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
 
     let mut storage = Storage::<Vec<User>>::new(auth.storage_path.clone());
     storage.save(app_state.auth.users.clone()).await.unwrap();
+    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/users"));
 }
 
@@ -111,6 +112,7 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
         password: encrypt_psw,
     };
     app_state.auth.update_user(user).await;
+    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/users"));
 }
 
@@ -120,5 +122,6 @@ pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) {
 
     let username = req.param::<String>("username").unwrap();
     app_state.auth.delete_user(username).await.unwrap();
+    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/users"));
 }
