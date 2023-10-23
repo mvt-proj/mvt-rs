@@ -48,7 +48,8 @@ jobs:
       - name: Create ZIP (Windows)
         if: matrix.platform.os == 'windows-latest'
         run: |
-          Compress-Archive -Path target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}  static -Destination ${{ matrix.platform.name }}.zip
+          Compress-Archive -Path target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }} -Destination ${{ matrix.platform.name }}.zip
+          Compress-Archive -Path static/ -Update -Destination ${{ matrix.platform.name }}.zip
           if (!(Test-Path -Path "builds")) {
             New-Item -ItemType Directory -Path "builds"
           }
