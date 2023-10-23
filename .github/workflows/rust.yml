@@ -103,7 +103,9 @@ jobs:
 
   deploy:
     name: Deploy Release
-    needs: build
+    needs:
+      - build
+      - build-freebsd
     runs-on: ubuntu-20.04
     steps:
     - name: Download a single artifact
