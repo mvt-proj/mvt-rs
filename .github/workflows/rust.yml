@@ -93,6 +93,7 @@ jobs:
           zip -r $APP_NAME static
           mkdir -p builds
           mv $APP_NAME builds/
+          cargo clean
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v3
