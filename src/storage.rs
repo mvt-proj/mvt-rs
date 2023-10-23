@@ -83,7 +83,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_save() {
-        // let mut storage = Storage::<Person>::new("./test.json".to_string());
         let temp_file = NamedTempFile::new().unwrap();
         let mut storage = Storage::<Person>::new(temp_file.path()
                                                                   .to_str()
@@ -101,7 +100,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_load() {
-        // let mut storage = Storage::<Person>::new("./test.json".to_string());
         let temp_file = NamedTempFile::new().unwrap();
         let mut storage = Storage::<Person>::new(temp_file.path()
                                                                   .to_str()
