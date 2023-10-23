@@ -1,3 +1,7 @@
+use base64::decode;
+use std::error::Error;
+use std::fmt;
+
 use askama::Template;
 use salvo::macros::Extractible;
 use salvo::prelude::*;
@@ -8,6 +12,40 @@ use crate::{
     get_app_state, get_auth,
     storage::Storage,
 };
+
+
+#[derive(Debug)]
+struct AuthError {
+    message: String,
+}
+
+impl fmt::Display for AuthError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Authentication error: {}", self.message)
+    }
+}
+
+impl Error for AuthError {}
+
+fn decode_basic_auth(base64_string: &str) -> Result<String, AuthError> {
+    let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
+
+    if parts.len() != 2 || parts[0] != "Basic" {
+        return Err(AuthError { message: "Invalid Basic Authentication format".to_string() });
+    }
+
+    let decoded_bytes = decode(parts[1]).map_err(|_| AuthError { message: "Failed to decode Base64".to_string() })?;
+
+    let decoded_str = String::from_utf8(decoded_bytes).map_err(|_| AuthError { message: "Failed to convert to UTF-8".to_string() })?;
+
+    let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
+
+    if auth_parts.len() != 2 {
+        return Err(AuthError { message: "Invalid username:password format".to_string() });
+    }
+
+    Ok(auth_parts[0].to_string())
+}
 
 #[derive(Template)]
 #[template(path = "admin/users/users.html")]
@@ -24,7 +62,21 @@ struct NewUser<'a> {
 }
 
 #[handler]
-pub async fn list_users(res: &mut Response) {
+pub async fn list_users(req: &mut Request, res: &mut Response) {
+
+    let authorization = req.headers()
+        .get("authorization")
+        .unwrap();
+    let authorization_str = authorization.to_str().unwrap();
+    let username = match decode_basic_auth(authorization_str) {
+        Ok(username) => username,
+        Err(err) => {
+            eprintln!("Error: {}", err);
+            "ValorPorDefecto".to_string()
+        }
+    };
+    println!("Mi Username es {}", username);
+
     let auth: Auth = get_auth().clone();
     let template = ListUsersTemplate { users: &auth.users };
     res.render(Text::Html(template.render().unwrap()));

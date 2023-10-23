@@ -1483,6 +1483,7 @@ dependencies = [
  "anyhow",
  "argon2",
  "askama",
+ "base64 0.21.4",
  "bytes",
  "chrono",
  "clap",
