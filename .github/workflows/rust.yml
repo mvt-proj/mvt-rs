@@ -25,13 +25,6 @@ jobs:
             name: mvt-rs-windows-x86_64
             command: both
 
-          - release_for: macOS-x86_64
-            os: macOS-latest
-            target: x86_64-apple-darwin
-            bin: mvt-rs
-            name: mvt-rs-darwin-x86_64
-            command: both
-
     runs-on: ${{ matrix.platform.os }}
     steps:
       - name: Checkout
