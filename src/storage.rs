@@ -79,10 +79,18 @@ impl<T> Storage<T> {
 #[cfg(test)]
 mod tests {
     use super::{Person, Storage};
+    use tempfile::NamedTempFile;
 
     #[tokio::test]
     async fn test_save() {
-        let mut storage = Storage::<Person>::new("./test.json".to_string());
+        // let mut storage = Storage::<Person>::new("./test.json".to_string());
+        let temp_file = NamedTempFile::new().unwrap();
+        let mut storage = Storage::<Person>::new(temp_file.path()
+                                                                  .to_str()
+                                                                  .unwrap()
+                                                                  .to_string()
+                                                                  );
+
         let p1 = Person {
             name: "Toto".to_string(),
             age: 3,
@@ -93,12 +101,19 @@ mod tests {
 
     #[tokio::test]
     async fn test_load() {
-        let mut storage = Storage::<Person>::new("./test.json".to_string());
+        // let mut storage = Storage::<Person>::new("./test.json".to_string());
+        let temp_file = NamedTempFile::new().unwrap();
+        let mut storage = Storage::<Person>::new(temp_file.path()
+                                                                  .to_str()
+                                                                  .unwrap()
+                                                                  .to_string()
+                                                                  );
 
         let p1 = Person {
             name: "Toto".to_string(),
             age: 3,
         };
+        let _ = storage.save(p1.clone()).await;
         let loaded_data = storage.load().await.unwrap().unwrap();
         assert_eq!(loaded_data, p1);
     }
