@@ -11,13 +11,6 @@ jobs:
     strategy:
       matrix:
         platform:
-          - release_for: FreeBSD-x86_64
-            os: ubuntu-20.04
-            target: x86_64-unknown-freebsd
-            bin: mvt-rs
-            name: mvt-rs-freebsd-x86_64
-            command: build
-
           - release_for: Linux-x86_64-gnu
             os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
@@ -75,6 +68,38 @@ jobs:
           name: release-builds
           path: builds/${{ matrix.platform.name }}.zip
           retention-days: 1
+
+  build-freebsd:
+    runs-on: macos-12
+    name: Release - FreeBSD
+    env:
+      BIN_NAME : "mvt-rs"
+      APP_NAME: "mvt-rs-freebsd-x86_64.zip"
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build in FreeBSD
+      uses: vmactions/freebsd-vm@v0
+      with:
+        release: 13.1
+        envs: 'BIN_NAME APP_NAME'
+        usesh: true
+        prepare: |
+          pkg install -y rust zip
+
+        run: |
+          cargo build --release
+          mkdir -p builds
+          zip -j $APP_NAME target/release/$BIN_NAME
+          zip -r $APP_NAME static
+          mkdir -p builds
+          mv $APP_NAME builds/
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-builds
+        path: builds/mvt-rs-freebsd-x86_64.zip
+        retention-days: 1
 
   deploy:
     name: Deploy Release
