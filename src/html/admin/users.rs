@@ -70,14 +70,13 @@ pub async fn list_users(req: &mut Request, res: &mut Response) {
         .get("authorization")
         .unwrap();
     let authorization_str = authorization.to_str().unwrap();
-    let username = match decode_basic_auth(authorization_str) {
+    let _username = match decode_basic_auth(authorization_str) {
         Ok(username) => username,
         Err(err) => {
             eprintln!("Error: {}", err);
-            "ValorPorDefecto".to_string()
+            String::new()
         }
     };
-    println!("Mi Username es {}", username);
 
     let auth: Auth = get_auth().clone();
     let template = ListUsersTemplate { users: &auth.users };
