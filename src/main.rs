@@ -90,18 +90,6 @@ async fn main() {
         // .with_env_filter("info")
         .init();
 
-    dotenv::dotenv().ok();
-    let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
-    let port = std::env::var("PORT").unwrap_or("5887".to_string());
-    let db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
-    let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
-    let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
-    let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
-    let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
-
-    let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
-    let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
-    let delete_cache: u8 = delete_cache.parse().unwrap();
 
     let matches = Command::new("mvt-rs vector tiles server")
         .arg(
@@ -114,11 +102,20 @@ async fn main() {
         )
         .arg(
             Arg::new("cachedir")
-                .short('d')
+                .short('b')
                 .long("cache")
                 .value_name("CACHEDIR")
                 .default_value("cache")
                 .help("Directory where cache files are placed"),
+        )
+        .arg(
+            Arg::new("dbconn")
+                .short('d')
+                .long("dbconn")
+                .value_name("DBCONN")
+                .required(false)
+                // .default_value("")
+                .help("Database connection"),
         )
         .get_matches();
 
@@ -126,6 +123,30 @@ async fn main() {
     let cache_dir = matches.get_one::<String>("cachedir").expect("required");
 
     init(config_dir).await;
+
+    dotenv::dotenv().ok();
+
+    let mut db_conn = String::new();
+    if matches.contains_id("dbconn") {
+        db_conn = matches.get_one::<String>("dbconn").expect("required").to_string();
+    }
+
+    let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
+    let port = std::env::var("PORT").unwrap_or("5887".to_string());
+
+    if db_conn.is_empty() {
+        db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
+    }
+
+    let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
+    let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
+    let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
+    let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
+
+    let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
+    let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
+    let delete_cache: u8 = delete_cache.parse().unwrap();
+
 
     let auth = Auth::new(config_dir, salt_string)
         .await
