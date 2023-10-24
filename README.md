@@ -147,6 +147,8 @@ cargo build --release
 
 
 ## Arguments
+
+```
 Usage: mvt-rs [OPTIONS]
 
 Options:
@@ -154,3 +156,4 @@ Options:
   -b, --cache <CACHEDIR>    Directory where cache files are placed [default: cache]
   -d, --dbconn <DBCONN>     Database connection
   -h, --help                Print help
+```
