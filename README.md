@@ -113,6 +113,9 @@ By default, the cache files are stored in the "cache" directory located at the r
 
 `./mvt-rs --cache /tmp/cache`
 
+
+
+
 ## To-Do
 
 - Something very basic has been developed to manage users and layers using templates. Additionally, an API for the admin has been started, so that it can be developed as a standalone app.
@@ -140,3 +143,14 @@ cargo run
 
 # Compile for production
 cargo build --release
+```
+
+
+## Arguments
+Usage: mvt-rs [OPTIONS]
+
+Options:
+  -c, --config <CONFIGDIR>  Directory where config files are placed [default: config]
+  -b, --cache <CACHEDIR>    Directory where cache files are placed [default: cache]
+  -d, --dbconn <DBCONN>     Database connection
+  -h, --help                Print help
