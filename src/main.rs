@@ -30,6 +30,7 @@ pub struct AppState {
     catalog: Catalog,
     disk_cache: DiskCache,
     auth: Auth,
+    jwt_secret: String,
 }
 
 static mut APP_STATE: OnceCell<AppState> = OnceCell::new();
@@ -53,6 +54,11 @@ pub fn get_disk_cache() -> &'static DiskCache {
 pub fn get_auth() -> &'static Auth {
     unsafe { &APP_STATE.get().unwrap().auth }
 }
+
+pub fn get_jwt_secret() -> &'static String {
+    unsafe { &APP_STATE.get().unwrap().jwt_secret }
+}
+
 
 async fn init(config_dir: &str) {
     if !Path::new(&config_dir).exists() {
@@ -114,9 +120,17 @@ async fn main() {
                 .long("dbconn")
                 .value_name("DBCONN")
                 .required(false)
-                // .default_value("")
                 .help("Database connection"),
         )
+        .arg(
+            Arg::new("jwtsecret")
+                .short('j')
+                .long("jwtsecret")
+                .value_name("JWTSECRET")
+                .required(false)
+                .help("JWT secret key"),
+        )
+
         .get_matches();
 
     let config_dir = matches.get_one::<String>("configdir").expect("required");
@@ -131,11 +145,20 @@ async fn main() {
         db_conn = matches.get_one::<String>("dbconn").expect("required").to_string();
     }
 
+    let mut jwt_secret = String::new();
+    if matches.contains_id("jwtsecret") {
+        jwt_secret = matches.get_one::<String>("jwtsecret").expect("required").to_string();
+    }
+
     let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
     let port = std::env::var("PORT").unwrap_or("5887".to_string());
 
     if db_conn.is_empty() {
         db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
+    }
+
+    if jwt_secret.is_empty() {
+        jwt_secret = std::env::var("JWTSECRET").expect("JWTSECRET needs to be defined");
     }
 
     let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
@@ -146,7 +169,6 @@ async fn main() {
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
     let delete_cache: u8 = delete_cache.parse().unwrap();
-
 
     let auth = Auth::new(config_dir, salt_string)
         .await
@@ -174,6 +196,7 @@ async fn main() {
         catalog,
         disk_cache,
         auth,
+        jwt_secret,
     };
 
     unsafe {

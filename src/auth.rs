@@ -6,13 +6,11 @@ use time::{Duration, OffsetDateTime};
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
-use crate::{get_auth, storage::Storage};
+use crate::{get_auth, get_jwt_secret, storage::Storage};
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
-
-const SECRET_KEY: &str = "YOUR SECRET_KEY";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
@@ -150,6 +148,7 @@ impl Auth {
     }
 
     pub fn login(&mut self, username: &str, psw: &str) -> Result<String, anyhow::Error> {
+        let jwt_secret  = get_jwt_secret();
         for user in self.users.clone().into_iter() {
             if username == user.username && self.validate_psw(user, psw).unwrap() {
                 let exp = OffsetDateTime::now_utc() + Duration::days(14);
@@ -160,7 +159,7 @@ impl Auth {
                 let token = jsonwebtoken::encode(
                     &jsonwebtoken::Header::default(),
                     &claim,
-                    &EncodingKey::from_secret(SECRET_KEY.as_bytes()),
+                    &EncodingKey::from_secret(jwt_secret.as_bytes()),
                 )?;
                 return Ok(token);
             }
@@ -198,7 +197,9 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
 
 // pub fn auth_handler(secret_key: String) -> JwtAuth<JwtClaims, ConstDecoder> {
 pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
-    JwtAuth::new(ConstDecoder::from_secret(SECRET_KEY.as_bytes()))
+    let jwt_secret  = get_jwt_secret();
+
+    JwtAuth::new(ConstDecoder::from_secret(jwt_secret.as_bytes()))
         .finders(vec![Box::new(HeaderFinder::new())])
         .force_passed(true)
 }
