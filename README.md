@@ -100,7 +100,7 @@ The server uses environment variables for its configuration. Make sure to create
 
 - `SALTSTRING`: User passwords are stored encrypted using Argon2. Thi variable is used to enhance the security of the password hashing process.
 
-- `JWTSECRET`: JWTSECRET is used to create and validate JWT tokens.
+- `JWTSECRET`: Is used to create and validate JWT tokens.
 
 
 
