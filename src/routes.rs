@@ -38,7 +38,6 @@ pub fn app_router() -> salvo::Router {
 
     let router = Router::new()
         .hoop(Logger::default())
-        // .hoop(affix::inject(config.clone()))
         .get(html::main::index)
         .push(Router::with_path("error404").get(html::main::error404))
         .push(Router::with_path("catalog").get(html::main::page_catalog))
@@ -90,19 +89,15 @@ pub fn app_router() -> salvo::Router {
         )
         .push(
             Router::with_path("api")
-                // .(html::admin::main::index)
-                // .hoop(auth_handler)
                 .hoop(cors_handler.clone())
                 .push(
                     Router::with_path("users/login")
                         .post(api::users::login)
-                        .options(handler::empty()),
+                        .options(handler::empty())
                 )
-                // .push(Router::with_path("/users").get(html::admin::users::list_users))
                 .push(
                     Router::with_path("admin")
                         .hoop(auth::jwt_auth_handler())
-                        // .get(html::admin::main::index)
                         .push(
                             Router::with_path("users").hoop(auth::validate_token).push(
                                 Router::new()
@@ -111,10 +106,33 @@ pub fn app_router() -> salvo::Router {
                             ),
                         )
                         .push(
-                            Router::with_path("catalog")
+                            Router::with_path("database")
                                 .hoop(auth::validate_token)
-                                .get(api::catalog::prueba),
-                        ),
+                                .push(Router::with_path("schemas")
+                                      .get(api::database::schemas)
+                                      )
+                                .push(Router::with_path("tables/<schema>")
+                                      .get(api::database::tables)
+                                      )
+                                .push(Router::with_path("fields/<schema>/<table>")
+                                      .get(api::database::fields)
+                                      )
+                                .push(Router::with_path("srid/<schema>/<table>/<geometry>")
+                                      .get(api::database::srid)
+                                      )
+                        )
+
+                        .push(
+                            Router::with_path("catalog/layer")
+                                .hoop(auth::validate_token)
+                                .get(api::catalog::list)
+                                .post(api::catalog::create_layer)
+                        )
+                        .push(
+                            Router::with_path("<**rest>")
+                                .hoop(cors_handler.clone())
+                                .options(handler::empty())
+                        )
                 ),
         )
         .push(Router::with_path("tiles").get(tiles::mvt))
