@@ -9,6 +9,7 @@ use std::time::Duration;
 
 use crate::{api, auth, health, html, tiles};
 
+
 pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(
         MokaStore::builder()
@@ -31,7 +32,7 @@ pub fn app_router() -> salvo::Router {
         ])
         .into_handler();
 
-    let auth_handler = BasicAuth::new(auth::Validator);
+    let basic_auth_handler = BasicAuth::new(auth::Validator);
     let static_dir = StaticDir::new(["static"])
         .defaults("index.html")
         .listing(true);
@@ -45,7 +46,7 @@ pub fn app_router() -> salvo::Router {
         .push(Router::with_path("health").get(health::get_health))
         .push(
             Router::with_path("admin")
-                .hoop(auth_handler)
+                .hoop(basic_auth_handler)
                 .get(html::admin::main::index)
                 .push(
                     Router::with_path("users")
@@ -138,6 +139,7 @@ pub fn app_router() -> salvo::Router {
         .push(Router::with_path("tiles").get(tiles::mvt))
         .push(
             Router::with_path("tiles/<layer_name>/<z>/<x>/<y>.pbf")
+                // .hoop(auth_handler)
                 .hoop(cache_30s)
                 .hoop(cors_handler)
                 .options(handler::empty())
