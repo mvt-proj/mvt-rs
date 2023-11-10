@@ -139,7 +139,6 @@ pub fn app_router() -> salvo::Router {
         .push(Router::with_path("tiles").get(tiles::mvt))
         .push(
             Router::with_path("tiles/<layer_name>/<z>/<x>/<y>.pbf")
-                // .hoop(auth_handler)
                 .hoop(cache_30s)
                 .hoop(cors_handler)
                 .options(handler::empty())
