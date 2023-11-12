@@ -55,7 +55,7 @@ async fn query_database(
                   {buffer},
                   {clip_geom}
                 ) AS geom
-              FROM {schema}.{table}
+              FROM "{schema}"."{table}"
               WHERE
                 geom && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
                 AND {geom} IS NOT NULL
@@ -76,7 +76,7 @@ async fn query_database(
                   {buffer},
                   {clip_geom}
                 ) AS geom
-              FROM {schema}.{table}
+              FROM "{schema}"."{table}"
               WHERE
                 geom && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
                 AND {geom} IS NOT NULL
