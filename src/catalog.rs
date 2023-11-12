@@ -104,6 +104,7 @@ impl Layer {
         rv += &format!("Table: {}<br>", self.table);
         rv += &format!("Fields: {}<br>", self.fields.join(", "));
         rv += &format!("Field geom: {}<br>", self.get_geom());
+        rv += &format!("SRID: {}<br>", self.get_srid());
         rv += &format!("Filter: {}<br>", self.get_filter());
         rv += &format!("Buffer: {}<br>", self.get_buffer());
         rv += &format!("Extent: {}<br>", self.get_extent());
