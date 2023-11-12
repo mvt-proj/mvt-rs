@@ -19,7 +19,9 @@ async fn query_database(
     let name = layer_conf.name;
     let schema = layer_conf.schema;
     let table = layer_conf.table;
-    let fields = layer_conf.fields.join(", ");
+    // let field&s = layer_conf.fields.join(", ");
+    let vec_fields = layer_conf.fields.iter().map(|field| format!("\"{}\"", field)).collect::<Vec<_>>();
+    let fields = vec_fields.join(", ");
 
     let geom = layer_conf.geom.unwrap_or(String::from("geom"));
     let srid = layer_conf.srid.unwrap_or(4326);
