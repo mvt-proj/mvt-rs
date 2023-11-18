@@ -8,6 +8,22 @@ use crate::{
     get_catalog, get_db_pool, get_disk_cache,
 };
 
+
+fn convert_fields(fields: Vec<String>) -> String {
+    let vec_fields: Vec<String>;
+    if fields.len() == 1 {
+        vec_fields = fields[0]
+            .split(',')
+            .map(|s| format!("\"{}\"", s.trim()))
+            .collect();
+    } else {
+        vec_fields = fields.iter()
+            .map(|field| format!("\"{}\"", field))
+            .collect::<Vec<_>>();
+    }
+    vec_fields.join(", ")
+}
+
 async fn query_database(
     pg_pool: PgPool,
     layer_conf: Layer,
@@ -19,9 +35,7 @@ async fn query_database(
     let name = layer_conf.name;
     let schema = layer_conf.schema;
     let table = layer_conf.table;
-    // let field&s = layer_conf.fields.join(", ");
-    let vec_fields = layer_conf.fields.iter().map(|field| format!("\"{}\"", field)).collect::<Vec<_>>();
-    let fields = vec_fields.join(", ");
+    let fields = convert_fields(layer_conf.fields);
 
     let geom = layer_conf.geom.unwrap_or(String::from("geom"));
     let srid = layer_conf.srid.unwrap_or(4326);
