@@ -35,7 +35,7 @@ pub fn app_router() -> salvo::Router {
     let basic_auth_handler = BasicAuth::new(auth::Validator);
     let static_dir = StaticDir::new(["static"])
         .defaults("index.html")
-        .listing(true);
+        .auto_list(true);
 
     let router = Router::new()
         .hoop(Logger::default())

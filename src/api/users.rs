@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
-#[salvo(extract(default_source(from = "body", format = "json")))]
+#[salvo(extract(default_source(from = "body")))]
 struct NewUser<'a> {
     username: &'a str,
     email: String,
@@ -17,7 +17,7 @@ struct NewUser<'a> {
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
-#[salvo(extract(default_source(from = "body", format = "json")))]
+#[salvo(extract(default_source(from = "body")))]
 struct LoginData<'a> {
     username: &'a str,
     password: String,

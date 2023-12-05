@@ -1364,9 +1364,9 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "mime-infer"
-version = "2.0.5"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f65b181c4fc4a9bfe77dbf7dfa5f34f292dc22c3b4267c505d1fa149a07e3559"
+checksum = "91caed19dd472bc88bcd063571df18153529d49301a1918f4cf37f42332bee2e"
 dependencies = [
  "mime",
  "unicase",
@@ -1499,6 +1499,17 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "tempfile",
+]
+
+[[package]]
+name = "nix"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eb04e9c688eff1c89d72b407f168cf79bb9e867a9d3323ed6c01519eb9cc053"
+dependencies = [
+ "bitflags 2.4.0",
+ "cfg-if",
+ "libc",
 ]
 
 [[package]]
@@ -2129,9 +2140,9 @@ checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
 
 [[package]]
 name = "salvo"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1f08024cb5b48e623f79425a4f3f155e95f400912ac74e79d2ee6ec5661e95b"
+checksum = "7af00f652ae8ab258a300ab0ca92a1f64fc3d699ee0d5f0ecc07480c765ec2d0"
 dependencies = [
  "salvo-cache",
  "salvo-cors",
@@ -2143,9 +2154,9 @@ dependencies = [
 
 [[package]]
 name = "salvo-cache"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bf61dcf8e36b0552020d49d6938624b63c432f3ee606313dd91a4a88d0702f0"
+checksum = "0c0d20c26eaca904c9e0f94bf7ba97984355436baa6ae8ae1a305345380339ae"
 dependencies = [
  "bytes",
  "moka",
@@ -2155,9 +2166,9 @@ dependencies = [
 
 [[package]]
 name = "salvo-cors"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b324eab45962930447fa1e43506045a9d2b2a0610fadf903651bd832eb572fc"
+checksum = "8f1c2df26c2ae2ce5308279ce068438a78c49bc3329eeca5bb708e308cc89279"
 dependencies = [
  "bytes",
  "salvo_core",
@@ -2166,9 +2177,9 @@ dependencies = [
 
 [[package]]
 name = "salvo-jwt-auth"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d260efc79c6aff49da565fdcb3f3d0cafea7f607d8305242a12997e69a512dd"
+checksum = "015dcf0c9a0181655be95ff9a2a5700686ff697318e3cf6864e64e2cd57311a4"
 dependencies = [
  "base64 0.21.5",
  "jsonwebtoken",
@@ -2183,9 +2194,9 @@ dependencies = [
 
 [[package]]
 name = "salvo-serve-static"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c77c2ac09cf798939204caeadbfa7550c1d2d3f52ada0dbed5002ebf8c07113"
+checksum = "f689026aa773c26c1cb95a646bcf344ad3a5d90036e1c84cb3be53e8c74f7e06"
 dependencies = [
  "hex",
  "mime",
@@ -2222,9 +2233,9 @@ dependencies = [
 
 [[package]]
 name = "salvo_core"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acc27d0544e1f38d0cad387bb33ded2928528b1914d6971795a7998db1d01e14"
+checksum = "5264a758b451fc0ce96344b53f0353c05672d1e97ca9fd7e283edf3d7885af10"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2248,6 +2259,7 @@ dependencies = [
  "mime-infer",
  "multer",
  "multimap",
+ "nix",
  "once_cell",
  "parking_lot",
  "percent-encoding",
@@ -2272,9 +2284,9 @@ dependencies = [
 
 [[package]]
 name = "salvo_extra"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "546213d6420505da31c7d3533ef5d71fa93b946cef9e96e7d6a4339a627cf63d"
+checksum = "580fcc51a751297c1a203dff091eab9b98ce07edcbd3ac4e61d00b740ed3973c"
 dependencies = [
  "base64 0.21.5",
  "etag",
@@ -2292,9 +2304,9 @@ dependencies = [
 
 [[package]]
 name = "salvo_macros"
-version = "0.58.5"
+version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "699a67a66bc22bb0476ecb7b1119dc8316d58cb8a6ba0cf3d3c23072e0debafd"
+checksum = "2fdd7ddff8c47ff54d5e1363fa40f7d34384ed62fcecee78bf9b0a38c32b308b"
 dependencies = [
  "cruet",
  "proc-macro-crate",
