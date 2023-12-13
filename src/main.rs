@@ -11,6 +11,7 @@ use tokio::io::AsyncWriteExt;
 mod api;
 mod auth;
 mod cache;
+mod rediscache;
 mod catalog;
 mod db;
 mod health;
@@ -21,8 +22,16 @@ mod tiles;
 
 use auth::Auth;
 use cache::DiskCache;
+use rediscache::RedisCache;
 use catalog::Catalog;
 use db::make_db_pool;
+
+
+// use bb8_redis::{
+//     bb8,
+//     redis::AsyncCommands,
+//     RedisConnectionManager,
+// };
 
 #[derive(Debug)]
 pub struct AppState {
@@ -31,6 +40,8 @@ pub struct AppState {
     disk_cache: DiskCache,
     auth: Auth,
     jwt_secret: String,
+    // redis_conn_manager: Option<bb8::Pool<RedisConnectionManager>>
+    redis_cache: Option<RedisCache>
 }
 
 static mut APP_STATE: OnceCell<AppState> = OnceCell::new();
@@ -156,6 +167,7 @@ async fn main() {
     if db_conn.is_empty() {
         db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
     }
+    let redis_conn = std::env::var("REDISCONN").unwrap_or(String::new());
 
     if jwt_secret.is_empty() {
         jwt_secret = std::env::var("JWTSECRET").expect("JWTSECRET needs to be defined");
@@ -191,12 +203,34 @@ async fn main() {
         }
     };
 
+    // =====================================================================
+    // let manager = RedisConnectionManager::new("redis://127.0.0.1:6380").unwrap();
+    // let pool = bb8::Pool::builder()
+    //     .build(manager)
+    //     .await
+    //     .unwrap();
+    // let mut con = pool.get().await.unwrap();
+    //
+    // =====================================================================
+
+    let redis_cache: Option<RedisCache>;
+
+    if redis_conn.is_empty() {
+        redis_cache = None;
+    } else {
+        let cache = RedisCache::new(redis_conn).await;
+        redis_cache = Some(cache);
+        redis_cache.clone().unwrap().delete_cache(catalog.clone()).await;
+    }
+
     let app_state = AppState {
         db_pool,
         catalog,
         disk_cache,
         auth,
         jwt_secret,
+        redis_cache,
+        // redis_conn_manager: None, // Some(pool.clone()),
     };
 
     unsafe {

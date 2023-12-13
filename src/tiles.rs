@@ -2,10 +2,13 @@ use bytes::Bytes;
 use salvo::prelude::*;
 use sqlx::PgPool;
 
+// use bb8_redis::redis::AsyncCommands;
+
 use crate::{
     cache::DiskCache,
     catalog::{Catalog, Layer, StateLayer},
     get_catalog, get_db_pool, get_disk_cache,
+    get_app_state
 };
 
 
@@ -134,7 +137,28 @@ async fn get_tile(
         .join(&x.to_string());
     let tilepath = tilefolder.join(&y.to_string()).with_extension("pbf");
 
+    // ============================================================================
+    let key = format!("{name}:{z}:{x}:{y}");
+    let app_state = get_app_state();
+    let redis_cache = &app_state.redis_cache;
+    match redis_cache {
+        Some(rc) => {
+            println!("hay redis cache (lectura)");
+            if rc.exists_key(key.clone()).await.unwrap() {
+                let tile  = rc.get_cache(key).await.unwrap();
+                println!("Obtengo tile desde cache {name}");
+                return Ok(tile.into());
+            }
+        },
+        None => {
+
+        }
+    }
+
+    // ============================================================================
+
     if let Ok(cached_tile) = disk_cache.get_cache(tilepath.clone(), max_cache_age).await {
+        // println!("{} - Desde disk cache", &tilepath.to_str().unwrap());
         return Ok(cached_tile);
     }
 
@@ -142,8 +166,31 @@ async fn get_tile(
         .await?
         .into();
 
+    // println!("Desde Database");
+
+
     if write_cache {
-        disk_cache.write_tile_to_file(&tilepath, &tile).await?;
+        match redis_cache {
+            Some(rc) => {
+                println!("hay redis cache (escritura)");
+                rc.write_tile_to_cache(key, &tile.to_vec(), max_cache_age).await.unwrap();
+                println!("Guardo tile en cache{name}");
+
+            },
+            None => {
+                disk_cache.write_tile_to_file(&tilepath, &tile).await?;
+            }
+        }
+        // let app_state = get_app_state();
+        // match &app_state.redis_conn_manager {
+        //     Some(rcm) => {
+        //         let mut conn = rcm.get().await.unwrap();
+        //         let value_bytes = tile.to_vec();
+        //         conn.set::<&str, Vec<u8>, ()>(&key, value_bytes.to_vec()).await.unwrap();
+        //     },
+        //     None => disk_cache.write_tile_to_file(&tilepath, &tile).await?
+        // }
+        // disk_cache.write_tile_to_file(&tilepath, &tile).await?;
     }
     Ok(tile.into())
 }
