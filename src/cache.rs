@@ -1,10 +1,10 @@
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
-use crate::Catalog;
 use bytes::Bytes;
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use crate::Catalog;
 
 #[derive(Debug, Clone)]
 pub struct DiskCache {
