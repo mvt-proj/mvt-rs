@@ -3,9 +3,19 @@ use salvo::prelude::*;
 use crate::{get_app_state, get_catalog, catalog::Layer};
 
 #[handler]
-pub async fn list(res: &mut Response) {
+pub async fn list(req: &mut Request, res: &mut Response) {
     let catalog = get_catalog().clone();
-    res.render(Json(&catalog.layers));
+    let mut layers = catalog.layers;
+    dbg!(&req);
+    let scheme = req.scheme().to_string();
+
+    let host = req.headers().get("host").unwrap().to_str().unwrap();
+
+    for layer in &mut layers {
+        layer.url = Some(format!("{scheme}://{host}/tiles/{}/{{z}}/{{x}}]/{{y}}].pbf", layer.name));
+    }
+
+    res.render(Json(&layers));
 }
 
 #[handler]

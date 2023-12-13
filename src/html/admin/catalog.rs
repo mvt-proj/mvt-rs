@@ -73,6 +73,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
         delete_cache_on_start: new_layer.delete_cache_on_start,
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
+        url: None
     };
 
     app_state.catalog.add_layer(layer).await;
@@ -104,6 +105,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
         delete_cache_on_start: new_layer.delete_cache_on_start,
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
+        url: None
     };
 
     app_state.catalog.update_layer(layer).await;
