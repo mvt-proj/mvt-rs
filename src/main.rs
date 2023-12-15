@@ -41,6 +41,7 @@ pub struct AppState {
     auth: Auth,
     jwt_secret: String,
     // redis_conn_manager: Option<bb8::Pool<RedisConnectionManager>>
+    use_redis_cache: bool,
     redis_cache: Option<RedisCache>
 }
 
@@ -177,6 +178,12 @@ async fn main() {
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
     let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
     let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
+    let use_redis_cache_str = std::env::var("USEREDISCACHE").unwrap_or("0".to_string());
+
+    let use_redis_cache = match use_redis_cache_str.to_lowercase().as_str() {
+        "true" | "1" => true,
+        _ => false,
+    };
 
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
@@ -229,6 +236,7 @@ async fn main() {
         disk_cache,
         auth,
         jwt_secret,
+        use_redis_cache,
         redis_cache,
         // redis_conn_manager: None, // Some(pool.clone()),
     };
