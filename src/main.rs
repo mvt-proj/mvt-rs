@@ -210,16 +210,6 @@ async fn main() {
         }
     };
 
-    // =====================================================================
-    // let manager = RedisConnectionManager::new("redis://127.0.0.1:6380").unwrap();
-    // let pool = bb8::Pool::builder()
-    //     .build(manager)
-    //     .await
-    //     .unwrap();
-    // let mut con = pool.get().await.unwrap();
-    //
-    // =====================================================================
-
     let redis_cache: Option<RedisCache>;
 
     if redis_conn.is_empty() {
@@ -238,7 +228,6 @@ async fn main() {
         jwt_secret,
         use_redis_cache,
         redis_cache,
-        // redis_conn_manager: None, // Some(pool.clone()),
     };
 
     unsafe {
