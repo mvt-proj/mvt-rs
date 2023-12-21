@@ -1,0 +1,23 @@
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.footer {
+  margin-top: auto;
+}
+
+.fixed-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
+#map {
+  height: 70vh;
+  /* width: 100%; */
+}
