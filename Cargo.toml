@@ -20,7 +20,7 @@ tempfile = "3.8.1"
 time = "0.3"
 jsonwebtoken = "9.1.0"
 chrono = { version = "0.4", features = ["serde"] }
-salvo = { version = "0.63.0", features = ["affix", "cors", "logging", "cache", "anyhow", "basic-auth", "jwt-auth", "serve-static"] }
+salvo = { version = "0.63.1", features = ["affix", "cors", "logging", "cache", "anyhow", "basic-auth", "jwt-auth", "serve-static"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
