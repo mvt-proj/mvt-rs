@@ -96,6 +96,11 @@ The server uses environment variables for its configuration. Make sure to create
 
 - `PORT`: The port on which the server will run. Example: `5880`
 
+- `USEREDISCACHE`:  Specify whether you will use Redis as a cache (0 for no, 1 for using Redis cache). If it's 0, disk caching will be employed; if it's 1, Redis will be used, and the REDISCONN variable must also be provided.
+
+- `REDISCONN`: The connection URL for the Redis.
+  Example: `redis://127.0.0.1:6379`
+
 - `DELETECACHE`:  Specifies whether to delete the cache (1 for true, 0 for false). Indicate whether you should attempt to clear the cache globally when starting the service. Also, take into consideration the delete_cache_start attribute that will be evaluated in the end.
 
 - `SALTSTRING`: User passwords are stored encrypted using Argon2. Thi variable is used to enhance the security of the password hashing process.
