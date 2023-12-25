@@ -1,4 +1,3 @@
-// use salvo::basic_auth::BasicAuth;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::cors::{self as cors, Cors};
 use salvo::http::Method;
