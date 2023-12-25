@@ -310,13 +310,9 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Er
             let start_time = Instant::now();
             let (tile, via) = get_tile(pg_pool, disk_cache, lyr.clone(), x, y, z, filter).await?;
             let elapsed_time = start_time.elapsed();
-            let elapsed_time_str = format!(
-                "{}ms - {}us",
-                elapsed_time.as_millis(),
-                elapsed_time.subsec_micros()
-            );
+            let elapsed_time_str = format!("{}", elapsed_time.as_millis());
             res.headers_mut().insert(
-                "X-Response-Time",
+                "X-Data-Source-Time",
                 HeaderValue::from_str(&elapsed_time_str)
                     .unwrap_or_else(|_| HeaderValue::from_static("0")),
             );
