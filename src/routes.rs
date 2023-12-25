@@ -9,7 +9,6 @@ use std::time::Duration;
 
 use crate::{api, auth, health, html, tiles};
 
-
 pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(
         MokaStore::builder()
@@ -93,7 +92,7 @@ pub fn app_router() -> salvo::Router {
                 .push(
                     Router::with_path("users/login")
                         .post(api::users::login)
-                        .options(handler::empty())
+                        .options(handler::empty()),
                 )
                 .push(
                     Router::with_path("admin")
@@ -108,31 +107,30 @@ pub fn app_router() -> salvo::Router {
                         .push(
                             Router::with_path("database")
                                 .hoop(auth::validate_token)
-                                .push(Router::with_path("schemas")
-                                      .get(api::database::schemas)
-                                      )
-                                .push(Router::with_path("tables/<schema>")
-                                      .get(api::database::tables)
-                                      )
-                                .push(Router::with_path("fields/<schema>/<table>")
-                                      .get(api::database::fields)
-                                      )
-                                .push(Router::with_path("srid/<schema>/<table>/<geometry>")
-                                      .get(api::database::srid)
-                                      )
+                                .push(Router::with_path("schemas").get(api::database::schemas))
+                                .push(
+                                    Router::with_path("tables/<schema>").get(api::database::tables),
+                                )
+                                .push(
+                                    Router::with_path("fields/<schema>/<table>")
+                                        .get(api::database::fields),
+                                )
+                                .push(
+                                    Router::with_path("srid/<schema>/<table>/<geometry>")
+                                        .get(api::database::srid),
+                                ),
                         )
-
                         .push(
                             Router::with_path("catalog/layer")
                                 .hoop(auth::validate_token)
                                 .get(api::catalog::list)
-                                .post(api::catalog::create_layer)
+                                .post(api::catalog::create_layer),
                         )
                         .push(
                             Router::with_path("<**rest>")
                                 .hoop(cors_handler.clone())
-                                .options(handler::empty())
-                        )
+                                .options(handler::empty()),
+                        ),
                 ),
         )
         .push(Router::with_path("tiles").get(tiles::mvt))

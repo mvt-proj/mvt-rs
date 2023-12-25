@@ -1,10 +1,10 @@
-use std::time::Instant;
-use std::path::PathBuf;
 use anyhow::anyhow;
 use bytes::Bytes;
 use salvo::http::header::HeaderValue;
 use salvo::prelude::*;
 use sqlx::PgPool;
+use std::path::PathBuf;
+use std::time::Instant;
 
 enum Via {
     DATABASE,
@@ -14,12 +14,10 @@ enum Via {
 
 use crate::{
     cache::DiskCache,
-    rediscache::RedisCache,
     catalog::{Catalog, Layer, StateLayer},
-    get_catalog, get_db_pool, get_disk_cache,
-    get_app_state,
+    get_app_state, get_catalog, get_db_pool, get_disk_cache,
+    rediscache::RedisCache,
 };
-
 
 fn convert_fields(fields: Vec<String>) -> String {
     let vec_fields: Vec<String>;
@@ -29,7 +27,8 @@ fn convert_fields(fields: Vec<String>) -> String {
             .map(|s| format!("\"{}\"", s.trim()))
             .collect();
     } else {
-        vec_fields = fields.iter()
+        vec_fields = fields
+            .iter()
             .map(|field| format!("\"{}\"", field))
             .collect::<Vec<_>>();
     }
@@ -139,7 +138,11 @@ async fn get_tile(
         Cow::Owned(layer_conf.clone().filter.unwrap_or_default())
     };
 
-    let tilefolder = disk_cache.cache_dir.join(name).join(&z.to_string()).join(&x.to_string());
+    let tilefolder = disk_cache
+        .cache_dir
+        .join(name)
+        .join(&z.to_string())
+        .join(&x.to_string());
     let tilepath = tilefolder.join(&y.to_string()).with_extension("pbf");
 
     let key = format!("{name}:{z}:{x}:{y}");
@@ -158,17 +161,29 @@ async fn get_tile(
         return Ok((cached_tile, Via::DISK));
     }
 
-    let tile: Bytes = query_database(pg_pool.clone(),
-                                     layer_conf.clone(),
-                                     x,
-                                     y,
-                                     z,
-                                     query.to_string()
-                                     )
-        .await?
-        .into();
+    let tile: Bytes = query_database(
+        pg_pool.clone(),
+        layer_conf.clone(),
+        x,
+        y,
+        z,
+        query.to_string(),
+    )
+    .await?
+    .into();
 
-    if write_cache(key, &tile, &tilepath, use_redis_cache, redis_cache, disk_cache, max_cache_age).await.is_ok() {
+    if write_cache(
+        key,
+        &tile,
+        &tilepath,
+        use_redis_cache,
+        redis_cache,
+        disk_cache,
+        max_cache_age,
+    )
+    .await
+    .is_ok()
+    {
         Ok((tile.into(), Via::DATABASE))
     } else {
         Err(anyhow!("Error writing cache"))
@@ -186,14 +201,14 @@ async fn write_cache(
 ) -> Result<(), anyhow::Error> {
     if use_redis_cache {
         if let Some(rc) = redis_cache {
-            rc.write_tile_to_cache(key, &tile.to_vec(), max_cache_age).await?;
+            rc.write_tile_to_cache(key, &tile.to_vec(), max_cache_age)
+                .await?;
         }
     } else {
         disk_cache.write_tile_to_file(tilepath, tile).await?;
     }
     Ok(())
 }
-
 
 // async fn get_tile(
 //     pg_pool: PgPool,
@@ -295,22 +310,26 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Er
             let start_time = Instant::now();
             let (tile, via) = get_tile(pg_pool, disk_cache, lyr.clone(), x, y, z, filter).await?;
             let elapsed_time = start_time.elapsed();
-            let elapsed_time_str = format!("{}ms - {}us",
-                                                   elapsed_time.as_millis(),
-                                                   elapsed_time.subsec_micros()
-                                                   );
-            res.headers_mut()
-                .insert("X-Response-Time", HeaderValue::from_str(&elapsed_time_str).unwrap_or_else(|_| HeaderValue::from_static("0")));
+            let elapsed_time_str = format!(
+                "{}ms - {}us",
+                elapsed_time.as_millis(),
+                elapsed_time.subsec_micros()
+            );
+            res.headers_mut().insert(
+                "X-Response-Time",
+                HeaderValue::from_str(&elapsed_time_str)
+                    .unwrap_or_else(|_| HeaderValue::from_static("0")),
+            );
 
             match via {
                 Via::DATABASE => {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("MISS"));
-                },
+                }
                 Via::DISK => {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("HIT Cached Disk"));
-                },
+                }
                 Via::REDIS => {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("HIT Cached Redis"));

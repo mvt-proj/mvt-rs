@@ -11,21 +11,20 @@ use tokio::io::AsyncWriteExt;
 mod api;
 mod auth;
 mod cache;
-mod rediscache;
 mod catalog;
 mod db;
 mod health;
 mod html;
+mod rediscache;
 mod routes;
 mod storage;
 mod tiles;
 
 use auth::Auth;
 use cache::DiskCache;
-use rediscache::RedisCache;
 use catalog::Catalog;
 use db::make_db_pool;
-
+use rediscache::RedisCache;
 
 // use bb8_redis::{
 //     bb8,
@@ -42,7 +41,7 @@ pub struct AppState {
     jwt_secret: String,
     // redis_conn_manager: Option<bb8::Pool<RedisConnectionManager>>
     use_redis_cache: bool,
-    redis_cache: Option<RedisCache>
+    redis_cache: Option<RedisCache>,
 }
 
 static mut APP_STATE: OnceCell<AppState> = OnceCell::new();
@@ -70,7 +69,6 @@ pub fn get_auth() -> &'static Auth {
 pub fn get_jwt_secret() -> &'static String {
     unsafe { &APP_STATE.get().unwrap().jwt_secret }
 }
-
 
 async fn init(config_dir: &str) {
     if !Path::new(&config_dir).exists() {
@@ -108,7 +106,6 @@ async fn main() {
         // .with_env_filter("info")
         .init();
 
-
     let matches = Command::new("mvt-rs vector tiles server")
         .arg(
             Arg::new("configdir")
@@ -142,7 +139,6 @@ async fn main() {
                 .required(false)
                 .help("JWT secret key"),
         )
-
         .get_matches();
 
     let config_dir = matches.get_one::<String>("configdir").expect("required");
@@ -154,12 +150,18 @@ async fn main() {
 
     let mut db_conn = String::new();
     if matches.contains_id("dbconn") {
-        db_conn = matches.get_one::<String>("dbconn").expect("required").to_string();
+        db_conn = matches
+            .get_one::<String>("dbconn")
+            .expect("required")
+            .to_string();
     }
 
     let mut jwt_secret = String::new();
     if matches.contains_id("jwtsecret") {
-        jwt_secret = matches.get_one::<String>("jwtsecret").expect("required").to_string();
+        jwt_secret = matches
+            .get_one::<String>("jwtsecret")
+            .expect("required")
+            .to_string();
     }
 
     let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
@@ -217,7 +219,11 @@ async fn main() {
     } else {
         let cache = RedisCache::new(redis_conn).await;
         redis_cache = Some(cache);
-        redis_cache.clone().unwrap().delete_cache(catalog.clone()).await;
+        redis_cache
+            .clone()
+            .unwrap()
+            .delete_cache(catalog.clone())
+            .await;
     }
 
     let app_state = AppState {

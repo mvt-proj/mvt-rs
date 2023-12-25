@@ -149,7 +149,7 @@ impl Auth {
     }
 
     pub fn login(&mut self, username: &str, psw: &str) -> Result<String, anyhow::Error> {
-        let jwt_secret  = get_jwt_secret();
+        let jwt_secret = get_jwt_secret();
         for user in self.users.clone().into_iter() {
             if username == user.username && self.validate_psw(user, psw).unwrap() {
                 let exp = OffsetDateTime::now_utc() + Duration::days(14);
@@ -198,7 +198,7 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
 
 // pub fn auth_handler(secret_key: String) -> JwtAuth<JwtClaims, ConstDecoder> {
 pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
-    let jwt_secret  = get_jwt_secret();
+    let jwt_secret = get_jwt_secret();
 
     JwtAuth::new(ConstDecoder::from_secret(jwt_secret.as_bytes()))
         .finders(vec![Box::new(HeaderFinder::new())])

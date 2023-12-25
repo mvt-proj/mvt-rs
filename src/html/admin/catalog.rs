@@ -73,11 +73,12 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
         delete_cache_on_start: new_layer.delete_cache_on_start,
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
-        url: None
+        url: None,
     };
 
     app_state.catalog.add_layer(layer).await;
-    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
+    res.headers_mut()
+        .insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/catalog"));
 }
 
@@ -105,11 +106,12 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
         delete_cache_on_start: new_layer.delete_cache_on_start,
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
-        url: None
+        url: None,
     };
 
     app_state.catalog.update_layer(layer).await;
-    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
+    res.headers_mut()
+        .insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/catalog"));
 }
 
@@ -128,6 +130,7 @@ pub async fn swich_published(req: &mut Request, res: &mut Response) {
 
     let layer_name = req.param::<String>("layer_name").unwrap();
     app_state.catalog.swich_layer_published(&layer_name).await;
-    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
+    res.headers_mut()
+        .insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/catalog"));
 }

@@ -62,12 +62,9 @@ async fn query_tables(schema: String) -> Result<Vec<Table>, sqlx::Error> {
         "#
     );
 
-    let data = sqlx::query_as::<_, Table>(&sql)
-        .fetch_all(&pg_pool)
-        .await?;
+    let data = sqlx::query_as::<_, Table>(&sql).fetch_all(&pg_pool).await?;
     Ok(data)
 }
-
 
 async fn query_fields(schema: String, table: String) -> Result<Vec<Field>, sqlx::Error> {
     let pg_pool: PgPool = get_db_pool().clone();
@@ -84,12 +81,9 @@ async fn query_fields(schema: String, table: String) -> Result<Vec<Field>, sqlx:
         "#
     );
 
-    let data = sqlx::query_as::<_, Field>(&sql)
-        .fetch_all(&pg_pool)
-        .await?;
+    let data = sqlx::query_as::<_, Field>(&sql).fetch_all(&pg_pool).await?;
     Ok(data)
 }
-
 
 async fn query_srid(schema: String, table: String, geometry: String) -> Result<SRID, sqlx::Error> {
     let pg_pool: PgPool = get_db_pool().clone();
@@ -103,15 +97,12 @@ async fn query_srid(schema: String, table: String, geometry: String) -> Result<S
     );
     dbg!(&sql);
 
-    let data = sqlx::query_as::<_, SRID>(&sql)
-        .fetch_one(&pg_pool)
-        .await?;
+    let data = sqlx::query_as::<_, SRID>(&sql).fetch_one(&pg_pool).await?;
     Ok(data)
 }
 
 #[handler]
 pub async fn schemas() -> Result<Json<Vec<Schema>>, StatusError> {
-
     let rv = query_schemas().await;
     match rv {
         Ok(data) => Ok(Json(data)),
@@ -119,16 +110,16 @@ pub async fn schemas() -> Result<Json<Vec<Schema>>, StatusError> {
             tracing::error!("{}", e);
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
-                .cause(format!("An error occurred while retrieving the data. {:?}", e))
-                )
+                .cause(format!(
+                    "An error occurred while retrieving the data. {:?}",
+                    e
+                )))
         }
     }
 }
 
-
 #[handler]
 pub async fn tables(req: &mut Request) -> Result<Json<Vec<Table>>, StatusError> {
-
     let schema = req.param::<String>("schema").unwrap();
     let rv = query_tables(schema).await;
     match rv {
@@ -137,15 +128,16 @@ pub async fn tables(req: &mut Request) -> Result<Json<Vec<Table>>, StatusError> 
             tracing::error!("{}", e);
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
-                .cause(format!("An error occurred while retrieving the data. {:?}", e))
-                )
+                .cause(format!(
+                    "An error occurred while retrieving the data. {:?}",
+                    e
+                )))
         }
     }
 }
 
 #[handler]
 pub async fn fields(req: &mut Request) -> Result<Json<Vec<Field>>, StatusError> {
-
     let schema = req.param::<String>("schema").unwrap();
     let table = req.param::<String>("table").unwrap();
     let rv = query_fields(schema, table).await;
@@ -155,15 +147,16 @@ pub async fn fields(req: &mut Request) -> Result<Json<Vec<Field>>, StatusError> 
             tracing::error!("{}", e);
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
-                .cause(format!("An error occurred while retrieving the data. {:?}", e))
-                )
+                .cause(format!(
+                    "An error occurred while retrieving the data. {:?}",
+                    e
+                )))
         }
     }
 }
 
 #[handler]
 pub async fn srid(req: &mut Request) -> Result<Json<SRID>, StatusError> {
-
     let schema = req.param::<String>("schema").unwrap();
     let table = req.param::<String>("table").unwrap();
     let geometry = req.param::<String>("geometry").unwrap();
@@ -174,8 +167,10 @@ pub async fn srid(req: &mut Request) -> Result<Json<SRID>, StatusError> {
             tracing::error!("{}", e);
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
-                .cause(format!("An error occurred while retrieving the data. {:?}", e))
-                )
+                .cause(format!(
+                    "An error occurred while retrieving the data. {:?}",
+                    e
+                )))
         }
     }
 }

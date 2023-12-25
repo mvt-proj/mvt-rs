@@ -1,4 +1,4 @@
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use std::error::Error;
 use std::fmt;
 
@@ -12,7 +12,6 @@ use crate::{
     get_app_state, get_auth,
     storage::Storage,
 };
-
 
 #[derive(Debug)]
 struct AuthError {
@@ -31,19 +30,27 @@ fn decode_basic_auth(base64_string: &str) -> Result<String, AuthError> {
     let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
 
     if parts.len() != 2 || parts[0] != "Basic" {
-        return Err(AuthError { message: "Invalid Basic Authentication format".to_string() });
+        return Err(AuthError {
+            message: "Invalid Basic Authentication format".to_string(),
+        });
     }
 
     let decoded_bytes = general_purpose::STANDARD
-        .decode(parts[1]).map_err(|_| AuthError { message: "Failed to decode Base64".to_string() })?;
+        .decode(parts[1])
+        .map_err(|_| AuthError {
+            message: "Failed to decode Base64".to_string(),
+        })?;
 
-    let decoded_str = String::from_utf8(decoded_bytes)
-        .map_err(|_| AuthError { message: "Failed to convert to UTF-8".to_string() })?;
+    let decoded_str = String::from_utf8(decoded_bytes).map_err(|_| AuthError {
+        message: "Failed to convert to UTF-8".to_string(),
+    })?;
 
     let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
 
     if auth_parts.len() != 2 {
-        return Err(AuthError { message: "Invalid username:password format".to_string() });
+        return Err(AuthError {
+            message: "Invalid username:password format".to_string(),
+        });
     }
 
     Ok(auth_parts[0].to_string())
@@ -65,10 +72,7 @@ struct NewUser<'a> {
 
 #[handler]
 pub async fn list_users(req: &mut Request, res: &mut Response) {
-
-    let authorization = req.headers()
-        .get("authorization")
-        .unwrap();
+    let authorization = req.headers().get("authorization").unwrap();
     let authorization_str = authorization.to_str().unwrap();
     let _username = match decode_basic_auth(authorization_str) {
         Ok(username) => username,
@@ -98,7 +102,8 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
 
     let mut storage = Storage::<Vec<User>>::new(auth.storage_path.clone());
     storage.save(app_state.auth.users.clone()).await.unwrap();
-    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
+    res.headers_mut()
+        .insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/users"));
 }
 
@@ -113,7 +118,8 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) {
         password: encrypt_psw,
     };
     app_state.auth.update_user(user).await;
-    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
+    res.headers_mut()
+        .insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/users"));
 }
 
@@ -123,6 +129,7 @@ pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) {
 
     let username = req.param::<String>("username").unwrap();
     app_state.auth.delete_user(username).await.unwrap();
-    res.headers_mut().insert("content-type", "text/html".parse().unwrap());
+    res.headers_mut()
+        .insert("content-type", "text/html".parse().unwrap());
     res.render(Redirect::other("/admin/users"));
 }

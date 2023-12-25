@@ -84,11 +84,7 @@ mod tests {
     #[tokio::test]
     async fn test_save() {
         let temp_file = NamedTempFile::new().unwrap();
-        let mut storage = Storage::<Person>::new(temp_file.path()
-                                                                  .to_str()
-                                                                  .unwrap()
-                                                                  .to_string()
-                                                                  );
+        let mut storage = Storage::<Person>::new(temp_file.path().to_str().unwrap().to_string());
 
         let p1 = Person {
             name: "Toto".to_string(),
@@ -101,11 +97,7 @@ mod tests {
     #[tokio::test]
     async fn test_load() {
         let temp_file = NamedTempFile::new().unwrap();
-        let mut storage = Storage::<Person>::new(temp_file.path()
-                                                                  .to_str()
-                                                                  .unwrap()
-                                                                  .to_string()
-                                                                  );
+        let mut storage = Storage::<Person>::new(temp_file.path().to_str().unwrap().to_string());
 
         let p1 = Person {
             name: "Toto".to_string(),

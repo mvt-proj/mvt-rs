@@ -1,6 +1,6 @@
 use salvo::prelude::*;
 
-use crate::{get_app_state, get_catalog, catalog::Layer};
+use crate::{catalog::Layer, get_app_state, get_catalog};
 
 #[handler]
 pub async fn list(req: &mut Request, res: &mut Response) {
@@ -12,7 +12,10 @@ pub async fn list(req: &mut Request, res: &mut Response) {
     let host = req.headers().get("host").unwrap().to_str().unwrap();
 
     for layer in &mut layers {
-        layer.url = Some(format!("{scheme}://{host}/tiles/{}/{{z}}/{{x}}]/{{y}}].pbf", layer.name));
+        layer.url = Some(format!(
+            "{scheme}://{host}/tiles/{}/{{z}}/{{x}}]/{{y}}].pbf",
+            layer.name
+        ));
     }
 
     res.render(Json(&layers));
@@ -29,7 +32,7 @@ pub async fn create_layer(req: &mut Request, res: &mut Response) {
         Ok(lyr) => {
             app_state.catalog.add_layer(lyr.clone()).await;
             res.render(Json(lyr))
-        },
-        Err(e) => res.render(format!("{:?}", e))
+        }
+        Err(e) => res.render(format!("{:?}", e)),
     }
 }
