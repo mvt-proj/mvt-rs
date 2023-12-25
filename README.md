@@ -164,7 +164,7 @@ Options:
   -c, --config <CONFIGDIR>     Directory where config files are placed [default: config]
   -b, --cache <CACHEDIR>       Directory where cache files are placed [default: cache]
   -d, --dbconn <DBCONN>        Database connection
-  -r, --redisconn <REDISCONN>        Redis connection
+  -r, --redisconn <REDISCONN>  Redis connection
   -j, --jwtsecret <JWTSECRET>  JWT secret key
   -h, --help                   Print help
 ```
