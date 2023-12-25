@@ -132,6 +132,14 @@ async fn main() {
                 .help("Database connection"),
         )
         .arg(
+            Arg::new("redisconn")
+                .short('r')
+                .long("redisconn")
+                .value_name("REDISCONN")
+                .required(false)
+                .help("Redis connection"),
+        )
+        .arg(
             Arg::new("jwtsecret")
                 .short('j')
                 .long("jwtsecret")
@@ -149,9 +157,17 @@ async fn main() {
     dotenv::dotenv().ok();
 
     let mut db_conn = String::new();
+    let mut redis_conn = String::new();
     if matches.contains_id("dbconn") {
         db_conn = matches
             .get_one::<String>("dbconn")
+            .expect("required")
+            .to_string();
+    }
+
+    if matches.contains_id("redisconn") {
+        redis_conn = matches
+            .get_one::<String>("redisconn")
             .expect("required")
             .to_string();
     }
@@ -164,13 +180,16 @@ async fn main() {
             .to_string();
     }
 
+
     let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
     let port = std::env::var("PORT").unwrap_or("5887".to_string());
 
     if db_conn.is_empty() {
         db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
     }
-    let redis_conn = std::env::var("REDISCONN").unwrap_or(String::new());
+    if redis_conn.is_empty() {
+        redis_conn = std::env::var("REDISCONN").unwrap_or(String::new());
+    }
 
     if jwt_secret.is_empty() {
         jwt_secret = std::env::var("JWTSECRET").expect("JWTSECRET needs to be defined");
@@ -180,12 +199,12 @@ async fn main() {
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
     let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
     let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
-    let use_redis_cache_str = std::env::var("USEREDISCACHE").unwrap_or("0".to_string());
+    // let use_redis_cache_str = std::env::var("USEREDISCACHE").unwrap_or("0".to_string());
 
-    let use_redis_cache = match use_redis_cache_str.to_lowercase().as_str() {
-        "true" | "1" => true,
-        _ => false,
-    };
+    // let use_redis_cache = match use_redis_cache_str.to_lowercase().as_str() {
+    //     "true" | "1" => true,
+    //     _ => false,
+    // };
 
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
@@ -213,10 +232,12 @@ async fn main() {
     };
 
     let redis_cache: Option<RedisCache>;
+    let mut use_redis_cache = false;
 
     if redis_conn.is_empty() {
         redis_cache = None;
     } else {
+        use_redis_cache = true;
         let cache = RedisCache::new(redis_conn).await;
         redis_cache = Some(cache);
         redis_cache
