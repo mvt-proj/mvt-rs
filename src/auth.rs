@@ -1,4 +1,5 @@
-use salvo::basic_auth::BasicAuthValidator;
+use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
+
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -211,4 +212,8 @@ impl BasicAuthValidator for Validator {
         let mut auth: Auth = get_auth().clone();
         auth.validate_user(username, password)
     }
+}
+
+pub fn basic_auth_handler() -> BasicAuth<Validator> {
+    BasicAuth::new(Validator)
 }

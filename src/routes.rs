@@ -1,4 +1,4 @@
-use salvo::basic_auth::BasicAuth;
+// use salvo::basic_auth::BasicAuth;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::cors::{self as cors, Cors};
 use salvo::http::Method;
@@ -32,7 +32,6 @@ pub fn app_router() -> salvo::Router {
         ])
         .into_handler();
 
-    let basic_auth_handler = BasicAuth::new(auth::Validator);
     let static_dir = StaticDir::new(["static"])
         .defaults("index.html")
         .auto_list(true);
@@ -46,7 +45,7 @@ pub fn app_router() -> salvo::Router {
         .push(Router::with_path("health").get(health::get_health))
         .push(
             Router::with_path("admin")
-                .hoop(basic_auth_handler)
+                .hoop(auth::basic_auth_handler())
                 .get(html::admin::main::index)
                 .push(
                     Router::with_path("users")
