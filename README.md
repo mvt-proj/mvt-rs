@@ -106,8 +106,8 @@ The server uses environment variables for its configuration. Make sure to create
 
 
 
-Ensure that the `.env` file is kept secure and not shared in public repositories.
 
+Remember the `.env` file has to kept secure and not shared in public repositories.
 
 ## About the Cache
 
@@ -120,7 +120,7 @@ If a Redis connection is provided, either through the environment variable REDIS
 
 Regarding caching and filter application, it will only be saved when the filter is provided in the layer's configuration and will not be applied when it comes from a request to the server.
 
-By default, the cache files are stored in the "cache" directory located at the root of your project. However, you can also specify a different location for teh cache direcory as an argument when starting the server. Example:
+By default, the cache files are stored in the "cache" directory located at the root of your project. However, you can also specify a different location for the cache directory as an argument when starting the server. Example:
 
 `./mvt-rs --cache /tmp/cache`
 
