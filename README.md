@@ -1,6 +1,6 @@
 # MVT-RS Simple Vector Tile Server
 
-This is a simple and high-speed vector tile server developed in Rust, utilizing the Salvo web framework. It provides an efficient way to serve vector geospatial data over the web.
+This is a simple and high-speed vector tile server developed in Rust, using the Salvo web framework. It provides an efficient way to serve vector geospatial data over the web.
 
 Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local or remote. It relies on the use of the PostGIS function ST_AsMVT. More information can be found at https://postgis.net/docs/en/ST_AsMVT.html.
 
@@ -8,12 +8,12 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
   <img src="https://github.com/mvt-proj/mvt-rs/assets/5981345/b31e1d59-2253-4406-90c9-453750c1bff2" width="40%" />
 </div>
 
-**mvt-rs** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the configuration of the layers.
+**mvt-rs** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the layers' configuration.
 
 
 ## Table of Layer Configuration Fields
 
-Each layer intended for publication is defined as a JSON file with the fields as shown below.
+Each published layer is defined as a JSON file with the fields as shown below.
 
 | Field                     | Meaning                                | Required | Default  | Example                |
 |---------------------------|----------------------------------------|----------|----------|------------------------|
@@ -65,12 +65,12 @@ Example:
 }
 ```
 
-In this case, the URL that the service publishes will be:
+In this case, the service publishes the following URL:
 
 http://127.0.0.1:5887/tiles/departamentos/{z}/{x}/{y}.pbf
 
 
-Can you see all the served layers at:
+You could see all the served layers at:
 
 http://127.0.0.1:5887/catalog
 
