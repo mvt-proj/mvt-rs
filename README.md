@@ -75,7 +75,7 @@ You could see all the served layers at:
 http://127.0.0.1:5887/catalog
 
 
-By default, the file catalog.json is in the "config" directory located at the root of your project. However, you can also specify a different location for these configuration files as an argument when starting the server. Example:
+By default, the file catalog.json is in the "config" directory located at the root of your project. However, you can also specify a different location for these configuration files as an argument when the server starts. Example:
 
 `./mvt-rs --config /usr/local/etc/mvt-rs/config`
 
@@ -98,11 +98,11 @@ The server uses environment variables for its configuration. Make sure to create
 
 - `REDISCONN`: The connection URL for the Redis. If a Redis connection is provided, it is assumed that Redis should be used as the primary cache, overriding disk cache usage. Example: `redis://127.0.0.1:6379`
 
-- `DELETECACHE`:  Specifies whether to delete the cache (1 for true, 0 for false). Indicate whether you should attempt to clear the cache globally when starting the service. Also, take into consideration the delete_cache_start attribute that will be evaluated in the end.
+- `DELETECACHE`:  Specifies when to delete the cache (1 for true, 0 for false). Indicate if you should attempt to clear the cache globally when starting the service. Also, take into consideration the delete_cache_start attribute that will be evaluated in the end.
 
-- `SALTSTRING`: User passwords are stored encrypted using Argon2. Thi variable is used to enhance the security of the password hashing process.
+- `SALTSTRING`: User passwords are stored encrypted using Argon2. This variable is used to enhance the security of the password hashing process.
 
-- `JWTSECRET`: Is used to create and validate JWT tokens.
+- `JWTSECRET`: It is used to create and validate JWT tokens.
 
 
 
