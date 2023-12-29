@@ -98,8 +98,6 @@ The server uses environment variables for its configuration. Make sure to create
 
 - `REDISCONN`: The connection URL for the Redis. If a Redis connection is provided, it is assumed that Redis should be used as the primary cache, overriding disk cache usage. Example: `redis://127.0.0.1:6379`
 
-- `DELETECACHE`:  Specifies when to delete the cache (1 for true, 0 for false). Indicate if you should attempt to clear the cache globally when starting the service. Also, take into consideration the delete_cache_start attribute that will be evaluated in the end.
-
 - `SALTSTRING`: User passwords are stored encrypted using Argon2. This variable is used to enhance the security of the password hashing process.
 
 - `JWTSECRET`: It is used to create and validate JWT tokens.

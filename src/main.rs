@@ -174,7 +174,6 @@ async fn main() {
             .to_string();
     }
 
-
     let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
     let port = std::env::var("PORT").unwrap_or("5887".to_string());
 
@@ -192,12 +191,9 @@ async fn main() {
     let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
     let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
-    let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
-    // let use_redis_cache_str = std::env::var("USEREDISCACHE").unwrap_or("0".to_string());
 
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
-    let delete_cache: u8 = delete_cache.parse().unwrap();
 
     let auth = Auth::new(config_dir, salt_string)
         .await
@@ -207,11 +203,6 @@ async fn main() {
         .await
         .expect("The 'layers' structure could not be initialized");
 
-    let disk_cache = DiskCache::new(cache_dir.into());
-    if delete_cache != 0 {
-        disk_cache.delete_cache_dir(catalog.clone()).await;
-    }
-
     let db_pool = match make_db_pool(&db_conn, db_pool_size_min, db_pool_size_max).await {
         Ok(pool) => pool,
         Err(e) => {
@@ -219,6 +210,9 @@ async fn main() {
             panic!("Database connection error: {}", e);
         }
     };
+
+    let disk_cache = DiskCache::new(cache_dir.into());
+    disk_cache.delete_cache_dir(catalog.clone()).await;
 
     let redis_cache: Option<RedisCache>;
     let mut use_redis_cache = false;
