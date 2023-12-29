@@ -26,11 +26,6 @@ use catalog::Catalog;
 use db::make_db_pool;
 use rediscache::RedisCache;
 
-// use bb8_redis::{
-//     bb8,
-//     redis::AsyncCommands,
-//     RedisConnectionManager,
-// };
 
 #[derive(Debug)]
 pub struct AppState {
@@ -39,7 +34,6 @@ pub struct AppState {
     disk_cache: DiskCache,
     auth: Auth,
     jwt_secret: String,
-    // redis_conn_manager: Option<bb8::Pool<RedisConnectionManager>>
     use_redis_cache: bool,
     redis_cache: Option<RedisCache>,
 }
