@@ -195,11 +195,6 @@ async fn main() {
     let delete_cache = std::env::var("DELETECACHE").unwrap_or("0".to_string());
     // let use_redis_cache_str = std::env::var("USEREDISCACHE").unwrap_or("0".to_string());
 
-    // let use_redis_cache = match use_redis_cache_str.to_lowercase().as_str() {
-    //     "true" | "1" => true,
-    //     _ => false,
-    // };
-
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
     let delete_cache: u8 = delete_cache.parse().unwrap();
