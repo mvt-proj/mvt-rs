@@ -206,7 +206,6 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
 }
 
 pub struct Validator;
-#[async_trait]
 impl BasicAuthValidator for Validator {
     async fn validate(&self, username: &str, password: &str, _depot: &mut Depot) -> bool {
         let mut auth: Auth = get_auth().clone();
