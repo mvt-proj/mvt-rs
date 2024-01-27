@@ -1,6 +1,8 @@
 use salvo::prelude::*;
 
-use crate::database::{Schema, Table, Field, SRID, query_schemas, query_tables, query_fields, query_srid};
+use crate::database::{
+    query_fields, query_schemas, query_srid, query_tables, Field, Schema, Table, SRID,
+};
 
 #[handler]
 pub async fn schemas() -> Result<Json<Vec<Schema>>, StatusError> {

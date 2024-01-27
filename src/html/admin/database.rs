@@ -1,7 +1,9 @@
 use askama::Template;
 use salvo::prelude::*;
 
-use crate::database::{Schema, Table, Field, SRID, query_schemas, query_tables, query_fields, query_srid};
+use crate::database::{
+    query_fields, query_schemas, query_srid, query_tables, Field, Schema, Table, SRID,
+};
 
 #[derive(Template)]
 #[template(path = "admin/database/schemas.html")]
@@ -31,11 +33,14 @@ struct SRIDTemplate<'a> {
     srid: &'a SRID,
 }
 
-
 #[handler]
 pub async fn schemas(req: &mut Request, res: &mut Response) {
-    let schema_selected =  req.query::<String>("schema_selected").unwrap_or(String::new());
-    let table_selected =  req.query::<String>("table_selected").unwrap_or(String::new());
+    let schema_selected = req
+        .query::<String>("schema_selected")
+        .unwrap_or(String::new());
+    let table_selected = req
+        .query::<String>("table_selected")
+        .unwrap_or(String::new());
     let rv = query_schemas().await.unwrap();
 
     let template = SchemaTemplate {
@@ -44,13 +49,14 @@ pub async fn schemas(req: &mut Request, res: &mut Response) {
         table_selected,
     };
     res.render(Text::Html(template.render().unwrap()));
-
 }
 
 #[handler]
 pub async fn tables(req: &mut Request, res: &mut Response) {
     let schema = req.query::<String>("schema").unwrap();
-    let table_selected =  req.query::<String>("table_selected").unwrap_or(String::new());
+    let table_selected = req
+        .query::<String>("table_selected")
+        .unwrap_or(String::new());
 
     let rv = query_tables(schema).await.unwrap();
     let template = TableTemplate {
@@ -64,7 +70,9 @@ pub async fn tables(req: &mut Request, res: &mut Response) {
 pub async fn fields(req: &mut Request, res: &mut Response) {
     let schema = req.query::<String>("schema").unwrap();
     let table = req.query::<String>("table").unwrap();
-    let fields_selected_vec =  req.query::<Vec<String>>("fields_selected").unwrap_or(vec![]);
+    let fields_selected_vec = req
+        .query::<Vec<String>>("fields_selected")
+        .unwrap_or(vec![]);
 
     let fields_selected: Vec<String> = fields_selected_vec
         .get(0)
@@ -92,8 +100,6 @@ pub async fn srid(req: &mut Request, res: &mut Response) {
     let geometry = req.query::<String>("geometry").unwrap();
     let rv = query_srid(schema, table, geometry).await.unwrap();
 
-    let template = SRIDTemplate {
-        srid: &rv,
-    };
+    let template = SRIDTemplate { srid: &rv };
     res.render(Text::Html(template.render().unwrap()));
 }

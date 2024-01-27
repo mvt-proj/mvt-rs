@@ -84,7 +84,11 @@ pub async fn query_fields(schema: String, table: String) -> Result<Vec<Field>, s
     Ok(data)
 }
 
-pub async fn query_srid(schema: String, table: String, geometry: String) -> Result<SRID, sqlx::Error> {
+pub async fn query_srid(
+    schema: String,
+    table: String,
+    geometry: String,
+) -> Result<SRID, sqlx::Error> {
     let pg_pool: PgPool = get_db_pool().clone();
 
     let sql = format!(

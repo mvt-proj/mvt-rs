@@ -27,7 +27,6 @@ use catalog::Catalog;
 use db::make_db_pool;
 use rediscache::RedisCache;
 
-
 #[derive(Debug)]
 pub struct AppState {
     db_pool: PgPool,
