@@ -1,0 +1,100 @@
+use serde::Serialize;
+use sqlx::{FromRow, PgPool};
+
+use crate::get_db_pool;
+
+#[derive(FromRow, Serialize, Debug)]
+pub struct Schema {
+    pub name: String,
+}
+
+#[derive(FromRow, Serialize, Debug)]
+pub struct Table {
+    pub name: String,
+    pub geometry: String,
+}
+
+#[derive(FromRow, Serialize, Debug)]
+pub struct Field {
+    pub name: String,
+    pub udt: String,
+}
+
+#[derive(FromRow, Serialize, Debug)]
+pub struct SRID {
+    pub name: i32,
+}
+
+pub async fn query_schemas() -> Result<Vec<Schema>, sqlx::Error> {
+    let pg_pool: PgPool = get_db_pool().clone();
+
+    let sql = format!(
+        r#"
+            SELECT schema_name name
+            FROM information_schema.schemata
+            ORDER BY schema_name;
+        "#
+    );
+
+    let data = sqlx::query_as::<_, Schema>(&sql)
+        .fetch_all(&pg_pool)
+        .await?;
+    Ok(data)
+}
+
+pub async fn query_tables(schema: String) -> Result<Vec<Table>, sqlx::Error> {
+    let pg_pool: PgPool = get_db_pool().clone();
+
+    let sql = format!(
+        r#"
+            SELECT
+                table_name name,
+                column_name geometry
+            FROM
+                information_schema.columns
+            WHERE
+                table_schema = '{schema}'
+                AND data_type = 'USER-DEFINED'
+                AND udt_name = 'geometry'
+            ORDER BY
+                table_name;
+        "#
+    );
+
+    let data = sqlx::query_as::<_, Table>(&sql).fetch_all(&pg_pool).await?;
+    Ok(data)
+}
+
+pub async fn query_fields(schema: String, table: String) -> Result<Vec<Field>, sqlx::Error> {
+    let pg_pool: PgPool = get_db_pool().clone();
+
+    let sql = format!(
+        r#"
+            SELECT
+                column_name name,
+                udt_name udt
+            FROM
+                information_schema.columns
+            WHERE table_schema = '{schema}'
+              AND table_name = '{table}';
+        "#
+    );
+
+    let data = sqlx::query_as::<_, Field>(&sql).fetch_all(&pg_pool).await?;
+    Ok(data)
+}
+
+pub async fn query_srid(schema: String, table: String, geometry: String) -> Result<SRID, sqlx::Error> {
+    let pg_pool: PgPool = get_db_pool().clone();
+
+    let sql = format!(
+        r#"
+            SELECT Find_SRID('{schema}', '{table}', '{geometry}') AS name
+            FROM {table}
+            LIMIT 1;
+        "#
+    );
+
+    let data = sqlx::query_as::<_, SRID>(&sql).fetch_one(&pg_pool).await?;
+    Ok(data)
+}

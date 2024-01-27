@@ -1,0 +1,10 @@
+{% block admin_content %}
+  <option value=""></option>
+  {% for table in tables %}
+    {% if table.name == table_selected %}
+      <option value="{{table.name}}" selected>{{table.name}}</option>
+    {% else %}
+      <option value="{{table.name}}">{{table.name}}</option>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

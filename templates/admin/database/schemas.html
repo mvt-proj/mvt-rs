@@ -1,0 +1,18 @@
+{% block admin_content %}
+  <select name="schema" id="schema"
+    hx-get="/admin/database/tables"
+    hx-target="#table"
+    hx-trigger="load, change"
+    hx-vals='{"table_selected": "{{ table_selected }}"}'
+    required
+  >
+    <option value=""></option>
+    {% for schema in schemas %}
+      {% if schema.name == schema_selected %}
+        <option value="{{schema.name}}" selected>{{schema.name}}</option>
+      {% else %}
+        <option value="{{schema.name}}">{{schema.name}}</option>
+      {% endif %}
+    {% endfor %}
+  </select>
+{% endblock %}

@@ -35,7 +35,7 @@
         <div class="field">
           <label class="label" for="name">Name</label>
           <div class="control">
-            <input class="input" type="text" name="name" id="name">
+            <input class="input" type="text" name="name" id="name" required>
           </div>
         </div>
 
@@ -43,15 +43,27 @@
         <div class="field">
           <label class="label" for="alias">Alias</label>
           <div class="control">
-            <input class="input" type="text" name="alias" id="alias">
+            <input class="input" type="text" name="alias" id="alias" required>
           </div>
         </div>
 
         <!-- schema -->
+        <!-- <div class="field" -->
+        <!--   hx-get="/admin/database/schemas" -->
+        <!--   hx-swap="outerHTML" -->
+        <!--   hx-trigger="load" -->
+        <!-- > -->
+        <!--   <label class="label" for="schema">Schema</label> -->
+        <!-- </div> -->
         <div class="field">
           <label class="label" for="schema">Schema</label>
           <div class="control">
-            <input class="input" type="text" name="schema" id="schema" value="public">
+            <div class="select"
+              hx-get="/admin/database/schemas"
+              hx-swap="innerHTML"
+              hx-trigger="load"
+            >
+            </div>
           </div>
         </div>
 
@@ -59,7 +71,16 @@
         <div class="field">
           <label class="label" for="table">Table</label>
           <div class="control">
-            <input class="input" type="text" name="table" id="table">
+            <div class="select">
+              <select name="table" id="table"
+                hx-get="/admin/database/fields"
+                hx-target="#fields"
+                hx-trigger="change"
+                hx-include="[name='schema']"
+                required
+              >
+              </select>
+            </div>
           </div>
         </div>
 
@@ -67,7 +88,10 @@
         <div class="field">
           <label class="label" for="fields">Fields</label>
           <div class="control">
-            <textarea class="textarea" name="fields" id="fields" rows="3">id</textarea>
+            <div class="select is-multiple">
+              <select name="fields" id="fields" multiple size="8" required>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -75,7 +99,7 @@
         <div class="field">
           <label class="label" for="geom">Geom</label>
           <div class="control">
-            <input class="input" type="text" name="geom" id="geom" value="geom">
+            <input class="input" type="text" name="geom" id="geom" value="geom" required>
           </div>
         </div>
 
@@ -91,7 +115,7 @@
         <div class="field">
           <label class="label" for="srid">SRID</label>
           <div class="control">
-            <input class="input" type="text" name="srid" id="srid" value="4326">
+            <input class="input" type="text" name="srid" id="srid" value="4326" required>
           </div>
         </div>
 
@@ -99,7 +123,7 @@
         <div class="field">
           <label class="label" for="buffer">Buffer</label>
           <div class="control">
-            <input class="input" type="buffer" name="buffer" id="buffer" value="256">
+            <input class="input" type="buffer" name="buffer" id="buffer" value="256" required>
           </div>
         </div>
 
@@ -107,7 +131,7 @@
         <div class="field">
           <label class="label" for="extent">Extent</label>
           <div class="control">
-            <input class="input" type="text" name="extent" id="extent" value="4096">
+            <input class="input" type="text" name="extent" id="extent" value="4096" required>
           </div>
         </div>
 
@@ -115,7 +139,7 @@
         <div class="field">
           <label class="label" for="zmin">ZMin</label>
           <div class="control">
-            <input class="input" type="text" name="zmin" id="zmin" value="0">
+            <input class="input" type="text" name="zmin" id="zmin" value="0" required>
           </div>
         </div>
 
@@ -123,7 +147,7 @@
         <div class="field">
           <label class="label" for="zmin">ZMax</label>
           <div class="control">
-            <input class="input" type="text" name="zmax" id="zmax" value="22">
+            <input class="input" type="text" name="zmax" id="zmax" value="22" required>
           </div>
         </div>
 
@@ -131,7 +155,7 @@
         <div class="field">
           <label class="label" for="zmax_do_not_simplify">ZMax do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="16">
+            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="16" required>
           </div>
         </div>
 
@@ -139,7 +163,7 @@
         <div class="field">
           <label class="label" for="buffer_do_not_simplify">Buffer do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="256">
+            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="256" required>
           </div>
         </div>
 
@@ -147,7 +171,7 @@
         <div class="field">
           <label class="label" for="extent_do_not_simplify">Extent do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="4096">
+            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="4096" required>
           </div>
         </div>
 
@@ -186,7 +210,7 @@
         <div class="field">
           <label class="label" for="max_cache_age">Max cache age</label>
           <div class="control">
-            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="0">
+            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="0" required>
           </div>
           <p class="help is-info">Time must enter in seconds. The value of 0 means infinity</p>
         </div>

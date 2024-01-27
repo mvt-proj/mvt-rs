@@ -12,6 +12,7 @@ mod api;
 mod auth;
 mod cache;
 mod catalog;
+mod database;
 mod db;
 mod health;
 mod html;

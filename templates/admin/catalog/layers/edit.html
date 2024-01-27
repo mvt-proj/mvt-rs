@@ -34,7 +34,7 @@
         <div class="field">
           <label class="label" for="name">Name</label>
           <div class="control">
-            <input class="input" type="text" name="name" id="name" value="{{ layer.name }}">
+            <input class="input" type="text" name="name" id="name" value="{{ layer.name }}" required>
           </div>
         </div>
 
@@ -42,7 +42,7 @@
         <div class="field">
           <label class="label" for="alias">Alias</label>
           <div class="control">
-            <input class="input" type="text" name="alias" id="alias" value="{{ layer.alias }}">
+            <input class="input" type="text" name="alias" id="alias" value="{{ layer.alias }}" required>
           </div>
         </div>
 
@@ -50,7 +50,13 @@
         <div class="field">
           <label class="label" for="schema">Schema</label>
           <div class="control">
-            <input class="input" type="text" name="schema" id="schema" value="{{ layer.schema }}">
+            <div class="select"
+              hx-get="/admin/database/schemas"
+              hx-swap="innerHTML"
+              hx-trigger="load, change"
+              hx-vals='{"schema_selected": "{{ layer.schema }}", "table_selected": "{{ layer.table }}"}'
+            >
+            </div>
           </div>
         </div>
 
@@ -58,15 +64,28 @@
         <div class="field">
           <label class="label" for="table">Table</label>
           <div class="control">
-            <input class="input" type="text" name="table" id="table" value="{{ layer.table }}">
-          </div>
+            <div class="select">
+              <select name="table" id="table"
+                hx-get="/admin/database/fields"
+                hx-target="#fields"
+                hx-trigger="change, load delay:3s"
+                hx-include="[name='schema']"
+                hx-vals='{"fields_selected": "{{ layer.fields.join(",") }}"}'
+                required
+              >
+              </select>
+            </div>
+          </divi>
         </div>
 
         <!-- fields -->
         <div class="field">
           <label class="label" for="fields">Fields</label>
           <div class="control">
-            <textarea class="textarea" name="fields" id="fields" rows="3">{{ layer.fields.join(", ") }}</textarea>
+            <div class="select is-multiple">
+              <select name="fields" id="fields" multiple size="8" required>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -74,7 +93,7 @@
         <div class="field">
           <label class="label" for="geom">Geom</label>
           <div class="control">
-            <input class="input" type="text" name="geom" id="geom" value="{{ layer.get_geom() }}">
+            <input class="input" type="text" name="geom" id="geom" value="{{ layer.get_geom() }}" required>
           </div>
         </div>
 
@@ -90,7 +109,7 @@
         <div class="field">
           <label class="label" for="srid">SRID</label>
           <div class="control">
-            <input class="input" type="text" name="srid" id="srid" value="{{ layer.get_srid() }}">
+            <input class="input" type="text" name="srid" id="srid" value="{{ layer.get_srid() }}" required>
           </div>
         </div>
 
@@ -98,7 +117,7 @@
         <div class="field">
           <label class="label" for="buffer">Buffer</label>
           <div class="control">
-            <input class="input" type="buffer" name="buffer" id="buffer" value="{{ layer.get_buffer() }}">
+            <input class="input" type="buffer" name="buffer" id="buffer" value="{{ layer.get_buffer() }}" required>
           </div>
         </div>
 
@@ -106,7 +125,7 @@
         <div class="field">
           <label class="label" for="extent">Extent</label>
           <div class="control">
-            <input class="input" type="text" name="extent" id="extent" value="{{ layer.get_extent() }}">
+            <input class="input" type="text" name="extent" id="extent" value="{{ layer.get_extent() }}" required>
           </div>
         </div>
 
@@ -114,7 +133,7 @@
         <div class="field">
           <label class="label" for="zmin">ZMin</label>
           <div class="control">
-            <input class="input" type="text" name="zmin" id="zmin" value="{{ layer.get_zmin() }}">
+            <input class="input" type="text" name="zmin" id="zmin" value="{{ layer.get_zmin() }}" required>
           </div>
         </div>
 
@@ -122,7 +141,7 @@
         <div class="field">
           <label class="label" for="zmin">ZMax</label>
           <div class="control">
-            <input class="input" type="text" name="zmax" id="zmax" value="{{ layer.get_zmax() }}">
+            <input class="input" type="text" name="zmax" id="zmax" value="{{ layer.get_zmax() }}" required>
           </div>
         </div>
 
@@ -130,7 +149,7 @@
         <div class="field">
           <label class="label" for="zmax_do_not_simplify">ZMax do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="{{ layer.get_zmax_do_not_simplify() }}">
+            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="{{ layer.get_zmax_do_not_simplify() }}" required>
           </div>
         </div>
 
@@ -138,7 +157,7 @@
         <div class="field">
           <label class="label" for="buffer_do_not_simplify">Buffer do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="{{ layer.get_buffer_do_not_simplify() }}">
+            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="{{ layer.get_buffer_do_not_simplify() }}" required>
           </div>
         </div>
 
@@ -146,7 +165,7 @@
         <div class="field">
           <label class="label" for="extent_do_not_simplify">Extent do not simplify</label>
           <div class="control">
-            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="{{ layer.get_extent_do_not_simplify() }}">
+            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="{{ layer.get_extent_do_not_simplify() }}" required>
           </div>
         </div>
 
@@ -185,7 +204,7 @@
         <div class="field">
           <label class="label" for="max_cache_age">Max cache age</label>
           <div class="control">
-            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="{{ layer.get_max_cache_age() }}">
+            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="{{ layer.get_max_cache_age() }}" required>
           </div>
           <p class="help is-info">Time must enter in seconds. The value of 0 means infinity</p>
         </div>

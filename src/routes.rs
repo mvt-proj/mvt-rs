@@ -83,7 +83,14 @@ pub fn app_router() -> salvo::Router {
                             Router::with_path("layers/swichpublished/<layer_name>")
                                 .get(html::admin::catalog::swich_published),
                         ),
-                ),
+                )
+                .push(Router::with_path("database")
+                    .push(Router::with_path("schemas").get(html::admin::database::schemas))
+                    .push(Router::with_path("tables").get(html::admin::database::tables))
+                    .push(Router::with_path("fields").get(html::admin::database::fields))
+                    .push(Router::with_path("srid").get(html::admin::database::srid))
+                )
+
         )
         .push(
             Router::with_path("api")
