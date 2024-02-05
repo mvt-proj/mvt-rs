@@ -18,16 +18,8 @@ pub fn app_router() -> salvo::Router {
 
     let cors_handler = Cors::new()
         .allow_origin(cors::Any)
-        .allow_methods(vec![Method::GET, Method::POST, Method::OPTIONS])
-        .allow_headers(vec![
-            "Content-Type",
-            "Access-Control-Allow-Methods",
-            "Access-Control-Allow-Headers",
-            "Access-Control-Request-Method",
-            "Access-Control-Allow-Origin",
-            "Access-Control-Max-Age",
-            "Authorization",
-        ])
+        .allow_methods(cors::Any)
+        .allow_headers(cors::Any)
         .into_handler();
 
     let static_dir = StaticDir::new(["static"])
