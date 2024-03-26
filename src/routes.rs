@@ -1,6 +1,6 @@
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::cors::{self as cors, Cors};
-use salvo::http::Method;
+// use salvo::http::Method;
 use salvo::logging::Logger;
 use salvo::prelude::*;
 use salvo::serve_static::StaticDir;
