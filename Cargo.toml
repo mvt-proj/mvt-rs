@@ -13,14 +13,14 @@ bytes = "1.5.0"
 argon2 = "0.5.2"
 askama = "0.12.1"
 anyhow = "1"
-base64 = "0.21.5"
+base64 = "0.22"
 
 tempfile = "3.8.1"
 
 time = "0.3"
 jsonwebtoken = "9.1.0"
 chrono = { version = "0.4", features = ["serde"] }
-salvo = { version = "0.65", features = ["cors", "logging", "cache", "anyhow", "basic-auth", "jwt-auth", "serve-static"] }
+salvo = { version = "0.66", features = ["cors", "logging", "cache", "anyhow", "basic-auth", "jwt-auth", "serve-static"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
@@ -29,9 +29,9 @@ serde = { version = "1", features = ["derive"] }
 # sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" , "postgres", "bstr" ] }
 sqlx = { version = "0.7", features = [ "runtime-tokio-native-tls" , "postgres" ] }
 
-redis = { version = "0.24.0", features = ["tokio-comp"] }
+redis = { version = "0.25.0", features = ["tokio-comp"] }
 bb8 = "0.8"
-bb8-redis = "0.14"
+bb8-redis = "0.15"
 
 [profile.release]
 opt-level = 'z' # Optimize for size
