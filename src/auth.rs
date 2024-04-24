@@ -196,7 +196,6 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
     }
 }
 
-// pub fn auth_handler(secret_key: String) -> JwtAuth<JwtClaims, ConstDecoder> {
 pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
     let jwt_secret = get_jwt_secret();
 
