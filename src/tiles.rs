@@ -5,6 +5,7 @@ use salvo::prelude::*;
 use sqlx::PgPool;
 use std::path::PathBuf;
 use std::time::Instant;
+use std::borrow::Cow;
 
 enum Via {
     DATABASE,
@@ -118,8 +119,6 @@ async fn query_database(
     Ok(tile.into())
 }
 
-use std::borrow::Cow;
-
 async fn get_tile(
     pg_pool: PgPool,
     disk_cache: DiskCache,
@@ -209,77 +208,6 @@ async fn write_cache(
     }
     Ok(())
 }
-
-// async fn get_tile(
-//     pg_pool: PgPool,
-//     disk_cache: DiskCache,
-//     layer_conf: Layer,
-//     x: u32,
-//     y: u32,
-//     z: u32,
-//     filter: String,
-// ) -> Result<(Bytes, Via), anyhow::Error> {
-//     let name = &layer_conf.name;
-//     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
-//
-//     // let write_cache = filter.is_empty();
-//     let query: String = if !filter.is_empty() {
-//         filter
-//     } else {
-//         layer_conf.clone().filter.unwrap_or(String::new())
-//     };
-//     let write_cache = query.is_empty();
-//
-//     let tilefolder = disk_cache
-//         .cache_dir
-//         .join(name.to_string())
-//         .join(&z.to_string())
-//         .join(&x.to_string());
-//     let tilepath = tilefolder.join(&y.to_string()).with_extension("pbf");
-//
-//     let key = format!("{name}:{z}:{x}:{y}");
-//     let app_state = get_app_state();
-//     let use_redis_cache = app_state.use_redis_cache;
-//     let redis_cache = &app_state.redis_cache;
-//
-//     if use_redis_cache {
-//         match redis_cache {
-//             Some(rc) => {
-//                 if rc.exists_key(key.clone()).await? {
-//                     let tile  = rc.get_cache(key).await?;
-//                     return Ok((tile.into(), Via::REDIS));
-//                 }
-//             },
-//             None => {
-//
-//             }
-//         }
-//     } else {
-//         if let Ok(cached_tile) = disk_cache.get_cache(tilepath.clone(), max_cache_age).await {
-//             return Ok((cached_tile, Via::DISK));
-//         }
-//     }
-//
-//     let tile: Bytes = query_database(pg_pool.clone(), layer_conf.clone(), x, y, z, query)
-//         .await?
-//         .into();
-//
-//     if write_cache {
-//         if use_redis_cache {
-//             match redis_cache {
-//                 Some(rc) => {
-//                     rc.write_tile_to_cache(key, &tile.to_vec(), max_cache_age).await?;
-//                 },
-//                 None => {
-//                     disk_cache.write_tile_to_file(&tilepath, &tile).await?;
-//                 }
-//             }
-//         } else {
-//             disk_cache.write_tile_to_file(&tilepath, &tile).await?;
-//         }
-//     }
-//     Ok((tile.into(), Via::DATABASE))
-// }
 
 #[handler]
 pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Error> {
