@@ -8,24 +8,4 @@
     A simple, fast, and powerful vector tiles server. You can view the served layers from the 'Catalog' menu.
   </p>
 
-  <div hx-ext="client-side-templates">
-    <button
-      class="button is-info is-rounded"
-      hx-get="http://127.0.0.1:5800/api/perros"
-      hx-swap="innerHTML"
-      hx-target="#content"
-      hx-trigger="click"
-      mustache-array-template="foo"
-    >
-      Click Me
-    </button>
-
-    <p id="content">Contenido de foo aquí</p>
-
-    <template id="foo">
-      [[#data]]
-        <p><b>[[nombre]]</b> tiene [[edad]] años. Estilo Fondo [[estilo.fondo]]</p>
-      [[/data]]
-    </template>
-  </div>
-{% endblock %}
+  {% endblock %}
