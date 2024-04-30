@@ -3,9 +3,9 @@ use bytes::Bytes;
 use salvo::http::header::HeaderValue;
 use salvo::prelude::*;
 use sqlx::PgPool;
+use std::borrow::Cow;
 use std::path::PathBuf;
 use std::time::Instant;
-use std::borrow::Cow;
 
 enum Via {
     DATABASE,
