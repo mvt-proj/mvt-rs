@@ -106,5 +106,35 @@
     });
   });
 
+
+  map.on('click', '{{ name }}', (e) => {
+    let features = map.queryRenderedFeatures(e.point, { layers: ['{{ name }}'] });
+
+    if (!features.length) {
+      return;
+    }
+
+    let feature = features[0];
+    // let popupContent = '<h5 class="title is-5">' + feature.layer.id + '</h5>';
+    let popupContent = '<h5 class="title is-5">{{ alias }}</h5>';
+
+    for (var prop in feature.properties) {
+      popupContent += '<p><strong>' + prop + ':</strong> ' + feature.properties[prop] + '</p>';
+    }
+
+    new maplibregl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML(popupContent)
+      .addTo(map);
+  });
+
+  map.on('mouseenter', '{{ name }}', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', '{{ name }}', () => {
+    map.getCanvas().style.cursor = '';
+  });
+
 </script>
 {% endblock %}
