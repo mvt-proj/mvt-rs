@@ -63,11 +63,7 @@ async fn query_database(
         extent = extent_do_not_simplify;
     }
 
-    let clip_geom = if layer_conf.clip_geom.unwrap_or(true) {
-        "true"
-    } else {
-        "false"
-    };
+    let clip_geom = layer_conf.clip_geom.unwrap_or(true).to_string();
 
     let sql: String;
     if !query.is_empty() {
