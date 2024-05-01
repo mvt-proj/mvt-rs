@@ -8,9 +8,9 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 enum Via {
-    DATABASE,
-    DISK,
-    REDIS,
+    Database,
+    Disk,
+    Redis,
 }
 
 use crate::{
@@ -21,18 +21,18 @@ use crate::{
 };
 
 fn convert_fields(fields: Vec<String>) -> String {
-    let vec_fields: Vec<String>;
-    if fields.len() == 1 {
-        vec_fields = fields[0]
+    // let vec_fields: Vec<String>;
+    let vec_fields: Vec<String> = if fields.len() == 1 {
+        fields[0]
             .split(',')
             .map(|s| format!("\"{}\"", s.trim()))
-            .collect();
+            .collect()
     } else {
-        vec_fields = fields
+        fields
             .iter()
             .map(|field| format!("\"{}\"", field))
-            .collect::<Vec<_>>();
-    }
+            .collect::<Vec<_>>()
+    };
     vec_fields.join(", ")
 }
 
@@ -72,10 +72,8 @@ async fn query_database(
         String::new()
     };
 
-    let sql: String;
-
-    if sql_mode == "CTE" {
-        sql = format!(
+    let sql: String = if sql_mode == "CTE" {
+        format!(
             r#"
             WITH mvtgeom AS (
                 SELECT
@@ -96,9 +94,9 @@ async fn query_database(
             SELECT ST_AsMVT(mvtgeom.*, '{name}', {extent}, 'geom') AS tile
             FROM mvtgeom;
             "#
-        );
+        )
     } else {
-        sql = format!(
+        format!(
             r#"
                 SELECT ST_AsMVT(tile, '{name}', {extent}, 'geom') FROM (
                   SELECT
@@ -117,8 +115,8 @@ async fn query_database(
                     {query_placeholder}
                 ) as tile;
             "#
-        );
-    }
+        )
+    };
 
     let rec: (Option<Vec<u8>>,) = sqlx::query_as(&sql).fetch_one(&pg_pool).await.unwrap();
 
@@ -147,9 +145,9 @@ async fn get_tile(
     let tilefolder = disk_cache
         .cache_dir
         .join(name)
-        .join(&z.to_string())
-        .join(&x.to_string());
-    let tilepath = tilefolder.join(&y.to_string()).with_extension("pbf");
+        .join(z.to_string())
+        .join(x.to_string());
+    let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
 
     let key = format!("{name}:{z}:{x}:{y}");
     let app_state = get_app_state();
@@ -160,11 +158,11 @@ async fn get_tile(
         if let Some(rc) = redis_cache {
             if rc.exists_key(key.clone()).await? {
                 let tile = rc.get_cache(key).await?;
-                return Ok((tile.into(), Via::REDIS));
+                return Ok((tile, Via::Redis));
             }
         }
     } else if let Ok(cached_tile) = disk_cache.get_cache(tilepath.clone(), max_cache_age).await {
-        return Ok((cached_tile, Via::DISK));
+        return Ok((cached_tile, Via::Disk));
     }
 
     let tile: Bytes = query_database(
@@ -176,8 +174,7 @@ async fn get_tile(
         z,
         query.to_string(),
     )
-    .await?
-    .into();
+    .await?;
 
     if write_cache(
         key,
@@ -191,7 +188,7 @@ async fn get_tile(
     .await
     .is_ok()
     {
-        Ok((tile.into(), Via::DATABASE))
+        Ok((tile, Via::Database))
     } else {
         Err(anyhow!("Error writing cache"))
     }
@@ -208,8 +205,7 @@ async fn write_cache(
 ) -> Result<(), anyhow::Error> {
     if use_redis_cache {
         if let Some(rc) = redis_cache {
-            rc.write_tile_to_cache(key, &tile.to_vec(), max_cache_age)
-                .await?;
+            rc.write_tile_to_cache(key, tile, max_cache_age).await?;
         }
     } else {
         disk_cache.write_tile_to_file(tilepath, tile).await?;
@@ -229,7 +225,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Er
     let catalog: Catalog = get_catalog().clone();
     let disk_cache: DiskCache = get_disk_cache().clone();
 
-    let layer = catalog.find_layer_by_name(&layer_name, StateLayer::PUBLISHED);
+    let layer = catalog.find_layer_by_name(&layer_name, StateLayer::Published);
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse().unwrap(),
@@ -254,15 +250,15 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Er
             );
 
             match via {
-                Via::DATABASE => {
+                Via::Database => {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("MISS"));
                 }
-                Via::DISK => {
+                Via::Disk => {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("HIT Cached Disk"));
                 }
-                Via::REDIS => {
+                Via::Redis => {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("HIT Cached Redis"));
                 }

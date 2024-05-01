@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use crate::storage::Storage;
 
 pub enum StateLayer {
-    ANY,
-    PUBLISHED,
+    Any,
+    Published,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -39,19 +39,11 @@ pub struct Layer {
 
 impl Layer {
     pub fn get_geom(&self) -> String {
-        self.geom
-            .as_ref()
-            .map(|s| s.as_str())
-            .unwrap_or("geom")
-            .to_string()
+        self.geom.as_deref().unwrap_or("geom").to_string()
     }
 
     pub fn get_filter(&self) -> String {
-        self.filter
-            .as_ref()
-            .map(|s| s.as_str())
-            .unwrap_or("")
-            .to_string()
+        self.filter.as_deref().unwrap_or("").to_string()
     }
 
     pub fn get_srid(&self) -> u32 {
@@ -161,8 +153,8 @@ impl Catalog {
         state: StateLayer,
     ) -> Option<&'a Layer> {
         match state {
-            StateLayer::ANY => self.layers.iter().find(|layer| layer.name == target_name),
-            StateLayer::PUBLISHED => self
+            StateLayer::Any => self.layers.iter().find(|layer| layer.name == target_name),
+            StateLayer::Published => self
                 .layers
                 .iter()
                 .find(|layer| layer.name == target_name && layer.published),
@@ -175,11 +167,11 @@ impl Catalog {
         state: StateLayer,
     ) -> Option<usize> {
         match state {
-            StateLayer::ANY => self
+            StateLayer::Any => self
                 .layers
                 .iter()
                 .position(|layer| layer.name == target_name),
-            StateLayer::PUBLISHED => self
+            StateLayer::Published => self
                 .layers
                 .iter()
                 .position(|layer| layer.name == target_name && layer.published),

@@ -1,5 +1,4 @@
 use clap::{Arg, Command};
-use dotenv;
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::cell::OnceCell;
@@ -67,7 +66,7 @@ pub fn get_jwt_secret() -> &'static String {
 
 async fn init(config_dir: &str) {
     if !Path::new(&config_dir).exists() {
-        std::fs::create_dir(&config_dir).unwrap();
+        std::fs::create_dir(config_dir).unwrap();
     }
     // Catalog
     let path = format!("{config_dir}/catalog.json");
@@ -203,7 +202,7 @@ async fn main() {
         sql_mode = std::env::var("SQLMODE").unwrap_or(String::from("CTE"));
     }
     if redis_conn.is_empty() {
-        redis_conn = std::env::var("REDISCONN").unwrap_or(String::new());
+        redis_conn = std::env::var("REDISCONN").unwrap_or_default();
     }
 
     if jwt_secret.is_empty() {

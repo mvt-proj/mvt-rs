@@ -29,7 +29,7 @@ impl RedisCache {
 
                 if !keys.is_empty() {
                     for key in keys {
-                        let _ = conn.del::<&str, ()>(&key).await.unwrap();
+                        conn.del::<&str, ()>(&key).await.unwrap();
                     }
                 }
             }

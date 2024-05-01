@@ -21,20 +21,19 @@ pub struct Field {
 }
 
 #[derive(FromRow, Serialize, Debug)]
-pub struct SRID {
+pub struct Srid {
     pub name: i32,
 }
 
 pub async fn query_schemas() -> Result<Vec<Schema>, sqlx::Error> {
     let pg_pool: PgPool = get_db_pool().clone();
 
-    let sql = format!(
-        r#"
+    let sql = r#"
             SELECT schema_name name
             FROM information_schema.schemata
             ORDER BY schema_name;
         "#
-    );
+    .to_string();
 
     let data = sqlx::query_as::<_, Schema>(&sql)
         .fetch_all(&pg_pool)
@@ -88,7 +87,7 @@ pub async fn query_srid(
     schema: String,
     table: String,
     geometry: String,
-) -> Result<SRID, sqlx::Error> {
+) -> Result<Srid, sqlx::Error> {
     let pg_pool: PgPool = get_db_pool().clone();
 
     let sql = format!(
@@ -99,6 +98,6 @@ pub async fn query_srid(
         "#
     );
 
-    let data = sqlx::query_as::<_, SRID>(&sql).fetch_one(&pg_pool).await?;
+    let data = sqlx::query_as::<_, Srid>(&sql).fetch_one(&pg_pool).await?;
     Ok(data)
 }

@@ -19,7 +19,7 @@ impl DiskCache {
     pub async fn delete_cache_dir(&self, catalog: Catalog) {
         for layer in catalog.layers.iter() {
             if layer.delete_cache_on_start.unwrap() {
-                let dir_path = Path::new(&self.cache_dir).join(layer.name.to_string());
+                let dir_path = Path::new(&self.cache_dir).join(&layer.name);
 
                 if let Err(err) = tokio::fs::remove_dir_all(&dir_path).await {
                     tracing::warn!(
@@ -68,7 +68,7 @@ impl DiskCache {
         tile: &[u8],
     ) -> Result<(), anyhow::Error> {
         if let Some(parent) = tilepath.parent() {
-            if !fs::metadata(parent).await.is_ok() {
+            if fs::metadata(parent).await.is_err() {
                 fs::create_dir_all(parent).await?;
             }
         }

@@ -62,7 +62,7 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response) {
     let layer_name = req.param::<String>("layer_name").unwrap();
     let catalog = get_catalog().clone();
     let layer = catalog
-        .find_layer_by_name(&layer_name, StateLayer::ANY)
+        .find_layer_by_name(&layer_name, StateLayer::Any)
         .unwrap();
     let template = EditLayerTemplate {
         layer: layer.clone(),

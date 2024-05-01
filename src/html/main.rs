@@ -56,7 +56,7 @@ pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), Statu
     let layer_name = req.param::<String>("layer_name").unwrap();
 
     let lyr = catalog
-        .find_layer_by_name(&layer_name, StateLayer::PUBLISHED)
+        .find_layer_by_name(&layer_name, StateLayer::Published)
         .ok_or_else(|| {
             StatusError::not_found()
                 .brief("Layer not found")

@@ -2,7 +2,7 @@ use askama::Template;
 use salvo::prelude::*;
 
 use crate::database::{
-    query_fields, query_schemas, query_srid, query_tables, Field, Schema, Table, SRID,
+    query_fields, query_schemas, query_srid, query_tables, Field, Schema, Srid, Table,
 };
 
 #[derive(Template)]
@@ -30,17 +30,13 @@ struct FieldTemplate<'a> {
 #[derive(Template)]
 #[template(path = "admin/database/srid.html")]
 struct SRIDTemplate<'a> {
-    srid: &'a SRID,
+    srid: &'a Srid,
 }
 
 #[handler]
 pub async fn schemas(req: &mut Request, res: &mut Response) {
-    let schema_selected = req
-        .query::<String>("schema_selected")
-        .unwrap_or(String::new());
-    let table_selected = req
-        .query::<String>("table_selected")
-        .unwrap_or(String::new());
+    let schema_selected = req.query::<String>("schema_selected").unwrap_or_default();
+    let table_selected = req.query::<String>("table_selected").unwrap_or_default();
     let rv = query_schemas().await.unwrap();
 
     let template = SchemaTemplate {
@@ -54,9 +50,7 @@ pub async fn schemas(req: &mut Request, res: &mut Response) {
 #[handler]
 pub async fn tables(req: &mut Request, res: &mut Response) {
     let schema = req.query::<String>("schema").unwrap();
-    let table_selected = req
-        .query::<String>("table_selected")
-        .unwrap_or(String::new());
+    let table_selected = req.query::<String>("table_selected").unwrap_or_default();
 
     let rv = query_tables(schema).await.unwrap();
     let template = TableTemplate {
@@ -72,17 +66,17 @@ pub async fn fields(req: &mut Request, res: &mut Response) {
     let table = req.query::<String>("table").unwrap();
     let fields_selected_vec = req
         .query::<Vec<String>>("fields_selected")
-        .unwrap_or(vec![]);
+        .unwrap_or_default();
 
     let fields_selected: Vec<String> = fields_selected_vec
-        .get(0)
+        .first()
         .map(|fields_selected_str| {
             fields_selected_str
                 .split(',')
                 .map(|s| s.trim().to_string())
                 .collect()
         })
-        .unwrap_or_else(|| Vec::new());
+        .unwrap_or_default();
 
     let rv = query_fields(schema, table).await.unwrap();
 

@@ -1,7 +1,7 @@
 use salvo::prelude::*;
 
 use crate::database::{
-    query_fields, query_schemas, query_srid, query_tables, Field, Schema, Table, SRID,
+    query_fields, query_schemas, query_srid, query_tables, Field, Schema, Srid, Table,
 };
 
 #[handler]
@@ -59,7 +59,7 @@ pub async fn fields(req: &mut Request) -> Result<Json<Vec<Field>>, StatusError> 
 }
 
 #[handler]
-pub async fn srid(req: &mut Request) -> Result<Json<SRID>, StatusError> {
+pub async fn srid(req: &mut Request) -> Result<Json<Srid>, StatusError> {
     let schema = req.param::<String>("schema").unwrap();
     let table = req.param::<String>("table").unwrap();
     let geometry = req.param::<String>("geometry").unwrap();

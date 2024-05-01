@@ -57,7 +57,7 @@ impl Auth {
         let loaded_users = storage.load().await?;
         let mut users: Vec<User> = loaded_users.unwrap_or(Vec::new());
 
-        if users.len() == 0 {
+        if users.is_empty() {
             let salt = SaltString::encode_b64(salt_string.as_bytes()).unwrap();
             let argon2 = Argon2::default();
             let password_hash = argon2

@@ -26,7 +26,7 @@ pub fn app_router() -> salvo::Router {
         .defaults("index.html")
         .auto_list(true);
 
-    let router = Router::new()
+    Router::new()
         .hoop(Logger::default())
         .get(html::main::index)
         .push(Router::with_path("error404").get(html::main::error404))
@@ -139,6 +139,5 @@ pub fn app_router() -> salvo::Router {
                 .options(handler::empty())
                 .get(tiles::mvt),
         )
-        .push(Router::with_path("static/<**path>").get(static_dir));
-    router
+        .push(Router::with_path("static/<**path>").get(static_dir))
 }
