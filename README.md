@@ -92,6 +92,8 @@ The server uses environment variables for its configuration. Make sure to create
 
 - `POOLSIZEMAX`: Maximum size of the connection pool. Example: `5`
 
+- `SQLMODE`: CTE: Common Table Expression or SQ: Subquery. Default: `CTE`
+
 - `IPHOST`: The IP address where the server will listen. Example: `0.0.0.0`
 
 - `PORT`: The port on which the server will run. Example: `5880`
@@ -164,6 +166,7 @@ Options:
   -c, --config <CONFIGDIR>     Directory where config files are placed [default: config]
   -b, --cache <CACHEDIR>       Directory where cache files are placed [default: cache]
   -d, --dbconn <DBCONN>        Database connection
+  -s, --sqlmode <SQLMODE>      CTE: Common Table Expression or SQ: Subquery
   -r, --redisconn <REDISCONN>  Redis connection
   -j, --jwtsecret <JWTSECRET>  JWT secret key
   -h, --help                   Print help
