@@ -38,6 +38,7 @@ fn convert_fields(fields: Vec<String>) -> String {
 
 async fn query_database(
     pg_pool: PgPool,
+    sql_mode: String,
     layer_conf: Layer,
     x: u32,
     y: u32,
@@ -65,49 +66,60 @@ async fn query_database(
 
     let clip_geom = layer_conf.clip_geom.unwrap_or(true).to_string();
 
+    let query_placeholder = if !query.is_empty() {
+        format!("AND {query}")
+    } else {
+        String::new()
+    };
+
     let sql: String;
-    if !query.is_empty() {
+
+    if sql_mode == "CTE" {
         sql = format!(
             r#"
-            SELECT ST_AsMVT(tile, '{name}', {extent}, 'geom') FROM (
-              SELECT
-                {fields},
-                ST_AsMVTGeom(
-                  ST_Transform({geom}, 3857),
-                  ST_TileEnvelope({z}, {x}, {y}),
-                  {extent},
-                  {buffer},
-                  {clip_geom}
-                ) AS geom
-              FROM "{schema}"."{table}"
-              WHERE
-                geom && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
-                AND {geom} IS NOT NULL
-                AND {query}
-            ) as tile;
-        "#
+            WITH mvtgeom AS (
+                SELECT
+                    {fields},
+                    ST_AsMVTGeom(
+                        ST_Transform({geom}, 3857),
+                        ST_TileEnvelope({z}, {x}, {y}),
+                        {extent},
+                        {buffer},
+                        {clip_geom}
+                    ) AS geom
+                FROM "{schema}"."{table}"
+                WHERE
+                    geom && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
+                    AND {geom} IS NOT NULL
+                    {query_placeholder}
+            )
+            SELECT ST_AsMVT(mvtgeom.*, '{name}', {extent}, 'geom') AS tile
+            FROM mvtgeom;
+            "#
         );
     } else {
         sql = format!(
             r#"
-            SELECT ST_AsMVT(tile, '{name}', {extent}, 'geom') FROM (
-              SELECT
-                {fields},
-                ST_AsMVTGeom(
-                  ST_Transform({geom}, 3857),
-                  ST_TileEnvelope({z}, {x}, {y}),
-                  {extent},
-                  {buffer},
-                  {clip_geom}
-                ) AS geom
-              FROM "{schema}"."{table}"
-              WHERE
-                geom && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
-                AND {geom} IS NOT NULL
-            ) as tile;
-        "#
+                SELECT ST_AsMVT(tile, '{name}', {extent}, 'geom') FROM (
+                  SELECT
+                    {fields},
+                    ST_AsMVTGeom(
+                      ST_Transform({geom}, 3857),
+                      ST_TileEnvelope({z}, {x}, {y}),
+                      {extent},
+                      {buffer},
+                      {clip_geom}
+                    ) AS geom
+                  FROM "{schema}"."{table}"
+                  WHERE
+                    geom && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
+                    AND {geom} IS NOT NULL
+                    {query_placeholder}
+                ) as tile;
+            "#
         );
     }
+
 
     let rec: (Option<Vec<u8>>,) = sqlx::query_as(&sql).fetch_one(&pg_pool).await.unwrap();
 
@@ -158,6 +170,7 @@ async fn get_tile(
 
     let tile: Bytes = query_database(
         pg_pool.clone(),
+        app_state.sql_mode.clone(),
         layer_conf.clone(),
         x,
         y,

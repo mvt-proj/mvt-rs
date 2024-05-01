@@ -30,6 +30,7 @@ use rediscache::RedisCache;
 #[derive(Debug)]
 pub struct AppState {
     db_pool: PgPool,
+    sql_mode: String,
     catalog: Catalog,
     disk_cache: DiskCache,
     auth: Auth,
@@ -126,6 +127,14 @@ async fn main() {
                 .help("Database connection"),
         )
         .arg(
+            Arg::new("sqlmode")
+                .short('s')
+                .long("sqlmode")
+                .value_name("SQLMODE")
+                .required(false)
+                .help("SQL Query Mode. CTE: Common Table Expression - SQ: Subquery"),
+        )
+        .arg(
             Arg::new("redisconn")
                 .short('r')
                 .long("redisconn")
@@ -152,6 +161,9 @@ async fn main() {
 
     let mut db_conn = String::new();
     let mut redis_conn = String::new();
+    let mut sql_mode = String::new();
+    let mut jwt_secret = String::new();
+
     if matches.contains_id("dbconn") {
         db_conn = matches
             .get_one::<String>("dbconn")
@@ -166,7 +178,13 @@ async fn main() {
             .to_string();
     }
 
-    let mut jwt_secret = String::new();
+    if matches.contains_id("sqlmode") {
+        sql_mode = matches
+            .get_one::<String>("sqlmode")
+            .expect("required")
+            .to_string();
+    }
+
     if matches.contains_id("jwtsecret") {
         jwt_secret = matches
             .get_one::<String>("jwtsecret")
@@ -179,6 +197,10 @@ async fn main() {
 
     if db_conn.is_empty() {
         db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
+    }
+
+    if sql_mode.is_empty() {
+        sql_mode = std::env::var("SQLMODE").unwrap_or(String::from("CTE"));
     }
     if redis_conn.is_empty() {
         redis_conn = std::env::var("REDISCONN").unwrap_or(String::new());
@@ -232,6 +254,7 @@ async fn main() {
 
     let app_state = AppState {
         db_pool,
+        sql_mode,
         catalog,
         disk_cache,
         auth,
