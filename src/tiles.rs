@@ -120,7 +120,6 @@ async fn query_database(
         );
     }
 
-
     let rec: (Option<Vec<u8>>,) = sqlx::query_as(&sql).fetch_one(&pg_pool).await.unwrap();
 
     let tile = rec.0.unwrap_or_default();
