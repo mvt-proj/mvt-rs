@@ -180,7 +180,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 .short('s')
                 .long("sqlmode")
                 .value_name("SQLMODE")
-                .required(false)
+                .default_value("CTE")
                 .help("SQL Query Mode. CTE: Common Table Expression - SQ: Subquery"),
         )
         .arg(
