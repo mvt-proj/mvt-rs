@@ -165,6 +165,8 @@ Usage: mvt-rs [OPTIONS]
 Options:
   -c, --config <CONFIGDIR>     Directory where config files are placed [default: config]
   -b, --cache <CACHEDIR>       Directory where cache files are placed [default: cache]
+  -i, --host <HOST>            Bind address
+  -p, --port <PORT>            Bind port
   -d, --dbconn <DBCONN>        Database connection
   -s, --sqlmode <SQLMODE>      CTE: Common Table Expression or SQ: Subquery
   -r, --redisconn <REDISCONN>  Redis connection

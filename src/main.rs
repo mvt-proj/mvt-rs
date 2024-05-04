@@ -152,6 +152,22 @@ async fn main() -> Result<(), anyhow::Error> {
                 .help("Directory where cache files are placed"),
         )
         .arg(
+            Arg::new("host")
+                .short('i')
+                .long("host")
+                .value_name("HOST")
+                .default_value("0.0.0.0")
+                .help("Bind address"),
+        )
+        .arg(
+            Arg::new("port")
+                .short('p')
+                .long("port")
+                .value_name("PORT")
+                .default_value("5887")
+                .help("Bind port"),
+        )
+        .arg(
             Arg::new("dbconn")
                 .short('d')
                 .long("dbconn")
@@ -192,10 +208,26 @@ async fn main() -> Result<(), anyhow::Error> {
 
     dotenv::dotenv().ok();
 
+    let mut host = String::new();
+    let mut port = String::new();
     let mut db_conn = String::new();
     let mut redis_conn = String::new();
     let mut sql_mode = String::new();
     let mut jwt_secret = String::new();
+
+    if matches.contains_id("host") {
+        host = matches
+            .get_one::<String>("host")
+            .expect("required")
+            .to_string();
+    }
+
+    if matches.contains_id("port") {
+        port = matches
+            .get_one::<String>("port")
+            .expect("required")
+            .to_string();
+    }
 
     if matches.contains_id("dbconn") {
         db_conn = matches
@@ -225,8 +257,14 @@ async fn main() -> Result<(), anyhow::Error> {
             .to_string();
     }
 
-    let host = std::env::var("IPHOST").unwrap_or("127.0.0.1".to_string());
-    let port = std::env::var("PORT").unwrap_or("5887".to_string());
+
+    if host.is_empty() {
+        host = std::env::var("IPHOST").expect("IPHOST needs to be defined");
+    }
+
+    if port.is_empty() {
+        port = std::env::var("PORT").expect("PORT needs to be defined");
+    }
 
     if db_conn.is_empty() {
         db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
