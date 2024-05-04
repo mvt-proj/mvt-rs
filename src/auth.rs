@@ -47,10 +47,7 @@ pub struct Auth {
 }
 
 impl Auth {
-    pub async fn new(
-        config_dir: &str,
-        salt_string: String,
-    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(config_dir: &str, salt_string: String) -> Result<Self, anyhow::Error> {
         let storage_path = format!("{config_dir}/users.json");
 
         let mut storage = Storage::<Vec<User>>::new(storage_path.clone());

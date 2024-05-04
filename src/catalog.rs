@@ -134,7 +134,7 @@ pub struct Catalog {
 }
 
 impl Catalog {
-    pub async fn new(config_dir: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(config_dir: &str) -> Result<Self, anyhow::Error> {
         let storage_path = format!("{config_dir}/catalog.json");
         let mut storage = Storage::<Vec<Layer>>::new(storage_path.clone());
         let loaded_catalog = storage.load().await?;

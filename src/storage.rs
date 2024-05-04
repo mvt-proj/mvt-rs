@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::error::Error;
+// use std::error::Error;
 use std::path::Path;
 use tokio::fs::{File, OpenOptions};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -24,7 +24,7 @@ impl<T> Storage<T> {
         }
     }
 
-    pub async fn save(&mut self, data: T) -> Result<(), Box<dyn Error + Send + Sync>>
+    pub async fn save(&mut self, data: T) -> Result<(), anyhow::Error>
     where
         T: Serialize,
     {
@@ -45,7 +45,7 @@ impl<T> Storage<T> {
         Ok(())
     }
 
-    pub async fn load(&mut self) -> Result<Option<T>, Box<dyn Error + Send + Sync>>
+    pub async fn load(&mut self) -> Result<Option<T>, anyhow::Error>
     where
         T: for<'de> Deserialize<'de>,
     {

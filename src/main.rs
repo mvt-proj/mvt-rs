@@ -7,6 +7,8 @@ use std::path::Path;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
+use anyhow::{anyhow, Context};
+
 mod api;
 mod auth;
 mod cache;
@@ -64,35 +66,67 @@ pub fn get_jwt_secret() -> &'static String {
     unsafe { &APP_STATE.get().unwrap().jwt_secret }
 }
 
-async fn init(config_dir: &str) {
-    if !Path::new(&config_dir).exists() {
-        std::fs::create_dir(config_dir).unwrap();
+async fn create_config_files(config_dir: &str) -> Result<(), anyhow::Error> {
+    let paths_to_create = ["catalog.json", "users.json"];
+    for path in paths_to_create.iter() {
+        let file_path = Path::new(config_dir).join(path);
+        if !file_path.exists() {
+            let json_str = "[]";
+            let mut file = File::create(file_path).await?;
+            file.write_all(json_str.as_bytes()).await?;
+            file.flush().await?;
+        }
     }
-    // Catalog
-    let path = format!("{config_dir}/catalog.json");
-    let file_path = Path::new(&path);
-
-    if !file_path.exists() {
-        let json_str = "[]";
-        let mut file = File::create(file_path).await.unwrap();
-        file.write_all(json_str.as_bytes()).await.unwrap();
-        file.flush().await.unwrap();
-    }
-
-    // Users
-    let path = format!("{config_dir}/users.json");
-    let file_path = Path::new(&path);
-
-    if !file_path.exists() {
-        let json_str = "[]";
-        let mut file = File::create(file_path).await.unwrap();
-        file.write_all(json_str.as_bytes()).await.unwrap();
-        file.flush().await.unwrap();
-    }
+    Ok(())
 }
 
+async fn initialize_auth(config_dir: &str, salt_string: String) -> Result<Auth, anyhow::Error> {
+    Auth::new(config_dir, salt_string)
+        .await
+        .map_err(|err| anyhow!("Error initializing 'Auth': {}", err))
+        .context("Failed to initialize 'Auth'")
+}
+
+async fn initialize_catalog(config_dir: &str) -> Result<Catalog, anyhow::Error> {
+    Catalog::new(config_dir)
+        .await
+        .map_err(|err| anyhow!("Error initializing 'Catalog': {}", err))
+        .context("Failed to initialize 'Catalog'")
+}
+
+async fn initialize_redis_cache(
+    redis_conn: String,
+    catalog: &Catalog,
+) -> Result<Option<RedisCache>, anyhow::Error> {
+    if redis_conn.is_empty() {
+        return Ok(None);
+    }
+
+    match RedisCache::new(redis_conn).await {
+        Ok(cache) => {
+            cache
+                .delete_cache(catalog.clone())
+                .await
+                .with_context(|| "Failed to delete cache for catalog".to_string())?;
+            Ok(Some(cache))
+        }
+        Err(e) => {
+            tracing::error!("Failed to create Redis cache: {}", e);
+            Ok(None)
+        }
+    }
+}
+// async fn create_app_state() -> Result<AppState, anyhow::Error> {
+// }
+//
+//
+// async fn start_server(app_state: AppState) -> Result<(), anyhow::Error> {
+//     // Start the server here...
+//     Ok(())
+// }
+//
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), anyhow::Error> {
     tracing_subscriber::fmt()
         // .json()
         .with_env_filter("error")
@@ -154,7 +188,7 @@ async fn main() {
     let config_dir = matches.get_one::<String>("configdir").expect("required");
     let cache_dir = matches.get_one::<String>("cachedir").expect("required");
 
-    init(config_dir).await;
+    create_config_files(config_dir).await?;
 
     dotenv::dotenv().ok();
 
@@ -216,40 +250,42 @@ async fn main() {
     let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
     let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
 
-    let auth = Auth::new(config_dir, salt_string)
+    let auth = initialize_auth(config_dir, salt_string)
         .await
-        .expect("The 'auth' structure could not be initialized");
+        .with_context(|| {
+            format!(
+                "Failed to initialize 'Auth' for config directory '{}'",
+                config_dir
+            )
+        })?;
 
-    let catalog = Catalog::new(config_dir)
-        .await
-        .expect("The 'layers' structure could not be initialized");
+    let catalog = initialize_catalog(config_dir).await.with_context(|| {
+        format!(
+            "Failed to initialize 'Catalog' for config directory '{}'",
+            config_dir
+        )
+    })?;
 
-    let db_pool = match make_db_pool(&db_conn, db_pool_size_min, db_pool_size_max).await {
-        Ok(pool) => pool,
-        Err(e) => {
-            tracing::error!("Could not connect to the database {}", &db_conn);
-            panic!("Database connection error: {}", e);
-        }
-    };
+    let db_pool = make_db_pool(&db_conn, db_pool_size_min, db_pool_size_max).await?;
 
     let disk_cache = DiskCache::new(cache_dir.into());
     disk_cache.delete_cache_dir(catalog.clone()).await;
 
-    let redis_cache: Option<RedisCache>;
     let mut use_redis_cache = false;
-
-    if redis_conn.is_empty() {
-        redis_cache = None;
-    } else {
-        use_redis_cache = true;
-        let cache = RedisCache::new(redis_conn).await;
-        redis_cache = Some(cache);
-        redis_cache
-            .clone()
-            .unwrap()
-            .delete_cache(catalog.clone())
-            .await;
-    }
+    let redis_cache = match initialize_redis_cache(redis_conn, &catalog).await {
+        Ok(Some(cache)) => {
+            use_redis_cache = true;
+            Some(cache)
+        }
+        Ok(None) => None,
+        Err(err) => {
+            tracing::error!(
+                "Error initializing Redis cache: {}. The disk will be used as cache storage!",
+                err
+            );
+            None
+        }
+    };
 
     let app_state = AppState {
         db_pool,
@@ -268,4 +304,6 @@ async fn main() {
 
     let acceptor = TcpListener::new(format!("{host}:{port}")).bind().await;
     Server::new(acceptor).serve(routes::app_router()).await;
+
+    Ok(())
 }

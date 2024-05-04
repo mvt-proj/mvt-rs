@@ -1465,6 +1465,7 @@ dependencies = [
  "clap",
  "dotenv",
  "jsonwebtoken",
+ "log",
  "redis",
  "salvo",
  "serde",
