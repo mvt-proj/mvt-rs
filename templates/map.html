@@ -125,6 +125,7 @@
     new maplibregl.Popup()
       .setLngLat(e.lngLat)
       .setHTML(popupContent)
+      .setMaxWidth("600px")
       .addTo(map);
   });
 
