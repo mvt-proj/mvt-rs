@@ -21,7 +21,6 @@ use crate::{
 };
 
 fn convert_fields(fields: Vec<String>) -> String {
-    // let vec_fields: Vec<String>;
     let vec_fields: Vec<String> = if fields.len() == 1 {
         fields[0]
             .split(',')
