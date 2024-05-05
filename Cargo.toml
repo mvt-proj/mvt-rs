@@ -16,8 +16,6 @@ anyhow = "1"
 base64 = "0.22"
 log = "0.4"
 
-tempfile = "3.8.1"
-
 time = "0.3"
 jsonwebtoken = "9.1.0"
 chrono = { version = "0.4", features = ["serde"] }
