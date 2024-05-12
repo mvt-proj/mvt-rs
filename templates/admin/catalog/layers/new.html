@@ -48,13 +48,6 @@
         </div>
 
         <!-- schema -->
-        <!-- <div class="field" -->
-        <!--   hx-get="/admin/database/schemas" -->
-        <!--   hx-swap="outerHTML" -->
-        <!--   hx-trigger="load" -->
-        <!-- > -->
-        <!--   <label class="label" for="schema">Schema</label> -->
-        <!-- </div> -->
         <div class="field">
           <label class="label" for="schema">Schema</label>
           <div class="control">
@@ -103,19 +96,19 @@
           </div>
         </div>
 
-        <!-- filter -->
-        <div class="field">
-          <label class="label" for="filter">Filter</label>
-          <div class="control">
-            <textarea class="textarea" name="filter" id="filter" rows="3"></textarea>
-          </div>
-        </div>
-
         <!-- srid -->
         <div class="field">
           <label class="label" for="srid">SRID</label>
           <div class="control">
             <input class="input" type="text" name="srid" id="srid" value="4326" required>
+          </div>
+        </div>
+
+        <!-- filter -->
+        <div class="field">
+          <label class="label" for="filter">Filter</label>
+          <div class="control">
+            <textarea class="textarea" name="filter" id="filter" rows="3"></textarea>
           </div>
         </div>
 
@@ -241,4 +234,30 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+  document.addEventListener('htmx:afterSwap', function(event) {
+    var target = event.detail.target;
+
+    if (target.id === 'fields') {
+      var schemaValue = document.querySelector('[name="schema"]').value;
+      var tableValue = document.querySelector('[name="table"]').value;
+      var geomValue = document.querySelector('[name="geom"]').value;
+      var url = '/admin/database/srid?schema=' + encodeURIComponent(schemaValue) + '&table=' + encodeURIComponent(tableValue) + '&geometry=' + encodeURIComponent(geomValue);
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error al cargar SRID');
+          }
+          return response.json();
+        })
+        .then(data => {
+          document.querySelector('[name="srid"]').value = data;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+  });
+</script>
 {% endblock %}
