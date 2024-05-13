@@ -1,8 +1,12 @@
+// use anyhow::Ok;
 use askama::Template;
 use salvo::prelude::*;
 
-use crate::database::{
+use crate::{
+    error::{AppResult, AppError},
+    database::{
     query_fields, query_schemas, query_srid, query_tables, Field, Schema, Srid, Table,
+    }
 };
 
 #[derive(Template)]
@@ -34,36 +38,40 @@ struct SRIDTemplate<'a> {
 }
 
 #[handler]
-pub async fn schemas(req: &mut Request, res: &mut Response) {
+pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let schema_selected = req.query::<String>("schema_selected").unwrap_or_default();
     let table_selected = req.query::<String>("table_selected").unwrap_or_default();
-    let rv = query_schemas().await.unwrap();
+    let rv = query_schemas().await?;
 
     let template = SchemaTemplate {
         schemas: &rv,
         schema_selected,
         table_selected,
     };
-    res.render(Text::Html(template.render().unwrap()));
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
 }
 
 #[handler]
-pub async fn tables(req: &mut Request, res: &mut Response) {
-    let schema = req.query::<String>("schema").unwrap();
+pub async fn tables(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let schema = req.query::<String>("schema").ok_or(AppError::RequestParamError("schema".to_string()))?;
     let table_selected = req.query::<String>("table_selected").unwrap_or_default();
 
-    let rv = query_tables(schema).await.unwrap();
+    let rv = query_tables(schema).await?;
     let template = TableTemplate {
         tables: &rv,
         table_selected,
     };
-    res.render(Text::Html(template.render().unwrap()));
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
 }
 
 #[handler]
-pub async fn fields(req: &mut Request, res: &mut Response) {
-    let schema = req.query::<String>("schema").unwrap();
-    let table = req.query::<String>("table").unwrap();
+pub async fn fields(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let schema = req.query::<String>("schema").ok_or(AppError::RequestParamError("schema".to_string()))?;
+    let table = req.query::<String>("table").ok_or(AppError::RequestParamError("table".to_string()))?;
     let fields_selected_vec = req
         .query::<Vec<String>>("fields_selected")
         .unwrap_or_default();
@@ -78,22 +86,26 @@ pub async fn fields(req: &mut Request, res: &mut Response) {
         })
         .unwrap_or_default();
 
-    let rv = query_fields(schema, table).await.unwrap();
+    let rv = query_fields(schema, table).await?;
 
     let template = FieldTemplate {
         fields: &rv,
         fields_selected,
     };
-    res.render(Text::Html(template.render().unwrap()));
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
 }
 
 #[handler]
-pub async fn srid(req: &mut Request, res: &mut Response) {
-    let schema = req.query::<String>("schema").unwrap();
-    let table = req.query::<String>("table").unwrap();
-    let geometry = req.query::<String>("geometry").unwrap();
-    let rv = query_srid(schema, table, geometry).await.unwrap();
+pub async fn srid(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let schema = req.query::<String>("schema").ok_or(AppError::RequestParamError("schema".to_string()))?;
+    let table = req.query::<String>("table").ok_or(AppError::RequestParamError("table".to_string()))?;
+    let geometry = req.query::<String>("geometry").ok_or(AppError::RequestParamError("geometry".to_string()))?;
+    let rv = query_srid(schema, table, geometry).await?;
 
     let template = SRIDTemplate { srid: &rv };
-    res.render(Text::Html(template.render().unwrap()));
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
 }

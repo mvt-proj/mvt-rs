@@ -1,7 +1,7 @@
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
 
-use crate::get_db_pool;
+use crate::{get_db_pool, error::AppResult};
 
 #[derive(FromRow, Serialize, Debug)]
 pub struct Schema {
@@ -25,7 +25,7 @@ pub struct Srid {
     pub name: i32,
 }
 
-pub async fn query_schemas() -> Result<Vec<Schema>, sqlx::Error> {
+pub async fn query_schemas() -> AppResult<Vec<Schema>> {
     let pg_pool: PgPool = get_db_pool().clone();
 
     let sql = r#"
@@ -41,7 +41,7 @@ pub async fn query_schemas() -> Result<Vec<Schema>, sqlx::Error> {
     Ok(data)
 }
 
-pub async fn query_tables(schema: String) -> Result<Vec<Table>, sqlx::Error> {
+pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
     let pg_pool: PgPool = get_db_pool().clone();
 
     let sql = format!(
@@ -64,7 +64,7 @@ pub async fn query_tables(schema: String) -> Result<Vec<Table>, sqlx::Error> {
     Ok(data)
 }
 
-pub async fn query_fields(schema: String, table: String) -> Result<Vec<Field>, sqlx::Error> {
+pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>> {
     let pg_pool: PgPool = get_db_pool().clone();
 
     let sql = format!(
@@ -87,7 +87,7 @@ pub async fn query_srid(
     schema: String,
     table: String,
     geometry: String,
-) -> Result<Srid, sqlx::Error> {
+) -> AppResult<Srid> {
     let pg_pool: PgPool = get_db_pool().clone();
 
     let sql = format!(

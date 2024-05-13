@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 // use std::path::Path;
 // use tokio::fs::File;
 // use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use crate::storage::Storage;
+use crate::{storage::Storage, error::AppResult};
+
 
 pub enum StateLayer {
     Any,
@@ -134,7 +135,7 @@ pub struct Catalog {
 }
 
 impl Catalog {
-    pub async fn new(config_dir: &str) -> Result<Self, anyhow::Error> {
+    pub async fn new(config_dir: &str) -> AppResult<Self> {
         let storage_path = format!("{config_dir}/catalog.json");
         let mut storage = Storage::<Vec<Layer>>::new(storage_path.clone());
         let loaded_catalog = storage.load().await?;
@@ -178,7 +179,7 @@ impl Catalog {
         }
     }
 
-    pub async fn swich_layer_published(&mut self, target_name: &str) {
+    pub async fn swich_layer_published(&mut self, target_name: &str) -> AppResult<()> {
         let position = self
             .layers
             .iter()
@@ -188,29 +189,29 @@ impl Catalog {
             None => println!("layer not found"),
         }
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
-        storage.save(self.layers.clone()).await.unwrap();
+        storage.save(self.layers.clone()).await?;
+        Ok(())
     }
 
-    pub async fn add_layer(&mut self, layer: Layer) {
+    pub async fn add_layer(&mut self, layer: Layer) -> AppResult<()> {
         self.layers.push(layer);
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
-        storage.save(self.layers.clone()).await.unwrap();
+        storage.save(self.layers.clone()).await?;
+        Ok(())
     }
 
-    pub async fn update_layer(&mut self, layer: Layer) {
+    pub async fn update_layer(&mut self, layer: Layer) -> AppResult<()> {
         let position = self.layers.iter().position(|lyr| lyr.name == layer.name);
         match position {
             Some(index) => self.layers[index] = layer,
             None => println!("layer not found"),
         }
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
-        storage.save(self.layers.clone()).await.unwrap();
+        storage.save(self.layers.clone()).await?;
+        Ok(())
     }
 
-    pub async fn delete_layer(
-        &mut self,
-        name: String,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn delete_layer(&mut self, name: String) -> AppResult<()> {
         self.layers.retain(|lyr| lyr.name != name);
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
         storage.save(self.layers.clone()).await?;

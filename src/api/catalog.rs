@@ -30,7 +30,7 @@ pub async fn create_layer(req: &mut Request, res: &mut Response) {
 
     match layer {
         Ok(lyr) => {
-            app_state.catalog.add_layer(lyr.clone()).await;
+            let _ = app_state.catalog.add_layer(lyr.clone()).await;
             res.render(Json(lyr))
         }
         Err(e) => res.render(format!("{:?}", e)),

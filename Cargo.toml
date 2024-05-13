@@ -10,9 +10,10 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 dotenv = "0.15.0"
 clap = "4.4"
 bytes = "1.5.0"
-argon2 = "0.5.2"
+argon2 = { version = "0.5", features = ["std"] }
 askama = "0.12.1"
 anyhow = "1"
+thiserror = "1"
 base64 = "0.22"
 log = "0.4"
 

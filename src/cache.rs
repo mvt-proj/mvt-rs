@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
-use crate::Catalog;
+use crate::{error::{AppResult, AppError}, Catalog};
 use bytes::Bytes;
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -34,11 +34,7 @@ impl DiskCache {
         }
     }
 
-    pub async fn get_cache(
-        &self,
-        tilepath: PathBuf,
-        max_cache_age: u64,
-    ) -> Result<Bytes, anyhow::Error> {
+    pub async fn get_cache(&self, tilepath: PathBuf, max_cache_age: u64) -> AppResult<Bytes> {
         if let Ok(metadata) = fs::metadata(&tilepath).await {
             let cache_modified = match metadata.modified() {
                 Ok(modified_time) => modified_time,
@@ -59,14 +55,10 @@ impl DiskCache {
             }
         }
 
-        Err(anyhow::anyhow!("Cache not found"))
+        Err(AppError::CacheNotFount("aa".to_string()))
     }
 
-    pub async fn write_tile_to_file(
-        &self,
-        tilepath: &PathBuf,
-        tile: &[u8],
-    ) -> Result<(), anyhow::Error> {
+    pub async fn write_tile_to_file(&self, tilepath: &PathBuf, tile: &[u8]) -> AppResult<()> {
         if let Some(parent) = tilepath.parent() {
             if fs::metadata(parent).await.is_err() {
                 fs::create_dir_all(parent).await?;

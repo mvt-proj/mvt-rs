@@ -17,6 +17,7 @@ mod rediscache;
 mod routes;
 mod storage;
 mod tiles;
+mod error;
 
 use auth::Auth;
 use cache::DiskCache;

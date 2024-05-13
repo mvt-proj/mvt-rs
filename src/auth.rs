@@ -7,7 +7,7 @@ use time::{Duration, OffsetDateTime};
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
-use crate::{get_auth, get_jwt_secret, storage::Storage};
+use crate::{error::AppResult, get_auth, get_jwt_secret, storage::Storage};
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
@@ -47,7 +47,7 @@ pub struct Auth {
 }
 
 impl Auth {
-    pub async fn new(config_dir: &str, salt_string: String) -> Result<Self, anyhow::Error> {
+    pub async fn new(config_dir: &str, salt_string: String) -> AppResult<Self> {
         let storage_path = format!("{config_dir}/users.json");
 
         let mut storage = Storage::<Vec<User>>::new(storage_path.clone());
@@ -55,7 +55,7 @@ impl Auth {
         let mut users: Vec<User> = loaded_users.unwrap_or(Vec::new());
 
         if users.is_empty() {
-            let salt = SaltString::encode_b64(salt_string.as_bytes()).unwrap();
+            let salt = SaltString::encode_b64(salt_string.as_bytes())?;
             let argon2 = Argon2::default();
             let password_hash = argon2
                 .hash_password("admin".to_string().as_bytes(), &salt)
@@ -85,7 +85,7 @@ impl Auth {
         Ok(password_hash)
     }
 
-    fn validate_psw(&self, user: User, psw: &str) -> Result<bool, argon2::password_hash::Error> {
+    fn validate_psw(&self, user: User, psw: &str) -> AppResult<bool> {
         let salt = SaltString::encode_b64(self.salt_string.as_bytes())?;
         let argon2 = Argon2::default();
         let password_hash = argon2.hash_password(psw.as_bytes(), &salt)?.to_string();
@@ -104,7 +104,7 @@ impl Auth {
     pub async fn create_user(
         &mut self,
         user: User,
-    ) -> Result<User, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> AppResult<User> {
         self.users.push(user.clone());
         let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
 
@@ -112,7 +112,7 @@ impl Auth {
         Ok(user)
     }
 
-    pub async fn update_user(&mut self, user: User) {
+    pub async fn update_user(&mut self, user: User) -> AppResult<()> {
         let position = self
             .users
             .iter()
@@ -122,13 +122,14 @@ impl Auth {
             None => println!("user not found"),
         }
         let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
-        storage.save(self.users.clone()).await.unwrap();
+        storage.save(self.users.clone()).await?;
+        Ok(())
     }
 
     pub async fn delete_user(
         &mut self,
         username: String,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> AppResult<()> {
         self.users.retain(|user| user.username != username);
         let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
         storage.save(self.users.clone()).await?;
@@ -145,10 +146,10 @@ impl Auth {
             .position(|usr| usr.username == target_name)
     }
 
-    pub fn login(&mut self, username: &str, psw: &str) -> Result<String, anyhow::Error> {
+    pub fn login(&mut self, username: &str, psw: &str) -> AppResult<String> {
         let jwt_secret = get_jwt_secret();
         for user in self.users.clone().into_iter() {
-            if username == user.username && self.validate_psw(user, psw).unwrap() {
+            if username == user.username && self.validate_psw(user, psw)? {
                 let exp = OffsetDateTime::now_utc() + Duration::days(14);
                 let claim = JwtClaims {
                     username: username.to_owned(),

@@ -3,6 +3,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    error::{AppResult, AppError},
     catalog::{Catalog, Layer},
     get_app_state, get_catalog,
 };
@@ -40,16 +41,18 @@ struct NewLayer<'a> {
 }
 
 #[handler]
-pub async fn page_catalog(res: &mut Response) {
+pub async fn page_catalog(res: &mut Response) -> AppResult<()> {
     let catalog: Catalog = get_catalog().clone();
     let template = CatalogTemplate {
         layers: &catalog.layers,
     };
-    res.render(Text::Html(template.render().unwrap()));
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
 }
 
 #[handler]
-pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
+pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()>{
     let app_state = get_app_state();
 
     let layer = Layer {
@@ -76,14 +79,15 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
         url: None,
     };
 
-    app_state.catalog.add_layer(layer).await;
+    let _ = app_state.catalog.add_layer(layer).await;
     res.headers_mut()
-        .insert("content-type", "text/html".parse().unwrap());
+        .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
+    Ok(())
 }
 
 #[handler]
-pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
+pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
     let app_state = get_app_state();
     let layer = Layer {
         geometry: new_layer.geometry.to_string(),
@@ -109,28 +113,31 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) {
         url: None,
     };
 
-    app_state.catalog.update_layer(layer).await;
+    let _ = app_state.catalog.update_layer(layer).await;
     res.headers_mut()
-        .insert("content-type", "text/html".parse().unwrap());
+        .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
+    Ok(())
 }
 
 #[handler]
-pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) {
+pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let name = req.param::<String>("name").unwrap();
-    app_state.catalog.delete_layer(name).await.unwrap();
+    let name = req.param::<String>("name").ok_or(AppError::RequestParamError("name".to_string()))?;
+    let _ = app_state.catalog.delete_layer(name).await?;
     res.render(Redirect::other("/admin/catalog"));
+    Ok(())
 }
 
 #[handler]
-pub async fn swich_published(req: &mut Request, res: &mut Response) {
+pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let layer_name = req.param::<String>("layer_name").unwrap();
-    app_state.catalog.swich_layer_published(&layer_name).await;
+    let layer_name = req.param::<String>("layer_name").ok_or(AppError::RequestParamError("layer_name".to_string()))?;
+    let _ = app_state.catalog.swich_layer_published(&layer_name).await;
     res.headers_mut()
-        .insert("content-type", "text/html".parse().unwrap());
+        .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
+    Ok(())
 }

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokio::fs::{File, OpenOptions};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use crate::error::AppResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 struct Person {
@@ -24,7 +25,7 @@ impl<T> Storage<T> {
         }
     }
 
-    pub async fn save(&mut self, data: T) -> Result<(), anyhow::Error>
+    pub async fn save(&mut self, data: T) -> AppResult<()>
     where
         T: Serialize,
     {
@@ -45,7 +46,7 @@ impl<T> Storage<T> {
         Ok(())
     }
 
-    pub async fn load(&mut self) -> Result<Option<T>, anyhow::Error>
+    pub async fn load(&mut self) -> AppResult<Option<T>>
     where
         T: for<'de> Deserialize<'de>,
     {

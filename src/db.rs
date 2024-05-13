@@ -3,11 +3,13 @@ use sqlx::ConnectOptions;
 
 use std::time::Duration;
 
+use crate::error::AppResult;
+
 pub async fn make_db_pool(
     db_conn: &str,
     min_connections: u32,
     max_connections: u32,
-) -> anyhow::Result<sqlx::Pool<sqlx::Postgres>, anyhow::Error> {
+) -> AppResult<sqlx::Pool<sqlx::Postgres>> {
     let mut opts: PgConnectOptions = db_conn.parse()?;
 
     opts = opts
