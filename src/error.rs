@@ -1,6 +1,7 @@
 use salvo::prelude::*;
 // use tokio::sync::mpsc::error;
 use std::io;
+use std::num::TryFromIntError;
 use thiserror::Error;
 
 
@@ -45,6 +46,15 @@ pub enum AppError {
 
     #[error("Redis error: `{0}`")]
     RedisError(String),
+
+    #[error("failed to create Redis connection manager")]
+    ConnectionManager(#[from] redis::RedisError),
+
+    #[error("failed to build connection pool")]
+    Pool(#[from] bb8::RunError<redis::RedisError>),
+
+    #[error("Conversion error")]
+    Conversion(#[from] TryFromIntError),
 
     // #[error("Error obtaining connection: {0}")]
     // ConnectionError(#[from] redis::RedisError),

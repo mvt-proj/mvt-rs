@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use bytes::Bytes;
 use salvo::http::header::HeaderValue;
 use salvo::prelude::*;
@@ -14,6 +13,7 @@ enum Via {
 }
 
 use crate::{
+    error::AppResult,
     cache::DiskCache,
     catalog::{Catalog, Layer, StateLayer},
     get_app_state, get_catalog, get_db_pool, get_disk_cache,
@@ -43,7 +43,7 @@ async fn query_database(
     y: u32,
     z: u32,
     query: String,
-) -> Result<Bytes, anyhow::Error> {
+) -> AppResult<Bytes> {
     let name = layer_conf.name;
     let schema = layer_conf.schema;
     let table = layer_conf.table;
@@ -117,7 +117,7 @@ async fn query_database(
         )
     };
 
-    let rec: (Option<Vec<u8>>,) = sqlx::query_as(&sql).fetch_one(&pg_pool).await.unwrap();
+    let rec: (Option<Vec<u8>>,) = sqlx::query_as(&sql).fetch_one(&pg_pool).await?;
 
     let tile = rec.0.unwrap_or_default();
     Ok(tile.into())
@@ -131,7 +131,7 @@ async fn get_tile(
     y: u32,
     z: u32,
     filter: String,
-) -> Result<(Bytes, Via), anyhow::Error> {
+) -> AppResult<(Bytes, Via)> {
     let name = &layer_conf.name;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
 
@@ -175,7 +175,7 @@ async fn get_tile(
     )
     .await?;
 
-    if write_cache(
+    write_cache(
         key,
         &tile,
         &tilepath,
@@ -184,13 +184,8 @@ async fn get_tile(
         disk_cache,
         max_cache_age,
     )
-    .await
-    .is_ok()
-    {
-        Ok((tile, Via::Database))
-    } else {
-        Err(anyhow!("Error writing cache"))
-    }
+    .await?;
+    Ok((tile, Via::Database))
 }
 
 async fn write_cache(
@@ -201,7 +196,7 @@ async fn write_cache(
     redis_cache: &Option<RedisCache>,
     disk_cache: DiskCache,
     max_cache_age: u64,
-) -> Result<(), anyhow::Error> {
+) -> AppResult<()> {
     if use_redis_cache {
         if let Some(rc) = redis_cache {
             rc.write_tile_to_cache(key, tile, max_cache_age).await?;
@@ -213,7 +208,7 @@ async fn write_cache(
 }
 
 #[handler]
-pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Error> {
+pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let layer_name = req.param::<String>("layer_name").unwrap_or("".to_string());
     let x = req.param::<u32>("x").unwrap_or(0);
     let y = req.param::<u32>("y").unwrap_or(0);
@@ -227,7 +222,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> Result<(), anyhow::Er
     let layer = catalog.find_layer_by_name(&layer_name, StateLayer::Published);
     res.headers_mut().insert(
         "content-type",
-        "application/x-protobuf;type=mapbox-vector".parse().unwrap(),
+        "application/x-protobuf;type=mapbox-vector".parse()?,
     );
 
     match layer {
