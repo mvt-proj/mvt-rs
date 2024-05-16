@@ -91,40 +91,41 @@ impl Layer {
         self.max_cache_age.unwrap_or(0)
     }
 
-    pub fn info_html(&self) -> String {
-        let mut rv = format!("Name: {}<br>", self.name);
-        rv += &format!("Alias: {}<br>", self.alias);
-        rv += &format!("Schema: {}<br>", self.schema);
-        rv += &format!("Table: {}<br>", self.table);
-        rv += &format!("Fields: {}<br>", self.fields.join(", "));
-        rv += &format!("Field geom: {}<br>", self.get_geom());
-        rv += &format!("SRID: {}<br>", self.get_srid());
-        rv += &format!("Filter: {}<br>", self.get_filter());
-        rv += &format!("Buffer: {}<br>", self.get_buffer());
-        rv += &format!("Extent: {}<br>", self.get_extent());
-        rv += &format!("Zmin: {}<br>", self.get_zmin());
-        rv += &format!("Zmax: {}<br>", self.get_zmax());
-        rv += &format!(
-            "Zmax do not simplify: {}<br>",
-            self.get_zmax_do_not_simplify()
-        );
-        rv += &format!(
-            "Buffer do not simplify: {}<br>",
-            self.get_buffer_do_not_simplify()
-        );
-        rv += &format!(
-            "Extent do not simplify: {}<br>",
-            self.get_extent_do_not_simplify()
-        );
-        rv += &format!("Clip geom: {}<br>", self.get_clip_geom());
-        rv += &format!(
-            "Delete cache on start: {}<br>",
-            self.get_delete_cache_on_start()
-        );
-        rv += &format!("Max cache age: {}<br>", self.get_max_cache_age());
-        rv += &format!("Published: {}", self.published);
-        rv
-    }
+pub fn info_html(&self) -> String {
+    let mut rv = format!("<strong>Name:</strong> {}<br>", self.name);
+    rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
+    rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
+    rv += &format!("<strong>Table:</strong> {}<br>", self.table);
+    rv += &format!("<strong>Fields:</strong> {}<br>", self.fields.join(", "));
+    rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
+    rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
+    rv += &format!("<strong>Filter:</strong> {}<br>", self.get_filter());
+    rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());
+    rv += &format!("<strong>Extent:</strong> {}<br>", self.get_extent());
+    rv += &format!("<strong>Zmin:</strong> {}<br>", self.get_zmin());
+    rv += &format!("<strong>Zmax:</strong> {}<br>", self.get_zmax());
+    rv += &format!(
+        "<strong>Zmax do not simplify:</strong> {}<br>",
+        self.get_zmax_do_not_simplify()
+    );
+    rv += &format!(
+        "<strong>Buffer do not simplify:</strong> {}<br>",
+        self.get_buffer_do_not_simplify()
+    );
+    rv += &format!(
+        "<strong>Extent do not simplify:</strong> {}<br>",
+        self.get_extent_do_not_simplify()
+    );
+    rv += &format!("<strong>Clip geom:</strong> {}<br>", self.get_clip_geom());
+    rv += &format!(
+        "<strong>Delete cache on start:</strong> {}<br>",
+        self.get_delete_cache_on_start()
+    );
+    rv += &format!("<strong>Max cache age:</strong> {}<br>", self.get_max_cache_age());
+    rv += &format!("<strong>Published:</strong> {}", self.published);
+    rv
+}
+
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
