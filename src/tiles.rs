@@ -14,7 +14,7 @@ enum Via {
 
 use crate::{
     error::AppResult,
-    cache::DiskCache,
+    diskcache::DiskCache,
     catalog::{Catalog, Layer, StateLayer},
     get_app_state, get_catalog, get_db_pool, get_disk_cache,
     rediscache::RedisCache,

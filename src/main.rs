@@ -7,7 +7,7 @@ use anyhow::{anyhow, Context};
 mod api;
 mod args;
 mod auth;
-mod cache;
+mod diskcache;
 mod catalog;
 mod database;
 mod db;
@@ -20,7 +20,7 @@ mod tiles;
 mod error;
 
 use auth::Auth;
-use cache::DiskCache;
+use diskcache::DiskCache;
 use catalog::Catalog;
 use db::make_db_pool;
 use rediscache::RedisCache;
