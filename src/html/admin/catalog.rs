@@ -128,7 +128,7 @@ pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResul
     let app_state = get_app_state();
 
     let name = req.param::<String>("name").ok_or(AppError::RequestParamError("name".to_string()))?;
-    let _ = app_state.catalog.delete_layer(name).await?;
+    app_state.catalog.delete_layer(name).await?;
     res.render(Redirect::other("/admin/catalog"));
     Ok(())
 }
@@ -138,7 +138,7 @@ pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult
     let app_state = get_app_state();
 
     let layer_name = req.param::<String>("layer_name").ok_or(AppError::RequestParamError("layer_name".to_string()))?;
-    let _ = app_state.catalog.swich_layer_published(&layer_name).await;
+    app_state.catalog.swich_layer_published(&layer_name).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
