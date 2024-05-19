@@ -10,7 +10,6 @@ pub struct AppConfig {
     pub port: String,
     pub db_conn: String,
     pub redis_conn: String,
-    pub sql_mode: String,
     pub jwt_secret: String,
     pub db_pool_size_min: u32,
     pub db_pool_size_max: u32,
@@ -60,14 +59,6 @@ pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
                 .help("Database connection"),
         )
         .arg(
-            Arg::new("sqlmode")
-                .short('s')
-                .long("sqlmode")
-                .value_name("SQLMODE")
-                .default_value("CTE")
-                .help("SQL Query Mode. CTE: Common Table Expression - SQ: Subquery"),
-        )
-        .arg(
             Arg::new("redisconn")
                 .short('r')
                 .long("redisconn")
@@ -103,7 +94,6 @@ pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
     let mut port = String::new();
     let mut db_conn = String::new();
     let mut redis_conn = String::new();
-    let mut sql_mode = String::new();
     let mut jwt_secret = String::new();
 
     if matches.contains_id("host") {
@@ -134,13 +124,6 @@ pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
             .to_string();
     }
 
-    if matches.contains_id("sqlmode") {
-        sql_mode = matches
-            .get_one::<String>("sqlmode")
-            .expect("required")
-            .to_string();
-    }
-
     if matches.contains_id("jwtsecret") {
         jwt_secret = matches
             .get_one::<String>("jwtsecret")
@@ -160,9 +143,6 @@ pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
         db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
     }
 
-    if sql_mode.is_empty() {
-        sql_mode = std::env::var("SQLMODE").unwrap_or(String::from("CTE"));
-    }
     if redis_conn.is_empty() {
         redis_conn = std::env::var("REDISCONN").unwrap_or_default();
     }
@@ -185,7 +165,6 @@ pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
         port,
         db_conn,
         redis_conn,
-        sql_mode,
         jwt_secret,
         db_pool_size_min,
         db_pool_size_max,

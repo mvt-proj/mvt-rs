@@ -22,6 +22,7 @@ pub struct Layer {
     pub filter: Option<String>,
     pub srid: Option<u32>,
     pub geom: Option<String>,
+    pub sql_mode: Option<String>,
     pub buffer: Option<u32>,
     pub extent: Option<u32>,
     pub zmin: Option<u32>,
@@ -41,6 +42,10 @@ pub struct Layer {
 impl Layer {
     pub fn get_geom(&self) -> String {
         self.geom.as_deref().unwrap_or("geom").to_string()
+    }
+
+    pub fn get_sql_mode(&self) -> String {
+        self.sql_mode.as_deref().unwrap_or("CTE").to_string()
     }
 
     pub fn get_filter(&self) -> String {
@@ -98,6 +103,7 @@ pub fn info_html(&self) -> String {
     rv += &format!("<strong>Table:</strong> {}<br>", self.table);
     rv += &format!("<strong>Fields:</strong> {}<br>", self.fields.join(", "));
     rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
+    rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
     rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
     rv += &format!("<strong>Filter:</strong> {}<br>", self.get_filter());
     rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());

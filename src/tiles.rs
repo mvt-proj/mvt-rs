@@ -37,7 +37,6 @@ fn convert_fields(fields: Vec<String>) -> String {
 
 async fn query_database(
     pg_pool: PgPool,
-    sql_mode: String,
     layer_conf: Layer,
     x: u32,
     y: u32,
@@ -50,6 +49,7 @@ async fn query_database(
     let fields = convert_fields(layer_conf.fields);
 
     let geom = layer_conf.geom.unwrap_or(String::from("geom"));
+    let sql_mode = layer_conf.sql_mode.unwrap_or(String::from("CTE"));
     let srid = layer_conf.srid.unwrap_or(4326);
     let mut buffer = layer_conf.buffer.unwrap_or(256);
     let mut extent = layer_conf.extent.unwrap_or(4096);
@@ -166,7 +166,6 @@ async fn get_tile(
 
     let tile: Bytes = query_database(
         pg_pool.clone(),
-        app_state.sql_mode.clone(),
         layer_conf.clone(),
         x,
         y,

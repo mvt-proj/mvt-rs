@@ -28,7 +28,6 @@ use rediscache::RedisCache;
 #[derive(Debug)]
 pub struct AppState {
     db_pool: PgPool,
-    sql_mode: String,
     catalog: Catalog,
     disk_cache: DiskCache,
     auth: Auth,
@@ -157,7 +156,6 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let app_state = AppState {
         db_pool,
-        sql_mode: app_config.sql_mode,
         catalog,
         disk_cache,
         auth,

@@ -105,6 +105,19 @@
           </div>
         </div>
 
+        <!-- sql_mode -->
+        <div class="field">
+          <label class="label" for="sql_mode">SQL Mode</label>
+          <div class="control">
+            <div class="select">
+              <select name="sql_mode" id="sql_mode">
+                <option value="CTE" {% if layer.get_sql_mode() == "CTE" %}selected{% endif %}>Common Table Expression</option>
+                <option value="SQ" {% if layer.get_sql_mode() == "SQ" %}selected{% endif %}>Subquery</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <!-- filter -->
         <div class="field">
           <label class="label" for="filter">Filter</label>
