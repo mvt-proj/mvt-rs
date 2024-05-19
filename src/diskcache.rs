@@ -1,7 +1,10 @@
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
-use crate::{error::{AppResult, AppError}, Catalog};
+use crate::{
+    error::{AppError, AppResult},
+    Catalog,
+};
 use bytes::Bytes;
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

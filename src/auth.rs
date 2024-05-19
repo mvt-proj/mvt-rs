@@ -101,10 +101,7 @@ impl Auth {
         false
     }
 
-    pub async fn create_user(
-        &mut self,
-        user: User,
-    ) -> AppResult<User> {
+    pub async fn create_user(&mut self, user: User) -> AppResult<User> {
         self.users.push(user.clone());
         let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
 
@@ -126,10 +123,7 @@ impl Auth {
         Ok(())
     }
 
-    pub async fn delete_user(
-        &mut self,
-        username: String,
-    ) -> AppResult<()> {
+    pub async fn delete_user(&mut self, username: String) -> AppResult<()> {
         self.users.retain(|user| user.username != username);
         let mut storage = Storage::<Vec<User>>::new(self.storage_path.clone());
         storage.save(self.users.clone()).await?;

@@ -7,22 +7,22 @@ use anyhow::{anyhow, Context};
 mod api;
 mod args;
 mod auth;
-mod diskcache;
 mod catalog;
 mod database;
 mod db;
+mod diskcache;
+mod error;
 mod health;
 mod html;
 mod rediscache;
 mod routes;
 mod storage;
 mod tiles;
-mod error;
 
 use auth::Auth;
-use diskcache::DiskCache;
 use catalog::Catalog;
 use db::make_db_pool;
+use diskcache::DiskCache;
 use rediscache::RedisCache;
 
 #[derive(Debug)]

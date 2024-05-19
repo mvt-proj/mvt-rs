@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 // use std::error::Error;
+use crate::error::AppResult;
 use std::path::Path;
 use tokio::fs::{File, OpenOptions};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use crate::error::AppResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 struct Person {

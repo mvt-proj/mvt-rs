@@ -1,7 +1,7 @@
 use crate::{
-    error::{AppResult, AppError},
     auth::User,
     catalog::{Layer, StateLayer},
+    error::{AppError, AppResult},
     get_auth, get_catalog,
 };
 use askama::Template;
@@ -47,9 +47,12 @@ pub async fn new_user(res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_user(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let username = req.param::<String>("username").ok_or(AppError::RequestParamError("username".to_string()))?;
+    let username = req
+        .param::<String>("username")
+        .ok_or(AppError::RequestParamError("username".to_string()))?;
     let auth = get_auth().clone();
-    let user = auth.find_user_by_name(&username)
+    let user = auth
+        .find_user_by_name(&username)
         .ok_or_else(|| AppError::UserNotFoundError(username.clone()))?;
 
     let template = EditUserTemplate { user: user.clone() };
@@ -66,7 +69,9 @@ pub async fn new_layer(res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_layer(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let layer_name = req.param::<String>("layer_name").ok_or(AppError::RequestParamError("layer_name".to_string()))?;
+    let layer_name = req
+        .param::<String>("layer_name")
+        .ok_or(AppError::RequestParamError("layer_name".to_string()))?;
     let catalog = get_catalog().clone();
     let layer = catalog
         .find_layer_by_name(&layer_name, StateLayer::Any)

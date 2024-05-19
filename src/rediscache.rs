@@ -49,7 +49,12 @@ impl RedisCache {
         Ok(retrieved_data)
     }
 
-    pub async fn write_tile_to_cache(&self, key: String, tile: &[u8], max_cache_age: u64) -> AppResult<()> {
+    pub async fn write_tile_to_cache(
+        &self,
+        key: String,
+        tile: &[u8],
+        max_cache_age: u64,
+    ) -> AppResult<()> {
         let mut conn = self.pool.get().await?;
         conn.set::<&str, Vec<u8>, ()>(&key, tile.to_vec()).await?;
         if max_cache_age != 0 {

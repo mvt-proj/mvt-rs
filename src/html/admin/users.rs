@@ -8,8 +8,8 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error::{AppResult, AppError},
     auth::{Auth, User},
+    error::{AppError, AppResult},
     get_app_state, get_auth,
     storage::Storage,
 };
@@ -31,19 +31,24 @@ fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
     let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
 
     if parts.len() != 2 || parts[0] != "Basic" {
-        return Err(AppError::BasicAuthError("Invalid Basic Authentication format".to_string()));
+        return Err(AppError::BasicAuthError(
+            "Invalid Basic Authentication format".to_string(),
+        ));
     }
 
     let decoded_bytes = general_purpose::STANDARD
         .decode(parts[1])
         .map_err(|_| AppError::BasicAuthError("Failed to decode Base64".to_string()))?;
 
-    let decoded_str = String::from_utf8(decoded_bytes).map_err(|_| AppError::BasicAuthError("Failed to convert to UTF-8".to_string()))?;
+    let decoded_str = String::from_utf8(decoded_bytes)
+        .map_err(|_| AppError::BasicAuthError("Failed to convert to UTF-8".to_string()))?;
 
     let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
 
     if auth_parts.len() != 2 {
-        return Err(AppError::BasicAuthError("Invalid username:password format".to_string()));
+        return Err(AppError::BasicAuthError(
+            "Invalid username:password format".to_string(),
+        ));
     }
 
     Ok(auth_parts[0].to_string())
@@ -66,7 +71,9 @@ struct NewUser<'a> {
 #[handler]
 pub async fn list_users(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let authorization = req.headers().get("authorization").unwrap(); //.ok_or(AppError::ParseHeaderError);
-    let authorization_str = authorization.to_str().map_err(|err| AppError::ConversionError(err.to_string()))?;
+    let authorization_str = authorization
+        .to_str()
+        .map_err(|err| AppError::ConversionError(err.to_string()))?;
     let _username = match decode_basic_auth(authorization_str) {
         Ok(username) => username,
         Err(err) => {
@@ -103,7 +110,7 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 }
 
 #[handler]
-pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppResult<()>{
+pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppResult<()> {
     let auth: Auth = get_auth().clone();
     let app_state = get_app_state();
     let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
@@ -123,7 +130,9 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let username = req.param::<String>("username").ok_or(AppError::RequestParamError("schema".to_string()))?;
+    let username = req
+        .param::<String>("username")
+        .ok_or(AppError::RequestParamError("schema".to_string()))?;
     app_state.auth.delete_user(username).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);

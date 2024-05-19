@@ -3,8 +3,7 @@ use serde::{Deserialize, Serialize};
 // use std::path::Path;
 // use tokio::fs::File;
 // use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use crate::{storage::Storage, error::AppResult};
-
+use crate::{error::AppResult, storage::Storage};
 
 pub enum StateLayer {
     Any,
@@ -96,42 +95,44 @@ impl Layer {
         self.max_cache_age.unwrap_or(0)
     }
 
-pub fn info_html(&self) -> String {
-    let mut rv = format!("<strong>Name:</strong> {}<br>", self.name);
-    rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
-    rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
-    rv += &format!("<strong>Table:</strong> {}<br>", self.table);
-    rv += &format!("<strong>Fields:</strong> {}<br>", self.fields.join(", "));
-    rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
-    rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
-    rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
-    rv += &format!("<strong>Filter:</strong> {}<br>", self.get_filter());
-    rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());
-    rv += &format!("<strong>Extent:</strong> {}<br>", self.get_extent());
-    rv += &format!("<strong>Zmin:</strong> {}<br>", self.get_zmin());
-    rv += &format!("<strong>Zmax:</strong> {}<br>", self.get_zmax());
-    rv += &format!(
-        "<strong>Zmax do not simplify:</strong> {}<br>",
-        self.get_zmax_do_not_simplify()
-    );
-    rv += &format!(
-        "<strong>Buffer do not simplify:</strong> {}<br>",
-        self.get_buffer_do_not_simplify()
-    );
-    rv += &format!(
-        "<strong>Extent do not simplify:</strong> {}<br>",
-        self.get_extent_do_not_simplify()
-    );
-    rv += &format!("<strong>Clip geom:</strong> {}<br>", self.get_clip_geom());
-    rv += &format!(
-        "<strong>Delete cache on start:</strong> {}<br>",
-        self.get_delete_cache_on_start()
-    );
-    rv += &format!("<strong>Max cache age:</strong> {}<br>", self.get_max_cache_age());
-    rv += &format!("<strong>Published:</strong> {}", self.published);
-    rv
-}
-
+    pub fn info_html(&self) -> String {
+        let mut rv = format!("<strong>Name:</strong> {}<br>", self.name);
+        rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
+        rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
+        rv += &format!("<strong>Table:</strong> {}<br>", self.table);
+        rv += &format!("<strong>Fields:</strong> {}<br>", self.fields.join(", "));
+        rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
+        rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
+        rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
+        rv += &format!("<strong>Filter:</strong> {}<br>", self.get_filter());
+        rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());
+        rv += &format!("<strong>Extent:</strong> {}<br>", self.get_extent());
+        rv += &format!("<strong>Zmin:</strong> {}<br>", self.get_zmin());
+        rv += &format!("<strong>Zmax:</strong> {}<br>", self.get_zmax());
+        rv += &format!(
+            "<strong>Zmax do not simplify:</strong> {}<br>",
+            self.get_zmax_do_not_simplify()
+        );
+        rv += &format!(
+            "<strong>Buffer do not simplify:</strong> {}<br>",
+            self.get_buffer_do_not_simplify()
+        );
+        rv += &format!(
+            "<strong>Extent do not simplify:</strong> {}<br>",
+            self.get_extent_do_not_simplify()
+        );
+        rv += &format!("<strong>Clip geom:</strong> {}<br>", self.get_clip_geom());
+        rv += &format!(
+            "<strong>Delete cache on start:</strong> {}<br>",
+            self.get_delete_cache_on_start()
+        );
+        rv += &format!(
+            "<strong>Max cache age:</strong> {}<br>",
+            self.get_max_cache_age()
+        );
+        rv += &format!("<strong>Published:</strong> {}", self.published);
+        rv
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -4,8 +4,6 @@ use std::io;
 use std::num::TryFromIntError;
 use thiserror::Error;
 
-
-
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error("io: `{0}`")]
@@ -55,7 +53,6 @@ pub enum AppError {
 
     #[error("Conversion error")]
     Conversion(#[from] TryFromIntError),
-
     // #[error("Error obtaining connection: {0}")]
     // ConnectionError(#[from] redis::RedisError),
 }

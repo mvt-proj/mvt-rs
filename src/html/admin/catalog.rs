@@ -3,8 +3,8 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error::{AppResult, AppError},
     catalog::{Catalog, Layer},
+    error::{AppError, AppResult},
     get_app_state, get_catalog,
 };
 
@@ -53,7 +53,7 @@ pub async fn page_catalog(res: &mut Response) -> AppResult<()> {
 }
 
 #[handler]
-pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()>{
+pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
     let app_state = get_app_state();
 
     let layer = Layer {
@@ -127,7 +127,9 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let name = req.param::<String>("name").ok_or(AppError::RequestParamError("name".to_string()))?;
+    let name = req
+        .param::<String>("name")
+        .ok_or(AppError::RequestParamError("name".to_string()))?;
     app_state.catalog.delete_layer(name).await?;
     res.render(Redirect::other("/admin/catalog"));
     Ok(())
@@ -137,7 +139,9 @@ pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResul
 pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let layer_name = req.param::<String>("layer_name").ok_or(AppError::RequestParamError("layer_name".to_string()))?;
+    let layer_name = req
+        .param::<String>("layer_name")
+        .ok_or(AppError::RequestParamError("layer_name".to_string()))?;
     app_state.catalog.swich_layer_published(&layer_name).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
