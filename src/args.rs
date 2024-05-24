@@ -1,8 +1,10 @@
+use crate::error::{AppError, AppResult};
 use clap::{Arg, Command};
 use std::path::Path;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
+#[derive(Debug)]
 pub struct AppConfig {
     pub config_dir: String,
     pub cache_dir: String,
@@ -16,7 +18,7 @@ pub struct AppConfig {
     pub salt_string: String,
 }
 
-pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
+pub async fn parse_args() -> AppResult<AppConfig> {
     let matches = Command::new("mvt-rs vector tiles server")
         .arg(
             Arg::new("configdir")
@@ -155,8 +157,8 @@ pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
     let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
 
-    let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap();
-    let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap();
+    let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap_or(3);
+    let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap_or(5);
 
     Ok(AppConfig {
         config_dir,
@@ -172,7 +174,14 @@ pub async fn parse_args() -> Result<AppConfig, anyhow::Error> {
     })
 }
 
-async fn create_config_files(config_dir: &str) -> Result<(), anyhow::Error> {
+async fn create_config_files(config_dir: &str) -> AppResult<()> {
+    let dir_path = Path::new(config_dir);
+    if !dir_path.exists() {
+        tokio::fs::create_dir_all(dir_path)
+            .await
+            .map_err(AppError::FileCreationError)?;
+    }
+
     let paths_to_create = ["catalog.json", "users.json"];
     for path in paths_to_create.iter() {
         let file_path = Path::new(config_dir).join(path);

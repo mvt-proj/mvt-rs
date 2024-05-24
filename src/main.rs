@@ -2,8 +2,6 @@ use salvo::prelude::*;
 use sqlx::PgPool;
 use std::cell::OnceCell;
 
-use anyhow::{anyhow, Context};
-
 mod api;
 mod args;
 mod auth;
@@ -23,6 +21,7 @@ use auth::Auth;
 use catalog::Catalog;
 use db::make_db_pool;
 use diskcache::DiskCache;
+use error::AppResult;
 use rediscache::RedisCache;
 
 #[derive(Debug)]
@@ -62,45 +61,31 @@ pub fn get_jwt_secret() -> &'static String {
     unsafe { &APP_STATE.get().unwrap().jwt_secret }
 }
 
-async fn initialize_auth(config_dir: &str, salt_string: String) -> Result<Auth, anyhow::Error> {
-    Auth::new(config_dir, salt_string)
-        .await
-        .map_err(|err| anyhow!("Error initializing 'Auth': {}", err))
-        .context("Failed to initialize 'Auth'")
+async fn initialize_auth(config_dir: &str, salt_string: String) -> AppResult<Auth> {
+    let auth = Auth::new(config_dir, salt_string).await?;
+    Ok(auth)
 }
 
-async fn initialize_catalog(config_dir: &str) -> Result<Catalog, anyhow::Error> {
-    Catalog::new(config_dir)
-        .await
-        .map_err(|err| anyhow!("Error initializing 'Catalog': {}", err))
-        .context("Failed to initialize 'Catalog'")
+async fn initialize_catalog(config_dir: &str) -> AppResult<Catalog> {
+    let catalog = Catalog::new(config_dir).await?;
+    Ok(catalog)
 }
 
 async fn initialize_redis_cache(
     redis_conn: String,
     catalog: &Catalog,
-) -> Result<Option<RedisCache>, anyhow::Error> {
+) -> AppResult<Option<RedisCache>> {
     if redis_conn.is_empty() {
         return Ok(None);
     }
 
-    match RedisCache::new(redis_conn).await {
-        Ok(cache) => {
-            cache
-                .delete_cache(catalog.clone())
-                .await
-                .with_context(|| "Failed to delete cache for catalog".to_string())?;
-            Ok(Some(cache))
-        }
-        Err(e) => {
-            tracing::error!("Failed to create Redis cache: {}", e);
-            Ok(None)
-        }
-    }
+    let cache = RedisCache::new(redis_conn).await?;
+    cache.delete_cache(catalog.clone()).await?;
+    Ok(Some(cache))
 }
 
 #[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
+async fn main() -> AppResult<()> {
     tracing_subscriber::fmt()
         // .json()
         .with_env_filter("error")
@@ -109,24 +94,8 @@ async fn main() -> Result<(), anyhow::Error> {
         .init();
 
     let app_config = args::parse_args().await?;
-
-    let auth = initialize_auth(&app_config.config_dir, app_config.salt_string)
-        .await
-        .with_context(|| {
-            format!(
-                "Failed to initialize 'Auth' for config directory '{}'",
-                app_config.config_dir
-            )
-        })?;
-
-    let catalog = initialize_catalog(&app_config.config_dir)
-        .await
-        .with_context(|| {
-            format!(
-                "Failed to initialize 'Catalog' for config directory '{}'",
-                app_config.config_dir
-            )
-        })?;
+    let auth = initialize_auth(&app_config.config_dir, app_config.salt_string).await?;
+    let catalog = initialize_catalog(&app_config.config_dir).await?;
 
     let db_pool = make_db_pool(
         &app_config.db_conn,

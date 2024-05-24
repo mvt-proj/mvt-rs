@@ -1,14 +1,10 @@
 use salvo::prelude::*;
-// use tokio::sync::mpsc::error;
-use std::io;
+// use std::io;
 use std::num::TryFromIntError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("io: `{0}`")]
-    Io(#[from] io::Error),
-
     #[error("Error parsing params: {0}")]
     RequestParamError(String),
 
@@ -53,8 +49,15 @@ pub enum AppError {
 
     #[error("Conversion error")]
     Conversion(#[from] TryFromIntError),
-    // #[error("Error obtaining connection: {0}")]
-    // ConnectionError(#[from] redis::RedisError),
+
+    #[error("Error initializing 'Auth': {0}")]
+    AuthInitializationError(String),
+
+    #[error("Error initializing 'Catalog': {0}")]
+    CatalogInitializationError(String),
+
+    #[error("Error creating file: {0}")]
+    FileCreationError(#[from] tokio::io::Error),
 }
 
 pub type AppResult<T> = Result<T, AppError>;

@@ -16,7 +16,6 @@ anyhow = "1"
 thiserror = "1"
 base64 = "0.22"
 log = "0.4"
-
 time = "0.3"
 jsonwebtoken = "9.1.0"
 chrono = { version = "0.4", features = ["serde"] }
