@@ -1,15 +1,8 @@
 use serde::{Deserialize, Serialize};
-// use std::error::Error;
 use crate::error::AppResult;
 use std::path::Path;
-use tokio::fs::{File, OpenOptions};
+use tokio::fs::OpenOptions;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-struct Person {
-    name: String,
-    age: u32,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Storage<T> {
@@ -30,8 +23,7 @@ impl<T> Storage<T> {
         T: Serialize,
     {
         let file_path = Path::new(&self.file_path);
-        let mut file: File;
-        file = OpenOptions::new()
+        let mut file = OpenOptions::new()
             .create(true)
             .write(true)
             .truncate(true)
@@ -51,18 +43,11 @@ impl<T> Storage<T> {
         T: for<'de> Deserialize<'de>,
     {
         let file_path = Path::new(&self.file_path);
-        let mut file: File;
-
-        if file_path.exists() {
-            file = OpenOptions::new().read(true).open(file_path).await?;
-        } else {
-            file = OpenOptions::new()
-                .read(true)
-                .truncate(false)
-                .open(file_path)
-                .await?;
+        if !file_path.exists() {
+            return Ok(None);
         }
 
+        let mut file = OpenOptions::new().read(true).open(file_path).await?;
         let mut json = String::new();
         file.read_to_string(&mut json).await?;
 
@@ -78,8 +63,14 @@ impl<T> Storage<T> {
 
 // #[cfg(test)]
 // mod tests {
-//     use super::{Person, Storage};
+//     use super::Storage;
 //     use tempfile::NamedTempFile;
+
+//     #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+//     struct Person {
+//         name: String,
+//         age: u32,
+//     }
 //
 //     #[tokio::test]
 //     async fn test_save() {
