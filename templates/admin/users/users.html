@@ -4,12 +4,14 @@
   <h1 class="title is-5 has-text-grey-darker">List of Users</h1>
 
   <div class="has-text-right">
+    {% if current_user.is_admin() %}
     <a href="/admin/users/new" class="button is-light">
       <span class="icon is-small">
         <i class="fas fa-user-plus"></i>
       </span>
       <span>ADD USER</span>
     </a>
+    {% endif %}
   </div>
 
   <table class="table is-fullwidth">
@@ -17,6 +19,7 @@
       <tr>
         <th scope="col">Username</th>
         <th scope="col">Email</th>
+        <th scope="col">Groups</th>
         <th scope="col"></th>
       </tr>
     </thead>
@@ -29,13 +32,17 @@
           <td>
             {{ user.email }}
           </td>
+          <td>
+            {{ user.groups_as_string() }}
+          </td>
           <td class="has-text-right">
+            {% if current_user.is_admin() %}
             <div class="is-flex is-justify-content-right">
               <a href="/admin/users/edit/{{ user.username }}" class="button is-white">
-                  <span class="icon">
-                    <i class="fas fa-pen"></i>
-                  </span>
-                </a>
+                <span class="icon">
+                  <i class="fas fa-pen"></i>
+                </span>
+               </a>
               {% if user.username != "admin" %}
                 <a href="/admin/users/delete/{{ user.username}}" class="button is-danger is-outlined"
                   onclick="return confirm('Are you sure you want to delete this user?');" >
@@ -45,6 +52,7 @@
                 </a>
               {% endif %}
             </div>
+            {% endif %}
           </td>
         </tr>
       {% endfor %}

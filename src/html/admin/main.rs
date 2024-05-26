@@ -1,5 +1,5 @@
 use crate::{
-    auth::User,
+    auth::{User, Group},
     catalog::{Layer, StateLayer},
     error::{AppError, AppResult},
     get_auth, get_catalog,
@@ -13,12 +13,15 @@ struct IndexTemplate {}
 
 #[derive(Template)]
 #[template(path = "admin/users/new.html")]
-struct NewUserTemplate {}
+struct NewUserTemplate {
+    groups: Vec<Group>,
+}
 
 #[derive(Template)]
 #[template(path = "admin/users/edit.html")]
 struct EditUserTemplate {
     user: User,
+    groups: Vec<Group>,
 }
 
 #[derive(Template)]
@@ -40,7 +43,11 @@ pub async fn index(res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn new_user(res: &mut Response) -> AppResult<()> {
-    let template = NewUserTemplate {};
+    let auth = get_auth().clone();
+
+    let template = NewUserTemplate {
+        groups: auth.groups,
+    };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
@@ -55,7 +62,10 @@ pub async fn edit_user(req: &mut Request, res: &mut Response) -> AppResult<()> {
         .find_user_by_name(&username)
         .ok_or_else(|| AppError::UserNotFoundError(username.clone()))?;
 
-    let template = EditUserTemplate { user: user.clone() };
+    let template = EditUserTemplate {
+        user: user.clone(),
+        groups: auth.groups,
+    };
     res.render(Text::Html(template.render()?));
     Ok(())
 }

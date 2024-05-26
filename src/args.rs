@@ -182,7 +182,7 @@ async fn create_config_files(config_dir: &str) -> AppResult<()> {
             .map_err(AppError::FileCreationError)?;
     }
 
-    let paths_to_create = ["catalog.json", "users.json"];
+    let paths_to_create = ["catalog.json", "users.json", "groups.json"];
     for path in paths_to_create.iter() {
         let file_path = Path::new(config_dir).join(path);
         if !file_path.exists() {

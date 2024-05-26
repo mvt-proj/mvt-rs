@@ -1,4 +1,3 @@
-use base64::{engine::general_purpose, Engine as _};
 // use std::error::Error;
 // use std::fmt;
 
@@ -8,56 +7,44 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, User},
+    auth::{Auth, Group, User},
     error::{AppError, AppResult},
     get_app_state, get_auth,
     storage::Storage,
 };
 
-// #[derive(Debug)]
-// struct AuthError {
-//     message: String,
-// }
+// fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
+//     let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
 //
-// impl fmt::Display for AuthError {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "Authentication error: {}", self.message)
+//     if parts.len() != 2 || parts[0] != "Basic" {
+//         return Err(AppError::BasicAuthError(
+//             "Invalid Basic Authentication format".to_string(),
+//         ));
 //     }
-// }
 //
-// impl Error for AuthError {}
-
-fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
-    let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
-
-    if parts.len() != 2 || parts[0] != "Basic" {
-        return Err(AppError::BasicAuthError(
-            "Invalid Basic Authentication format".to_string(),
-        ));
-    }
-
-    let decoded_bytes = general_purpose::STANDARD
-        .decode(parts[1])
-        .map_err(|_| AppError::BasicAuthError("Failed to decode Base64".to_string()))?;
-
-    let decoded_str = String::from_utf8(decoded_bytes)
-        .map_err(|_| AppError::BasicAuthError("Failed to convert to UTF-8".to_string()))?;
-
-    let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
-
-    if auth_parts.len() != 2 {
-        return Err(AppError::BasicAuthError(
-            "Invalid username:password format".to_string(),
-        ));
-    }
-
-    Ok(auth_parts[0].to_string())
-}
+//     let decoded_bytes = general_purpose::STANDARD
+//         .decode(parts[1])
+//         .map_err(|_| AppError::BasicAuthError("Failed to decode Base64".to_string()))?;
+//
+//     let decoded_str = String::from_utf8(decoded_bytes)
+//         .map_err(|_| AppError::BasicAuthError("Failed to convert to UTF-8".to_string()))?;
+//
+//     let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
+//
+//     if auth_parts.len() != 2 {
+//         return Err(AppError::BasicAuthError(
+//             "Invalid username:password format".to_string(),
+//         ));
+//     }
+//
+//     Ok(auth_parts[0].to_string())
+// }
 
 #[derive(Template)]
 #[template(path = "admin/users/users.html")]
 struct ListUsersTemplate<'a> {
     users: &'a Vec<User>,
+    current_user: &'a User,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -66,6 +53,7 @@ struct NewUser<'a> {
     username: &'a str,
     email: String,
     password: String,
+    groups: Vec<String>,
 }
 
 #[handler]
@@ -74,16 +62,14 @@ pub async fn list_users(req: &mut Request, res: &mut Response) -> AppResult<()> 
     let authorization_str = authorization
         .to_str()
         .map_err(|err| AppError::ConversionError(err.to_string()))?;
-    let _username = match decode_basic_auth(authorization_str) {
-        Ok(username) => username,
-        Err(err) => {
-            eprintln!("Error: {}", err);
-            String::new()
-        }
-    };
 
     let auth: Auth = get_auth().clone();
-    let template = ListUsersTemplate { users: &auth.users };
+    let current_user = auth.get_current_user(&authorization_str).unwrap();
+
+    let template = ListUsersTemplate {
+        users: &auth.users,
+        current_user: &current_user,
+    };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
@@ -93,15 +79,23 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
     let auth: Auth = get_auth().clone();
     let app_state = get_app_state();
     let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
+
+    let selected_groups: Vec<Group> = new_user.groups
+        .iter()
+        .filter_map(|group_name| auth.find_group_by_name(group_name).cloned())
+        .collect();
+
     let user = User {
         username: new_user.username.to_string(),
         email: new_user.email,
         password: encrypt_psw,
+        // groups: Vec::new(),
+        groups: selected_groups,
     };
 
     app_state.auth.users.push(user);
 
-    let mut storage = Storage::<Vec<User>>::new(auth.storage_path.clone());
+    let mut storage = Storage::<Vec<User>>::new(auth.users_path.clone());
     storage.save(app_state.auth.users.clone()).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
@@ -113,11 +107,28 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppResult<()> {
     let auth: Auth = get_auth().clone();
     let app_state = get_app_state();
-    let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
+
+    let encrypt_psw: String;
+    if new_user.password.to_string().is_empty() {
+        match auth.find_user_by_name(&new_user.username) {
+            Some(user) => encrypt_psw = user.password.clone(),
+            None => encrypt_psw = "".to_string()
+        };
+    } else {
+        encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
+    }
+
+    let selected_groups: Vec<Group> = new_user.groups
+        .iter()
+        .filter_map(|group_name| auth.find_group_by_name(group_name).cloned())
+        .collect();
+
     let user = User {
         username: new_user.username.to_string(),
         email: new_user.email,
         password: encrypt_psw,
+        // groups: Vec::new(),
+        groups: selected_groups,
     };
     let _ = app_state.auth.update_user(user).await;
     res.headers_mut()

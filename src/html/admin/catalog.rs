@@ -3,15 +3,17 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    auth::{Auth, User},
     catalog::{Catalog, Layer},
     error::{AppError, AppResult},
-    get_app_state, get_catalog,
+    get_app_state, get_catalog, get_auth,
 };
 
 #[derive(Template)]
 #[template(path = "admin/catalog/catalog.html")]
 struct CatalogTemplate<'a> {
     layers: &'a Vec<Layer>,
+    current_user: &'a User,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -42,10 +44,20 @@ struct NewLayer<'a> {
 }
 
 #[handler]
-pub async fn page_catalog(res: &mut Response) -> AppResult<()> {
+pub async fn page_catalog(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let catalog: Catalog = get_catalog().clone();
+    let auth: Auth = get_auth().clone();
+
+    let authorization = req.headers().get("authorization").unwrap(); //.ok_or(AppError::ParseHeaderError);
+    let authorization_str = authorization
+        .to_str()
+        .map_err(|err| AppError::ConversionError(err.to_string()))?;
+
+    let current_user = auth.get_current_user(&authorization_str).unwrap();
+
     let template = CatalogTemplate {
         layers: &catalog.layers,
+        current_user: &current_user,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));

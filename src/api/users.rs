@@ -4,7 +4,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, AuthorizeState, DataToken, User},
+    auth::{Auth, AuthorizeState, DataToken, User, Group},
     get_app_state, get_auth,
 };
 
@@ -14,6 +14,7 @@ struct NewUser<'a> {
     username: &'a str,
     email: String,
     password: String,
+    groups: Vec<Option<Group>>
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -63,6 +64,7 @@ pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
         username: data.username.to_string(),
         email: data.email,
         password: encrypt_psw,
+        groups: Vec::new(),
     };
 
     app_state.auth.create_user(user.clone()).await.unwrap();

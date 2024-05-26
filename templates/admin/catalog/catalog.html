@@ -20,12 +20,14 @@
 </div>
 
   <div class="has-text-right">
+    {% if current_user.is_admin() %}
     <a href="/admin/catalog/layers/new" class="button is-light">
       <span class="icon is-small">
         <i class="fas fa-layer-group"></i>
       </span>
       <span>ADD LAYER</span>
     </a>
+    {% endif %}
   </div>
 
   <table class="table is-fullwidth">
@@ -69,48 +71,51 @@
                 </span>
               </button>
 
-              {% if layer.published %}
-                <a href="/map/{{ layer.name }}" class="button is-white" target="_blank">
-                  <span class="icon">
-                    <i class="fas fa-map"></i>
-                  </span>
-                </a>
-              {% else %}
-                <a href="/map/{{ layer.name }}" class="button is-white is-static" target="_blank" disabled >
-                  <span class="icon">
-                    <i class="fas fa-map"></i>
-                  </span>
-                </a>
-              {% endif %}
+              {% if current_user.is_admin() %}
+
+                {% if layer.published %}
+                  <a href="/map/{{ layer.name }}" class="button is-white" target="_blank">
+                    <span class="icon">
+                      <i class="fas fa-map"></i>
+                    </span>
+                  </a>
+                {% else %}
+                  <a href="/map/{{ layer.name }}" class="button is-white is-static" target="_blank" disabled >
+                    <span class="icon">
+                      <i class="fas fa-map"></i>
+                    </span>
+                  </a>
+                {% endif %}
 
 
-              <a href="/admin/catalog/layers/edit/{{ layer.name }}" class="button is-white">
-                <span class="icon">
-                  <i class="fas fa-pen"></i>
-                </span>
-              </a>
-
-              {% if layer.published %}
-                <a href="/admin/catalog/layers/swichpublished/{{ layer.name }}" class="button is-white">
+                <a href="/admin/catalog/layers/edit/{{ layer.name }}" class="button is-white">
                   <span class="icon">
-                    <i class="far fa-check-square"></i>
+                    <i class="fas fa-pen"></i>
                   </span>
                 </a>
-              {% else %}
-                <a href="/admin/catalog/layers/swichpublished/{{ layer.name }}" class="button is-white">
+
+                {% if layer.published %}
+                  <a href="/admin/catalog/layers/swichpublished/{{ layer.name }}" class="button is-white">
+                    <span class="icon">
+                      <i class="far fa-check-square"></i>
+                    </span>
+                  </a>
+                {% else %}
+                  <a href="/admin/catalog/layers/swichpublished/{{ layer.name }}" class="button is-white">
+                    <span class="icon">
+                      <i class="far fa-square"></i>
+                    </span>
+                  </a>
+                {% endif %}
+
+                <a href="/admin/catalog/layers/delete/{{ layer.name }}" class="button is-danger is-outlined"
+                  onclick="return confirm('Are you sure you want to delete this layer publication?');">
                   <span class="icon">
-                    <i class="far fa-square"></i>
+                    <i class="fas fa-trash"></i>
                   </span>
                 </a>
-              {% endif %}
-
-              <a href="/admin/catalog/layers/delete/{{ layer.name }}" class="button is-danger is-outlined"
-                onclick="return confirm('Are you sure you want to delete this layer publication?');">
-                <span class="icon">
-                  <i class="fas fa-trash"></i>
-                </span>
-              </a>
-            </div>
+              </div>
+            {% endif %}
           </td>
         </tr>
       {% endfor %}
