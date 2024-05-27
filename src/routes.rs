@@ -39,25 +39,28 @@ pub fn app_router() -> salvo::Router {
                 .get(html::admin::main::index)
                 .push(
                     Router::with_path("users")
-                        .get(html::admin::users::list_users)
-                        .push(Router::with_path("new").get(html::admin::main::new_user))
-                        .push(Router::with_path("create").post(html::admin::users::create_user))
-                        .push(
-                            Router::with_path("edit/<username>").get(html::admin::main::edit_user),
-                        )
-                        .push(Router::with_path("update").post(html::admin::users::update_user))
-                        .push(
-                            Router::with_path("delete/<username>")
-                                .get(html::admin::users::delete_user),
-                        ),
+                    .hoop(auth::require_user_admin)
+
+                    .get(html::admin::users::list_users)
+                    .push(Router::with_path("new").get(html::admin::main::new_user))
+                    .push(Router::with_path("create").post(html::admin::users::create_user))
+                    .push(
+                        Router::with_path("edit/<username>").get(html::admin::main::edit_user)
+                    )
+                    .push(Router::with_path("update").post(html::admin::users::update_user))
+                    .push(
+                        Router::with_path("delete/<username>")
+                            .get(html::admin::users::delete_user)
+                    )
                 )
                 .push(
                     Router::with_path("catalog")
+                        .hoop(auth::require_user_admin)
                         .get(html::admin::catalog::page_catalog)
                         .push(Router::with_path("layers/new").get(html::admin::main::new_layer))
                         .push(
                             Router::with_path("layers/create")
-                                .post(html::admin::catalog::create_layer),
+                                .post(html::admin::catalog::create_layer)
                         )
                         .push(
                             Router::with_path("layers/edit/<layer_name>")
@@ -65,24 +68,24 @@ pub fn app_router() -> salvo::Router {
                         )
                         .push(
                             Router::with_path("layers/delete/<name>")
-                                .get(html::admin::catalog::delete_layer),
+                                .get(html::admin::catalog::delete_layer)
                         )
                         .push(
                             Router::with_path("layers/update")
-                                .post(html::admin::catalog::update_layer),
+                                .post(html::admin::catalog::update_layer)
                         )
                         .push(
                             Router::with_path("layers/swichpublished/<layer_name>")
-                                .get(html::admin::catalog::swich_published),
-                        ),
+                                .get(html::admin::catalog::swich_published)
+                        )
                 )
                 .push(
                     Router::with_path("database")
                         .push(Router::with_path("schemas").get(html::admin::database::schemas))
                         .push(Router::with_path("tables").get(html::admin::database::tables))
                         .push(Router::with_path("fields").get(html::admin::database::fields))
-                        .push(Router::with_path("srid").get(html::admin::database::srid)),
-                ),
+                        .push(Router::with_path("srid").get(html::admin::database::srid))
+                )
         )
         .push(
             Router::with_path("api")
@@ -90,7 +93,7 @@ pub fn app_router() -> salvo::Router {
                 .push(
                     Router::with_path("users/login")
                         .post(api::users::login)
-                        .options(handler::empty()),
+                        .options(handler::empty())
                 )
                 .push(
                     Router::with_path("admin")
@@ -99,36 +102,36 @@ pub fn app_router() -> salvo::Router {
                             Router::with_path("users").hoop(auth::validate_token).push(
                                 Router::new()
                                     .get(api::users::index)
-                                    .post(api::users::create),
-                            ),
+                                    .post(api::users::create)
+                            )
                         )
                         .push(
                             Router::with_path("database")
                                 .hoop(auth::validate_token)
                                 .push(Router::with_path("schemas").get(api::database::schemas))
                                 .push(
-                                    Router::with_path("tables/<schema>").get(api::database::tables),
+                                    Router::with_path("tables/<schema>").get(api::database::tables)
                                 )
                                 .push(
                                     Router::with_path("fields/<schema>/<table>")
-                                        .get(api::database::fields),
+                                        .get(api::database::fields)
                                 )
                                 .push(
                                     Router::with_path("srid/<schema>/<table>/<geometry>")
-                                        .get(api::database::srid),
+                                        .get(api::database::srid)
                                 ),
                         )
                         .push(
                             Router::with_path("catalog/layer")
                                 .hoop(auth::validate_token)
                                 .get(api::catalog::list)
-                                .post(api::catalog::create_layer),
+                                .post(api::catalog::create_layer)
                         )
                         .push(
                             Router::with_path("<**rest>")
                                 .hoop(cors_handler.clone())
-                                .options(handler::empty()),
-                        ),
+                                .options(handler::empty())
+                        )
                 ),
         )
         .push(Router::with_path("tiles").get(tiles::mvt))
@@ -137,7 +140,7 @@ pub fn app_router() -> salvo::Router {
                 .hoop(cache_30s)
                 .hoop(cors_handler)
                 .options(handler::empty())
-                .get(tiles::mvt),
+                .get(tiles::mvt)
         )
         .push(Router::with_path("static/<**path>").get(static_dir))
 }

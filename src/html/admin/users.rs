@@ -13,32 +13,6 @@ use crate::{
     storage::Storage,
 };
 
-// fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
-//     let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
-//
-//     if parts.len() != 2 || parts[0] != "Basic" {
-//         return Err(AppError::BasicAuthError(
-//             "Invalid Basic Authentication format".to_string(),
-//         ));
-//     }
-//
-//     let decoded_bytes = general_purpose::STANDARD
-//         .decode(parts[1])
-//         .map_err(|_| AppError::BasicAuthError("Failed to decode Base64".to_string()))?;
-//
-//     let decoded_str = String::from_utf8(decoded_bytes)
-//         .map_err(|_| AppError::BasicAuthError("Failed to convert to UTF-8".to_string()))?;
-//
-//     let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
-//
-//     if auth_parts.len() != 2 {
-//         return Err(AppError::BasicAuthError(
-//             "Invalid username:password format".to_string(),
-//         ));
-//     }
-//
-//     Ok(auth_parts[0].to_string())
-// }
 
 #[derive(Template)]
 #[template(path = "admin/users/users.html")]
@@ -89,7 +63,6 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         username: new_user.username.to_string(),
         email: new_user.email,
         password: encrypt_psw,
-        // groups: Vec::new(),
         groups: selected_groups,
     };
 
@@ -127,7 +100,6 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         username: new_user.username.to_string(),
         email: new_user.email,
         password: encrypt_psw,
-        // groups: Vec::new(),
         groups: selected_groups,
     };
     let _ = app_state.auth.update_user(user).await;

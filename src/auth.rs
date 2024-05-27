@@ -290,6 +290,21 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
     }
 }
 
+#[handler]
+pub async fn require_user_admin(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let authorization = req.headers().get("authorization").unwrap();
+    let authorization_str = authorization
+        .to_str()
+        .map_err(|err| AppError::ConversionError(err.to_string()))?;
+
+    let auth: Auth = get_auth().clone();
+    let current_user = auth.get_current_user(&authorization_str).unwrap();
+    if !current_user.is_admin() {
+        res.render(Redirect::other("/admin"));
+    }
+    Ok(())
+}
+
 pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
     let jwt_secret = get_jwt_secret();
 
