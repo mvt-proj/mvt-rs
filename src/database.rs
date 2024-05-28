@@ -89,7 +89,7 @@ pub async fn query_srid(schema: String, table: String, geometry: String) -> AppR
     let sql = format!(
         r#"
             SELECT Find_SRID('{schema}', '{table}', '{geometry}') AS name
-            FROM {table}
+            FROM {schema}.{table}
             LIMIT 1;
         "#
     );
