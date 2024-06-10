@@ -1,6 +1,7 @@
 use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{
     auth::{Auth, User},
@@ -19,6 +20,7 @@ struct CatalogTemplate<'a> {
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]
 struct NewLayer<'a> {
+    id: String,
     geometry: &'a str,
     name: String,
     alias: String,
@@ -67,8 +69,11 @@ pub async fn page_catalog(req: &mut Request, res: &mut Response) -> AppResult<()
 #[handler]
 pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
     let app_state = get_app_state();
+    let uuid = Uuid::new_v4();
+    let hex_string = uuid.simple().to_string();
 
     let layer = Layer {
+        id: hex_string,
         geometry: new_layer.geometry.to_string(),
         name: new_layer.name,
         alias: new_layer.alias,
@@ -104,6 +109,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
     let app_state = get_app_state();
     let layer = Layer {
+        id: new_layer.id,
         geometry: new_layer.geometry.to_string(),
         name: new_layer.name,
         alias: new_layer.alias,
@@ -139,10 +145,10 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let name = req
-        .param::<String>("name")
-        .ok_or(AppError::RequestParamError("name".to_string()))?;
-    app_state.catalog.delete_layer(name).await?;
+    let layer_id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    app_state.catalog.delete_layer(layer_id).await?;
     res.render(Redirect::other("/admin/catalog"));
     Ok(())
 }
@@ -151,10 +157,10 @@ pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResul
 pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let layer_name = req
-        .param::<String>("layer_name")
-        .ok_or(AppError::RequestParamError("layer_name".to_string()))?;
-    app_state.catalog.swich_layer_published(&layer_name).await?;
+    let layer_id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    app_state.catalog.swich_layer_published(&layer_id).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));

@@ -79,12 +79,12 @@ pub async fn new_layer(res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_layer(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let layer_name = req
-        .param::<String>("layer_name")
-        .ok_or(AppError::RequestParamError("layer_name".to_string()))?;
+    let layer_id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("layer_id".to_string()))?;
     let catalog = get_catalog().clone();
     let layer = catalog
-        .find_layer_by_name(&layer_name, StateLayer::Any)
+        .find_layer_by_id(&layer_id, StateLayer::Any)
         .unwrap();
     let template = EditLayerTemplate {
         layer: layer.clone(),

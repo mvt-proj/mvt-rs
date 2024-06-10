@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-
 use crate::{error::AppResult, storage::Storage};
 
 pub enum StateLayer {
@@ -9,6 +8,7 @@ pub enum StateLayer {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Layer {
+    pub id: String,
     pub geometry: String,
     pub name: String,
     pub alias: String,
@@ -93,7 +93,8 @@ impl Layer {
     }
 
     pub fn info_html(&self) -> String {
-        let mut rv = format!("<strong>Name:</strong> {}<br>", self.name);
+        let mut rv = format!("<strong>ID:</strong> {}<br>", self.id);
+        rv += &format!("<strong>Name:</strong> {}<br>", self.name);
         rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
         rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
         rv += &format!("<strong>Table:</strong> {}<br>", self.table);
@@ -184,11 +185,25 @@ impl Catalog {
         }
     }
 
-    pub async fn swich_layer_published(&mut self, target_name: &str) -> AppResult<()> {
+    pub fn find_layer_by_id<'a>(
+        &'a self,
+        target_id: &'a str,
+        state: StateLayer,
+    ) -> Option<&'a Layer> {
+        match state {
+            StateLayer::Any => self.layers.iter().find(|layer| layer.id == target_id),
+            StateLayer::Published => self
+                .layers
+                .iter()
+                .find(|layer| layer.id == target_id && layer.published),
+        }
+    }
+
+    pub async fn swich_layer_published(&mut self, target_id: &str) -> AppResult<()> {
         let position = self
             .layers
             .iter()
-            .position(|layer| layer.name == target_name);
+            .position(|layer| layer.id == target_id);
         match position {
             Some(index) => self.layers[index].published = !self.layers.clone()[index].published,
             None => println!("layer not found"),
@@ -206,7 +221,7 @@ impl Catalog {
     }
 
     pub async fn update_layer(&mut self, layer: Layer) -> AppResult<()> {
-        let position = self.layers.iter().position(|lyr| lyr.name == layer.name);
+        let position = self.layers.iter().position(|lyr| lyr.id == layer.id);
         match position {
             Some(index) => self.layers[index] = layer,
             None => println!("layer not found"),
@@ -216,8 +231,8 @@ impl Catalog {
         Ok(())
     }
 
-    pub async fn delete_layer(&mut self, name: String) -> AppResult<()> {
-        self.layers.retain(|lyr| lyr.name != name);
+    pub async fn delete_layer(&mut self, id: String) -> AppResult<()> {
+        self.layers.retain(|lyr| lyr.id != id);
         let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
         storage.save(self.layers.clone()).await?;
         Ok(())
