@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::error::AppResult;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokio::fs::OpenOptions;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

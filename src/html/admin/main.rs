@@ -1,5 +1,5 @@
 use crate::{
-    auth::{User, Group},
+    auth::{Group, User},
     catalog::{Layer, StateLayer},
     error::{AppError, AppResult},
     get_auth, get_catalog,

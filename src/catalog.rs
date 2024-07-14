@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::{error::AppResult, storage::Storage};
+use serde::{Deserialize, Serialize};
 
 pub enum StateLayer {
     Any,
@@ -200,10 +200,7 @@ impl Catalog {
     }
 
     pub async fn swich_layer_published(&mut self, target_id: &str) -> AppResult<()> {
-        let position = self
-            .layers
-            .iter()
-            .position(|layer| layer.id == target_id);
+        let position = self.layers.iter().position(|layer| layer.id == target_id);
         match position {
             Some(index) => self.layers[index].published = !self.layers.clone()[index].published,
             None => println!("layer not found"),

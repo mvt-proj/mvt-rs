@@ -1,5 +1,5 @@
-use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
 use base64::{engine::general_purpose, Engine as _};
+use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -7,12 +7,15 @@ use time::{Duration, OffsetDateTime};
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
-use crate::{error::{AppResult, AppError}, get_auth, get_jwt_secret, storage::Storage};
+use crate::{
+    error::{AppError, AppResult},
+    get_auth, get_jwt_secret,
+    storage::Storage,
+};
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
-
 
 fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
     let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
@@ -40,7 +43,6 @@ fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
 
     Ok(auth_parts[0].to_string())
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
@@ -154,7 +156,6 @@ impl Auth {
             storage.save(users.clone()).await?;
         }
 
-
         Ok(Self {
             groups,
             users,
@@ -164,7 +165,6 @@ impl Auth {
             salt_string,
         })
     }
-
 
     pub fn find_group_by_name<'a>(&'a self, target_name: &'a str) -> Option<&'a Group> {
         self.groups.iter().find(|m| m.name == target_name)
@@ -237,7 +237,8 @@ impl Auth {
             Ok(username) => username,
             Err(err) => {
                 eprintln!("Error: {}", err);
-                return None;             }
+                return None;
+            }
         };
         self.find_user_by_name(&current_username)
     }
@@ -298,7 +299,7 @@ pub async fn require_user_admin(req: &mut Request, res: &mut Response) -> AppRes
         .map_err(|err| AppError::ConversionError(err.to_string()))?;
 
     let auth: Auth = get_auth().clone();
-    let current_user = auth.get_current_user(&authorization_str).unwrap();
+    let current_user = auth.get_current_user(authorization_str).unwrap();
     if !current_user.is_admin() {
         res.render(Redirect::other("/admin"));
     }

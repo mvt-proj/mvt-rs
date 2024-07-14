@@ -9,7 +9,7 @@ use bytes::Bytes;
 
 #[derive(Debug, Clone)]
 pub struct RedisCache {
-    pub conn_info: String,
+    // pub conn_info: String,
     pool: bb8::Pool<RedisConnectionManager>,
 }
 
@@ -17,7 +17,7 @@ impl RedisCache {
     pub async fn new(conn_info: String) -> AppResult<Self> {
         let manager = RedisConnectionManager::new(conn_info.clone())?;
         let pool = bb8::Pool::builder().build(manager).await?;
-        Ok(RedisCache { conn_info, pool })
+        Ok(RedisCache { pool })
     }
 
     pub async fn delete_cache(&self, catalog: Catalog) -> AppResult<()> {

@@ -13,7 +13,6 @@ use crate::{
     storage::Storage,
 };
 
-
 #[derive(Template)]
 #[template(path = "admin/users/users.html")]
 struct ListUsersTemplate<'a> {
@@ -38,11 +37,11 @@ pub async fn list_users(req: &mut Request, res: &mut Response) -> AppResult<()> 
         .map_err(|err| AppError::ConversionError(err.to_string()))?;
 
     let auth: Auth = get_auth().clone();
-    let current_user = auth.get_current_user(&authorization_str).unwrap();
+    let current_user = auth.get_current_user(authorization_str).unwrap();
 
     let template = ListUsersTemplate {
         users: &auth.users,
-        current_user: &current_user,
+        current_user,
     };
     res.render(Text::Html(template.render()?));
     Ok(())
@@ -54,7 +53,8 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
     let app_state = get_app_state();
     let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
 
-    let selected_groups: Vec<Group> = new_user.groups
+    let selected_groups: Vec<Group> = new_user
+        .groups
         .iter()
         .filter_map(|group_name| auth.find_group_by_name(group_name).cloned())
         .collect();
@@ -83,15 +83,16 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 
     let encrypt_psw: String;
     if new_user.password.to_string().is_empty() {
-        match auth.find_user_by_name(&new_user.username) {
+        match auth.find_user_by_name(new_user.username) {
             Some(user) => encrypt_psw = user.password.clone(),
-            None => encrypt_psw = "".to_string()
+            None => encrypt_psw = "".to_string(),
         };
     } else {
         encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
     }
 
-    let selected_groups: Vec<Group> = new_user.groups
+    let selected_groups: Vec<Group> = new_user
+        .groups
         .iter()
         .filter_map(|group_name| auth.find_group_by_name(group_name).cloned())
         .collect();

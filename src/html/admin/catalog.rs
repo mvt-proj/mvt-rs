@@ -7,7 +7,7 @@ use crate::{
     auth::{Auth, User},
     catalog::{Catalog, Layer},
     error::{AppError, AppResult},
-    get_app_state, get_catalog, get_auth,
+    get_app_state, get_auth, get_catalog,
 };
 
 #[derive(Template)]
@@ -55,11 +55,11 @@ pub async fn page_catalog(req: &mut Request, res: &mut Response) -> AppResult<()
         .to_str()
         .map_err(|err| AppError::ConversionError(err.to_string()))?;
 
-    let current_user = auth.get_current_user(&authorization_str).unwrap();
+    let current_user = auth.get_current_user(authorization_str).unwrap();
 
     let template = CatalogTemplate {
         layers: &catalog.layers,
-        current_user: &current_user,
+        current_user,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));

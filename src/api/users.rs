@@ -4,7 +4,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, AuthorizeState, DataToken, User, Group},
+    auth::{Auth, AuthorizeState, DataToken, Group, User},
     get_app_state, get_auth,
 };
 
@@ -14,7 +14,7 @@ struct NewUser<'a> {
     username: &'a str,
     email: String,
     password: String,
-    groups: Vec<Option<Group>>
+    groups: Vec<Option<Group>>,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
