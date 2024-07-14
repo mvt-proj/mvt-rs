@@ -19,7 +19,7 @@ pub struct AppConfig {
 }
 
 pub async fn parse_args() -> AppResult<AppConfig> {
-    let matches = Command::new("mvt-rs vector tiles server")
+    let matches = Command::new("mvt-server: a vector tiles server")
         .arg(
             Arg::new("configdir")
                 .short('c')
