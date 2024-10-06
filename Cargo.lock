@@ -1408,7 +1408,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mvt-server"
+name = "mvtrs"
 version = "0.4.1"
 dependencies = [
  "anyhow",

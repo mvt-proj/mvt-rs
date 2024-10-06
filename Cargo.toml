@@ -1,10 +1,18 @@
 [package]
-name = "mvt-server"
+name = "mvtrs"
 version = "0.4.1"
 edition = "2021"
 authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "mvt_server"
+path = "src/mvt_server/main.rs"
+
+[[bin]]
+name = "mvt_admin"
+path = "src/mvt_admin/main.rs"
 
 [dependencies]
 uuid = { version = "1.8.0", features = ["v4", "fast-rng"] }
@@ -26,7 +34,7 @@ tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
-sqlx = { version = "0.8", features = [ "runtime-tokio-native-tls" , "postgres" ] }
+sqlx = { version = "0.8", features = [ "runtime-tokio-native-tls" , "postgres", "sqlite" ] }
 
 redis = { version = "0.27", features = ["tokio-comp"] }
 bb8 = "0.8"
