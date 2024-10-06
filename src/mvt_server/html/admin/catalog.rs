@@ -2,11 +2,11 @@ use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use mvtrs::common::error::{AppResult, AppError};
 
 use crate::{
     auth::{Auth, User},
     catalog::{Catalog, Layer},
-    error::{AppError, AppResult},
     get_app_state, get_auth, get_catalog,
 };
 

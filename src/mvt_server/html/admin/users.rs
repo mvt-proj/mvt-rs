@@ -5,10 +5,10 @@ use askama::Template;
 use salvo::macros::Extractible;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
+use mvtrs::common::error::{AppResult, AppError};
 
 use crate::{
     auth::{Auth, Group, User},
-    error::{AppError, AppResult},
     get_app_state, get_auth,
     storage::Storage,
 };

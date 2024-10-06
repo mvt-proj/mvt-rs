@@ -1,11 +1,9 @@
 // use anyhow::Ok;
 use askama::Template;
 use salvo::prelude::*;
+use mvtrs::common::error::{AppResult, AppError};
 
-use crate::{
-    database::{query_fields, query_schemas, query_srid, query_tables, Field, Schema, Srid, Table},
-    error::{AppError, AppResult},
-};
+use crate::database::{query_fields, query_schemas, query_srid, query_tables, Field, Schema, Srid, Table};
 
 #[derive(Template)]
 #[template(path = "admin/database/schemas.html")]

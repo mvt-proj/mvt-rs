@@ -9,7 +9,7 @@ mod catalog;
 mod database;
 mod db;
 mod diskcache;
-mod error;
+// mod error;
 mod health;
 mod html;
 mod rediscache;
@@ -17,11 +17,13 @@ mod routes;
 mod storage;
 mod tiles;
 
+
+
 use auth::Auth;
 use catalog::Catalog;
 use db::make_db_pool;
 use diskcache::DiskCache;
-use error::AppResult;
+use mvtrs::common::error::AppResult;
 use rediscache::RedisCache;
 
 #[derive(Debug)]

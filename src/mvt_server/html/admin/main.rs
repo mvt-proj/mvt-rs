@@ -1,7 +1,8 @@
+use mvtrs::common::error::{AppResult, AppError};
+
 use crate::{
     auth::{Group, User},
     catalog::{Layer, StateLayer},
-    error::{AppError, AppResult},
     get_auth, get_catalog,
 };
 use askama::Template;

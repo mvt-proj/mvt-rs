@@ -11,11 +11,11 @@ enum Via {
     Disk,
     Redis,
 }
+use mvtrs::common::error::AppResult;
 
 use crate::{
     catalog::{Catalog, Layer, StateLayer},
     diskcache::DiskCache,
-    error::AppResult,
     get_app_state, get_catalog, get_db_pool, get_disk_cache,
     rediscache::RedisCache,
 };

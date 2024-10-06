@@ -3,7 +3,7 @@ use sqlx::ConnectOptions;
 
 use std::time::Duration;
 
-use crate::error::AppResult;
+use mvtrs::common::error::AppResult;
 
 pub async fn make_db_pool(
     db_conn: &str,

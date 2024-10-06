@@ -1,4 +1,6 @@
-use crate::{error::AppResult, storage::Storage};
+use crate::storage::Storage;
+use mvtrs::common::error::AppResult;
+
 use serde::{Deserialize, Serialize};
 
 pub enum StateLayer {

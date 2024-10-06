@@ -1,7 +1,8 @@
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
+use mvtrs::common::error::AppResult;
 
-use crate::{error::AppResult, get_db_pool};
+use crate::get_db_pool;
 
 #[derive(FromRow, Serialize, Debug)]
 pub struct Schema {

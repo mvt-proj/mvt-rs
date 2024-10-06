@@ -1,4 +1,4 @@
-use crate::error::AppResult;
+use mvtrs::common::error::AppResult;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokio::fs::OpenOptions;

@@ -1,4 +1,6 @@
-use crate::{error::AppResult, Catalog};
+use crate::Catalog;
+use mvtrs::common::error::AppResult;
+
 use bb8_redis::{
     bb8,
     // redis::{AsyncCommands, RedisResult},

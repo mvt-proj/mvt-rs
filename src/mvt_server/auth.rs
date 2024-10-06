@@ -6,9 +6,10 @@ use time::{Duration, OffsetDateTime};
 
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
+use mvtrs::common::error::{AppError, AppResult};
 
 use crate::{
-    error::{AppError, AppResult},
+    // error::{AppError, AppResult},
     get_auth, get_jwt_secret,
     storage::Storage,
 };
