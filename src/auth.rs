@@ -2,12 +2,15 @@ use base64::{engine::general_purpose, Engine as _};
 use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
+use sqlx::SqlitePool;
 use time::{Duration, OffsetDateTime};
 
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
+use crate::config::{create_user, delete_user, update_user};
 use crate::{
+    config::{get_groups, get_users},
     error::{AppError, AppResult},
     get_auth, get_jwt_secret,
     storage::Storage,
@@ -58,12 +61,14 @@ pub struct AuthorizeState {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Group {
+    pub id: String,
     pub name: String,
     pub description: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
+    pub id: String,
     pub username: String,
     pub email: String,
     // #[serde(skip_serializing)]
@@ -108,53 +113,11 @@ pub struct Auth {
 }
 
 impl Auth {
-    pub async fn new(config_dir: &str, salt_string: String) -> AppResult<Self> {
-        // Groups
-        let groups_path = format!("{config_dir}/groups.json");
-        let mut storage = Storage::<Vec<Group>>::new(groups_path.clone());
-        let loaded_groups = storage.load().await?;
-        let mut groups: Vec<Group> = loaded_groups.unwrap_or(Vec::new());
-
-        if groups.is_empty() {
-            let admin_group = Group {
-                name: "admin".to_string(),
-                description: "admin role".to_string(),
-            };
-            let operator_group = Group {
-                name: "operator".to_string(),
-                description: "operator role".to_string(),
-            };
-            groups.push(admin_group);
-            groups.push(operator_group);
-            storage.save(groups.clone()).await?;
-        }
-
-        // Users
-        let users_path = format!("{config_dir}/users.json");
-        let mut storage = Storage::<Vec<User>>::new(users_path.clone());
-        let loaded_users = storage.load().await?;
-        let mut users: Vec<User> = loaded_users.unwrap_or(Vec::new());
-
-        if users.is_empty() {
-            let salt = SaltString::encode_b64(salt_string.as_bytes())?;
-            let argon2 = Argon2::default();
-            let password_hash = argon2
-                .hash_password("admin".to_string().as_bytes(), &salt)
-                .unwrap()
-                .to_string();
-            let admin_group = Group {
-                name: "admin".to_string(),
-                description: "admin role".to_string(),
-            };
-            let user = User {
-                username: "admin".to_string(),
-                email: "admin@mail.com".to_string(),
-                password: password_hash,
-                groups: vec![admin_group],
-            };
-            users.push(user);
-            storage.save(users.clone()).await?;
-        }
+    pub async fn new(config_dir: &str, salt_string: String, pool: &SqlitePool) -> AppResult<Self> {
+        let groups = get_groups(Some(pool)).await?;
+        let users = get_users(Some(pool)).await?;
+        let groups_path = format!("{}/groups.json", config_dir);
+        let users_path = format!("{}/users.json", config_dir);
 
         Ok(Self {
             groups,
@@ -195,13 +158,13 @@ impl Auth {
 
     pub async fn create_user(&mut self, user: User) -> AppResult<User> {
         self.users.push(user.clone());
-        let mut storage = Storage::<Vec<User>>::new(self.users_path.clone());
-
-        storage.save(self.users.clone()).await?;
+        create_user(&user, None).await?;
         Ok(user)
     }
 
     pub async fn update_user(&mut self, user: User) -> AppResult<()> {
+        let id = user.id.clone();
+        update_user(id, &user, None).await?;
         let position = self
             .users
             .iter()
@@ -210,15 +173,12 @@ impl Auth {
             Some(index) => self.users[index] = user,
             None => println!("user not found"),
         }
-        let mut storage = Storage::<Vec<User>>::new(self.users_path.clone());
-        storage.save(self.users.clone()).await?;
         Ok(())
     }
 
-    pub async fn delete_user(&mut self, username: String) -> AppResult<()> {
-        self.users.retain(|user| user.username != username);
-        let mut storage = Storage::<Vec<User>>::new(self.users_path.clone());
-        storage.save(self.users.clone()).await?;
+    pub async fn delete_user(&mut self, id: String) -> AppResult<()> {
+        delete_user(id.clone(), None).await?;
+        self.users.retain(|user| user.id != id);
         Ok(())
     }
 

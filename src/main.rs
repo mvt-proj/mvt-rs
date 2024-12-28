@@ -1,5 +1,10 @@
+use argon2::{
+    password_hash::{PasswordHasher, SaltString},
+    Argon2,
+};
 use salvo::prelude::*;
 use sqlx::{Connection, Executor, PgPool, SqliteConnection, SqlitePool};
+use uuid::Uuid;
 use std::cell::OnceCell;
 use std::fs;
 use std::path::Path;
@@ -8,6 +13,7 @@ mod api;
 mod args;
 mod auth;
 mod catalog;
+mod config;
 mod database;
 mod db;
 mod diskcache;
@@ -48,6 +54,10 @@ pub fn get_db_pool() -> &'static PgPool {
     unsafe { &APP_STATE.get().unwrap().db_pool }
 }
 
+pub fn get_cf_pool() -> &'static SqlitePool {
+    unsafe { &APP_STATE.get().unwrap().cf_pool }
+}
+
 pub fn get_catalog() -> &'static Catalog {
     unsafe { &APP_STATE.get().unwrap().catalog }
 }
@@ -64,8 +74,12 @@ pub fn get_jwt_secret() -> &'static String {
     unsafe { &APP_STATE.get().unwrap().jwt_secret }
 }
 
-async fn initialize_auth(config_dir: &str, salt_string: String) -> AppResult<Auth> {
-    let auth = Auth::new(config_dir, salt_string).await?;
+async fn initialize_auth(
+    config_dir: &str,
+    salt_string: String,
+    pool: &SqlitePool,
+) -> AppResult<Auth> {
+    let auth = Auth::new(config_dir, salt_string, pool).await?;
     Ok(auth)
 }
 
@@ -87,7 +101,7 @@ async fn initialize_redis_cache(
     Ok(Some(cache))
 }
 
-pub async fn init_sqlite(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
+pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx::Error> {
     if !Path::new(db_path).exists() {
         println!("Database file not found, initializing: {}", db_path);
 
@@ -100,7 +114,7 @@ pub async fn init_sqlite(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id TEXT PRIMARY KEY NOT NULL,
                         username TEXT NOT NULL,
                         email TEXT NOT NULL UNIQUE,
                         password TEXT NOT NULL,
@@ -111,18 +125,47 @@ pub async fn init_sqlite(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS groups (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id TEXT PRIMARY KEY NOT NULL,
                         name TEXT NOT NULL UNIQUE,
                         description TEXT NOT NULL
                     );",
         )
         .await?;
 
+        let admin_role_id = Uuid::new_v4().to_string();
+
         conn.execute(
-            "
-            INSERT INTO groups (name, description)
-            VALUES ('admin', 'admin role');
-        ",
+            format!("
+            INSERT INTO groups (id, name, description)
+            VALUES ('{}', 'admin', 'admin role');
+        ", admin_role_id).as_str(),
+        )
+        .await?;
+
+        conn.execute(
+            format!("
+            INSERT INTO groups (id, name, description)
+            VALUES ('{}', 'operator', 'operator role');
+        ", Uuid::new_v4().to_string()).as_str(),
+        )
+        .await?;
+
+        //create admin user with conn.execute
+        let argon2 = Argon2::default();
+        let salt = SaltString::encode_b64(salt.as_bytes()).unwrap();
+        let password_hash = argon2
+            .hash_password("admin".to_string().as_bytes(), &salt)
+            .unwrap()
+            .to_string();
+        conn.execute(
+            format!(
+                "
+            INSERT INTO users 
+                (id, username, email, password, groups) 
+            VALUES 
+                ('{}', 'admin', 'admin@gmail.com', '{password_hash}', '{admin_role_id}');", Uuid::new_v4().to_string(),
+            )
+            .as_str(),
         )
         .await?;
 
@@ -146,7 +189,17 @@ async fn main() -> AppResult<()> {
         .init();
 
     let app_config = args::parse_args().await?;
-    let auth = initialize_auth(&app_config.config_dir, app_config.salt_string).await?;
+
+    let db_conn = &format!("{}/mvtrs.db", app_config.config_dir);
+    let salt = app_config.salt_string.clone();
+    let cf_pool = init_sqlite(db_conn, salt).await?;
+
+    let auth = initialize_auth(
+        &app_config.config_dir,
+        app_config.salt_string.clone(),
+        &cf_pool,
+    )
+    .await?;
     let catalog = initialize_catalog(&app_config.config_dir).await?;
 
     let db_pool = make_db_pool(
@@ -174,9 +227,6 @@ async fn main() -> AppResult<()> {
             None
         }
     };
-
-    let db_conn = &format!("{}/mvtrs.db", app_config.config_dir);
-    let cf_pool = init_sqlite(db_conn).await?;
 
     let app_state = AppState {
         db_pool,

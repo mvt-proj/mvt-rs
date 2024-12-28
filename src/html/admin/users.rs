@@ -5,6 +5,7 @@ use askama::Template;
 use salvo::macros::Extractible;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{
     auth::{Auth, Group, User},
@@ -60,6 +61,7 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         .collect();
 
     let user = User {
+        id: Uuid::new_v4().to_string(),
         username: new_user.username.to_string(),
         email: new_user.email,
         password: encrypt_psw,
@@ -98,6 +100,7 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         .collect();
 
     let user = User {
+        id: Uuid::new_v4().to_string(),
         username: new_user.username.to_string(),
         email: new_user.email,
         password: encrypt_psw,
@@ -114,10 +117,10 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let username = req
-        .param::<String>("username")
+    let id = req
+        .param::<String>("id")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
-    app_state.auth.delete_user(username).await?;
+    app_state.auth.delete_user(id).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/users"));

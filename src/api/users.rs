@@ -2,6 +2,7 @@ use salvo::http::StatusCode;
 use salvo::macros::Extractible;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{
     auth::{Auth, AuthorizeState, DataToken, Group, User},
@@ -61,6 +62,7 @@ pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
     let app_state = get_app_state();
     let encrypt_psw = auth.get_encrypt_psw(data.password.to_string()).unwrap();
     let user = User {
+        id: Uuid::new_v4().to_string(),
         username: data.username.to_string(),
         email: data.email,
         password: encrypt_psw,
