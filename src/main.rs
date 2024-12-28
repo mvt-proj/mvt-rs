@@ -1,6 +1,8 @@
 use salvo::prelude::*;
-use sqlx::PgPool;
+use sqlx::{Connection, Executor, PgPool, SqliteConnection, SqlitePool};
 use std::cell::OnceCell;
+use std::fs;
+use std::path::Path;
 
 mod api;
 mod args;
@@ -27,6 +29,7 @@ use rediscache::RedisCache;
 #[derive(Debug)]
 pub struct AppState {
     db_pool: PgPool,
+    cf_pool: SqlitePool,
     catalog: Catalog,
     disk_cache: DiskCache,
     auth: Auth,
@@ -84,6 +87,55 @@ async fn initialize_redis_cache(
     Ok(Some(cache))
 }
 
+pub async fn init_db(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
+    if !Path::new(db_path).exists() {
+        println!("Database file not found, initializing: {}", db_path);
+
+        if let Some(parent) = Path::new(db_path).parent() {
+            fs::create_dir_all(parent).expect("Failed to create database directory");
+            fs::File::create(db_path).expect("Failed to create database file");
+        }
+
+        let mut conn = SqliteConnection::connect(&format!("sqlite:{}", db_path)).await?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT NOT NULL,
+                        email TEXT NOT NULL UNIQUE,
+                        password TEXT NOT NULL,
+                        group_ids TEXT NOT NULL 
+                    );",
+        )
+        .await?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS groups (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL UNIQUE,
+                        description TEXT NOT NULL
+                    );",
+        )
+        .await?;
+
+        conn.execute(
+            "
+            INSERT INTO groups (name, description)
+            VALUES ('admin', 'admin role');
+        ",
+        )
+        .await?;
+
+        println!("Database initialized successfully.");
+    } else {
+        println!("Database file found, skipping initialization.");
+    }
+
+    // Crea el pool de conexiones
+    let pool = SqlitePool::connect(&format!("sqlite:{}", db_path)).await?;
+    Ok(pool)
+}
+
 #[tokio::main]
 async fn main() -> AppResult<()> {
     tracing_subscriber::fmt()
@@ -123,8 +175,12 @@ async fn main() -> AppResult<()> {
         }
     };
 
+    let db_conn = &format!("{}/mvtrs.db", app_config.config_dir);
+    let cf_pool = init_db(db_conn).await?;
+
     let app_state = AppState {
         db_pool,
+        cf_pool,
         catalog,
         disk_cache,
         auth,

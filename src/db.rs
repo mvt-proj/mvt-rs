@@ -24,3 +24,12 @@ pub async fn make_db_pool(
 
     Ok(pool)
 }
+
+
+pub async fn make_cf_pool(
+    db_conn: &str,
+) -> AppResult<sqlx::SqlitePool> {
+
+    let pool = sqlx::SqlitePool::connect(db_conn).await?;
+    Ok(pool)
+}
