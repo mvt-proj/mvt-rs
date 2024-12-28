@@ -45,7 +45,7 @@ async fn query_database(
 ) -> AppResult<Bytes> {
     let name = layer_conf.name;
     let schema = layer_conf.schema;
-    let table = layer_conf.table;
+    let table = layer_conf.table_name;
     let fields = convert_fields(layer_conf.fields);
 
     let geom = layer_conf.geom.unwrap_or(String::from("geom"));

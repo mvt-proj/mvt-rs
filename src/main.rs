@@ -83,8 +83,8 @@ async fn initialize_auth(
     Ok(auth)
 }
 
-async fn initialize_catalog(config_dir: &str) -> AppResult<Catalog> {
-    let catalog = Catalog::new(config_dir).await?;
+async fn initialize_catalog(pool: &SqlitePool) -> AppResult<Catalog> {
+    let catalog = Catalog::new(pool).await?;
     Ok(catalog)
 }
 
@@ -122,6 +122,34 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
                     );",
         )
         .await?;
+        
+        conn.execute("
+            CREATE TABLE layers (
+                id TEXT PRIMARY KEY,
+                geometry TEXT NOT NULL,
+                name TEXT NOT NULL,
+                alias TEXT NOT NULL,
+                schema TEXT NOT NULL,
+                table_name TEXT NOT NULL,
+                fields TEXT NOT NULL,
+                filter TEXT,
+                srid INTEGER,
+                geom TEXT,
+                sql_mode TEXT,
+                buffer INTEGER,
+                extent INTEGER,
+                zmin INTEGER,
+                zmax INTEGER,
+                zmax_do_not_simplify INTEGER,
+                buffer_do_not_simplify INTEGER,
+                extent_do_not_simplify INTEGER,
+                clip_geom BOOLEAN,
+                delete_cache_on_start BOOLEAN,
+                max_cache_age INTEGER,
+                published BOOLEAN NOT NULL,
+                url TEXT
+            );
+        ",).await?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS groups (
@@ -200,7 +228,7 @@ async fn main() -> AppResult<()> {
         &cf_pool,
     )
     .await?;
-    let catalog = initialize_catalog(&app_config.config_dir).await?;
+    let catalog = initialize_catalog(&cf_pool).await?;
 
     let db_pool = make_db_pool(
         &app_config.db_conn,

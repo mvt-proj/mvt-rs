@@ -1,4 +1,8 @@
-use crate::{error::AppResult, storage::Storage};
+use crate::{
+    config::{create_layer, delete_layer, get_layers, switch_layer_published, update_layer},
+    error::AppResult,
+    storage::Storage,
+};
 use serde::{Deserialize, Serialize};
 
 pub enum StateLayer {
@@ -13,7 +17,7 @@ pub struct Layer {
     pub name: String,
     pub alias: String,
     pub schema: String,
-    pub table: String,
+    pub table_name: String,
     pub fields: Vec<String>,
     pub filter: Option<String>,
     pub srid: Option<u32>,
@@ -97,7 +101,7 @@ impl Layer {
         rv += &format!("<strong>Name:</strong> {}<br>", self.name);
         rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
         rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
-        rv += &format!("<strong>Table:</strong> {}<br>", self.table);
+        rv += &format!("<strong>Table:</strong> {}<br>", self.table_name);
         rv += &format!("<strong>Fields:</strong> {}<br>", self.fields.join(", "));
         rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
         rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
@@ -136,22 +140,13 @@ impl Layer {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Catalog {
     pub layers: Vec<Layer>,
-    pub config_dir: String,
-    pub storage_path: String,
 }
 
 impl Catalog {
-    pub async fn new(config_dir: &str) -> AppResult<Self> {
-        let storage_path = format!("{config_dir}/catalog.json");
-        let mut storage = Storage::<Vec<Layer>>::new(storage_path.clone());
-        let loaded_catalog = storage.load().await?;
-        let layers: Vec<Layer> = loaded_catalog.unwrap_or(Vec::new());
+    pub async fn new(pool: &sqlx::SqlitePool) -> AppResult<Self> {
+        let layers = get_layers(Some(pool)).await?;
 
-        Ok(Self {
-            layers,
-            config_dir: config_dir.to_string(),
-            storage_path,
-        })
+        Ok(Self { layers })
     }
 
     pub fn find_layer_by_name<'a>(
@@ -200,38 +195,34 @@ impl Catalog {
     }
 
     pub async fn swich_layer_published(&mut self, target_id: &str) -> AppResult<()> {
+        switch_layer_published(None, target_id).await?;
         let position = self.layers.iter().position(|layer| layer.id == target_id);
         match position {
             Some(index) => self.layers[index].published = !self.layers.clone()[index].published,
             None => println!("layer not found"),
         }
-        let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
-        storage.save(self.layers.clone()).await?;
         Ok(())
     }
 
     pub async fn add_layer(&mut self, layer: Layer) -> AppResult<()> {
+        create_layer(None, layer.clone()).await?;
         self.layers.push(layer);
-        let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
-        storage.save(self.layers.clone()).await?;
         Ok(())
     }
 
     pub async fn update_layer(&mut self, layer: Layer) -> AppResult<()> {
+        update_layer(None, layer.clone()).await?;
         let position = self.layers.iter().position(|lyr| lyr.id == layer.id);
         match position {
             Some(index) => self.layers[index] = layer,
             None => println!("layer not found"),
         }
-        let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
-        storage.save(self.layers.clone()).await?;
         Ok(())
     }
 
     pub async fn delete_layer(&mut self, id: String) -> AppResult<()> {
+        delete_layer(None, id.as_str()).await?;
         self.layers.retain(|lyr| lyr.id != id);
-        let mut storage = Storage::<Vec<Layer>>::new(self.storage_path.clone());
-        storage.save(self.layers.clone()).await?;
         Ok(())
     }
 
