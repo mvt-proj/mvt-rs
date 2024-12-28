@@ -87,7 +87,7 @@ async fn initialize_redis_cache(
     Ok(Some(cache))
 }
 
-pub async fn init_db(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
+pub async fn init_sqlite(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
     if !Path::new(db_path).exists() {
         println!("Database file not found, initializing: {}", db_path);
 
@@ -104,7 +104,7 @@ pub async fn init_db(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
                         username TEXT NOT NULL,
                         email TEXT NOT NULL UNIQUE,
                         password TEXT NOT NULL,
-                        group_ids TEXT NOT NULL 
+                        groups TEXT NOT NULL 
                     );",
         )
         .await?;
@@ -176,7 +176,7 @@ async fn main() -> AppResult<()> {
     };
 
     let db_conn = &format!("{}/mvtrs.db", app_config.config_dir);
-    let cf_pool = init_db(db_conn).await?;
+    let cf_pool = init_sqlite(db_conn).await?;
 
     let app_state = AppState {
         db_pool,
