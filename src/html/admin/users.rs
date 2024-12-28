@@ -8,10 +8,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Auth, Group, User},
-    error::{AppError, AppResult},
-    get_app_state, get_auth,
-    storage::Storage,
+    auth::{Auth, Group, User}, config::create_user as create_cf_user, error::{AppError, AppResult}, get_app_state, get_auth
 };
 
 #[derive(Template)]
@@ -68,10 +65,10 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         groups: selected_groups,
     };
 
+    create_cf_user(&user, None).await?;
+
     app_state.auth.users.push(user);
 
-    let mut storage = Storage::<Vec<User>>::new(auth.users_path.clone());
-    storage.save(app_state.auth.users.clone()).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/users"));
