@@ -12,8 +12,7 @@ use crate::config::{create_user, delete_user, update_user};
 use crate::{
     config::{get_groups, get_users},
     error::{AppError, AppResult},
-    get_auth, get_jwt_secret,
-    storage::Storage,
+    get_auth, get_jwt_secret
 };
 use argon2::{
     password_hash::{PasswordHasher, SaltString},

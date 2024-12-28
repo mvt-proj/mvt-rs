@@ -22,7 +22,7 @@ mod health;
 mod html;
 mod rediscache;
 mod routes;
-mod storage;
+// mod storage;
 mod tiles;
 
 use auth::Auth;
