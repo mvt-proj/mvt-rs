@@ -1,8 +1,5 @@
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use clap::{Arg, Command};
-use std::path::Path;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
 
 #[derive(Debug)]
 pub struct AppConfig {
@@ -26,7 +23,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .long("config")
                 .value_name("CONFIGDIR")
                 .default_value("config")
-                .help("Directory where config files are placed"),
+                .help("Directory where config file is placed"),
         )
         .arg(
             Arg::new("cachedir")
@@ -87,8 +84,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         .get_one::<String>("cachedir")
         .expect("required")
         .to_string();
-
-    create_config_files(&config_dir).await?;
 
     dotenv::dotenv().ok();
 
@@ -174,23 +169,4 @@ pub async fn parse_args() -> AppResult<AppConfig> {
     })
 }
 
-async fn create_config_files(config_dir: &str) -> AppResult<()> {
-    let dir_path = Path::new(config_dir);
-    if !dir_path.exists() {
-        tokio::fs::create_dir_all(dir_path)
-            .await
-            .map_err(AppError::FileCreationError)?;
-    }
 
-    let paths_to_create = ["catalog.json", "users.json", "groups.json"];
-    for path in paths_to_create.iter() {
-        let file_path = Path::new(config_dir).join(path);
-        if !file_path.exists() {
-            let json_str = "[]";
-            let mut file = File::create(file_path).await?;
-            file.write_all(json_str.as_bytes()).await?;
-            file.flush().await?;
-        }
-    }
-    Ok(())
-}
