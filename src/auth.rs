@@ -167,7 +167,7 @@ impl Auth {
         let position = self
             .users
             .iter()
-            .position(|usr| usr.username == user.username);
+            .position(|usr| usr.id == user.id);
         match position {
             Some(index) => self.users[index] = user,
             None => println!("user not found"),
@@ -183,6 +183,10 @@ impl Auth {
 
     pub fn find_user_by_name<'a>(&'a self, target_name: &str) -> Option<&'a User> {
         self.users.iter().find(|usr| usr.username == target_name)
+    }
+
+    pub fn get_user_by_id<'a>(&'a self, target_id: &str) -> Option<&'a User> {
+        self.users.iter().find(|usr| usr.id == target_id)
     }
 
     pub fn find_user_position_by_name(&self, target_name: &str) -> Option<usize> {

@@ -44,11 +44,11 @@ pub fn app_router() -> salvo::Router {
                         .push(Router::with_path("new").get(html::admin::main::new_user))
                         .push(Router::with_path("create").post(html::admin::users::create_user))
                         .push(
-                            Router::with_path("edit/<username>").get(html::admin::main::edit_user),
+                            Router::with_path("edit/<id>").get(html::admin::main::edit_user),
                         )
                         .push(Router::with_path("update").post(html::admin::users::update_user))
                         .push(
-                            Router::with_path("delete/<username>")
+                            Router::with_path("delete/<id>")
                                 .get(html::admin::users::delete_user),
                         ),
                 )

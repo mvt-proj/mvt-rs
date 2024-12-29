@@ -38,13 +38,13 @@
           <td class="has-text-right">
             {% if current_user.is_admin() %}
             <div class="is-flex is-justify-content-right">
-              <a href="/admin/users/edit/{{ user.username }}" class="button is-white">
+              <a href="/admin/users/edit/{{ user.id }}" class="button is-white">
                 <span class="icon">
                   <i class="fas fa-pen"></i>
                 </span>
                </a>
               {% if user.username != "admin" %}
-                <a href="/admin/users/delete/{{ user.username}}" class="button is-danger is-outlined"
+                <a href="/admin/users/delete/{{ user.id}}" class="button is-danger is-outlined"
                   onclick="return confirm('Are you sure you want to delete this user?');" >
                   <span class="icon">
                     <i class="fas fa-trash"></i>

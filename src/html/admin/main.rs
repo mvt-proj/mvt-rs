@@ -54,13 +54,13 @@ pub async fn new_user(res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_user(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let username = req
-        .param::<String>("username")
+    let id = req
+        .param::<String>("id")
         .ok_or(AppError::RequestParamError("username".to_string()))?;
     let auth = get_auth().clone();
     let user = auth
-        .find_user_by_name(&username)
-        .ok_or_else(|| AppError::UserNotFoundError(username.clone()))?;
+        .get_user_by_id(&id)
+        .ok_or_else(|| AppError::UserNotFoundError(id.clone()))?;
 
     let template = EditUserTemplate {
         user: user.clone(),

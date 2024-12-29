@@ -21,6 +21,7 @@ struct ListUsersTemplate<'a> {
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]
 struct NewUser<'a> {
+    id: Option<String>,
     username: &'a str,
     email: String,
     password: String,
@@ -82,7 +83,7 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 
     let encrypt_psw: String;
     if new_user.password.to_string().is_empty() {
-        match auth.find_user_by_name(new_user.username) {
+        match auth.get_user_by_id(new_user.id.clone().unwrap().as_str()) {
             Some(user) => encrypt_psw = user.password.clone(),
             None => encrypt_psw = "".to_string(),
         };
@@ -97,13 +98,13 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         .collect();
 
     let user = User {
-        id: Uuid::new_v4().to_string(),
+        id: new_user.id.unwrap(),
         username: new_user.username.to_string(),
         email: new_user.email,
         password: encrypt_psw,
         groups: selected_groups,
     };
-    let _ = app_state.auth.update_user(user).await;
+    let _ = app_state.auth.update_user(user).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/users"));

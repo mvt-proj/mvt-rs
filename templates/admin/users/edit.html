@@ -18,6 +18,12 @@
 
       <form action="/admin/users/update" method="post">
         <div class="field">
+          <label class="label">ID</label>
+          <div class="control">
+            <input class="input" name="id" type="text" placeholder="ID" value="{{ user.id }}" readonly disabled>
+          </div>
+        </div>
+        <div class="field">
           <label class="label">Username</label>
           <div class="control">
             <input class="input" name="username" type="text" placeholder="Username" value="{{ user.username }}">
