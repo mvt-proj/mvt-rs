@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::auth::{Group, User};
 use crate::catalog::Layer;
 use crate::get_cf_pool;
@@ -6,58 +8,51 @@ use sqlx::{sqlite::SqlitePool, Row};
 pub async fn get_users(pool: Option<&SqlitePool>) -> Result<Vec<User>, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
-    let rows = sqlx::query("SELECT id, username, email, password, groups FROM Users")
-        .fetch_all(pool)
-        .await?;
+    let rows = sqlx::query(
+        "SELECT 
+            u.id as user_id, 
+            u.username, 
+            u.email, 
+            u.password, 
+            g.id as group_id, 
+            g.name as group_name, 
+            g.description as group_description 
+         FROM Users u
+         LEFT JOIN Groups g ON ',' || u.groups || ',' LIKE '%,' || g.id || ',%'",
+    )
+    .fetch_all(pool)
+    .await?;
 
-    let mut users = Vec::new();
+    let mut users_map: HashMap<String, User> = HashMap::new();
 
     for row in rows {
-        let id: String = row.get("id");
+        let user_id: String = row.get("user_id");
         let username: String = row.get("username");
         let email: String = row.get("email");
         let password: String = row.get("password");
-        let group_ids: String = row.get("groups");
+        let group_id: Option<String> = row.get("group_id");
+        let group_name: Option<String> = row.get("group_name");
+        let group_description: Option<String> = row.get("group_description");
 
-        let group_ids_vec: Vec<&str> = group_ids.split(',').collect();
-        let group_ids_sql = group_ids_vec
-            .iter()
-            .map(|id| format!("'{}'", id))
-            .collect::<Vec<String>>()
-            .join(",");
+        let user = users_map.entry(user_id.clone()).or_insert(User {
+            id: user_id.clone(),
+            username,
+            email,
+            password,
+            groups: Vec::new(),
+        });
 
-        let groups_query = format!(
-            "SELECT id, name, description FROM Groups WHERE id IN ({})",
-            group_ids_sql
-        );
-
-        println!("groups_query: {}", groups_query);
-
-        let groups_rows = sqlx::query(&groups_query).fetch_all(pool).await?;
-        let mut groups = Vec::new();
-
-        for group_row in groups_rows {
-            let id: String = group_row.get("id");
-            let name: String = group_row.get("name");
-            let description: String = group_row.get("description");
-
-            groups.push(Group {
+        if let (Some(id), Some(name), Some(description)) = (group_id, group_name, group_description)
+        {
+            user.groups.push(Group {
                 id,
                 name,
                 description,
             });
         }
-
-        users.push(User {
-            id,
-            username,
-            email,
-            password,
-            groups,
-        });
     }
 
-    Ok(users)
+    Ok(users_map.into_values().collect())
 }
 
 pub async fn get_groups(pool: Option<&SqlitePool>) -> Result<Vec<Group>, sqlx::Error> {
@@ -410,7 +405,10 @@ pub async fn delete_layer(pool: Option<&SqlitePool>, layer_id: &str) -> Result<(
     Ok(())
 }
 
-pub async fn switch_layer_published(pool: Option<&SqlitePool>, layer_id: &str) -> Result<(), sqlx::Error> {
+pub async fn switch_layer_published(
+    pool: Option<&SqlitePool>,
+    layer_id: &str,
+) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     let row = sqlx::query("SELECT published FROM layers WHERE id = ?")
