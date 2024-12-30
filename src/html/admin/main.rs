@@ -1,8 +1,5 @@
 use crate::{
-    auth::{Group, User},
-    catalog::{Layer, StateLayer},
-    error::{AppError, AppResult},
-    get_auth, get_catalog,
+    auth::{Group, User}, catalog::{Layer, StateLayer}, category::Category, error::{AppError, AppResult}, get_auth, get_catalog
 };
 use askama::Template;
 use salvo::prelude::*;
@@ -32,6 +29,16 @@ struct NewLayerTemplate {}
 #[template(path = "admin/catalog/layers/edit.html")]
 struct EditLayerTemplate {
     layer: Layer,
+}
+
+#[derive(Template)]
+#[template(path = "admin/categories/new.html")]
+struct NewCategoryTemplate {}
+
+#[derive(Template)]
+#[template(path = "admin/categories/edit.html")]
+struct EditCategoryTemplate {
+    category: Category,
 }
 
 #[handler]
@@ -88,6 +95,26 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response) -> AppResult<()> 
         .unwrap();
     let template = EditLayerTemplate {
         layer: layer.clone(),
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn new_category(res: &mut Response) -> AppResult<()> {
+    let template = NewCategoryTemplate {};
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn edit_category(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let category = Category::from_id(&id).await?;
+    let template = EditCategoryTemplate {
+        category: category.clone(),
     };
     res.render(Text::Html(template.render()?));
     Ok(())

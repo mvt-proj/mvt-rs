@@ -1,0 +1,46 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_content %}
+
+  <div class="has-text-left">
+    <a href="/admin/categories" class="button is-light">
+      <span class="icon is-small">
+        <i class="fas fa-arrow-left"></i>
+      </span>
+      <span>Back</span>
+    </a>
+  </div>
+
+  <div class="columns is-centered">
+    <div class="column is-three-quarters">
+
+      <h1 class="mb-3 title is-5 has-text-grey-darker">Edit Category {{ category.name }}</h1>
+
+      <form action="/admin/categories/update" method="post">
+        <div class="field">
+          <label class="label">ID</label>
+          <div class="control">
+            <input class="input" name="id" type="text" placeholder="ID" value="{{ category.id }}" readonly>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Name</label>
+          <div class="control">
+            <input class="input" name="name" type="text" placeholder="Name" value="{{ category.name }}">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <input class="input" name="description" type="text" placeholder="Description" value="{{ category.description }}">
+          </div>
+        </div>
+        <div class="field">
+          <div class="control has-text-centered">
+            <button class="button is-fullwidth is-link">Update Category</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

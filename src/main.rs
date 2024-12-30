@@ -2,17 +2,20 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
+use category::Category;
+use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
 use sqlx::{Connection, Executor, PgPool, SqliteConnection, SqlitePool};
-use uuid::Uuid;
 use std::cell::OnceCell;
 use std::fs;
 use std::path::Path;
+use uuid::Uuid;
 
 mod api;
 mod args;
 mod auth;
 mod catalog;
+mod category;
 mod config;
 mod database;
 mod db;
@@ -42,6 +45,7 @@ pub struct AppState {
     jwt_secret: String,
     use_redis_cache: bool,
     redis_cache: Option<RedisCache>,
+    categories: Vec<Category>,
 }
 
 static mut APP_STATE: OnceCell<AppState> = OnceCell::new();
@@ -72,6 +76,10 @@ pub fn get_auth() -> &'static Auth {
 
 pub fn get_jwt_secret() -> &'static String {
     unsafe { &APP_STATE.get().unwrap().jwt_secret }
+}
+
+pub fn get_categories() -> &'static Vec<Category> {
+    unsafe { &APP_STATE.get().unwrap().categories }
 }
 
 async fn initialize_auth(
@@ -122,8 +130,18 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
                     );",
         )
         .await?;
-        
-        conn.execute("
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS categories (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        name TEXT NOT NULL UNIQUE,
+                        description TEXT NOT NULL
+                    );",
+        )
+        .await?;
+
+        conn.execute(
+            "
             CREATE TABLE layers (
                 id TEXT PRIMARY KEY,
                 geometry TEXT NOT NULL,
@@ -149,7 +167,9 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
                 published BOOLEAN NOT NULL,
                 url TEXT
             );
-        ",).await?;
+        ",
+        )
+        .await?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS groups (
@@ -163,18 +183,26 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
         let admin_role_id = Uuid::new_v4().to_string();
 
         conn.execute(
-            format!("
+            format!(
+                "
             INSERT INTO groups (id, name, description)
             VALUES ('{}', 'admin', 'admin role');
-        ", admin_role_id).as_str(),
+        ",
+                admin_role_id
+            )
+            .as_str(),
         )
         .await?;
 
         conn.execute(
-            format!("
+            format!(
+                "
             INSERT INTO groups (id, name, description)
             VALUES ('{}', 'operator', 'operator role');
-        ", Uuid::new_v4().to_string()).as_str(),
+        ",
+                Uuid::new_v4().to_string()
+            )
+            .as_str(),
         )
         .await?;
 
@@ -191,7 +219,8 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
             INSERT INTO users 
                 (id, username, email, password, groups) 
             VALUES 
-                ('{}', 'admin', 'admin@gmail.com', '{password_hash}', '{admin_role_id}');", Uuid::new_v4().to_string(),
+                ('{}', 'admin', 'admin@gmail.com', '{password_hash}', '{admin_role_id}');",
+                Uuid::new_v4().to_string(),
             )
             .as_str(),
         )
@@ -237,6 +266,8 @@ async fn main() -> AppResult<()> {
     )
     .await?;
 
+    let categories = get_cf_categories(Some(&cf_pool)).await?;
+
     let disk_cache = DiskCache::new(app_config.cache_dir.into());
     disk_cache.delete_cache_dir(catalog.clone()).await;
 
@@ -265,6 +296,7 @@ async fn main() -> AppResult<()> {
         jwt_secret: app_config.jwt_secret,
         use_redis_cache,
         redis_cache,
+        categories,
     };
 
     unsafe {

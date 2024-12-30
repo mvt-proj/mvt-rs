@@ -53,6 +53,29 @@ pub fn app_router() -> salvo::Router {
                         ),
                 )
                 .push(
+                    Router::with_path("categories")
+                        .hoop(auth::require_user_admin)
+                        .get(html::admin::categories::list_categories)
+                        .push(
+                            Router::with_path("new").get(html::admin::main::new_category),
+                        )
+                        .push(
+                            Router::with_path("create").post(html::admin::categories::create_category),
+                        )
+                        .push(
+                            Router::with_path("edit/<id>")
+                                .get(html::admin::main::edit_category),
+                        )
+                        .push(
+                            Router::with_path("update")
+                                .post(html::admin::categories::edit_category),
+                        )
+                        .push(
+                            Router::with_path("delete/<id>")
+                                .get(html::admin::categories::delete_category),
+                        ),
+                )
+                .push(
                     Router::with_path("catalog")
                         .hoop(auth::require_user_admin)
                         .get(html::admin::catalog::page_catalog)
