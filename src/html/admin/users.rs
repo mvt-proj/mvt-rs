@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Auth, Group, User}, config::create_user as create_cf_user, error::{AppError, AppResult}, get_app_state, get_auth
+    auth::{Auth, Group, User}, config::users::create_user as create_cf_user, error::{AppError, AppResult}, get_app_state, get_auth
 };
 
 #[derive(Template)]

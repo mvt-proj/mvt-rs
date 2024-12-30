@@ -8,9 +8,9 @@ use time::{Duration, OffsetDateTime};
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
-use crate::config::{create_user, delete_user, update_user};
+use crate::config::users::{create_user, delete_user, update_user, get_users};
 use crate::{
-    config::{get_groups, get_users},
+    config::groups::get_groups,
     error::{AppError, AppResult},
     get_auth, get_jwt_secret
 };

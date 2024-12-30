@@ -1,5 +1,8 @@
 use crate::{
-    config::{create_layer, delete_layer, get_layers, switch_layer_published, update_layer},
+    config::layers::{
+        create_layer, delete_layer, get_layers, switch_layer_published,
+        update_layer,
+    },
     error::AppResult,
 };
 use serde::{Deserialize, Serialize};
