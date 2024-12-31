@@ -34,6 +34,7 @@
     <thead>
       <tr>
         <th scope="col"></th>
+        <th scope="col">Category</th>
         <th scope="col">Alias</th>
         <th scope="col">Table</th>
         <th scope="col">URL</th>
@@ -54,6 +55,7 @@
               {% endif %}
             </span>
           </td>
+          <td>{{ layer.category.name }}</td>
           <td>{{ layer.alias }}</td>
           <td>{{ layer.schema }}.{{ layer.table_name }}</td>
           <td class="has-text-info">

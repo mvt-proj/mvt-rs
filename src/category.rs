@@ -57,6 +57,19 @@ impl Category {
             }
         }
 
+        let position = get_app_state()
+            .catalog
+            .layers
+            .iter()
+            .position(|l| l.category.id == self.id);
+
+        match position {
+            Some(pos) => {
+                get_app_state().catalog.layers[pos].category = category.clone();
+            }
+            None => {}
+        }
+
         Ok(category)
     }
 

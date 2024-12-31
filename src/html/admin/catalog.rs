@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Auth, User},
-    catalog::{Catalog, Layer},
-    error::{AppError, AppResult},
-    get_app_state, get_auth, get_catalog,
+    auth::{Auth, User}, catalog::{Catalog, Layer}, category::Category, error::{AppError, AppResult}, get_app_state, get_auth, get_catalog
 };
 
 #[derive(Template)]
@@ -21,6 +18,7 @@ struct CatalogTemplate<'a> {
 #[salvo(extract(default_source(from = "body")))]
 struct NewLayer<'a> {
     id: String,
+    category: String,
     geometry: &'a str,
     name: String,
     alias: String,
@@ -72,8 +70,11 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     let uuid = Uuid::new_v4();
     let hex_string = uuid.simple().to_string();
 
+    let category = Category::from_id(&new_layer.category).await?;
+
     let layer = Layer {
         id: hex_string,
+        category,
         geometry: new_layer.geometry.to_string(),
         name: new_layer.name,
         alias: new_layer.alias,
@@ -108,8 +109,12 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 #[handler]
 pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
     let app_state = get_app_state();
+
+    let category = Category::from_id(&new_layer.category).await?;
+
     let layer = Layer {
         id: new_layer.id,
+        category,
         geometry: new_layer.geometry.to_string(),
         name: new_layer.name,
         alias: new_layer.alias,

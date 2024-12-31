@@ -1,16 +1,37 @@
-use crate::catalog::Layer;
 use crate::get_cf_pool;
+use crate::{catalog::Layer, category::Category};
 use sqlx::{sqlite::SqlitePool, Row};
 
 pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
-    let rows = sqlx::query("SELECT * FROM layers").fetch_all(pool).await?;
+    let rows = sqlx::query(
+        r#"
+        SELECT 
+            l.*, 
+            c.id AS category_id, 
+            c.name AS category_name, 
+            c.description AS category_description
+        FROM 
+            layers l
+        LEFT JOIN 
+            categories c 
+        ON 
+            l.category = c.id
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
 
     let mut layers = Vec::new();
 
     for row in rows {
         let id: String = row.get("id");
+        let category = Category {
+            id: row.get("category_id"),
+            name: row.get("category_name"),
+            description: row.get("category_description"),
+        };
         let geometry: String = row.get("geometry");
         let name: String = row.get("name");
         let alias: String = row.get("alias");
@@ -39,6 +60,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
 
         layers.push(Layer {
             id,
+            category,
             geometry,
             name,
             alias,
@@ -74,15 +96,16 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
 
     sqlx::query(
         "INSERT INTO layers (
-            id, geometry, name, alias, schema, table_name, fields, filter, srid, geom, 
+            id, category, geometry, name, alias, schema, table_name, fields, filter, srid, geom, 
             sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify, 
             buffer_do_not_simplify, extent_do_not_simplify, clip_geom, 
             delete_cache_on_start, max_cache_age, published, url
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )",
     )
     .bind(&layer.id)
+    .bind(&layer.category.id)
     .bind(&layer.geometry)
     .bind(&layer.name)
     .bind(&layer.alias)
@@ -117,15 +140,36 @@ pub async fn get_layer_by_id(
 ) -> Result<Layer, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
-    let row = sqlx::query("SELECT * FROM layers WHERE id = ?")
-        .bind(layer_id)
-        .fetch_one(pool)
-        .await?;
+    let row = sqlx::query(
+        r#"
+        SELECT 
+            l.*, 
+            c.id AS category_id, 
+            c.name AS category_name, 
+            c.description AS category_description
+        FROM 
+            layers l
+        LEFT JOIN 
+            categories c 
+        ON 
+            l.category = c.id
+        WHERE 
+            l.id = ?
+        "#,
+    )
+    .bind(layer_id)
+    .fetch_one(pool)
+    .await?;
 
     let fields: String = row.get("fields");
     let fields_vec: Vec<String> = fields.split(',').map(|s| s.trim().to_string()).collect();
 
     let id: String = row.get("id");
+    let category = Category {
+        id: row.get("category_id"),
+        name: row.get("category_name"),
+        description: row.get("category_description"),
+    };
     let geometry: String = row.get("geometry");
     let name: String = row.get("name");
     let alias: String = row.get("alias");
@@ -150,6 +194,7 @@ pub async fn get_layer_by_id(
 
     Ok(Layer {
         id,
+        category,
         geometry,
         name,
         alias,
@@ -182,12 +227,13 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
 
     sqlx::query(
         "UPDATE layers SET 
-            geometry = ?, name = ?, alias = ?, schema = ?, table_name = ?, fields = ?, 
+            category = ?, geometry = ?, name = ?, alias = ?, schema = ?, table_name = ?, fields = ?, 
             filter = ?, srid = ?, geom = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?, 
             zmax = ?, zmax_do_not_simplify = ?, buffer_do_not_simplify = ?, 
             extent_do_not_simplify = ?, clip_geom = ?, delete_cache_on_start = ?, 
             max_cache_age = ?, published = ?, url = ? WHERE id = ?",
     )
+    .bind(&layer.category.id)
     .bind(&layer.geometry)
     .bind(&layer.name)
     .bind(&layer.alias)

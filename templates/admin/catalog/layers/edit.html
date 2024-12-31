@@ -19,6 +19,19 @@
 
         <input type="hidden" name="id" id="id" value="{{ layer.id }}">
 
+        <!--Selected category-->
+        <div class="field">
+          <label class="label" for="category">Category</label>
+          <div class="control">
+            <div class="select">
+              <select name="category" id="category">
+                {% for category in categories %}
+                  <option value="{{ category.id }}" {% if category.id == layer.category.id %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
         <!-- geometry -->
         <div class="field">
           <label class="label" for="geometry">Geometry</label>

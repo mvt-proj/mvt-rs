@@ -140,10 +140,25 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
         )
         .await?;
 
+        let public_category_id = Uuid::new_v4().to_string();
+
+        conn.execute(
+            format!(
+                "
+            INSERT INTO categories (id, name, description)
+            VALUES ('{}', 'public', 'public category');
+        ",
+                public_category_id
+            )
+            .as_str(),
+        )
+        .await?;
+
         conn.execute(
             "
             CREATE TABLE layers (
                 id TEXT PRIMARY KEY,
+                category TEXT NOT NULL,
                 geometry TEXT NOT NULL,
                 name TEXT NOT NULL,
                 alias TEXT NOT NULL,

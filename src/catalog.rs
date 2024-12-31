@@ -1,9 +1,8 @@
 use crate::{
-    config::layers::{
+    category::Category, config::layers::{
         create_layer, delete_layer, get_layers, switch_layer_published,
         update_layer,
-    },
-    error::AppResult,
+    }, error::AppResult
 };
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +14,7 @@ pub enum StateLayer {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Layer {
     pub id: String,
+    pub category: Category,
     pub geometry: String,
     pub name: String,
     pub alias: String,
