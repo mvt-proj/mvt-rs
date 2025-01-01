@@ -1,0 +1,80 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_content %}
+<div class="has-text-left">
+  <a href="/admin/styles" class="button is-light">
+    <span class="icon is-small">
+      <i class="fas fa-arrow-left"></i>
+    </span>
+    <span>Back</span>
+  </a>
+</div>
+
+<div class="columns is-centered">
+  <div class="column is-three-quarters">
+    <h1 class="mb-3 title is-5 has-text-grey-darker">New Style</h1>
+
+    <form action="/admin/styles/create" method="post">
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control">
+          <input class="input" name="name" type="text" placeholder="Name">
+        </div>
+      </div>
+
+      <!--Category-->
+      <div class="field">
+        <label class="label">Category</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="category" id="category">
+              {% for category in categories %}
+              <option value="{{ category.id }}">{{ category.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON Editor for Style -->
+      <div class="field">
+        <label class="label">Style</label>
+        <div class="control">
+          <!-- JSON Editor container -->
+          <div id="jsoneditor" style="height: 400px; border: 1px solid #ddd;"></div>
+          <!-- Hidden input to store JSON -->
+          <input type="hidden" id="jsonInput" name="style">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="control has-text-centered">
+          <button class="button is-fullwidth is-link">Create Style</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Include JSONEditor library -->
+<link href="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById('jsoneditor');
+    const hiddenInput = document.getElementById('jsonInput');
+
+    const editor = new JSONEditor(container, {
+      modes: ['code', 'tree'],
+      mode: 'tree',
+    });
+
+    document.querySelector('form').addEventListener('submit', (event) => {
+      hiddenInput.value = JSON.stringify(editor.get());
+    });
+
+    editor.set({});
+  });
+</script>
+{% endblock %}

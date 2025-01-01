@@ -25,7 +25,7 @@ mod health;
 mod html;
 mod rediscache;
 mod routes;
-// mod storage;
+mod styles;
 mod tiles;
 
 use auth::Auth;
@@ -191,6 +191,16 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
                         id TEXT PRIMARY KEY NOT NULL,
                         name TEXT NOT NULL UNIQUE,
                         description TEXT NOT NULL
+                    );",
+        )
+        .await?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS styles (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        category TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        style TEXT NOT NULL
                     );",
         )
         .await?;

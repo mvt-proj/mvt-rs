@@ -1,5 +1,5 @@
 use crate::{
-    auth::{Group, User}, catalog::{Layer, StateLayer}, category::Category, error::{AppError, AppResult}, get_auth, get_catalog, get_categories
+    auth::{Group, User}, catalog::{Layer, StateLayer}, category::Category, error::{AppError, AppResult}, get_auth, get_catalog, get_categories, styles::Style
 };
 use askama::Template;
 use salvo::prelude::*;
@@ -43,6 +43,20 @@ struct NewCategoryTemplate {}
 struct EditCategoryTemplate {
     category: Category,
 }
+
+#[derive(Template)]
+#[template(path = "admin/styles/new.html")]
+struct NewStyleTemplate {
+    categories: Vec<Category>,
+}
+
+#[derive(Template)]
+#[template(path = "admin/styles/edit.html")]
+struct EditStyleTemplate {
+    style: Style,
+    categories: Vec<Category>,
+}
+
 
 #[handler]
 pub async fn index(res: &mut Response) -> AppResult<()> {
@@ -123,6 +137,31 @@ pub async fn edit_category(req: &mut Request, res: &mut Response) -> AppResult<(
     let category = Category::from_id(&id).await?;
     let template = EditCategoryTemplate {
         category: category.clone(),
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn new_style(res: &mut Response) -> AppResult<()> {
+    let categories = get_categories().clone();
+    let template = NewStyleTemplate {
+        categories,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn edit_style(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let style = Style::from_id(&id).await?;
+    let categories = get_categories().clone();
+    let template = EditStyleTemplate {
+        style: style.clone(),
+        categories,
     };
     res.render(Text::Html(template.render()?));
     Ok(())

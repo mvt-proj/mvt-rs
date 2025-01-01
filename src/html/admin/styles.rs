@@ -5,27 +5,27 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::{Auth, User},
     category::Category,
-    error::{AppError, AppResult},
+    error::{AppError, AppResult}, styles::Style,
 };
 
 #[derive(Template)]
-#[template(path = "admin/categories/categories.html")]
+#[template(path = "admin/styles/styles.html")]
 struct ListCategoriesTemplate<'a> {
-    categories: &'a Vec<Category>,
+    styles: &'a Vec<Style>,
     current_user: &'a User,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]
-struct NewCategory<'a> {
+struct NewStyle<'a> {
     id: Option<String>,
     name: &'a str,
-    description: String,
+    category: String,
+    style: String,
 }
 
 #[handler]
-pub async fn list_categories(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let app_state = crate::get_app_state();
+pub async fn list_styles(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let authorization = req.headers().get("authorization").unwrap();
     let authorization_str = authorization
         .to_str()
@@ -33,8 +33,9 @@ pub async fn list_categories(req: &mut Request, res: &mut Response) -> AppResult
 
     let auth: Auth = crate::get_auth().clone();
     let current_user = auth.get_current_user(authorization_str).unwrap();
+    let styles = Style::get_all_styles().await?;
     let template = ListCategoriesTemplate {
-        categories: &app_state.categories,
+        styles: &styles,
         current_user,
     };
     res.render(Text::Html(template.render()?));
@@ -42,45 +43,48 @@ pub async fn list_categories(req: &mut Request, res: &mut Response) -> AppResult
 }
 
 #[handler]
-pub async fn create_category<'a>(
+pub async fn create_style<'a>(
     res: &mut Response,
-    new_category: NewCategory<'a>,
+    new_style: NewStyle<'a>,
 ) -> AppResult<()> {
-    Category::new(
-        new_category.name.to_string(),
-        new_category.description.to_string(),
-    )
-    .await?;
+    Style::new(
+        new_style.name.to_string(),
+        Category::from_id(&new_style.category).await?,
+        new_style.style.to_string(),
+    ).await?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/categories"));
+    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
 
 #[handler]
-pub async fn edit_category<'a>(res: &mut Response, new_category: NewCategory<'a>) -> AppResult<()> {
-    let category = Category::from_id(new_category.id.as_ref().unwrap()).await?;
-    category
-        .update_category(new_category.name.to_string(), new_category.description.to_string())
-        .await?;
+pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppResult<()> {
+    let style = Style::from_id(&new_style.id.unwrap()).await?;
+    style.update_style(
+        new_style.name.to_string(),
+        Category::from_id(&new_style.category).await?,
+        new_style.style.to_string(),
+    ).await?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/categories"));
+    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
 
 #[handler]
-pub async fn delete_category(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn delete_style(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
-    let category = Category::from_id(&id).await?;
+    
+    let style = Style::from_id(&id).await?;
+    style.delete_style().await?;
 
-    category.delete_category().await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/categories"));
+    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
