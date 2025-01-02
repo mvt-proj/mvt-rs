@@ -17,8 +17,10 @@
   <table class="table is-fullwidth">
     <thead>
       <tr>
-        <th scope="col">Name</th>
         <th scope="col">Category</th>
+        <th scope="col">Name</th>
+        <th scope="col">Description</th>
+        <th scope="col">Url</th>
         <th scope="col"></th>
       </tr>
     </thead>
@@ -26,10 +28,16 @@
       {% for style in styles %}
         <tr>
           <td>
-            <span class="has-text-weight-semibold">{{ style.name }}</span>
+            <span class="has-text-weight-semibold">{{ style.category.name }}</span>
           </td>
           <td>
-            {{ style.category.name }}
+            {{ style.name }}
+          </td>
+          <td>
+            {{ style.description }}
+          </td>
+          <td class="has-text-info">
+            <span><span class="server"></span>/styles/{{ style.category.name }}:{{ style.name }}</span>
           </td>
           <td class="has-text-right">
             {% if current_user.is_admin() %}
@@ -52,4 +60,24 @@
       {% endfor %}
     </tbody>
   </table>
+
+  <script>
+    function initializePage() {
+      let protocol = window.location.protocol;
+      let host = window.location.hostname;
+      let port = window.location.port;
+  
+      if (port === '') {
+        port = protocol === 'https:' ? '443' : '80';
+      }
+  
+      let servers = document.getElementsByClassName("server");
+      for (let i = 0; i < servers.length; i++) {
+        servers[i].textContent = `${protocol}//${host}:${port}`;
+      }
+    }
+  
+    document.addEventListener('DOMContentLoaded', initializePage);
+  </script>
 {% endblock %}
+

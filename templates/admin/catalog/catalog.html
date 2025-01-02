@@ -172,16 +172,16 @@
   });
 
   function initializePage() {
-    var protocol = window.location.protocol;
-    var host = window.location.hostname;
-    var port = window.location.port;
+    let protocol = window.location.protocol;
+    let host = window.location.hostname;
+    let port = window.location.port;
 
     if (port === '') {
       port = protocol === 'https:' ? '443' : '80';
     }
 
-    var servers = document.getElementsByClassName("server");
-    for (var i = 0; i < servers.length; i++) {
+    let servers = document.getElementsByClassName("server");
+    for (let i = 0; i < servers.length; i++) {
       servers[i].textContent = `${protocol}//${host}:${port}`;
     }
   }

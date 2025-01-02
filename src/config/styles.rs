@@ -33,11 +33,13 @@ pub async fn get_styles(pool: Option<&SqlitePool>) -> Result<Vec<Style>, sqlx::E
             description: row.get("category_description"),
         };
         let name: String = row.get("name");
+        let description: String = row.get("description");
         let style: String = row.get("style");
 
         styles.push(Style {
             id,
             name,
+            description,
             category,
             style,
         });
@@ -76,11 +78,13 @@ pub async fn get_style(id: &str, pool: Option<&SqlitePool>) -> Result<Style, sql
         description: row.get("category_description"),
     };
     let name: String = row.get("name");
+    let description: String = row.get("description");
     let style: String = row.get("style");
 
     Ok(Style {
         id: row.get("id"),
         name,
+        description,
         category,
         style,
     })
@@ -94,13 +98,14 @@ pub async fn create_style(
 
     sqlx::query(
         r#"
-        INSERT INTO styles (id, name, category, style)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO styles (id, name, category, description, style)
+        VALUES ($1, $2, $3, $4, $5)
         "#,
     )
     .bind(style.id)
     .bind(style.name)
     .bind(style.category.id)
+    .bind(style.description)
     .bind(style.style)
     .execute(pool)
     .await?;
@@ -117,13 +122,14 @@ pub async fn update_style(
     sqlx::query(
         r#"
         UPDATE styles
-        SET name = $1, category = $2, style = $3
-        WHERE id = $4
+        SET name = $1, category = $2, style = $3, description = $4
+        WHERE id = $5
         "#,
     )
     .bind(style.name)
     .bind(style.category.id)
     .bind(style.style)
+    .bind(style.description)
     .bind(style.id)
     .execute(pool)
     .await?;

@@ -7,15 +7,17 @@ pub struct Style {
     pub id: String,
     pub name: String,
     pub category: Category,
+    pub description: String,
     pub style: String,
 }
 
 impl Style {
-    pub async fn new(name: String, category: Category, style: String) -> AppResult<Self> {
+    pub async fn new(name: String, category: Category, description: String, style: String) -> AppResult<Self> {
         let style = Style {
             id: uuid::Uuid::new_v4().to_string(),
             name,
             category,
+            description,
             style,
         };
 
@@ -36,11 +38,12 @@ impl Style {
         Ok(style)
     }
 
-    pub async fn update_style(&self, name: String, category: Category, style: String) -> AppResult<Self> {
+    pub async fn update_style(&self, name: String, category: Category, description: String, style: String) -> AppResult<Self> {
         let style = Style {
             id: self.id.clone(),
             name,
             category,
+            description,
             style,
         };
 

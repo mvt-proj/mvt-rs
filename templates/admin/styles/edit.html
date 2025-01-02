@@ -24,13 +24,6 @@
         </div>
       </div>
 
-      <div class="field">
-        <label class="label">Name</label>
-        <div class="control">
-          <input class="input" name="name" type="text" placeholder="Name" value="{{ style.name }}">
-        </div>
-      </div>
-
       <!--Category-->
       <div class="field">
         <label class="label">Category</label>
@@ -42,6 +35,20 @@
               {% endfor %}
             </select>
           </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control">
+          <input class="input" name="name" type="text" placeholder="Name" value="{{ style.name }}">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Description</label>
+        <div class="control">
+          <input class="input" name="description" type="text" placeholder="Description" value="{{ style.description }}">
         </div>
       </div>
 

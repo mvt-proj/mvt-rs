@@ -15,12 +15,6 @@
     <h1 class="mb-3 title is-5 has-text-grey-darker">New Style</h1>
 
     <form action="/admin/styles/create" method="post">
-      <div class="field">
-        <label class="label">Name</label>
-        <div class="control">
-          <input class="input" name="name" type="text" placeholder="Name">
-        </div>
-      </div>
 
       <!--Category-->
       <div class="field">
@@ -36,6 +30,20 @@
         </div>
       </div>
 
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control">
+          <input class="input" name="name" type="text" placeholder="Name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Description</label>
+        <div class="control">
+          <input class="input" name="description" type="text" placeholder="Description">
+        </div>
+      </div>
+      
       <!-- JSON Editor for Style -->
       <div class="field">
         <label class="label">Style</label>

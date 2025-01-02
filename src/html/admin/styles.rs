@@ -21,6 +21,7 @@ struct NewStyle<'a> {
     id: Option<String>,
     name: &'a str,
     category: String,
+    description: &'a str,
     style: String,
 }
 
@@ -50,6 +51,7 @@ pub async fn create_style<'a>(
     Style::new(
         new_style.name.to_string(),
         Category::from_id(&new_style.category).await?,
+        new_style.description.to_string(),
         new_style.style.to_string(),
     ).await?;
 
@@ -65,6 +67,7 @@ pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppR
     style.update_style(
         new_style.name.to_string(),
         Category::from_id(&new_style.category).await?,
+        new_style.description.to_string(),
         new_style.style.to_string(),
     ).await?;
 
