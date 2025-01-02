@@ -69,10 +69,6 @@
   </div>
 </div>
 
-<!-- Include JSONEditor library -->
-<link href="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/jsoneditor@latest/dist/jsoneditor.min.js"></script>
-
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('jsoneditor');
@@ -91,6 +87,11 @@
       editor.set(currentStyle);
     } catch (e) {
       errorMessage.style.display = 'block';
+    }
+
+    const acePowered = document.querySelector('.jsoneditor-poweredBy');
+    if (acePowered) {
+      acePowered.style.display = 'none';
     }
 
     document.querySelector('form').addEventListener('submit', (event) => {
