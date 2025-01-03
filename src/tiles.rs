@@ -13,7 +13,7 @@ enum Via {
 }
 
 use crate::{
-    catalog::{Catalog, Layer, StateLayer},
+    models::catalog::{Catalog, Layer, StateLayer},
     diskcache::DiskCache,
     error::AppResult,
     get_app_state, get_catalog, get_db_pool, get_disk_cache,

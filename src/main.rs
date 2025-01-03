@@ -2,7 +2,7 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
-use category::Category;
+// use category::Category;
 use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
 use sqlx::{Connection, Executor, PgPool, SqliteConnection, SqlitePool};
@@ -14,8 +14,8 @@ use uuid::Uuid;
 mod api;
 mod args;
 mod auth;
-mod catalog;
-mod category;
+// mod catalog;
+// mod category;
 mod config;
 mod database;
 mod db;
@@ -25,11 +25,13 @@ mod health;
 mod html;
 mod rediscache;
 mod routes;
-mod styles;
+mod models;
+// mod styles;
 mod tiles;
 
 use auth::Auth;
-use catalog::Catalog;
+// use catalog::Catalog;
+use models::{catalog::Catalog, category::Category};
 use db::make_db_pool;
 use diskcache::DiskCache;
 use error::AppResult;
@@ -126,7 +128,7 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
                         username TEXT NOT NULL,
                         email TEXT NOT NULL UNIQUE,
                         password TEXT NOT NULL,
-                        groups TEXT NOT NULL 
+                        groups TEXT NOT NULL
                     );",
         )
         .await?;
@@ -242,9 +244,9 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
         conn.execute(
             format!(
                 "
-            INSERT INTO users 
-                (id, username, email, password, groups) 
-            VALUES 
+            INSERT INTO users
+                (id, username, email, password, groups)
+            VALUES
                 ('{}', 'admin', 'admin@gmail.com', '{password_hash}', '{admin_role_id}');",
                 Uuid::new_v4().to_string(),
             )

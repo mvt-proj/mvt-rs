@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     auth::{Auth, User},
-    category::Category,
-    error::{AppError, AppResult}, styles::Style,
+    models::{category::Category, styles::Style},
+    error::{AppError, AppResult},
 };
 
 #[derive(Template)]
@@ -82,7 +82,7 @@ pub async fn delete_style(req: &mut Request, res: &mut Response) -> AppResult<()
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
-    
+
     let style = Style::from_id(&id).await?;
     style.delete_style().await?;
 

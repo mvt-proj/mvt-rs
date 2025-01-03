@@ -1,5 +1,5 @@
 use crate::get_cf_pool;
-use crate::category::Category;
+use crate::models::category::Category;
 use sqlx::{sqlite::SqlitePool, Row};
 
 pub async fn get_categories(pool: Option<&SqlitePool>) -> Result<Vec<Category>, sqlx::Error> {

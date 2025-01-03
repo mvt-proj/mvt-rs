@@ -1,5 +1,5 @@
 use crate::get_cf_pool;
-use crate::{styles::Style, category::Category};
+use crate::models::{styles::Style, category::Category};
 use sqlx::{sqlite::SqlitePool, Row};
 
 pub async fn get_styles(pool: Option<&SqlitePool>) -> Result<Vec<Style>, sqlx::Error> {
@@ -7,16 +7,16 @@ pub async fn get_styles(pool: Option<&SqlitePool>) -> Result<Vec<Style>, sqlx::E
 
     let rows = sqlx::query(
         r#"
-        SELECT 
-            s.*, 
-            c.id AS category_id, 
-            c.name AS category_name, 
+        SELECT
+            s.*,
+            c.id AS category_id,
+            c.name AS category_name,
             c.description AS category_description
-        FROM 
+        FROM
             styles s
-        LEFT JOIN 
-            categories c 
-        ON 
+        LEFT JOIN
+            categories c
+        ON
             s.category = c.id
         "#,
     )
@@ -53,18 +53,18 @@ pub async fn get_style(id: &str, pool: Option<&SqlitePool>) -> Result<Style, sql
 
     let row = sqlx::query(
         r#"
-        SELECT 
-            s.*, 
-            c.id AS category_id, 
-            c.name AS category_name, 
+        SELECT
+            s.*,
+            c.id AS category_id,
+            c.name AS category_name,
             c.description AS category_description
-        FROM 
+        FROM
             styles s
-        LEFT JOIN 
-            categories c 
-        ON 
+        LEFT JOIN
+            categories c
+        ON
             s.category = c.id
-        WHERE 
+        WHERE
             s.id = $1
         "#,
     )

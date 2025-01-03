@@ -2,7 +2,7 @@ use askama::Template;
 use salvo::prelude::*;
 
 use crate::{
-    catalog::{Catalog, Layer, StateLayer},
+    models::catalog::{Catalog, Layer, StateLayer},
     get_catalog,
 };
 

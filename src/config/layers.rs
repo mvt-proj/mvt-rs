@@ -1,5 +1,5 @@
 use crate::get_cf_pool;
-use crate::{catalog::Layer, category::Category};
+use crate::models::{catalog::Layer, category::Category};
 use sqlx::{sqlite::SqlitePool, Row};
 
 pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::Error> {
@@ -7,16 +7,16 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
 
     let rows = sqlx::query(
         r#"
-        SELECT 
-            l.*, 
-            c.id AS category_id, 
-            c.name AS category_name, 
+        SELECT
+            l.*,
+            c.id AS category_id,
+            c.name AS category_name,
             c.description AS category_description
-        FROM 
+        FROM
             layers l
-        LEFT JOIN 
-            categories c 
-        ON 
+        LEFT JOIN
+            categories c
+        ON
             l.category = c.id
         "#,
     )
@@ -96,9 +96,9 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
 
     sqlx::query(
         "INSERT INTO layers (
-            id, category, geometry, name, alias, schema, table_name, fields, filter, srid, geom, 
-            sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify, 
-            buffer_do_not_simplify, extent_do_not_simplify, clip_geom, 
+            id, category, geometry, name, alias, schema, table_name, fields, filter, srid, geom,
+            sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify,
+            buffer_do_not_simplify, extent_do_not_simplify, clip_geom,
             delete_cache_on_start, max_cache_age, published, url
         ) VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
@@ -142,18 +142,18 @@ pub async fn get_layer_by_id(
 
     let row = sqlx::query(
         r#"
-        SELECT 
-            l.*, 
-            c.id AS category_id, 
-            c.name AS category_name, 
+        SELECT
+            l.*,
+            c.id AS category_id,
+            c.name AS category_name,
             c.description AS category_description
-        FROM 
+        FROM
             layers l
-        LEFT JOIN 
-            categories c 
-        ON 
+        LEFT JOIN
+            categories c
+        ON
             l.category = c.id
-        WHERE 
+        WHERE
             l.id = ?
         "#,
     )
@@ -226,11 +226,11 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     let fields = layer.fields.join(",");
 
     sqlx::query(
-        "UPDATE layers SET 
-            category = ?, geometry = ?, name = ?, alias = ?, schema = ?, table_name = ?, fields = ?, 
-            filter = ?, srid = ?, geom = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?, 
-            zmax = ?, zmax_do_not_simplify = ?, buffer_do_not_simplify = ?, 
-            extent_do_not_simplify = ?, clip_geom = ?, delete_cache_on_start = ?, 
+        "UPDATE layers SET
+            category = ?, geometry = ?, name = ?, alias = ?, schema = ?, table_name = ?, fields = ?,
+            filter = ?, srid = ?, geom = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?,
+            zmax = ?, zmax_do_not_simplify = ?, buffer_do_not_simplify = ?,
+            extent_do_not_simplify = ?, clip_geom = ?, delete_cache_on_start = ?,
             max_cache_age = ?, published = ?, url = ? WHERE id = ?",
     )
     .bind(&layer.category.id)

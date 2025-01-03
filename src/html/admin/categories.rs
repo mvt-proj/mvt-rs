@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     auth::{Auth, User},
-    category::Category,
+    models::category::Category,
     error::{AppError, AppResult},
 };
 

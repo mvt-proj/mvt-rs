@@ -1,5 +1,10 @@
 use crate::{
-    auth::{Group, User}, catalog::{Layer, StateLayer}, category::Category, error::{AppError, AppResult}, get_auth, get_catalog, get_categories, styles::Style
+    auth::{Group, User},
+    models::{category::Category, styles::Style, catalog::{Layer, StateLayer}},
+    error::{AppError, AppResult},
+    get_auth,
+    get_catalog,
+    get_categories,
 };
 use askama::Template;
 use salvo::prelude::*;

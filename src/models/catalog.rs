@@ -1,5 +1,5 @@
 use crate::{
-    category::Category, config::layers::{
+    models::category::Category, config::layers::{
         create_layer, delete_layer, get_layers, switch_layer_published,
         update_layer,
     }, error::AppResult

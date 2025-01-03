@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-
-use crate::{category::Category, config::styles::{create_style, delete_style, get_style, get_styles, update_style}, error::AppResult};
+use crate::{models::category::Category, config::styles::{create_style, delete_style, get_style, get_styles, update_style}, error::AppResult};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Style {
