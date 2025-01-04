@@ -37,7 +37,7 @@
             {{ style.description }}
           </td>
           <td class="has-text-info">
-            <span><span class="server"></span>/styles/{{ style.category.name }}:{{ style.name }}</span>
+            <span><span class="server"></span>/services/styles/{{ style.category.name }}:{{ style.name }}</span>
           </td>
           <td class="has-text-right">
             {% if current_user.is_admin() %}
@@ -66,18 +66,17 @@
       let protocol = window.location.protocol;
       let host = window.location.hostname;
       let port = window.location.port;
-  
+
       if (port === '') {
         port = protocol === 'https:' ? '443' : '80';
       }
-  
+
       let servers = document.getElementsByClassName("server");
       for (let i = 0; i < servers.length; i++) {
         servers[i].textContent = `${protocol}//${host}:${port}`;
       }
     }
-  
+
     document.addEventListener('DOMContentLoaded', initializePage);
   </script>
 {% endblock %}
-
