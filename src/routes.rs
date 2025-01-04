@@ -6,7 +6,7 @@ use salvo::prelude::*;
 use salvo::serve_static::StaticDir;
 use std::time::Duration;
 
-use crate::{api, auth, health, html, tiles};
+use crate::{api, auth, health, html, tiles, services::{styles}};
 
 pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(
@@ -165,13 +165,13 @@ pub fn app_router() -> salvo::Router {
                         ),
                 ),
         )
-        .push(Router::with_path("tiles").get(tiles::mvt))
-        .push(
-            Router::with_path("tiles/<layer_name>/<z>/<x>/<y>.pbf")
-                .hoop(cache_30s)
-                .hoop(cors_handler)
-                .options(handler::empty())
-                .get(tiles::mvt),
-        )
+        .push(Router::with_path("services")
+            .hoop(cache_30s)
+            .hoop(cors_handler)
+            .options(handler::empty())
+            .push(Router::with_path("tiles").get(tiles::mvt))
+            .push(Router::with_path("tiles/<layer_name>/<z>/<x>/<y>.pbf").get(tiles::mvt))
+            .push(Router::with_path("styles/<style_name>").get(styles::index))
+            )
         .push(Router::with_path("static/<**path>").get(static_dir))
 }

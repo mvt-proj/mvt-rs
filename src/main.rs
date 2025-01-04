@@ -26,6 +26,7 @@ mod html;
 mod rediscache;
 mod routes;
 mod models;
+mod services;
 // mod styles;
 mod tiles;
 
@@ -334,6 +335,7 @@ async fn main() -> AppResult<()> {
     let acceptor = TcpListener::new(format!("{}:{}", app_config.host, app_config.port))
         .bind()
         .await;
+    // dbg!(routes::app_router());
     Server::new(acceptor).serve(routes::app_router()).await;
 
     Ok(())
