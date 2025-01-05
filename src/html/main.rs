@@ -67,7 +67,6 @@ pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), Statu
                 .brief("Layer not found")
                 .cause("The specified layer does not exist or is not published")
         })?;
-    dbg!(&lyr);
 
     let geometry = match lyr.geometry.as_str() {
         "points" => "circle",

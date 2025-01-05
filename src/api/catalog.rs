@@ -6,7 +6,6 @@ use crate::{models::catalog::Layer, get_app_state, get_catalog};
 pub async fn list(req: &mut Request, res: &mut Response) {
     let catalog = get_catalog().clone();
     let mut layers = catalog.layers;
-    dbg!(&req);
     let scheme = req.scheme().to_string();
 
     let host = req.headers().get("host").unwrap().to_str().unwrap();
