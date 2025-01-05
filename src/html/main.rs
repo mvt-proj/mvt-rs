@@ -23,6 +23,7 @@ struct CatalogTemplate<'a> {
 #[derive(Template)]
 #[template(path = "map.html")]
 struct MapTemplate<'a> {
+    category: &'a str,
     name: &'a str,
     alias: &'a str,
     geometry: &'a str,
@@ -54,14 +55,19 @@ pub async fn page_catalog(res: &mut Response) {
 pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), StatusError> {
     let catalog: Catalog = get_catalog().clone();
     let layer_name = req.param::<String>("layer_name").unwrap();
+    let parts: Vec<&str> = layer_name.split(':').collect();
+    let category = parts.get(0).unwrap_or(&"");
+    let name = parts.get(1).unwrap_or(&"");
+
 
     let lyr = catalog
-        .find_layer_by_name(&layer_name, StateLayer::Published)
+        .find_layer_by_category_and_name(&category, &name,  StateLayer::Published)
         .ok_or_else(|| {
             StatusError::not_found()
                 .brief("Layer not found")
                 .cause("The specified layer does not exist or is not published")
         })?;
+    dbg!(&lyr);
 
     let geometry = match lyr.geometry.as_str() {
         "points" => "circle",
@@ -71,6 +77,7 @@ pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), Statu
     };
 
     let template = MapTemplate {
+        category: &lyr.category.name,
         name: &lyr.name,
         alias: &lyr.alias,
         geometry,

@@ -165,6 +165,24 @@ impl Catalog {
         }
     }
 
+    pub fn find_layer_by_category_and_name<'a>(
+        &'a self,
+        target_category: &'a str,
+        target_name: &'a str,
+        state: StateLayer,
+    ) -> Option<&'a Layer> {
+        match state {
+            StateLayer::Any => self
+                .layers
+                .iter()
+                .find(|layer| layer.category.name == target_category && layer.name == target_name),
+            StateLayer::Published => self
+                .layers
+                .iter()
+                .find(|layer| layer.category.name == target_category && layer.name == target_name && layer.published),
+        }
+    }
+
     pub fn find_layer_position_by_name(
         &self,
         target_name: &str,

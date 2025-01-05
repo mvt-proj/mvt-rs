@@ -32,11 +32,11 @@
           <td>{{ layer.alias }}</td>
           <td>{{ layer.schema }}.{{ layer.table_name }}</td>
           <td class="has-text-info">
-            <span><span class="server"></span>/services/tiles/{{ layer.name }}/{z}/{x}/{y}.pbf</span>
+            <span><span class="server"></span>/services/tiles/{{ layer.category.name }}:{{ layer.name }}/{z}/{x}/{y}.pbf</span>
           </td>
           <td class="has-text-right">
 
-            <a href="/map/{{ layer.name }}" class="button is-small is-dark" target="_blank">
+            <a href="/map/{{ layer.category.name }}:{{ layer.name }}" class="button is-small is-dark" target="_blank">
               <span class="icon is-small">
                 <i class="fas fa-map"></i>
               </span>
