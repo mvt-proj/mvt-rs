@@ -6,7 +6,7 @@ use salvo::prelude::*;
 use salvo::serve_static::StaticDir;
 use std::time::Duration;
 
-use crate::{api, auth, health, html, tiles, services::{styles}};
+use crate::{api, auth, health, html, services::{styles, tiles}};
 
 pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(

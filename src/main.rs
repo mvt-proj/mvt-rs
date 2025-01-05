@@ -28,7 +28,7 @@ mod routes;
 mod models;
 mod services;
 // mod styles;
-mod tiles;
+// mod tiles;
 
 use auth::Auth;
 // use catalog::Catalog;
