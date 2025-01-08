@@ -30,6 +30,7 @@ struct EditUserTemplate {
 #[template(path = "admin/catalog/layers/new.html")]
 struct NewLayerTemplate {
     categories: Vec<Category>,
+    groups: Vec<Group>,
 }
 
 #[derive(Template)]
@@ -37,6 +38,7 @@ struct NewLayerTemplate {
 struct EditLayerTemplate {
     layer: Layer,
     categories: Vec<Category>,
+    groups: Vec<Group>,
 }
 
 #[derive(Template)]
@@ -102,8 +104,10 @@ pub async fn edit_user(req: &mut Request, res: &mut Response) -> AppResult<()> {
 #[handler]
 pub async fn new_layer(res: &mut Response) -> AppResult<()> {
     let categories = get_categories().clone();
+    let groups = get_auth().groups.clone();
     let template = NewLayerTemplate {
         categories,
+        groups,
     };
     res.render(Text::Html(template.render()?));
     Ok(())
@@ -116,12 +120,14 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response) -> AppResult<()> 
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("layer_id".to_string()))?;
     let catalog = get_catalog().clone();
+    let groups = get_auth().groups.clone();
     let layer = catalog
         .find_layer_by_id(&layer_id, StateLayer::Any)
         .unwrap();
     let template = EditLayerTemplate {
         layer: layer.clone(),
         categories,
+        groups,
     };
     res.render(Text::Html(template.render()?));
     Ok(())

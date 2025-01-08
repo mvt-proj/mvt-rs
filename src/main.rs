@@ -183,7 +183,8 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
                 delete_cache_on_start BOOLEAN,
                 max_cache_age INTEGER,
                 published BOOLEAN NOT NULL,
-                url TEXT
+                url TEXT,
+                groups TEXT NOT NULL
             );
         ",
         )

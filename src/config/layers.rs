@@ -1,3 +1,4 @@
+use crate::auth::Group;
 use crate::get_cf_pool;
 use crate::models::{catalog::Layer, category::Category};
 use sqlx::{sqlite::SqlitePool, Row};
@@ -11,13 +12,18 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
             l.*,
             c.id AS category_id,
             c.name AS category_name,
-            c.description AS category_description
+            c.description AS category_description,
+            GROUP_CONCAT(g.id) AS group_ids,
+            GROUP_CONCAT(g.name) AS group_names,
+            GROUP_CONCAT(g.description) AS group_descriptions
         FROM
             layers l
         LEFT JOIN
-            categories c
-        ON
-            l.category = c.id
+            categories c ON l.category = c.id
+        LEFT JOIN
+            groups g ON ',' || l.groups || ',' LIKE '%,' || g.id || ',%'
+        GROUP BY
+            l.id, c.id;
         "#,
     )
     .fetch_all(pool)
@@ -55,7 +61,34 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
         let published: bool = row.get("published");
         let url: Option<String> = row.get("url");
 
-        // Convertir el campo fields a Vec<String>
+        let group_ids: Option<String> = row.get("group_ids");
+        let group_names: Option<String> = row.get("group_names");
+        let group_descriptions: Option<String> = row.get("group_descriptions");
+
+        let mut groups: Vec<Group> = Vec::new();
+
+        if let (Some(ids), Some(names), Some(descriptions)) =
+            (group_ids, group_names, group_descriptions)
+        {
+            let ids_vec: Vec<String> = ids.split(',').map(|s| s.trim().to_string()).collect();
+            let names_vec: Vec<String> = names.split(',').map(|s| s.trim().to_string()).collect();
+            let descriptions_vec: Vec<String> = descriptions
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .collect();
+
+            for (id, (name, description)) in ids_vec
+                .iter()
+                .zip(names_vec.iter().zip(descriptions_vec.iter()))
+            {
+                groups.push(Group {
+                    id: id.clone(),
+                    name: name.clone(),
+                    description: description.clone(),
+                });
+            }
+        }
+
         let fields_vec: Vec<String> = fields.split(',').map(|s| s.trim().to_string()).collect();
 
         layers.push(Layer {
@@ -83,6 +116,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
             max_cache_age: max_cache_age.map(|v| v as u64),
             published,
             url,
+            groups,
         });
     }
 
@@ -99,9 +133,9 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
             id, category, geometry, name, alias, schema, table_name, fields, filter, srid, geom,
             sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify,
             buffer_do_not_simplify, extent_do_not_simplify, clip_geom,
-            delete_cache_on_start, max_cache_age, published, url
+            delete_cache_on_start, max_cache_age, published, url, groups
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )",
     )
     .bind(&layer.id)
@@ -128,6 +162,14 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(layer.max_cache_age.map(|v| v as i64))
     .bind(layer.published)
     .bind(&layer.url)
+    .bind(
+        layer
+            .groups
+            .iter()
+            .map(|g| g.id.clone())
+            .collect::<Vec<String>>()
+            .join(","),
+    )
     .execute(pool)
     .await?;
 
@@ -146,15 +188,20 @@ pub async fn get_layer_by_id(
             l.*,
             c.id AS category_id,
             c.name AS category_name,
-            c.description AS category_description
+            c.description AS category_description,
+            GROUP_CONCAT(g.id) AS group_ids,
+            GROUP_CONCAT(g.name) AS group_names,
+            GROUP_CONCAT(g.description) AS group_descriptions
         FROM
             layers l
         LEFT JOIN
-            categories c
-        ON
-            l.category = c.id
+            categories c ON l.category = c.id
+        LEFT JOIN
+            groups g ON ',' || l.groups || ',' LIKE '%,' || g.id || ',%'
         WHERE
             l.id = ?
+        GROUP BY
+            l.id, c.id
         "#,
     )
     .bind(layer_id)
@@ -192,6 +239,36 @@ pub async fn get_layer_by_id(
     let published: bool = row.get("published");
     let url: Option<String> = row.get("url");
 
+    // Procesamos los grupos
+    let group_ids: String = row.get("group_ids");
+    let group_names: String = row.get("group_names");
+    let group_descriptions: String = row.get("group_descriptions");
+
+    let group_ids_vec: Vec<String> = group_ids.split(',').map(|s| s.trim().to_string()).collect();
+    let group_names_vec: Vec<String> = group_names
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .collect();
+    let group_descriptions_vec: Vec<String> = group_descriptions
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .collect();
+
+    let mut groups: Vec<Group> = Vec::new();
+
+    for (id, name, description) in group_ids_vec
+        .iter()
+        .zip(group_names_vec.iter())
+        .zip(group_descriptions_vec.iter())
+        .map(|((id, name), description)| (id, name, description))
+    {
+        groups.push(Group {
+            id: id.clone(),
+            name: name.clone(),
+            description: description.clone(),
+        });
+    }
+
     Ok(Layer {
         id,
         category,
@@ -217,6 +294,7 @@ pub async fn get_layer_by_id(
         max_cache_age: max_cache_age.map(|v| v as u64),
         published,
         url,
+        groups,
     })
 }
 
@@ -224,6 +302,12 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     let fields = layer.fields.join(",");
+    let group_ids = layer
+        .groups
+        .iter()
+        .map(|g| g.id.clone())
+        .collect::<Vec<String>>()
+        .join(",");
 
     sqlx::query(
         "UPDATE layers SET
@@ -231,7 +315,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
             filter = ?, srid = ?, geom = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?,
             zmax = ?, zmax_do_not_simplify = ?, buffer_do_not_simplify = ?,
             extent_do_not_simplify = ?, clip_geom = ?, delete_cache_on_start = ?,
-            max_cache_age = ?, published = ?, url = ? WHERE id = ?",
+            max_cache_age = ?, published = ?, url = ?, groups = ? WHERE id = ?",
     )
     .bind(&layer.category.id)
     .bind(&layer.geometry)
@@ -256,6 +340,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(layer.max_cache_age.map(|v| v as i64))
     .bind(layer.published)
     .bind(&layer.url)
+    .bind(group_ids)
     .bind(&layer.id)
     .execute(pool)
     .await?;

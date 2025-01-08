@@ -1,8 +1,8 @@
 use crate::{
-    models::category::Category, config::layers::{
+    auth::Group, config::layers::{
         create_layer, delete_layer, get_layers, switch_layer_published,
         update_layer,
-    }, error::AppResult
+    }, error::AppResult, models::category::Category
 };
 use serde::{Deserialize, Serialize};
 
@@ -39,6 +39,7 @@ pub struct Layer {
     pub max_cache_age: Option<u64>,
     pub published: bool,
     pub url: Option<String>,
+    pub groups: Vec<Group>
 }
 
 impl Layer {
@@ -136,6 +137,25 @@ impl Layer {
         );
         rv += &format!("<strong>Published:</strong> {}", self.published);
         rv
+    }
+
+    pub fn groups_as_string(&self) -> String {
+        self.groups
+            .iter()
+            .map(|group| group.name.clone())
+            .collect::<Vec<String>>()
+            .join(" | ")
+    }
+
+    pub fn groups_as_vec_string(&self) -> Vec<String> {
+        self.groups
+            .iter()
+            .map(|group| group.name.clone())
+            .collect::<Vec<String>>()
+    }
+
+    pub fn is_admin(&self) -> bool {
+        self.groups_as_vec_string().contains(&"admin".to_string())
     }
 }
 

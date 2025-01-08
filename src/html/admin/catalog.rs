@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Auth, User}, models::{catalog::{Catalog, Layer}, category::Category}, error::{AppError, AppResult}, get_app_state, get_auth, get_catalog
+    auth::{Auth, Group, User}, error::{AppError, AppResult}, get_app_state, get_auth, get_catalog, models::{catalog::{Catalog, Layer}, category::Category}
 };
 
 #[derive(Template)]
@@ -41,6 +41,7 @@ struct NewLayer<'a> {
     /// max_cache_age: on seconds: default 0 -> infinite
     max_cache_age: Option<u64>,
     published: bool,
+    groups: Vec<String>,
 }
 
 #[handler]
@@ -72,6 +73,12 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 
     let category = Category::from_id(&new_layer.category).await?;
 
+    let selected_groups: Vec<Group> = new_layer
+        .groups
+        .iter()
+        .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+        .collect();
+
     let layer = Layer {
         id: hex_string,
         category,
@@ -97,9 +104,10 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
         url: None,
+        groups: selected_groups,
     };
 
-    let _ = app_state.catalog.add_layer(layer).await;
+    let _ = app_state.catalog.add_layer(layer).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
@@ -111,6 +119,12 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     let app_state = get_app_state();
 
     let category = Category::from_id(&new_layer.category).await?;
+
+    let selected_groups: Vec<Group> = new_layer
+        .groups
+        .iter()
+        .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+        .collect();
 
     let layer = Layer {
         id: new_layer.id,
@@ -137,9 +151,10 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
         url: None,
+        groups: selected_groups,
     };
 
-    let _ = app_state.catalog.update_layer(layer).await;
+    let _ = app_state.catalog.update_layer(layer).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
