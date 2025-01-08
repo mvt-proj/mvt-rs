@@ -85,6 +85,23 @@ pub fn app_router() -> salvo::Router {
                     .push(Router::with_path("delete/<id>").get(html::admin::styles::delete_style))
                 )
                 .push(
+                    Router::with_path("groups")
+                        .hoop(auth::require_user_admin)
+                        .get(html::admin::groups::list_groups)
+                        .push(Router::with_path("new").get(html::admin::main::new_group))
+                        .push(Router::with_path("create").post(html::admin::groups::create_group))
+                        .push(
+                            Router::with_path("edit/<id>").get(html::admin::main::edit_group),
+                        )
+                        .push(
+                            Router::with_path("update").post(html::admin::groups::edit_group),
+                        )
+                        .push(
+                            Router::with_path("delete/<id>")
+                                .get(html::admin::groups::delete_group),
+                        ),
+                )
+                .push(
                     Router::with_path("catalog")
                         .hoop(auth::require_user_admin)
                         .get(html::admin::catalog::page_catalog)

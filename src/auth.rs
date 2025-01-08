@@ -8,11 +8,13 @@ use time::{Duration, OffsetDateTime};
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
-use crate::config::users::{create_user, delete_user, update_user, get_users};
+use crate::config::groups::{create_group, delete_group, update_group};
+use crate::config::users::{create_user, delete_user, get_users, update_user};
+use crate::get_app_state;
 use crate::{
     config::groups::get_groups,
     error::{AppError, AppResult},
-    get_auth, get_jwt_secret
+    get_auth, get_jwt_secret,
 };
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
@@ -63,6 +65,78 @@ pub struct Group {
     pub id: String,
     pub name: String,
     pub description: String,
+}
+
+impl Group {
+    pub async fn new(name: String, description: String) -> AppResult<Self> {
+        let group = Group {
+            id: uuid::Uuid::new_v4().to_string(),
+            name,
+            description,
+        };
+
+        create_group(&group, None).await?;
+        get_app_state().auth.groups.push(group.clone());
+        Ok(group)
+    }
+
+    pub async fn from_id(id: &str) -> AppResult<Self> {
+        let group = get_app_state()
+            .auth
+            .groups
+            .iter()
+            .find(|group| group.id == id)
+            .unwrap();
+        Ok(group.clone())
+    }
+
+    pub async fn update_group(&self, name: String, description: String) -> AppResult<Self> {
+        let group = Group {
+            id: self.id.clone(),
+            name,
+            description,
+        };
+
+        update_group(self.id.clone(), &group, None).await?;
+
+        let position = get_app_state()
+            .auth
+            .groups
+            .iter()
+            .position(|group| group.id == self.id);
+
+        match position {
+            Some(pos) => {
+                get_app_state().auth.groups[pos] = group.clone();
+            }
+            None => {
+                get_app_state().auth.groups.push(group.clone());
+            }
+        }
+
+        Ok(group)
+    }
+
+    pub async fn delete_group(&self) -> AppResult<()> {
+        let position = get_app_state()
+            .auth
+            .groups
+            .iter()
+            .position(|group| group.id == self.id);
+
+        delete_group(self.id.clone(), None).await?;
+
+        match position {
+            Some(pos) => {
+                get_app_state().auth.groups.remove(pos);
+            }
+            None => {
+                println!("Group not found");
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -164,10 +238,7 @@ impl Auth {
     pub async fn update_user(&mut self, user: User) -> AppResult<()> {
         let id = user.id.clone();
         update_user(id, &user, None).await?;
-        let position = self
-            .users
-            .iter()
-            .position(|usr| usr.id == user.id);
+        let position = self.users.iter().position(|usr| usr.id == user.id);
         match position {
             Some(index) => self.users[index] = user,
             None => println!("user not found"),

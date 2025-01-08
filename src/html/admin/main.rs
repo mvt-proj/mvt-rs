@@ -64,6 +64,16 @@ struct EditStyleTemplate {
     categories: Vec<Category>,
 }
 
+#[derive(Template)]
+#[template(path = "admin/groups/new.html")]
+struct NewGroupTemplate {}
+
+#[derive(Template)]
+#[template(path = "admin/groups/edit.html")]
+struct EditGroupTemplate {
+    group: Group,
+}
+
 
 #[handler]
 pub async fn index(res: &mut Response) -> AppResult<()> {
@@ -173,6 +183,26 @@ pub async fn edit_style(req: &mut Request, res: &mut Response) -> AppResult<()> 
     let template = EditStyleTemplate {
         style: style.clone(),
         categories,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn new_group(res: &mut Response) -> AppResult<()> {
+    let template = NewGroupTemplate {};
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn edit_group(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let group = Group::from_id(&id).await?;
+    let template = EditGroupTemplate {
+        group: group.clone(),
     };
     res.render(Text::Html(template.render()?));
     Ok(())
