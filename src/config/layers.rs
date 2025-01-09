@@ -116,7 +116,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
             max_cache_age: max_cache_age.map(|v| v as u64),
             published,
             url,
-            groups,
+            groups: Some(groups),
         });
     }
 
@@ -165,10 +165,15 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(
         layer
             .groups
-            .iter()
-            .map(|g| g.id.clone())
-            .collect::<Vec<String>>()
-            .join(","),
+            .as_ref()
+            .map(|groups| {
+                groups
+                    .iter()
+                    .map(|g| g.id.clone())
+                    .collect::<Vec<String>>()
+                    .join(",")
+            })
+            .unwrap_or_default(),
     )
     .execute(pool)
     .await?;
@@ -294,7 +299,7 @@ pub async fn get_layer_by_id(
         max_cache_age: max_cache_age.map(|v| v as u64),
         published,
         url,
-        groups,
+        groups: Some(groups),
     })
 }
 
@@ -304,10 +309,15 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     let fields = layer.fields.join(",");
     let group_ids = layer
         .groups
-        .iter()
-        .map(|g| g.id.clone())
-        .collect::<Vec<String>>()
-        .join(",");
+        .as_ref() // Convierte Option<Vec<Group>> en Option<&Vec<Group>>
+        .map(|groups| {
+            groups
+                .iter()
+                .map(|g| g.id.clone())
+                .collect::<Vec<String>>()
+                .join(",")
+        })
+        .unwrap_or_default();
 
     sqlx::query(
         "UPDATE layers SET

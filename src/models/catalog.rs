@@ -41,7 +41,7 @@ pub struct Layer {
     pub max_cache_age: Option<u64>,
     pub published: bool,
     pub url: Option<String>,
-    pub groups: Vec<Group>,
+    pub groups: Option<Vec<Group>>,
 }
 
 impl Layer {
@@ -141,20 +141,46 @@ impl Layer {
         rv
     }
 
+    // pub fn groups_as_string(&self) -> String {
+    //     self.groups
+    //         .iter()
+    //         .map(|group| group.name.clone())
+    //         .collect::<Vec<String>>()
+    //         .join(" | ")
+    // }
+
     pub fn groups_as_string(&self) -> String {
         self.groups
-            .iter()
-            .map(|group| group.name.clone())
-            .collect::<Vec<String>>()
-            .join(" | ")
+            .as_ref() // Convierte Option<Vec<Group>> en Option<&Vec<Group>>
+            .map(|groups| {
+                groups
+                    .iter()
+                    .map(|group| group.name.clone())
+                    .collect::<Vec<String>>()
+                    .join(" | ")
+            })
+            .unwrap_or_default() // Si self.groups es None, retorna una cadena vacía
     }
+
+    // pub fn groups_as_vec_string(&self) -> Vec<String> {
+    //     self.groups
+    //         .iter()
+    //         .map(|group| group.name.clone())
+    //         .collect::<Vec<String>>()
+    // }
 
     pub fn groups_as_vec_string(&self) -> Vec<String> {
         self.groups
-            .iter()
-            .map(|group| group.name.clone())
-            .collect::<Vec<String>>()
+            .as_ref() // Convierte Option<Vec<Group>> en Option<&Vec<Group>>
+            .map(|groups| {
+                groups
+                    .iter()
+                    .map(|group| group.name.clone())
+                    .collect::<Vec<String>>()
+            })
+            .unwrap_or_default() // Retorna un Vec vacío si self.groups es None
     }
+
 
     pub fn is_admin(&self) -> bool {
         self.groups_as_vec_string().contains(&"admin".to_string())

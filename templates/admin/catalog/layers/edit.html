@@ -257,7 +257,7 @@
           <label class="label" for="fields">Allowed Groups</label>
           <div class="control">
             <div class="select is-multiple">
-              <select name="groups" id="groups" multiple size="8" required>
+              <select name="groups" id="groups" multiple size="8">
                 {% for group in groups %}
                   {% if layer.groups_as_vec_string().contains(group.name) %}
                     <option value="{{group.name}}" selected>{{group.name}}</option>

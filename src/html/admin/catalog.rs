@@ -47,7 +47,7 @@ struct NewLayer<'a> {
     /// max_cache_age: on seconds: default 0 -> infinite
     max_cache_age: Option<u64>,
     published: bool,
-    groups: Vec<String>,
+    groups: Option<Vec<String>>,
 }
 
 #[handler]
@@ -79,11 +79,23 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 
     let category = Category::from_id(&new_layer.category).await?;
 
+    // let selected_groups: Vec<Group> = new_layer
+    //     .groups
+    //     .iter()
+    //     .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+    //     .collect();
+
     let selected_groups: Vec<Group> = new_layer
         .groups
-        .iter()
-        .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
-        .collect();
+        .as_ref()
+        .map(|groups| {
+            groups
+                .iter()
+                .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+                .collect::<Vec<Group>>()
+        })
+        .unwrap_or_default();
+
 
     let layer = Layer {
         id: hex_string,
@@ -110,7 +122,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
         url: None,
-        groups: selected_groups,
+        groups: Some(selected_groups),
     };
 
     let _ = app_state.catalog.add_layer(layer).await?;
@@ -126,11 +138,23 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 
     let category = Category::from_id(&new_layer.category).await?;
 
+    // let selected_groups: Vec<Group> = new_layer
+    //     .groups
+    //     .iter()
+    //     .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+    //     .collect();
+    //
     let selected_groups: Vec<Group> = new_layer
         .groups
-        .iter()
-        .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
-        .collect();
+        .as_ref()
+        .map(|groups| {
+            groups
+                .iter()
+                .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+                .collect::<Vec<Group>>()
+        })
+        .unwrap_or_default();
+
 
     let layer = Layer {
         id: new_layer.id,
@@ -157,7 +181,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         max_cache_age: new_layer.max_cache_age,
         published: new_layer.published,
         url: None,
-        groups: selected_groups,
+        groups: Some(selected_groups),
     };
 
     let _ = app_state.catalog.update_layer(layer).await?;
