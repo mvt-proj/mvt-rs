@@ -14,7 +14,7 @@ bytes = "1.5.0"
 argon2 = { version = "0.5", features = ["std"] }
 askama = { version = "0.12.1", features = ["serde-json"] }
 anyhow = "1"
-thiserror = "1"
+thiserror = "2"
 base64 = "0.22"
 log = "0.4"
 time = "0.3"
@@ -28,9 +28,9 @@ serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.8", features = [ "runtime-tokio-native-tls" , "postgres", "sqlite" ] }
 
-redis = { version = "0.27", features = ["tokio-comp"] }
-bb8 = "0.8"
-bb8-redis = "0.17"
+redis = { version = "0.28", features = ["tokio-comp"] }
+bb8 = "0.9"
+bb8-redis = "0.20"
 # surrealdb = "1.5.4"
 
 [profile.release]
