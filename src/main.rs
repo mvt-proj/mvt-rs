@@ -23,19 +23,19 @@ mod diskcache;
 mod error;
 mod health;
 mod html;
+mod models;
 mod rediscache;
 mod routes;
-mod models;
 mod services;
 // mod styles;
 // mod tiles;
 
 use auth::Auth;
 // use catalog::Catalog;
-use models::{catalog::Catalog, category::Category};
 use db::make_db_pool;
 use diskcache::DiskCache;
 use error::AppResult;
+use models::{catalog::Catalog, category::Category};
 use rediscache::RedisCache;
 
 #[derive(Debug)]

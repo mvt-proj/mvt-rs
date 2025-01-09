@@ -4,7 +4,13 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Auth, Group, User}, error::{AppError, AppResult}, get_app_state, get_auth, get_catalog, models::{catalog::{Catalog, Layer}, category::Category}
+    auth::{Auth, Group, User},
+    error::{AppError, AppResult},
+    get_app_state, get_auth, get_catalog,
+    models::{
+        catalog::{Catalog, Layer},
+        category::Category,
+    },
 };
 
 #[derive(Template)]

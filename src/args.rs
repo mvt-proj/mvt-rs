@@ -168,5 +168,3 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         salt_string,
     })
 }
-
-

@@ -1,5 +1,12 @@
+use crate::{
+    config::styles::{
+        create_style, delete_style, get_style, get_style_by_category_and_name, get_styles,
+        update_style,
+    },
+    error::AppResult,
+    models::category::Category,
+};
 use serde::{Deserialize, Serialize};
-use crate::{config::styles::{create_style, delete_style, get_style, get_style_by_category_and_name, get_styles, update_style}, error::AppResult, models::category::Category};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Style {
@@ -11,7 +18,12 @@ pub struct Style {
 }
 
 impl Style {
-    pub async fn new(name: String, category: Category, description: String, style: String) -> AppResult<Self> {
+    pub async fn new(
+        name: String,
+        category: Category,
+        description: String,
+        style: String,
+    ) -> AppResult<Self> {
         let style = Style {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -43,8 +55,13 @@ impl Style {
         Ok(style)
     }
 
-
-    pub async fn update_style(&self, name: String, category: Category, description: String, style: String) -> AppResult<Self> {
+    pub async fn update_style(
+        &self,
+        name: String,
+        category: Category,
+        description: String,
+        style: String,
+    ) -> AppResult<Self> {
         let style = Style {
             id: self.id.clone(),
             name,

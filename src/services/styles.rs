@@ -1,7 +1,6 @@
+use crate::{error::AppResult, models::styles::Style};
 use salvo::prelude::*;
 use serde_json;
-use crate::{error::AppResult, models::styles::Style};
-
 
 #[handler]
 pub async fn index(req: &mut Request, res: &mut Response) -> AppResult<Json<serde_json::Value>> {

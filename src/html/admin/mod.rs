@@ -1,7 +1,7 @@
 pub mod catalog;
-pub mod database;
-pub mod main;
-pub mod users;
 pub mod categories;
-pub mod styles;
+pub mod database;
 pub mod groups;
+pub mod main;
+pub mod styles;
+pub mod users;

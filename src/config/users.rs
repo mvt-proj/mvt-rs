@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use crate::auth::{Group, User};
 use crate::get_cf_pool;
 use sqlx::{sqlite::SqlitePool, Row};
+use std::collections::HashMap;
 
 pub async fn get_users(pool: Option<&SqlitePool>) -> Result<Vec<User>, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
@@ -101,7 +101,6 @@ pub async fn update_user(
     Ok(())
 }
 
-
 pub async fn delete_user(id: String, pool: Option<&SqlitePool>) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
@@ -112,5 +111,3 @@ pub async fn delete_user(id: String, pool: Option<&SqlitePool>) -> Result<(), sq
 
     Ok(())
 }
-
-

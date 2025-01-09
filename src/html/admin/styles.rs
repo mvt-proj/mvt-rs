@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     auth::{Auth, User},
-    models::{category::Category, styles::Style},
     error::{AppError, AppResult},
+    models::{category::Category, styles::Style},
 };
 
 #[derive(Template)]
@@ -44,16 +44,14 @@ pub async fn list_styles(req: &mut Request, res: &mut Response) -> AppResult<()>
 }
 
 #[handler]
-pub async fn create_style<'a>(
-    res: &mut Response,
-    new_style: NewStyle<'a>,
-) -> AppResult<()> {
+pub async fn create_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppResult<()> {
     Style::new(
         new_style.name.to_string(),
         Category::from_id(&new_style.category).await?,
         new_style.description.to_string(),
         new_style.style.to_string(),
-    ).await?;
+    )
+    .await?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
@@ -64,12 +62,14 @@ pub async fn create_style<'a>(
 #[handler]
 pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppResult<()> {
     let style = Style::from_id(&new_style.id.unwrap()).await?;
-    style.update_style(
-        new_style.name.to_string(),
-        Category::from_id(&new_style.category).await?,
-        new_style.description.to_string(),
-        new_style.style.to_string(),
-    ).await?;
+    style
+        .update_style(
+            new_style.name.to_string(),
+            Category::from_id(&new_style.category).await?,
+            new_style.description.to_string(),
+            new_style.style.to_string(),
+        )
+        .await?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);

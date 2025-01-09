@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     auth::{Auth, User},
-    models::category::Category,
     error::{AppError, AppResult},
+    models::category::Category,
 };
 
 #[derive(Template)]
@@ -62,7 +62,10 @@ pub async fn create_category<'a>(
 pub async fn edit_category<'a>(res: &mut Response, new_category: NewCategory<'a>) -> AppResult<()> {
     let category = Category::from_id(new_category.id.as_ref().unwrap()).await?;
     category
-        .update_category(new_category.name.to_string(), new_category.description.to_string())
+        .update_category(
+            new_category.name.to_string(),
+            new_category.description.to_string(),
+        )
         .await?;
 
     res.headers_mut()

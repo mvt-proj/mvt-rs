@@ -1,10 +1,12 @@
 use crate::{
     auth::{Group, User},
-    models::{category::Category, styles::Style, catalog::{Layer, StateLayer}},
     error::{AppError, AppResult},
-    get_auth,
-    get_catalog,
-    get_categories,
+    get_auth, get_catalog, get_categories,
+    models::{
+        catalog::{Layer, StateLayer},
+        category::Category,
+        styles::Style,
+    },
 };
 use askama::Template;
 use salvo::prelude::*;
@@ -74,7 +76,6 @@ struct EditGroupTemplate {
     group: Group,
 }
 
-
 #[handler]
 pub async fn index(res: &mut Response) -> AppResult<()> {
     let template = IndexTemplate {};
@@ -115,10 +116,7 @@ pub async fn edit_user(req: &mut Request, res: &mut Response) -> AppResult<()> {
 pub async fn new_layer(res: &mut Response) -> AppResult<()> {
     let categories = get_categories().clone();
     let groups = get_auth().groups.clone();
-    let template = NewLayerTemplate {
-        categories,
-        groups,
-    };
+    let template = NewLayerTemplate { categories, groups };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
@@ -166,9 +164,7 @@ pub async fn edit_category(req: &mut Request, res: &mut Response) -> AppResult<(
 #[handler]
 pub async fn new_style(res: &mut Response) -> AppResult<()> {
     let categories = get_categories().clone();
-    let template = NewStyleTemplate {
-        categories,
-    };
+    let template = NewStyleTemplate { categories };
     res.render(Text::Html(template.render()?));
     Ok(())
 }

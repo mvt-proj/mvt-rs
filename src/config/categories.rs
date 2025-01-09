@@ -5,7 +5,9 @@ use sqlx::{sqlite::SqlitePool, Row};
 pub async fn get_categories(pool: Option<&SqlitePool>) -> Result<Vec<Category>, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
-    let rows = sqlx::query("SELECT * FROM categories").fetch_all(pool).await?;
+    let rows = sqlx::query("SELECT * FROM categories")
+        .fetch_all(pool)
+        .await?;
 
     let mut categories = Vec::new();
 
@@ -24,7 +26,10 @@ pub async fn get_categories(pool: Option<&SqlitePool>) -> Result<Vec<Category>, 
     Ok(categories)
 }
 
-pub async fn create_category(pool: Option<&SqlitePool>, category: Category) -> Result<(), sqlx::Error> {
+pub async fn create_category(
+    pool: Option<&SqlitePool>,
+    category: Category,
+) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     sqlx::query("INSERT INTO categories (id, name, description) VALUES (?, ?, ?)")
@@ -59,7 +64,10 @@ pub async fn get_category_by_id(
     })
 }
 
-pub async fn update_category(pool: Option<&SqlitePool>, category: Category) -> Result<(), sqlx::Error> {
+pub async fn update_category(
+    pool: Option<&SqlitePool>,
+    category: Category,
+) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     sqlx::query("UPDATE categories SET name = ?, description = ? WHERE id = ?")
@@ -72,7 +80,10 @@ pub async fn update_category(pool: Option<&SqlitePool>, category: Category) -> R
     Ok(())
 }
 
-pub async fn delete_category(pool: Option<&SqlitePool>, category_id: &str) -> Result<(), sqlx::Error> {
+pub async fn delete_category(
+    pool: Option<&SqlitePool>,
+    category_id: &str,
+) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     sqlx::query("DELETE FROM categories WHERE id = ?")

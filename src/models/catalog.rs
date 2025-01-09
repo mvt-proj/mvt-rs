@@ -1,8 +1,10 @@
 use crate::{
-    auth::Group, config::layers::{
-        create_layer, delete_layer, get_layers, switch_layer_published,
-        update_layer,
-    }, error::AppResult, models::category::Category
+    auth::Group,
+    config::layers::{
+        create_layer, delete_layer, get_layers, switch_layer_published, update_layer,
+    },
+    error::AppResult,
+    models::category::Category,
 };
 use serde::{Deserialize, Serialize};
 
@@ -39,7 +41,7 @@ pub struct Layer {
     pub max_cache_age: Option<u64>,
     pub published: bool,
     pub url: Option<String>,
-    pub groups: Vec<Group>
+    pub groups: Vec<Group>,
 }
 
 impl Layer {
@@ -196,10 +198,11 @@ impl Catalog {
                 .layers
                 .iter()
                 .find(|layer| layer.category.name == target_category && layer.name == target_name),
-            StateLayer::Published => self
-                .layers
-                .iter()
-                .find(|layer| layer.category.name == target_category && layer.name == target_name && layer.published),
+            StateLayer::Published => self.layers.iter().find(|layer| {
+                layer.category.name == target_category
+                    && layer.name == target_name
+                    && layer.published
+            }),
         }
     }
 

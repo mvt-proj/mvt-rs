@@ -6,7 +6,10 @@ use salvo::prelude::*;
 use salvo::serve_static::StaticDir;
 use std::time::Duration;
 
-use crate::{api, auth, health, html, services::{styles, tiles}};
+use crate::{
+    api, auth, health, html,
+    services::{styles, tiles},
+};
 
 pub fn app_router() -> salvo::Router {
     let cache_30s = Cache::new(
@@ -43,29 +46,22 @@ pub fn app_router() -> salvo::Router {
                         .get(html::admin::users::list_users)
                         .push(Router::with_path("new").get(html::admin::main::new_user))
                         .push(Router::with_path("create").post(html::admin::users::create_user))
-                        .push(
-                            Router::with_path("edit/<id>").get(html::admin::main::edit_user),
-                        )
+                        .push(Router::with_path("edit/<id>").get(html::admin::main::edit_user))
                         .push(Router::with_path("update").post(html::admin::users::update_user))
                         .push(
-                            Router::with_path("delete/<id>")
-                                .get(html::admin::users::delete_user),
+                            Router::with_path("delete/<id>").get(html::admin::users::delete_user),
                         ),
                 )
                 .push(
                     Router::with_path("categories")
                         .hoop(auth::require_user_admin)
                         .get(html::admin::categories::list_categories)
+                        .push(Router::with_path("new").get(html::admin::main::new_category))
                         .push(
-                            Router::with_path("new").get(html::admin::main::new_category),
+                            Router::with_path("create")
+                                .post(html::admin::categories::create_category),
                         )
-                        .push(
-                            Router::with_path("create").post(html::admin::categories::create_category),
-                        )
-                        .push(
-                            Router::with_path("edit/<id>")
-                                .get(html::admin::main::edit_category),
-                        )
+                        .push(Router::with_path("edit/<id>").get(html::admin::main::edit_category))
                         .push(
                             Router::with_path("update")
                                 .post(html::admin::categories::edit_category),
@@ -75,14 +71,17 @@ pub fn app_router() -> salvo::Router {
                                 .get(html::admin::categories::delete_category),
                         ),
                 )
-                .push(Router::with_path("styles")
-                    .hoop(auth::require_user_admin)
-                    .get(html::admin::styles::list_styles)
-                    .push(Router::with_path("new").get(html::admin::main::new_style))
-                    .push(Router::with_path("create").post(html::admin::styles::create_style))
-                    .push(Router::with_path("edit/<id>").get(html::admin::main::edit_style))
-                    .push(Router::with_path("update").post(html::admin::styles::edit_style))
-                    .push(Router::with_path("delete/<id>").get(html::admin::styles::delete_style))
+                .push(
+                    Router::with_path("styles")
+                        .hoop(auth::require_user_admin)
+                        .get(html::admin::styles::list_styles)
+                        .push(Router::with_path("new").get(html::admin::main::new_style))
+                        .push(Router::with_path("create").post(html::admin::styles::create_style))
+                        .push(Router::with_path("edit/<id>").get(html::admin::main::edit_style))
+                        .push(Router::with_path("update").post(html::admin::styles::edit_style))
+                        .push(
+                            Router::with_path("delete/<id>").get(html::admin::styles::delete_style),
+                        ),
                 )
                 .push(
                     Router::with_path("groups")
@@ -90,15 +89,10 @@ pub fn app_router() -> salvo::Router {
                         .get(html::admin::groups::list_groups)
                         .push(Router::with_path("new").get(html::admin::main::new_group))
                         .push(Router::with_path("create").post(html::admin::groups::create_group))
+                        .push(Router::with_path("edit/<id>").get(html::admin::main::edit_group))
+                        .push(Router::with_path("update").post(html::admin::groups::edit_group))
                         .push(
-                            Router::with_path("edit/<id>").get(html::admin::main::edit_group),
-                        )
-                        .push(
-                            Router::with_path("update").post(html::admin::groups::edit_group),
-                        )
-                        .push(
-                            Router::with_path("delete/<id>")
-                                .get(html::admin::groups::delete_group),
+                            Router::with_path("delete/<id>").get(html::admin::groups::delete_group),
                         ),
                 )
                 .push(
@@ -182,13 +176,14 @@ pub fn app_router() -> salvo::Router {
                         ),
                 ),
         )
-        .push(Router::with_path("services")
-            .hoop(cache_30s)
-            .hoop(cors_handler)
-            .options(handler::empty())
-            .push(Router::with_path("tiles").get(tiles::mvt))
-            .push(Router::with_path("tiles/<layer_name>/<z>/<x>/<y>.pbf").get(tiles::mvt))
-            .push(Router::with_path("styles/<style_name>").get(styles::index))
-            )
+        .push(
+            Router::with_path("services")
+                .hoop(cache_30s)
+                .hoop(cors_handler)
+                .options(handler::empty())
+                .push(Router::with_path("tiles").get(tiles::mvt))
+                .push(Router::with_path("tiles/<layer_name>/<z>/<x>/<y>.pbf").get(tiles::mvt))
+                .push(Router::with_path("styles/<style_name>").get(styles::index)),
+        )
         .push(Router::with_path("static/<**path>").get(static_dir))
 }

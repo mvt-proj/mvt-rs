@@ -1,6 +1,6 @@
 use salvo::prelude::*;
 
-use crate::{models::catalog::Layer, get_app_state, get_catalog};
+use crate::{get_app_state, get_catalog, models::catalog::Layer};
 
 #[handler]
 pub async fn list(req: &mut Request, res: &mut Response) {

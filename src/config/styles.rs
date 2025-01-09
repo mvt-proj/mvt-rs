@@ -1,5 +1,5 @@
 use crate::get_cf_pool;
-use crate::models::{styles::Style, category::Category};
+use crate::models::{category::Category, styles::Style};
 use sqlx::{sqlite::SqlitePool, Row};
 
 pub async fn get_styles(pool: Option<&SqlitePool>) -> Result<Vec<Style>, sqlx::Error> {
@@ -90,8 +90,11 @@ pub async fn get_style(id: &str, pool: Option<&SqlitePool>) -> Result<Style, sql
     })
 }
 
-
-pub async fn get_style_by_category_and_name(category: &str, name: &str, pool: Option<&SqlitePool>) -> Result<Style, sqlx::Error> {
+pub async fn get_style_by_category_and_name(
+    category: &str,
+    name: &str,
+    pool: Option<&SqlitePool>,
+) -> Result<Style, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     let row = sqlx::query(
@@ -132,11 +135,7 @@ pub async fn get_style_by_category_and_name(category: &str, name: &str, pool: Op
     })
 }
 
-
-pub async fn create_style(
-    style: Style,
-    pool: Option<&SqlitePool>,
-) -> Result<(), sqlx::Error> {
+pub async fn create_style(style: Style, pool: Option<&SqlitePool>) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     sqlx::query(
@@ -156,10 +155,7 @@ pub async fn create_style(
     Ok(())
 }
 
-pub async fn update_style(
-    style: Style,
-    pool: Option<&SqlitePool>,
-) -> Result<(), sqlx::Error> {
+pub async fn update_style(style: Style, pool: Option<&SqlitePool>) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     sqlx::query(

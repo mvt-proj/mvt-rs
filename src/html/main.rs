@@ -2,8 +2,8 @@ use askama::Template;
 use salvo::prelude::*;
 
 use crate::{
-    models::catalog::{Catalog, Layer, StateLayer},
     get_catalog,
+    models::catalog::{Catalog, Layer, StateLayer},
 };
 
 #[derive(Template)]
@@ -59,9 +59,8 @@ pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), Statu
     let category = parts.get(0).unwrap_or(&"");
     let name = parts.get(1).unwrap_or(&"");
 
-
     let lyr = catalog
-        .find_layer_by_category_and_name(&category, &name,  StateLayer::Published)
+        .find_layer_by_category_and_name(&category, &name, StateLayer::Published)
         .ok_or_else(|| {
             StatusError::not_found()
                 .brief("Layer not found")
