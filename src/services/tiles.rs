@@ -210,7 +210,7 @@ async fn write_cache(
 pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let layer_name = req.param::<String>("layer_name").unwrap_or("".to_string());
     let parts: Vec<&str> = layer_name.split(':').collect();
-    let category = parts.get(0).unwrap_or(&"");
+    let category = parts.first().unwrap_or(&"");
     let name = parts.get(1).unwrap_or(&"");
 
     let x = req.param::<u32>("x").unwrap_or(0);
@@ -222,7 +222,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let catalog: Catalog = get_catalog().clone();
     let disk_cache: DiskCache = get_disk_cache().clone();
 
-    let layer = catalog.find_layer_by_category_and_name(&category, &name, StateLayer::Published);
+    let layer = catalog.find_layer_by_category_and_name(category, name, StateLayer::Published);
     // let layer = catalog.find_layer_by_name(&layer_name, StateLayer::Published);
     res.headers_mut().insert(
         "content-type",

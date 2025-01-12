@@ -125,7 +125,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         groups: Some(selected_groups),
     };
 
-    let _ = app_state.catalog.add_layer(layer).await?;
+    app_state.catalog.add_layer(layer).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
@@ -184,7 +184,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         groups: Some(selected_groups),
     };
 
-    let _ = app_state.catalog.update_layer(layer).await?;
+    app_state.catalog.update_layer(layer).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));

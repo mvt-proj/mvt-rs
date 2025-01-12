@@ -224,7 +224,7 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
             INSERT INTO groups (id, name, description)
             VALUES ('{}', 'operator', 'operator role');
         ",
-                Uuid::new_v4().to_string()
+                Uuid::new_v4()
             )
             .as_str(),
         )
@@ -244,7 +244,7 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
                 (id, username, email, password, groups)
             VALUES
                 ('{}', 'admin', 'admin@gmail.com', '{password_hash}', '{admin_role_id}');",
-                Uuid::new_v4().to_string(),
+                Uuid::new_v4(),
             )
             .as_str(),
         )
