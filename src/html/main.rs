@@ -56,11 +56,11 @@ pub async fn page_map(req: &mut Request, res: &mut Response) -> Result<(), Statu
     let catalog: Catalog = get_catalog().clone();
     let layer_name = req.param::<String>("layer_name").unwrap();
     let parts: Vec<&str> = layer_name.split(':').collect();
-    let category = parts.get(0).unwrap_or(&"");
+    let category = parts.first().unwrap_or(&"");
     let name = parts.get(1).unwrap_or(&"");
 
     let lyr = catalog
-        .find_layer_by_category_and_name(&category, &name, StateLayer::Published)
+        .find_layer_by_category_and_name(category, name, StateLayer::Published)
         .ok_or_else(|| {
             StatusError::not_found()
                 .brief("Layer not found")
