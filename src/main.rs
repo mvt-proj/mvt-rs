@@ -2,7 +2,6 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
-// use category::Category;
 use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
 use sqlx::{Connection, Executor, PgPool, SqliteConnection, SqlitePool};
@@ -14,8 +13,6 @@ use uuid::Uuid;
 mod api;
 mod args;
 mod auth;
-// mod catalog;
-// mod category;
 mod config;
 mod database;
 mod db;
@@ -27,11 +24,8 @@ mod models;
 mod rediscache;
 mod routes;
 mod services;
-// mod styles;
-// mod tiles;
 
 use auth::Auth;
-// use catalog::Catalog;
 use db::make_db_pool;
 use diskcache::DiskCache;
 use error::AppResult;
