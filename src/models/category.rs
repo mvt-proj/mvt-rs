@@ -63,12 +63,9 @@ impl Category {
             .iter()
             .position(|l| l.category.id == self.id);
 
-        match position {
-            Some(pos) => {
+            if let Some(pos) = position {
                 get_app_state().catalog.layers[pos].category = category.clone();
             }
-            None => {}
-        }
 
         Ok(category)
     }
@@ -81,12 +78,9 @@ impl Category {
             .iter()
             .position(|c| c.id == self.id);
 
-        match position {
-            Some(pos) => {
+            if let Some(pos) = position {
                 get_app_state().categories.remove(pos);
             }
-            None => {}
-        }
 
         Ok(())
     }

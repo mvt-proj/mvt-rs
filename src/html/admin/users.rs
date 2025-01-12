@@ -107,7 +107,7 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         password: encrypt_psw,
         groups: selected_groups,
     };
-    let _ = app_state.auth.update_user(user).await?;
+    app_state.auth.update_user(user).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/users"));
