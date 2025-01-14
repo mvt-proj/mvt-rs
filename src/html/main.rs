@@ -11,6 +11,10 @@ use crate::{
 struct IndexTemplate {}
 
 #[derive(Template)]
+#[template(path = "login.html")]
+struct LoginTemplate {}
+
+#[derive(Template)]
 #[template(path = "error404.html")]
 struct E404Template {}
 
@@ -32,6 +36,12 @@ struct MapTemplate<'a> {
 #[handler]
 pub async fn index(res: &mut Response) {
     let template = IndexTemplate {};
+    res.render(Text::Html(template.render().unwrap()));
+}
+
+#[handler]
+pub async fn login(res: &mut Response) {
+    let template = LoginTemplate {};
     res.render(Text::Html(template.render().unwrap()));
 }
 

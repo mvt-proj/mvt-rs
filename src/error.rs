@@ -58,6 +58,9 @@ pub enum AppError {
 
     #[error("Error creating file: {0}")]
     FileCreationError(#[from] tokio::io::Error),
+
+    #[error("User not found")]
+    UserNotFound,
 }
 
 pub type AppResult<T> = Result<T, AppError>;

@@ -1,6 +1,7 @@
 use base64::{engine::general_purpose, Engine as _};
 use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
 use salvo::prelude::*;
+use salvo::session::Session;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use time::{Duration, OffsetDateTime};
@@ -175,6 +176,13 @@ pub struct DataToken {
     pub token: String,
 }
 
+#[derive(Serialize, Deserialize, Extractible, Debug)]
+#[salvo(extract(default_source(from = "body")))]
+pub struct Login<'a> {
+    pub email: &'a str,
+    pub password: &'a str,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Auth {
     pub groups: Vec<Group>,
@@ -296,6 +304,16 @@ impl Auth {
         }
         Ok("".to_owned())
     }
+
+    pub fn get_user_by_email_and_password(&self, email: &str, password: &str) -> AppResult<User> {
+        self.users
+            .iter()
+            .find(|user| {
+                user.email == email && self.validate_psw(user.clone().clone(), password).unwrap()
+            })
+            .cloned()
+            .ok_or(AppError::UserNotFound)
+    }
 }
 
 #[handler]
@@ -346,6 +364,22 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
     JwtAuth::new(ConstDecoder::from_secret(jwt_secret.as_bytes()))
         .finders(vec![Box::new(HeaderFinder::new())])
         .force_passed(true)
+}
+
+#[handler]
+pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -> AppResult<()> {
+    let auth: Auth = get_auth().clone();
+
+    let user = auth.get_user_by_email_and_password(&data.email, &data.password)?;
+
+    let mut session = Session::new();
+    session.insert("userid", user.id.clone()).unwrap();
+    depot.set_session(session);
+
+    res.headers_mut()
+        .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/"));
+    Ok(())
 }
 
 pub struct Validator;

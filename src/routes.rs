@@ -33,6 +33,8 @@ pub fn app_router() -> salvo::Router {
         .hoop(Logger::default())
         .get(html::main::index)
         .push(Router::with_path("error404").get(html::main::error404))
+        .push(Router::with_path("login").get(html::main::login))
+        .push(Router::with_path("auth/login").post(auth::login))
         .push(Router::with_path("catalog").get(html::main::page_catalog))
         .push(Router::with_path("map/<layer_name>").get(html::main::page_map))
         .push(Router::with_path("health").get(health::get_health))
