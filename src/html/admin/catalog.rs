@@ -11,6 +11,7 @@ use crate::{
         catalog::{Catalog, Layer},
         category::Category,
     },
+    html::main::BaseTemplateData
 };
 
 #[derive(Template)]
@@ -18,6 +19,7 @@ use crate::{
 struct CatalogTemplate<'a> {
     layers: &'a Vec<Layer>,
     current_user: &'a User,
+    base: BaseTemplateData
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -51,20 +53,28 @@ struct NewLayer<'a> {
 }
 
 #[handler]
-pub async fn page_catalog(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let catalog: Catalog = get_catalog().clone();
-    let auth: Auth = get_auth().clone();
+    let mut is_auth = false;
+    let mut user: Option<User> = None;
 
-    let authorization = req.headers().get("authorization").unwrap(); //.ok_or(AppError::ParseHeaderError);
-    let authorization_str = authorization
-        .to_str()
-        .map_err(|err| AppError::ConversionError(err.to_string()))?;
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(usr) = auth.get_user_by_id(&userid) {
+                is_auth = true;
+                user = Some(usr.clone());
+            }
+        }
+    }
 
-    let current_user = auth.get_current_user(authorization_str).unwrap();
+    let base = BaseTemplateData { is_auth };
+    let current_user = user.unwrap();
 
     let template = CatalogTemplate {
         layers: &catalog.layers,
-        current_user,
+        current_user: &current_user,
+        base
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));

@@ -3,8 +3,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, Group, User},
-    error::{AppError, AppResult},
+    auth::{Auth, Group, User}, error::{AppError, AppResult}, get_auth, html::main::BaseTemplateData
 };
 
 #[derive(Template)]
@@ -12,6 +11,7 @@ use crate::{
 struct ListGroupsTemplate<'a> {
     groups: &'a Vec<Group>,
     current_user: &'a User,
+    base: BaseTemplateData
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -23,18 +23,29 @@ struct NewGroup<'a> {
 }
 
 #[handler]
-pub async fn list_groups(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn list_groups(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let app_state = crate::get_app_state();
-    let authorization = req.headers().get("authorization").unwrap();
-    let authorization_str = authorization
-        .to_str()
-        .map_err(|err| AppError::ConversionError(err.to_string()))?;
 
-    let auth: Auth = crate::get_auth().clone();
-    let current_user = auth.get_current_user(authorization_str).unwrap();
+    let mut is_auth = false;
+    let mut user: Option<User> = None;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(usr) = auth.get_user_by_id(&userid) {
+                is_auth = true;
+                user = Some(usr.clone());
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+    let current_user = user.unwrap();
+
     let template = ListGroupsTemplate {
         groups: &app_state.auth.groups,
-        current_user,
+        current_user: &current_user,
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())

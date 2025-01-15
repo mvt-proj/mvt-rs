@@ -43,10 +43,18 @@
         <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
-
+              {% if self.base.is_auth %}
               <a class="button is-outlined is-light" href="/admin">
                 Admin
               </a>
+              <a class="button is-outlined is-light" href="/logout">
+                Logout
+              </a>
+              {% else %}
+              <a class="button is-outlined is-light" href="/login">
+                Login
+              </a>
+              {% endif %}
             </div>
           </div>
         </div>

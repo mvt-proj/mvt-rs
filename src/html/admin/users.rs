@@ -12,6 +12,7 @@ use crate::{
     config::users::create_user as create_cf_user,
     error::{AppError, AppResult},
     get_app_state, get_auth,
+    html::main::BaseTemplateData,
 };
 
 #[derive(Template)]
@@ -19,6 +20,7 @@ use crate::{
 struct ListUsersTemplate<'a> {
     users: &'a Vec<User>,
     current_user: &'a User,
+    base: BaseTemplateData,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -32,18 +34,27 @@ struct NewUser<'a> {
 }
 
 #[handler]
-pub async fn list_users(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let authorization = req.headers().get("authorization").unwrap(); //.ok_or(AppError::ParseHeaderError);
-    let authorization_str = authorization
-        .to_str()
-        .map_err(|err| AppError::ConversionError(err.to_string()))?;
-
+pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+    let mut user: Option<User> = None;
     let auth: Auth = get_auth().clone();
-    let current_user = auth.get_current_user(authorization_str).unwrap();
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            if let Some(usr) = auth.get_user_by_id(&userid) {
+                is_auth = true;
+                user = Some(usr.clone());
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+    let current_user = user.unwrap();
 
     let template = ListUsersTemplate {
         users: &auth.users,
-        current_user,
+        current_user: &current_user,
+        base,
     };
     res.render(Text::Html(template.render()?));
     Ok(())

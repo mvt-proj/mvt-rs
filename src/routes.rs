@@ -4,6 +4,7 @@ use salvo::cors::{self as cors, Cors};
 use salvo::logging::Logger;
 use salvo::prelude::*;
 use salvo::serve_static::StaticDir;
+use salvo::session::CookieStore;
 use std::time::Duration;
 
 use crate::{
@@ -25,22 +26,31 @@ pub fn app_router() -> salvo::Router {
         .allow_headers(cors::Any)
         .into_handler();
 
+    let session_handler = SessionHandler::builder(
+        CookieStore::new(),
+        b"a2b59cdf777c0d2802e825617849f355b82c0926212bb6302abc239d8f67ba87",
+    )
+    .build()
+    .unwrap();
+
     let static_dir = StaticDir::new(["static"])
         .defaults("index.html")
         .auto_list(true);
 
     Router::new()
         .hoop(Logger::default())
+        .hoop(session_handler)
         .get(html::main::index)
         .push(Router::with_path("error404").get(html::main::error404))
         .push(Router::with_path("login").get(html::main::login))
+        .push(Router::with_path("logout").get(auth::logout))
         .push(Router::with_path("auth/login").post(auth::login))
         .push(Router::with_path("catalog").get(html::main::page_catalog))
         .push(Router::with_path("map/<layer_name>").get(html::main::page_map))
         .push(Router::with_path("health").get(health::get_health))
         .push(
             Router::with_path("admin")
-                .hoop(auth::basic_auth_handler())
+                .hoop(auth::session_auth_handler)
                 .get(html::admin::main::index)
                 .push(
                     Router::with_path("users")

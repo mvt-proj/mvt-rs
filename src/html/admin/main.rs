@@ -1,24 +1,24 @@
 use crate::{
-    auth::{Group, User},
-    error::{AppError, AppResult},
-    get_auth, get_catalog, get_categories,
-    models::{
+    auth::{Auth, Group, User}, error::{AppError, AppResult}, get_auth, get_catalog, get_categories, html::main::BaseTemplateData, models::{
         catalog::{Layer, StateLayer},
         category::Category,
         styles::Style,
-    },
+    }
 };
 use askama::Template;
 use salvo::prelude::*;
 
 #[derive(Template)]
 #[template(path = "admin/index.html")]
-struct IndexTemplate {}
+struct IndexTemplate {
+    base: BaseTemplateData
+}
 
 #[derive(Template)]
 #[template(path = "admin/users/new.html")]
 struct NewUserTemplate {
     groups: Vec<Group>,
+    base: BaseTemplateData
 }
 
 #[derive(Template)]
@@ -26,6 +26,7 @@ struct NewUserTemplate {
 struct EditUserTemplate {
     user: User,
     groups: Vec<Group>,
+    base: BaseTemplateData
 }
 
 #[derive(Template)]
@@ -33,6 +34,7 @@ struct EditUserTemplate {
 struct NewLayerTemplate {
     categories: Vec<Category>,
     groups: Vec<Group>,
+    base: BaseTemplateData
 }
 
 #[derive(Template)]
@@ -41,22 +43,27 @@ struct EditLayerTemplate {
     layer: Layer,
     categories: Vec<Category>,
     groups: Vec<Group>,
+    base: BaseTemplateData
 }
 
 #[derive(Template)]
 #[template(path = "admin/categories/new.html")]
-struct NewCategoryTemplate {}
+struct NewCategoryTemplate {
+    base: BaseTemplateData
+}
 
 #[derive(Template)]
 #[template(path = "admin/categories/edit.html")]
 struct EditCategoryTemplate {
     category: Category,
+    base: BaseTemplateData
 }
 
 #[derive(Template)]
 #[template(path = "admin/styles/new.html")]
 struct NewStyleTemplate {
     categories: Vec<Category>,
+    base: BaseTemplateData
 }
 
 #[derive(Template)]
@@ -64,38 +71,82 @@ struct NewStyleTemplate {
 struct EditStyleTemplate {
     style: Style,
     categories: Vec<Category>,
+    base: BaseTemplateData
 }
 
 #[derive(Template)]
 #[template(path = "admin/groups/new.html")]
-struct NewGroupTemplate {}
+struct NewGroupTemplate {
+    base: BaseTemplateData
+}
 
 #[derive(Template)]
 #[template(path = "admin/groups/edit.html")]
 struct EditGroupTemplate {
     group: Group,
+    base: BaseTemplateData
 }
 
 #[handler]
-pub async fn index(res: &mut Response) -> AppResult<()> {
-    let template = IndexTemplate {};
+pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
+    let template = IndexTemplate { base };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn new_user(res: &mut Response) -> AppResult<()> {
+pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let auth = get_auth().clone();
+
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
 
     let template = NewUserTemplate {
         groups: auth.groups,
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn edit_user(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("username".to_string()))?;
@@ -107,22 +158,50 @@ pub async fn edit_user(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let template = EditUserTemplate {
         user: user.clone(),
         groups: auth.groups,
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn new_layer(res: &mut Response) -> AppResult<()> {
+pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let categories = get_categories().clone();
     let groups = get_auth().groups.clone();
-    let template = NewLayerTemplate { categories, groups };
+
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
+    let template = NewLayerTemplate { categories, groups, base };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn edit_layer(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
     let categories = get_categories().clone();
     let layer_id = req
         .param::<String>("id")
@@ -136,41 +215,97 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response) -> AppResult<()> 
         layer: layer.clone(),
         categories,
         groups,
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn new_category(res: &mut Response) -> AppResult<()> {
-    let template = NewCategoryTemplate {};
+pub async fn new_category(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
+    let template = NewCategoryTemplate {
+        base
+    };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn edit_category(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn edit_category(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
     let category = Category::from_id(&id).await?;
     let template = EditCategoryTemplate {
         category: category.clone(),
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn new_style(res: &mut Response) -> AppResult<()> {
+pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
     let categories = get_categories().clone();
-    let template = NewStyleTemplate { categories };
+    let template = NewStyleTemplate { categories, base };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn edit_style(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
@@ -179,26 +314,54 @@ pub async fn edit_style(req: &mut Request, res: &mut Response) -> AppResult<()> 
     let template = EditStyleTemplate {
         style: style.clone(),
         categories,
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn new_group(res: &mut Response) -> AppResult<()> {
-    let template = NewGroupTemplate {};
+pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
+    let template = NewGroupTemplate { base };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
-pub async fn edit_group(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn edit_group(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
     let group = Group::from_id(&id).await?;
     let template = EditGroupTemplate {
         group: group.clone(),
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())

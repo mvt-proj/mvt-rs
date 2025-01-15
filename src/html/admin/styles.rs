@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::{Auth, User},
     error::{AppError, AppResult},
+    get_auth,
     models::{category::Category, styles::Style},
+    html::main::BaseTemplateData
 };
 
 #[derive(Template)]
@@ -13,6 +15,7 @@ use crate::{
 struct ListCategoriesTemplate<'a> {
     styles: &'a Vec<Style>,
     current_user: &'a User,
+    base: BaseTemplateData
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -26,18 +29,28 @@ struct NewStyle<'a> {
 }
 
 #[handler]
-pub async fn list_styles(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let authorization = req.headers().get("authorization").unwrap();
-    let authorization_str = authorization
-        .to_str()
-        .map_err(|err| AppError::ConversionError(err.to_string()))?;
+pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+    let mut user: Option<User> = None;
 
-    let auth: Auth = crate::get_auth().clone();
-    let current_user = auth.get_current_user(authorization_str).unwrap();
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(usr) = auth.get_user_by_id(&userid) {
+                is_auth = true;
+                user = Some(usr.clone());
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+    let current_user = user.unwrap();
+
     let styles = Style::get_all_styles().await?;
     let template = ListCategoriesTemplate {
         styles: &styles,
-        current_user,
+        current_user: &current_user,
+        base
     };
     res.render(Text::Html(template.render()?));
     Ok(())

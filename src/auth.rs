@@ -1,5 +1,4 @@
 use base64::{engine::general_purpose, Engine as _};
-use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
 use salvo::prelude::*;
 use salvo::session::Session;
 use serde::{Deserialize, Serialize};
@@ -344,17 +343,19 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
 }
 
 #[handler]
-pub async fn require_user_admin(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let authorization = req.headers().get("authorization").unwrap();
-    let authorization_str = authorization
-        .to_str()
-        .map_err(|err| AppError::ConversionError(err.to_string()))?;
-
-    let auth: Auth = get_auth().clone();
-    let current_user = auth.get_current_user(authorization_str).unwrap();
-    if !current_user.is_admin() {
-        res.render(Redirect::other("/admin"));
+pub async fn require_user_admin(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(user) = auth.get_user_by_id(&userid) {
+                if !user.is_admin() {
+                    res.render(Redirect::other("/admin"));
+                    return Ok(());
+                }
+            }
+        }
     }
+
     Ok(())
 }
 
@@ -382,14 +383,25 @@ pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -
     Ok(())
 }
 
-pub struct Validator;
-impl BasicAuthValidator for Validator {
-    async fn validate(&self, username: &str, password: &str, _depot: &mut Depot) -> bool {
-        let mut auth: Auth = get_auth().clone();
-        auth.validate_user(username, password)
+#[handler]
+pub async fn logout(depot: &mut Depot, res: &mut Response) -> AppResult<()> {
+    if let Some(session) = depot.session_mut() {
+        session.remove("userid");
     }
+    res.render(Redirect::other("/"));
+    Ok(())
 }
 
-pub fn basic_auth_handler() -> BasicAuth<Validator> {
-    BasicAuth::new(Validator)
+#[handler]
+pub async fn session_auth_handler(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(_userid) = session.get::<String>("userid") {
+        } else {
+            res.render(Redirect::other("/login"));
+            return Ok(());
+        }
+    }
+
+    Ok(())
 }
