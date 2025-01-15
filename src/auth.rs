@@ -308,7 +308,7 @@ impl Auth {
         self.users
             .iter()
             .find(|user| {
-                user.email == email && self.validate_psw(user.clone().clone(), password).unwrap()
+                user.email == email && self.validate_psw((*user).clone(), password).unwrap()
             })
             .cloned()
             .ok_or(AppError::UserNotFound)
