@@ -50,21 +50,26 @@
 
 {% block scripts %}
 <script>
-    function initializePage() {
-      var protocol = window.location.protocol;
-      var host = window.location.hostname;
-      var port = window.location.port;
 
-      if (port === '') {
+  function initializePage() {
+    let protocol = window.location.protocol;
+    let host = window.location.hostname;
+    let port = window.location.port;
+
+    if (port === '') {
         port = protocol === 'https:' ? '443' : '80';
-      }
-
-      var servers = document.getElementsByClassName("server");
-      for (var i = 0; i < servers.length; i++) {
-        servers[i].textContent = `${protocol}//${host}:${port}`;
-      }
     }
 
-    document.addEventListener('DOMContentLoaded', initializePage);
+    let servers = document.getElementsByClassName("server");
+    for (let i = 0; i < servers.length; i++) {
+      let serverAddress = `${protocol}//${host}`;
+      if (port !== '80' && port !== '443') {
+          serverAddress += `:${port}`;
+      }
+      servers[i].textContent = serverAddress;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', initializePage);
 </script>
 {% endblock %}
