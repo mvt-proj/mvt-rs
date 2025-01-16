@@ -10,7 +10,7 @@ use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
 use crate::config::groups::{create_group, delete_group, update_group};
 use crate::config::users::{create_user, delete_user, get_users, update_user};
-use crate::get_app_state;
+use crate::{args, get_app_state};
 use crate::{
     config::groups::get_groups,
     error::{AppError, AppResult},
@@ -179,6 +179,12 @@ pub struct DataToken {
 #[salvo(extract(default_source(from = "body")))]
 pub struct Login<'a> {
     pub email: &'a str,
+    pub password: &'a str,
+}
+
+#[derive(Serialize, Deserialize, Extractible, Debug)]
+#[salvo(extract(default_source(from = "body")))]
+pub struct ChangePassword<'a> {
     pub password: &'a str,
 }
 
@@ -394,7 +400,6 @@ pub async fn logout(depot: &mut Depot, res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn session_auth_handler(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-
     if let Some(session) = depot.session_mut() {
         if let Some(_userid) = session.get::<String>("userid") {
         } else {
@@ -402,6 +407,42 @@ pub async fn session_auth_handler(res: &mut Response, depot: &mut Depot) -> AppR
             return Ok(());
         }
     }
+
+    Ok(())
+}
+
+#[handler]
+pub async fn change_password<'a>(
+    depot: &mut Depot,
+    res: &mut Response,
+    data: ChangePassword<'a>,
+) -> AppResult<()> {
+    let app_state = get_app_state();
+
+    let user_id = depot
+        .session_mut()
+        .and_then(|session| session.get::<String>("userid"))
+        .ok_or(AppError::SessionNotFound)?;
+
+    let mut user = app_state
+        .auth
+        .get_user_by_id(&user_id)
+        .ok_or(AppError::UserNotFoundError(user_id.clone()))?.clone();
+
+    let app_config = args::parse_args().await?;
+
+    let argon2 = Argon2::default();
+    let salt = SaltString::encode_b64(app_config.salt_string.as_bytes())
+        .map_err(|_| AppError::ConfigurationError("Invalid salt string".to_string()))?;
+    let new_password = argon2
+        .hash_password(data.password.as_bytes(), &salt)
+        .map_err(AppError::PasswordHashError)?;
+
+    user.password = new_password.to_string();
+
+    app_state.auth.update_user(user).await?;
+
+    res.render(Redirect::other("/"));
 
     Ok(())
 }

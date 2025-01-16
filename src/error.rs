@@ -29,7 +29,7 @@ pub enum AppError {
     #[error("User not found: {0}")]
     UserNotFoundError(String),
 
-    #[error("Cache noty found: {0}")]
+    #[error("Cache not found: {0}")]
     CacheNotFount(String),
 
     #[error("JWT encoding error: {0}")]
@@ -41,10 +41,10 @@ pub enum AppError {
     #[error("Redis error: `{0}`")]
     RedisError(String),
 
-    #[error("failed to create Redis connection manager")]
+    #[error("Failed to create Redis connection manager")]
     ConnectionManager(#[from] redis::RedisError),
 
-    #[error("failed to build connection pool")]
+    #[error("Failed to build connection pool")]
     Pool(#[from] bb8::RunError<redis::RedisError>),
 
     #[error("Conversion error")]
@@ -61,6 +61,27 @@ pub enum AppError {
 
     #[error("User not found")]
     UserNotFound,
+
+    #[error("Session not found")]
+    SessionNotFound,
+
+    #[error("Unauthorized access")]
+    UnauthorizedAccess,
+
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+
+    #[error("Configuration error: {0}")]
+    ConfigurationError(String),
+
+    #[error("Internal server error: {0}")]
+    InternalServerError(String),
+
+    #[error("Service unavailable: {0}")]
+    ServiceUnavailable(String),
+
+    #[error("Timeout error")]
+    TimeoutError,
 }
 
 pub type AppResult<T> = Result<T, AppError>;

@@ -1,18 +1,7 @@
-{% extends "admin/layout_admin.html" %}
+{% extends "layout.html" %}
 
-{% block admin_content %}
+{% block content %}
   <h1 class="title is-5 has-text-grey-darker">List of Styles</h1>
-
-  <div class="has-text-right">
-    {% if current_user.is_admin() %}
-    <a href="/admin/styles/new" class="button is-light">
-      <span class="icon is-small">
-        <i class="fas fa-palette"></i>
-      </span>
-      <span>ADD STYLE</span>
-    </a>
-    {% endif %}
-  </div>
 
   <table class="table is-fullwidth">
     <thead>
@@ -21,7 +10,6 @@
         <th scope="col">Name</th>
         <th scope="col">Description</th>
         <th scope="col">Url</th>
-        <th scope="col"></th>
       </tr>
     </thead>
     <tbody>
@@ -38,23 +26,6 @@
           </td>
           <td class="has-text-info">
             <span><span class="server"></span>/services/styles/{{ style.category.name }}:{{ style.name }}</span>
-          </td>
-          <td class="has-text-right">
-            {% if current_user.is_admin() %}
-            <div class="is-flex is-justify-content-right">
-              <a href="/admin/styles/edit/{{ style.id }}" class="button is-white">
-                <span class="icon">
-                  <i class="fas fa-pen"></i>
-                </span>
-               </a>
-                <a href="/admin/styles/delete/{{ style.id }}" class="button is-danger is-outlined"
-                  onclick="return confirm('Are you sure you want to delete this style?');" >
-                  <span class="icon">
-                    <i class="fas fa-trash"></i>
-                  </span>
-                </a>
-            </div>
-            {% endif %}
           </td>
         </tr>
       {% endfor %}

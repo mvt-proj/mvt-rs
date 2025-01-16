@@ -43,13 +43,13 @@
           <input class="input" name="description" type="text" placeholder="Description">
         </div>
       </div>
-      
+
       <!-- JSON Editor for Style -->
       <div class="field">
         <label class="label">Style</label>
         <div class="control">
           <!-- JSON Editor container -->
-          <div id="jsoneditor" style="height: 400px; border: 1px solid #ddd;"></div>
+          <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
           <!-- Hidden input to store JSON -->
           <input type="hidden" id="jsonInput" name="style">
         </div>
@@ -87,7 +87,7 @@
         hiddenInput.value = JSON.stringify(json);
       } catch (e) {
         event.preventDefault();
-        errorMessage.style.display = 'block'; 
+        errorMessage.style.display = 'block';
       }
     });
 
