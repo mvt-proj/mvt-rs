@@ -60,6 +60,7 @@ pub fn app_router() -> salvo::Router {
                 .post(auth::change_password),
         )
         .push(Router::with_path("catalog").get(html::main::page_catalog))
+        .push(Router::with_path("styles").get(html::main::page_styles))
         .push(Router::with_path("map/<layer_name>").get(html::main::page_map))
         .push(Router::with_path("health").get(health::get_health))
         .push(

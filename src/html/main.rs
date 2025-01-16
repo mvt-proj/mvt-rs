@@ -2,7 +2,7 @@ use askama::Template;
 use salvo::prelude::*;
 
 use crate::{
-    auth::Auth, get_auth, get_catalog, models::catalog::{Catalog, Layer, StateLayer}
+    auth::Auth, get_auth, get_catalog, models::{catalog::{Catalog, Layer, StateLayer}, styles::Style}
 };
 
 pub struct BaseTemplateData {
@@ -37,6 +37,13 @@ struct E404Template {
 #[template(path = "catalog.html")]
 struct CatalogTemplate<'a> {
     layers: &'a Vec<Layer>,
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "styles.html")]
+struct StylesTemplate<'a> {
+    styles: &'a Vec<Style>,
     base: BaseTemplateData,
 }
 
@@ -200,4 +207,28 @@ pub async fn page_map(req: &mut Request, res: &mut Response, depot: &mut Depot) 
 
     res.render(Text::Html(template.render().unwrap()));
     Ok(())
+}
+
+#[handler]
+pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
+    let styles = Style::get_all_styles().await.unwrap();
+    let mut is_auth = false;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(_) = auth.get_user_by_id(&userid) {
+                is_auth = true
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+
+
+    let template = StylesTemplate {
+        styles: &styles,
+        base
+    };
+    res.render(Text::Html(template.render().unwrap()));
 }
