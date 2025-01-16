@@ -20,7 +20,7 @@ log = "0.4"
 time = "0.3"
 jsonwebtoken = "9.1.0"
 chrono = { version = "0.4", features = ["serde"] }
-salvo = { version = "0.76", features = ["cors", "logging", "cache", "anyhow", "basic-auth", "jwt-auth", "serve-static", "session"] }
+salvo = { version = "0.75", features = ["cors", "logging", "cache", "anyhow", "basic-auth", "jwt-auth", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
