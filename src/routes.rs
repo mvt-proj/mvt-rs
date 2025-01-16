@@ -43,8 +43,22 @@ pub fn app_router() -> salvo::Router {
         .get(html::main::index)
         .push(Router::with_path("error404").get(html::main::error404))
         .push(Router::with_path("login").get(html::main::login))
-        .push(Router::with_path("logout").get(auth::logout))
+        .push(
+            Router::with_path("logout")
+                .hoop(auth::session_auth_handler)
+                .get(auth::logout),
+        )
         .push(Router::with_path("auth/login").post(auth::login))
+        .push(
+            Router::with_path("changepassword")
+                .hoop(auth::session_auth_handler)
+                .get(html::main::change_password),
+        )
+        .push(
+            Router::with_path("auth/changepassword")
+                .hoop(auth::session_auth_handler)
+                .post(auth::change_password),
+        )
         .push(Router::with_path("catalog").get(html::main::page_catalog))
         .push(Router::with_path("map/<layer_name>").get(html::main::page_map))
         .push(Router::with_path("health").get(health::get_health))
