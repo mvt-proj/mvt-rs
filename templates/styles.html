@@ -31,8 +31,10 @@
       {% endfor %}
     </tbody>
   </table>
+{% endblock %}
 
-  <script>
-    document.addEventListener('DOMContentLoaded', initializePage);
-  </script>
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', initializePage);
+</script>
 {% endblock %}
