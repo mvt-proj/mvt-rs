@@ -67,7 +67,6 @@
   </header>
   <main class="container is-max-widescreen mt-5 mb-6 p-4">
     {% block content %}{% endblock %}
-    {% block scripts %}{% endblock %}
   </main>
 
   <footer class="footer has-background-dark fixed-footer py-2">
@@ -78,6 +77,7 @@
     </div>
   </footer>
   <script src="/static/js/mvt.js"></script>
+  {% block scripts %}{% endblock %}
 
 </body>
 
