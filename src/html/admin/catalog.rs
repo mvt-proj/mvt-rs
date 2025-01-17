@@ -53,10 +53,24 @@ struct NewLayer<'a> {
 }
 
 #[handler]
-pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let catalog: Catalog = get_catalog().clone();
+pub async fn page_catalog(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let filter = req.query::<String>("filter");
+
+    let mut catalog: Catalog = get_catalog().clone();
     let mut is_auth = false;
     let mut user: Option<User> = None;
+
+    if let Some(filter) = filter {
+        catalog.layers = catalog
+            .layers
+            .iter()
+            .filter(|layer| {
+                layer.alias.to_lowercase().contains(&filter.to_lowercase())
+                    || layer.category.name.to_lowercase().contains(&filter.to_lowercase())
+            })
+            .cloned()
+            .collect();
+    }
 
     if let Some(session) = depot.session_mut() {
         if let Some(userid) = session.get::<String>("userid") {
