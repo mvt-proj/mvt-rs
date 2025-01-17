@@ -5,7 +5,7 @@ This is a simple and high-speed vector tile server developed in Rust, using the 
 Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local or remote. It relies on the use of the PostGIS function ST_AsMVT. More information can be found at https://postgis.net/docs/en/ST_AsMVT.html.
 
 <div align="center">
-  <img src="https://github.com/mvt-proj/mvt-rs/assets/5981345/b31e1d59-2253-4406-90c9-453750c1bff2" width="40%" />
+  <img src="https://github.com/user-attachments/assets/63807197-b224-43af-a3a9-cba4ec1cc902" width="40%" />
 </div>
 
 **mvt-rs** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the layers' configuration.
