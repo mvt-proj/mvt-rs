@@ -17,6 +17,13 @@ use crate::{
 #[derive(Template)]
 #[template(path = "admin/catalog/catalog.html")]
 struct CatalogTemplate<'a> {
+    current_user: &'a User,
+    base: BaseTemplateData
+}
+
+#[derive(Template)]
+#[template(path = "admin/catalog/table.html")]
+struct CatalogTableTemplate<'a> {
     layers: &'a Vec<Layer>,
     current_user: &'a User,
     base: BaseTemplateData
@@ -53,7 +60,34 @@ struct NewLayer<'a> {
 }
 
 #[handler]
-pub async fn page_catalog(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let mut is_auth = false;
+    let mut user: Option<User> = None;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(usr) = auth.get_user_by_id(&userid) {
+                is_auth = true;
+                user = Some(usr.clone());
+            }
+        }
+    }
+
+    let base = BaseTemplateData { is_auth };
+    let current_user = user.unwrap();
+
+    let template = CatalogTemplate {
+        current_user: &current_user,
+        base
+    };
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
+}
+
+#[handler]
+pub async fn table_catalog(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let filter = req.query::<String>("filter");
 
     let mut catalog: Catalog = get_catalog().clone();
@@ -85,7 +119,7 @@ pub async fn page_catalog(req: &mut Request, res: &mut Response, depot: &mut Dep
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
 
-    let template = CatalogTemplate {
+    let template = CatalogTableTemplate {
         layers: &catalog.layers,
         current_user: &current_user,
         base

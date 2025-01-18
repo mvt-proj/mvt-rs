@@ -1,0 +1,100 @@
+  <table class="table is-fullwidth">
+    <thead>
+      <tr>
+        <th scope="col"></th>
+        <th scope="col">Category</th>
+        <th scope="col">Alias</th>
+        <th scope="col">Table</th>
+        <th scope="col">URL</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for layer in layers %}
+        <tr>
+          <td>
+            <span class="icon is-small has-text-info">
+              {% if layer.geometry == "polygons" %}
+                <i class="fas fa-draw-polygon"></i>
+              {% else if layer.geometry == "lines" %}
+                <i class="fas fa-minus"></i>
+              {% else %}
+                <i class="fas fa-circle"></i>
+              {% endif %}
+            </span>
+          </td>
+          <td>{{ layer.category.name }}</td>
+          <td>{{ layer.alias }}</td>
+          <td>{{ layer.schema }}.{{ layer.table_name }}</td>
+          <td class="has-text-info">
+            <span><span class="server"></span>/services/tiles/{{ layer.category.name }}:{{ layer.name }}/{z}/{x}/{y}.pbf</span>
+          </td>
+          <td class="has-text-right">
+            <div class="is-flex is-justify-content-right">
+              <button
+                class="button is-white js-modal-trigger"
+                data-target="modal-js-example"
+                onclick="document.getElementById('data-json').innerHTML='{{ layer.info_html() }}';"
+                >
+                <span class="icon">
+                  <i class="fas fa-cog"></i>
+                </span>
+              </button>
+
+              {% if current_user.is_admin() %}
+
+                {% if layer.published %}
+                  <a href="/map/{{ layer.category.name }}:{{ layer.name }}" class="button is-white" target="_blank">
+                    <span class="icon">
+                      <i class="fas fa-map"></i>
+                    </span>
+                  </a>
+                {% else %}
+                <a href="/map/{{ layer.category.name }}:{{ layer.name }}" class="button is-white is-static" target="_blank" disabled >
+                    <span class="icon">
+                      <i class="fas fa-map"></i>
+                    </span>
+                  </a>
+                {% endif %}
+
+
+                <a href="/admin/catalog/layers/edit/{{ layer.id }}" class="button is-white">
+                  <span class="icon">
+                    <i class="fas fa-pen"></i>
+                  </span>
+                </a>
+
+                {% if layer.published %}
+                  <a href="/admin/catalog/layers/swichpublished/{{ layer.id }}" class="button is-white">
+                    <span class="icon">
+                      <i class="far fa-check-square"></i>
+                    </span>
+                  </a>
+                {% else %}
+                  <a href="/admin/catalog/layers/swichpublished/{{ layer.id }}" class="button is-white">
+                    <span class="icon">
+                      <i class="far fa-square"></i>
+                    </span>
+                  </a>
+                {% endif %}
+
+                <a href="#" class="button is-white"
+                    onclick="return confirm('Are you sure you want to erase the cache for this layer?');">
+                  <span class="icon">
+                    <i class="fas fa-eraser"></i>
+                  </span>
+                </a>
+                <a href="/admin/catalog/layers/delete/{{ layer.id }}" class="button is-danger is-outlined"
+                  onclick="return confirm('Are you sure you want to delete this layer publication?');">
+                  <span class="icon">
+                    <i class="fas fa-trash"></i>
+                  </span>
+                </a>
+
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
