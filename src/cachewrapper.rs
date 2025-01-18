@@ -43,9 +43,19 @@ impl CacheWrapper {
         }
     }
 
+    pub async fn delete_layer_cache(&self, layer_name: &String) -> AppResult<()> {
+        match &self.mode {
+            CacheMode::Redis(redis_cache) => redis_cache.delete_layer_cache(layer_name).await,
+            CacheMode::Disk(disk_cache) => {
+                disk_cache.delete_layer_cache(layer_name).await;
+                Ok(())
+            }
+        }
+    }
+
     pub async fn get_cache(
         &self,
-        name: &String,
+        layer_name: &String,
         x: u32,
         y: u32,
         z: u32,
@@ -53,13 +63,13 @@ impl CacheWrapper {
     ) -> AppResult<Bytes> {
         match &self.mode {
             CacheMode::Redis(redis_cache) => {
-                let key = format!("{name}:{z}:{x}:{y}");
+                let key = format!("{layer_name}:{z}:{x}:{y}");
                 redis_cache.get_cache(key).await
             }
             CacheMode::Disk(disk_cache) => {
                 let tilefolder = disk_cache
                     .cache_dir
-                    .join(name)
+                    .join(layer_name)
                     .join(z.to_string())
                     .join(x.to_string());
                 let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");

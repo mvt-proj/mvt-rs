@@ -9,7 +9,7 @@ use crate::{
     get_app_state, get_auth, get_catalog,
     html::main::BaseTemplateData,
     models::{
-        catalog::{Catalog, Layer},
+        catalog::{Catalog, Layer, StateLayer},
         category::Category,
     },
 };
@@ -277,6 +277,23 @@ pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult
     app_state.catalog.swich_layer_published(&layer_id).await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/admin/catalog"));
+    Ok(())
+}
+
+#[handler]
+pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
+    let app_state = get_app_state();
+
+    let layer_id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let layer = app_state.catalog.find_layer_by_id(&layer_id, StateLayer::Any);
+    if let Some(layer) = layer {
+        let layer_name = &layer.name;
+        let cache_wrapper = &app_state.cache_wrapper;
+        cache_wrapper.delete_layer_cache(layer_name).await?
+    }
     res.render(Redirect::other("/admin/catalog"));
     Ok(())
 }

@@ -37,6 +37,19 @@ impl RedisCache {
         Ok(())
     }
 
+    pub async fn delete_layer_cache(&self, layer_name: &String) -> AppResult<()> {
+        let mut conn = self.pool.get().await?;
+        let key_pattern = format!("{}:*", layer_name);
+        let keys: Vec<String> = conn.keys(key_pattern).await?;
+
+        if !keys.is_empty() {
+            for key in keys {
+                conn.del::<&str, ()>(&key).await?;
+            }
+        }
+        Ok(())
+    }
+
     pub async fn exists_key(&self, key: String) -> AppResult<bool> {
         let mut conn = self.pool.get().await?;
         let ret: bool = conn.exists(&key).await?;

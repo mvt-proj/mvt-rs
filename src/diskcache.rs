@@ -37,7 +37,7 @@ impl DiskCache {
         }
     }
 
-    pub async fn delete_cache_layer(&self, layer_name: String) {
+    pub async fn delete_layer_cache(&self, layer_name: &String) {
         let dir_path = Path::new(&self.cache_dir).join(&layer_name);
 
         if let Err(err) = tokio::fs::remove_dir_all(&dir_path).await {

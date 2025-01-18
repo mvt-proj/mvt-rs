@@ -147,6 +147,10 @@ pub fn app_router() -> salvo::Router {
                         .push(
                             Router::with_path("layers/swichpublished/{id}")
                                 .get(html::admin::catalog::swich_published),
+                        )
+                        .push(
+                            Router::with_path("layers/delete_cache/{id}")
+                                .get(html::admin::catalog::delete_layer_cache),
                         ),
                 )
                 .push(
