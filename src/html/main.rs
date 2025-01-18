@@ -2,7 +2,12 @@ use askama::Template;
 use salvo::prelude::*;
 
 use crate::{
-    auth::Auth, get_auth, get_catalog, models::{catalog::{Catalog, Layer, StateLayer}, styles::Style}
+    auth::Auth,
+    get_auth, get_catalog,
+    models::{
+        catalog::{Catalog, Layer, StateLayer},
+        styles::Style,
+    },
 };
 
 pub struct BaseTemplateData {
@@ -91,7 +96,6 @@ pub async fn login(res: &mut Response, depot: &mut Depot) {
 
     let base = BaseTemplateData { is_auth };
 
-
     let template = LoginTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
 }
@@ -111,8 +115,7 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
 
     let base = BaseTemplateData { is_auth };
 
-
-    let template = ChangePasswordTemplate  { base };
+    let template = ChangePasswordTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
 }
 
@@ -152,16 +155,19 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) {
 
     let base = BaseTemplateData { is_auth };
 
-
     let template = CatalogTemplate {
         layers: &catalog.get_published_layers(),
-        base
+        base,
     };
     res.render(Text::Html(template.render().unwrap()));
 }
 
 #[handler]
-pub async fn page_map(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Result<(), StatusError> {
+pub async fn page_map(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> Result<(), StatusError> {
     let catalog: Catalog = get_catalog().clone();
     let layer_name = req.param::<String>("layer_name").unwrap();
     let parts: Vec<&str> = layer_name.split(':').collect();
@@ -180,7 +186,6 @@ pub async fn page_map(req: &mut Request, res: &mut Response, depot: &mut Depot) 
     }
 
     let base = BaseTemplateData { is_auth };
-
 
     let lyr = catalog
         .find_layer_by_category_and_name(category, name, StateLayer::Published)
@@ -202,7 +207,7 @@ pub async fn page_map(req: &mut Request, res: &mut Response, depot: &mut Depot) 
         name: &lyr.name,
         alias: &lyr.alias,
         geometry,
-        base
+        base,
     };
 
     res.render(Text::Html(template.render().unwrap()));
@@ -225,10 +230,9 @@ pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
 
     let base = BaseTemplateData { is_auth };
 
-
     let template = StylesTemplate {
         styles: &styles,
-        base
+        base,
     };
     res.render(Text::Html(template.render().unwrap()));
 }

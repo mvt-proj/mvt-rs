@@ -7,18 +7,18 @@ use crate::{
     auth::{Auth, Group, User},
     error::{AppError, AppResult},
     get_app_state, get_auth, get_catalog,
+    html::main::BaseTemplateData,
     models::{
         catalog::{Catalog, Layer},
         category::Category,
     },
-    html::main::BaseTemplateData
 };
 
 #[derive(Template)]
 #[template(path = "admin/catalog/catalog.html")]
 struct CatalogTemplate<'a> {
     current_user: &'a User,
-    base: BaseTemplateData
+    base: BaseTemplateData,
 }
 
 #[derive(Template)]
@@ -26,7 +26,7 @@ struct CatalogTemplate<'a> {
 struct CatalogTableTemplate<'a> {
     layers: &'a Vec<Layer>,
     current_user: &'a User,
-    base: BaseTemplateData
+    base: BaseTemplateData,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -79,7 +79,7 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()
 
     let template = CatalogTemplate {
         current_user: &current_user,
-        base
+        base,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));
@@ -87,7 +87,11 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()
 }
 
 #[handler]
-pub async fn table_catalog(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn table_catalog(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     let filter = req.query::<String>("filter");
 
     let mut catalog: Catalog = get_catalog().clone();
@@ -100,7 +104,11 @@ pub async fn table_catalog(req: &mut Request, res: &mut Response, depot: &mut De
             .iter()
             .filter(|layer| {
                 layer.alias.to_lowercase().contains(&filter.to_lowercase())
-                    || layer.category.name.to_lowercase().contains(&filter.to_lowercase())
+                    || layer
+                        .category
+                        .name
+                        .to_lowercase()
+                        .contains(&filter.to_lowercase())
             })
             .cloned()
             .collect();
@@ -122,7 +130,7 @@ pub async fn table_catalog(req: &mut Request, res: &mut Response, depot: &mut De
     let template = CatalogTableTemplate {
         layers: &catalog.layers,
         current_user: &current_user,
-        base
+        base,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));
@@ -153,7 +161,6 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
                 .collect::<Vec<Group>>()
         })
         .unwrap_or_default();
-
 
     let layer = Layer {
         id: hex_string,
@@ -212,7 +219,6 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
                 .collect::<Vec<Group>>()
         })
         .unwrap_or_default();
-
 
     let layer = Layer {
         id: new_layer.id,

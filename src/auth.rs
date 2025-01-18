@@ -427,7 +427,8 @@ pub async fn change_password<'a>(
     let mut user = app_state
         .auth
         .get_user_by_id(&user_id)
-        .ok_or(AppError::UserNotFoundError(user_id.clone()))?.clone();
+        .ok_or(AppError::UserNotFoundError(user_id.clone()))?
+        .clone();
 
     let app_config = args::parse_args().await?;
 

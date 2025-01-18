@@ -3,7 +3,10 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, Group, User}, error::{AppError, AppResult}, get_auth, html::main::BaseTemplateData
+    auth::{Auth, Group, User},
+    error::{AppError, AppResult},
+    get_auth,
+    html::main::BaseTemplateData,
 };
 
 #[derive(Template)]
@@ -11,7 +14,7 @@ use crate::{
 struct ListGroupsTemplate<'a> {
     groups: &'a Vec<Group>,
     current_user: &'a User,
-    base: BaseTemplateData
+    base: BaseTemplateData,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -45,7 +48,7 @@ pub async fn list_groups(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     let template = ListGroupsTemplate {
         groups: &app_state.auth.groups,
         current_user: &current_user,
-        base
+        base,
     };
     res.render(Text::Html(template.render()?));
     Ok(())

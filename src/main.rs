@@ -3,10 +3,10 @@ use salvo::prelude::*;
 use sqlx::{PgPool, SqlitePool};
 use std::cell::OnceCell;
 
-
 mod api;
 mod args;
 mod auth;
+mod cachewrapper;
 mod config;
 mod database;
 mod db;
@@ -18,13 +18,12 @@ mod models;
 mod rediscache;
 mod routes;
 mod services;
-mod cachewrapper;
 
 use auth::Auth;
+use cachewrapper::CacheWrapper;
 use db::make_db_pool;
 use error::AppResult;
 use models::{catalog::Catalog, category::Category};
-use cachewrapper::CacheWrapper;
 
 #[derive(Debug)]
 pub struct AppState {
@@ -120,7 +119,8 @@ async fn main() -> AppResult<()> {
         Some(app_config.redis_conn),
         app_config.cache_dir.clone().into(),
         catalog.clone(),
-    ).await?;
+    )
+    .await?;
 
     let app_state = AppState {
         db_pool,

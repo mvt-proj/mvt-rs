@@ -6,8 +6,8 @@ use crate::{
     auth::{Auth, User},
     error::{AppError, AppResult},
     get_auth,
+    html::main::BaseTemplateData,
     models::{category::Category, styles::Style},
-    html::main::BaseTemplateData
 };
 
 #[derive(Template)]
@@ -15,7 +15,7 @@ use crate::{
 struct ListCategoriesTemplate<'a> {
     styles: &'a Vec<Style>,
     current_user: &'a User,
-    base: BaseTemplateData
+    base: BaseTemplateData,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -50,7 +50,7 @@ pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     let template = ListCategoriesTemplate {
         styles: &styles,
         current_user: &current_user,
-        base
+        base,
     };
     res.render(Text::Html(template.render()?));
     Ok(())

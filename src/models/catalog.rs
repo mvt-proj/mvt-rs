@@ -181,7 +181,6 @@ impl Layer {
             .unwrap_or_default() // Retorna un Vec vacío si self.groups es None
     }
 
-
     pub fn is_admin(&self) -> bool {
         self.groups_as_vec_string().contains(&"admin".to_string())
     }

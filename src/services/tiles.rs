@@ -149,11 +149,13 @@ async fn get_tile(
         x,
         y,
         z,
-       query.to_string(),
+        query.to_string(),
     )
     .await?;
 
-    cache_wrapper.write_tile_to_cache(name, x, y, z,  &tile, max_cache_age).await?;
+    cache_wrapper
+        .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
+        .await?;
 
     Ok((tile, Via::Database))
 }
@@ -205,7 +207,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
                 Via::Cache => {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("HIT Cached"));
-                },
+                }
             }
 
             res.body(salvo::http::ResBody::Once(tile));

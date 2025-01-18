@@ -3,7 +3,11 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, User}, error::{AppError, AppResult}, get_auth, html::main::BaseTemplateData, models::category::Category
+    auth::{Auth, User},
+    error::{AppError, AppResult},
+    get_auth,
+    html::main::BaseTemplateData,
+    models::category::Category,
 };
 
 #[derive(Template)]
@@ -11,7 +15,7 @@ use crate::{
 struct ListCategoriesTemplate<'a> {
     categories: &'a Vec<Category>,
     current_user: &'a User,
-    base: BaseTemplateData
+    base: BaseTemplateData,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -45,7 +49,7 @@ pub async fn list_categories(res: &mut Response, depot: &mut Depot) -> AppResult
     let template = ListCategoriesTemplate {
         categories: &app_state.categories,
         current_user: &current_user,
-        base
+        base,
     };
     res.render(Text::Html(template.render()?));
     Ok(())
