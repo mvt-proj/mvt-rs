@@ -3,21 +3,17 @@ use salvo::http::header::HeaderValue;
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::borrow::Cow;
-use std::path::PathBuf;
 use std::time::Instant;
 
 enum Via {
     Database,
-    Disk,
-    Redis,
+    Cache,
 }
 
 use crate::{
-    diskcache::DiskCache,
     error::AppResult,
-    get_app_state, get_catalog, get_db_pool, get_disk_cache,
+    get_app_state, get_catalog, get_db_pool,
     models::catalog::{Catalog, Layer, StateLayer},
-    rediscache::RedisCache,
 };
 
 fn convert_fields(fields: Vec<String>) -> String {
@@ -125,7 +121,6 @@ async fn query_database(
 
 async fn get_tile(
     pg_pool: PgPool,
-    disk_cache: DiskCache,
     layer_conf: Layer,
     x: u32,
     y: u32,
@@ -141,27 +136,11 @@ async fn get_tile(
         Cow::Owned(layer_conf.clone().filter.unwrap_or_default())
     };
 
-    let tilefolder = disk_cache
-        .cache_dir
-        .join(name)
-        .join(z.to_string())
-        .join(x.to_string());
-    let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
-
-    let key = format!("{name}:{z}:{x}:{y}");
     let app_state = get_app_state();
-    let use_redis_cache = app_state.use_redis_cache;
-    let redis_cache = &app_state.redis_cache;
+    let cache_wrapper = &app_state.cache_wrapper;
 
-    if use_redis_cache {
-        if let Some(rc) = redis_cache {
-            if rc.exists_key(key.clone()).await? {
-                let tile = rc.get_cache(key).await?;
-                return Ok((tile, Via::Redis));
-            }
-        }
-    } else if let Ok(cached_tile) = disk_cache.get_cache(tilepath.clone(), max_cache_age).await {
-        return Ok((cached_tile, Via::Disk));
+    if let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await {
+        return Ok((tile, Via::Cache));
     }
 
     let tile: Bytes = query_database(
@@ -170,40 +149,13 @@ async fn get_tile(
         x,
         y,
         z,
-        query.to_string(),
+       query.to_string(),
     )
     .await?;
 
-    write_cache(
-        key,
-        &tile,
-        &tilepath,
-        use_redis_cache,
-        redis_cache,
-        disk_cache,
-        max_cache_age,
-    )
-    .await?;
+    cache_wrapper.write_tile_to_cache(name, x, y, z,  &tile, max_cache_age).await?;
+
     Ok((tile, Via::Database))
-}
-
-async fn write_cache(
-    key: String,
-    tile: &Bytes,
-    tilepath: &PathBuf,
-    use_redis_cache: bool,
-    redis_cache: &Option<RedisCache>,
-    disk_cache: DiskCache,
-    max_cache_age: u64,
-) -> AppResult<()> {
-    if use_redis_cache {
-        if let Some(rc) = redis_cache {
-            rc.write_tile_to_cache(key, tile, max_cache_age).await?;
-        }
-    } else {
-        disk_cache.write_tile_to_file(tilepath, tile).await?;
-    }
-    Ok(())
 }
 
 #[handler]
@@ -220,10 +172,8 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
     let pg_pool: PgPool = get_db_pool().clone();
     let catalog: Catalog = get_catalog().clone();
-    let disk_cache: DiskCache = get_disk_cache().clone();
 
     let layer = catalog.find_layer_by_category_and_name(category, name, StateLayer::Published);
-    // let layer = catalog.find_layer_by_name(&layer_name, StateLayer::Published);
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,
@@ -238,7 +188,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
                 return Ok(());
             }
             let start_time = Instant::now();
-            let (tile, via) = get_tile(pg_pool, disk_cache, lyr.clone(), x, y, z, filter).await?;
+            let (tile, via) = get_tile(pg_pool, lyr.clone(), x, y, z, filter).await?;
             let elapsed_time = start_time.elapsed();
             let elapsed_time_str = format!("{}", elapsed_time.as_millis());
             res.headers_mut().insert(
@@ -252,14 +202,10 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
                     res.headers_mut()
                         .insert("X-Cache", HeaderValue::from_static("MISS"));
                 }
-                Via::Disk => {
+                Via::Cache => {
                     res.headers_mut()
-                        .insert("X-Cache", HeaderValue::from_static("HIT Cached Disk"));
-                }
-                Via::Redis => {
-                    res.headers_mut()
-                        .insert("X-Cache", HeaderValue::from_static("HIT Cached Redis"));
-                }
+                        .insert("X-Cache", HeaderValue::from_static("HIT Cached"));
+                },
             }
 
             res.body(salvo::http::ResBody::Once(tile));

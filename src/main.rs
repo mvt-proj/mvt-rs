@@ -18,24 +18,22 @@ mod models;
 mod rediscache;
 mod routes;
 mod services;
+mod cachewrapper;
 
 use auth::Auth;
 use db::make_db_pool;
-use diskcache::DiskCache;
 use error::AppResult;
 use models::{catalog::Catalog, category::Category};
-use rediscache::RedisCache;
+use cachewrapper::CacheWrapper;
 
 #[derive(Debug)]
 pub struct AppState {
     db_pool: PgPool,
     cf_pool: SqlitePool,
     catalog: Catalog,
-    disk_cache: DiskCache,
+    cache_wrapper: CacheWrapper,
     auth: Auth,
     jwt_secret: String,
-    use_redis_cache: bool,
-    redis_cache: Option<RedisCache>,
     categories: Vec<Category>,
 }
 
@@ -57,8 +55,8 @@ pub fn get_catalog() -> &'static Catalog {
     unsafe { &APP_STATE.get().unwrap().catalog }
 }
 
-pub fn get_disk_cache() -> &'static DiskCache {
-    unsafe { &APP_STATE.get().unwrap().disk_cache }
+pub fn get_cache_wrapper() -> &'static CacheWrapper {
+    unsafe { &APP_STATE.get().unwrap().cache_wrapper }
 }
 
 pub fn get_auth() -> &'static Auth {
@@ -86,20 +84,6 @@ async fn initialize_catalog(pool: &SqlitePool) -> AppResult<Catalog> {
     let catalog = Catalog::new(pool).await?;
     Ok(catalog)
 }
-
-async fn initialize_redis_cache(
-    redis_conn: String,
-    catalog: &Catalog,
-) -> AppResult<Option<RedisCache>> {
-    if redis_conn.is_empty() {
-        return Ok(None);
-    }
-
-    let cache = RedisCache::new(redis_conn).await?;
-    cache.delete_cache(catalog.clone()).await?;
-    Ok(Some(cache))
-}
-
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
@@ -132,35 +116,19 @@ async fn main() -> AppResult<()> {
     .await?;
 
     let categories = get_cf_categories(Some(&cf_pool)).await?;
-
-    let disk_cache = DiskCache::new(app_config.cache_dir.into());
-    disk_cache.delete_cache_dir(catalog.clone()).await;
-
-    let mut use_redis_cache = false;
-    let redis_cache = match initialize_redis_cache(app_config.redis_conn, &catalog).await {
-        Ok(Some(cache)) => {
-            use_redis_cache = true;
-            Some(cache)
-        }
-        Ok(None) => None,
-        Err(err) => {
-            tracing::error!(
-                "Error initializing Redis cache: {}. The disk will be used as cache storage!",
-                err
-            );
-            None
-        }
-    };
+    let cache_wrapper = cachewrapper::initialize_cache(
+        Some(app_config.redis_conn),
+        app_config.cache_dir.clone().into(),
+        catalog.clone(),
+    ).await?;
 
     let app_state = AppState {
         db_pool,
         cf_pool,
         catalog,
-        disk_cache,
         auth,
         jwt_secret: app_config.jwt_secret,
-        use_redis_cache,
-        redis_cache,
+        cache_wrapper,
         categories,
     };
 
