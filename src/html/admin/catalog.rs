@@ -26,7 +26,6 @@ struct CatalogTemplate<'a> {
 struct CatalogTableTemplate<'a> {
     layers: &'a Vec<Layer>,
     current_user: &'a User,
-    base: BaseTemplateData,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -95,7 +94,6 @@ pub async fn table_catalog(
     let filter = req.query::<String>("filter");
 
     let mut catalog: Catalog = get_catalog().clone();
-    let mut is_auth = false;
     let mut user: Option<User> = None;
 
     if let Some(filter) = filter {
@@ -118,19 +116,16 @@ pub async fn table_catalog(
         if let Some(userid) = session.get::<String>("userid") {
             let auth: Auth = get_auth().clone();
             if let Some(usr) = auth.get_user_by_id(&userid) {
-                is_auth = true;
                 user = Some(usr.clone());
             }
         }
     }
 
-    let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
 
     let template = CatalogTableTemplate {
         layers: &catalog.layers,
         current_user: &current_user,
-        base,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));
@@ -144,12 +139,6 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     let hex_string = uuid.simple().to_string();
 
     let category = Category::from_id(&new_layer.category).await?;
-
-    // let selected_groups: Vec<Group> = new_layer
-    //     .groups
-    //     .iter()
-    //     .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
-    //     .collect();
 
     let selected_groups: Vec<Group> = new_layer
         .groups
@@ -203,12 +192,6 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 
     let category = Category::from_id(&new_layer.category).await?;
 
-    // let selected_groups: Vec<Group> = new_layer
-    //     .groups
-    //     .iter()
-    //     .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
-    //     .collect();
-    //
     let selected_groups: Vec<Group> = new_layer
         .groups
         .as_ref()
