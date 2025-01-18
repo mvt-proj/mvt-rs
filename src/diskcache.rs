@@ -37,6 +37,20 @@ impl DiskCache {
         }
     }
 
+    pub async fn delete_cache_layer(&self, layer_name: String) {
+        let dir_path = Path::new(&self.cache_dir).join(&layer_name);
+
+        if let Err(err) = tokio::fs::remove_dir_all(&dir_path).await {
+            tracing::warn!(
+                "Failed to delete the cache directory {:?}: {}",
+                &dir_path,
+                err
+            );
+        } else {
+            tracing::warn!("Directory {:?} deleted successfully.", &dir_path);
+        }
+    }
+
     pub async fn get_cache(&self, tilepath: PathBuf, max_cache_age: u64) -> AppResult<Bytes> {
         if let Ok(metadata) = fs::metadata(&tilepath).await {
             let cache_modified = match metadata.modified() {
