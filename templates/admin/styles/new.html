@@ -1,5 +1,11 @@
 {% extends "admin/layout_admin.html" %}
 
+{% block head %}
+  <!-- Include JSONEditor library -->
+  <link href="/static/css/jsoneditor.min.css" rel="stylesheet" />
+  <script src="/static/js/jsoneditor.min.js"></script>
+{% endblock %}
+
 {% block admin_content %}
 <div class="has-text-left">
   <a href="/admin/styles" class="button is-light">
