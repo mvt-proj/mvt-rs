@@ -8,78 +8,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
   <img src="https://github.com/user-attachments/assets/a7b743de-5775-4c47-b5c5-adb1378d03ef" width="40%" />
 </div>
 
-**mvt-rs** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the layers' configuration.
-
-
-## Table of Layer Configuration Fields
-
-Each published layer is defined as a JSON file with the fields as shown below.
-
-| Field                     | Meaning                                           | Required | Default  | Example                |
-|---------------------------|---------------------------------------------------|----------|----------|------------------------|
-| `geometry`                | Geometry of layer ['points', 'lines', 'polygons'] | true   |          | `polygons`               |
-| `name`                    | Layer name used in the URL                        | true   |          | `streets`                |
-| `alias`                   | Layer alias                                       | true   |          | `Street Layer`           |
-| `schema`                  | PostgreSQL database schema name                   | true   |          | `public`                 |
-| `table`                   | Table or view to serve as VT                      | true   |          | `my_table`               |
-| `fields`                  | List of fields to include in vector tiles         | true |          | `[id, field1, field2]`     |
-| `filter`                  | Data filter                                       | false  |          | `field1 > 100`           |
-| `srid`                    | Spatial Reference Identifier                      | false  | `4326`   | `3857`                   |
-| `geom`                    | Geometry column in the table                      | false  | `geom`   | `geom_column`            |
-| `sql_mode`                | CTE: Common Table Expression or SQ: Subquery      | false  | `CTE`    | `SQ`                     |
-| `buffer`                  | Is the buffer size in tile coordinate space for geometry clippig | false | `256` | `512`         |
-| `extent`                  | Is the tile extent size in tile coordinate space                  | false | `4096` | `8192`      |
-| `zmin`                    | Minimum zoom level                                | false  | `0`      | `4`                      |
-| `zmax`                    | Maximum zoom level                                | false  | `22`     | `12`                     |
-| `zmax_do_not_simplify`    | Maximum zoom level for no simplification          | false | `16`      | `10`                     |
-| `buffer_do_not_simplify`  | Vector tile buffer size for no simplification     | false | `256`     | `128`                    |
-| `extent_do_not_simplify`  | Vector tile extent size for no simplification     | false | `4096`    | `2048`                   |
-| `clip_geom`               | Is a boolean to control if geometries are clipped or encoded as-is | false | `true` | `false`    |
-| `delete_cache_on_start`   | Delete cache on server start                      | false  | `false` | `true`                    |
-| `max_cache_age`           | Maximum cache age in seconds. 0 means infinite time | false | `0` | `3600`                       |
-| `published`               | A layer can be declared in the configuration, but it is not published as a service | true | true | false |
-
-
-
-You can customize the layer configuration by modifying values in a specific JSON configuration file or through the admin using a web form.
-
-Example:
-
-```json
-{
-  "geometry": "polygons",
-  "name": "departamentos",
-  "alias": "Departamentos",
-  "schema": "public",
-  "table": "departamentos",
-  "fields": ["id", "codigo", "nombre"],
-  "geom": "geom",
-  "srid": 4326,
-  "sql_mode": "CTE",
-  "zmin": 6,
-  "zmax": 14,
-  "buffer": 256,
-  "extent": 4096,
-  "clip_geom": false,
-  "delete_cache_on_start": true,
-  "max_cache_age": 0,
-  "published": true
-}
-```
-
-In this case, the service publishes the following URL:
-
-http://127.0.0.1:5887/tiles/departamentos/{z}/{x}/{y}.pbf
-
-
-You could see all the served layers at:
-
-http://127.0.0.1:5887/catalog
-
-
-By default, the file catalog.json is in the "config" directory located at the root of your project. However, you can also specify a different location for these configuration files as an argument when the server starts. Example:
-
-`./mvt-rs --config /usr/local/etc/mvt-rs/config`
+**mvt server** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the layers' configuration. It will also enable the publication of styles to be used in tools like QGIS. These styles define how layers are displayed, including visualization scales, colors, labels, and other visual elements. This functionality ensures seamless integration with GIS tools, guaranteeing that vector tiles are rendered consistently and as intended across different platforms.
 
 
 
