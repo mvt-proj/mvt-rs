@@ -18,3 +18,13 @@ function initializePage() {
     servers[i].textContent = serverAddress;
   }
 }
+
+function copyToClipboard(id) {
+  const urlElement = document.getElementById(id);
+  const urlText = urlElement.innerText || urlElement.textContent;
+  navigator.clipboard
+    .writeText(urlText)
+    .catch((err) => {
+      console.error("Error to copy: ", err);
+    });
+}

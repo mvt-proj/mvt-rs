@@ -27,13 +27,18 @@
       <td>{{ layer.alias }}</td>
       <td>{{ layer.schema }}.{{ layer.table_name }}</td>
       <td class="has-text-info">
-        <span
-          ><span class="server"></span>/services/tiles/{{ layer.category.name
-          }}:{{ layer.name }}/{z}/{x}/{y}.pbf</span
-        >
+        <span id="url-{{ layer.category.name }}:{{ layer.name }}">
+          <span class="server"></span>/services/tiles/{{ layer.category.name }}:{{ layer.name }}/{z}/{x}/{y}.pbf
+        </span>
       </td>
       <td class="has-text-right">
         <div class="is-flex is-justify-content-right">
+          <button class="button is-white"
+            onclick="copyToClipboard('url-{{ layer.category.name }}:{{ layer.name }}')">
+            <span class="icon">
+              <i class="fas fa-copy"></i>
+            </span>
+          </button>
           <button
             class="button is-white js-modal-trigger"
             data-target="modal-js-example"

@@ -37,11 +37,19 @@
             {{ style.description }}
           </td>
           <td class="has-text-info">
-            <span><span class="server"></span>/services/styles/{{ style.category.name }}:{{ style.name }}</span>
+            <span id="url-{{ style.category.name }}:{{ style.name }}">
+              <span class="server"></span>/services/styles/{{ style.category.name }}:{{ style.name }}
+            </span>
           </td>
           <td class="has-text-right">
             {% if current_user.is_admin() %}
             <div class="is-flex is-justify-content-right">
+              <button class="button is-white"
+                onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}')">
+                <span class="icon">
+                  <i class="fas fa-copy"></i>
+                </span>
+              </button>
               <a href="/admin/styles/edit/{{ style.id }}" class="button is-white">
                 <span class="icon">
                   <i class="fas fa-pen"></i>

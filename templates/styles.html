@@ -10,6 +10,7 @@
         <th scope="col">Name</th>
         <th scope="col">Description</th>
         <th scope="col">Url</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -25,7 +26,19 @@
             {{ style.description }}
           </td>
           <td class="has-text-info">
-            <span><span class="server"></span>/services/styles/{{ style.category.name }}:{{ style.name }}</span>
+            <span id="url-{{ style.category.name }}:{{ style.name }}">
+              <span class="server"></span>/services/styles/{{ style.category.name }}:{{ style.name }}
+            </span>
+          </td>
+          <td class="has-text-right">
+            <div class="is-flex is-justify-content-right">
+              <button class="button is-white"
+                onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}')">
+                <span class="icon">
+                  <i class="fas fa-copy"></i>
+                </span>
+              </button>
+            </div>
           </td>
         </tr>
       {% endfor %}
