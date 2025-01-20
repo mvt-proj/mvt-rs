@@ -19,13 +19,17 @@
   >
     <header>
       <nav class="navbar">
-        <h1 class="text-2xl font-bold">mvt server</h1>
-        <div class="flex space-x-4">
+        <h1 class="text-2xl font-bold ">mvt server</h1>
+        <div
+          class="flex flex-row flex-wrap justify-center sm:justify-end items-center space-x-4"
+        >
           <a href="/">Home</a>
           <a href="/catalog">Catalog</a>
           <a href="/styles">Styles</a>
         </div>
-        <div class="flex space-x-4">
+        <div
+          class="flex flex-row flex-wrap justify-center sm:justify-end items-center space-x-4"
+        >
           {% if self.base.is_auth %}
           <a class="button__outline" href="/admin"> Admin </a>
           <a class="button__outline" href="/changepassword"> Password </a>
@@ -37,9 +41,7 @@
       </nav>
     </header>
 
-    <main class="p-4 flex-grow">
-      {% block content %}{% endblock %}
-    </main>
+    <main class="p-4 flex-grow">{% block content %}{% endblock %}</main>
 
     <footer class="p-4 bg-zinc-800 text-white text-center">
       <p>&copy; 2025 mvt server</p>

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .navbar {
-  @apply p-4 flex justify-between items-center;
+  @apply p-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 justify-between items-center;
   @apply bg-zinc-800 text-white shadow-lg;
   @apply dark:bg-zinc-800;
 }
