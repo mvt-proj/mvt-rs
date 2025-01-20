@@ -1,123 +1,133 @@
-{% extends "admin/layout_admin.html" %}
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
+<h1 class="title text-center mb-4">Catalog of registered layers</h1>
 
-{% block admin_content %}
-  <h1 class="title is-5 has-text-grey-darker">Catalog of registered layers</h1>
+<div id="modal-configuration" class="modal">
+  <div class="modal-card">
+    <header class="modal-header">
+      <p class="font-bold text-1xl text-center">Configuration</p>
+      <button class="modal-close" onclick="closeModal()">
+        <span class="icon">
+          <i class="fas fa-times"></i>
+        </span>
+      </button>
+    </header>
+    <section class="modal-body">
+      <div id="data-json"></div>
+    </section>
+  </div>
+</div>
 
-  <div id="modal-js-example" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Configuration</p>
-        <button class="delete" aria-label="close"></button>
-      </header>
-      <section class="modal-card-body">
-        <div id="data-json"></div>
-      </section>
-      <footer class="modal-card-foot">
-        <!-- <button class="button is-dark">Close</button> -->
-      </footer>
-    </div>
+<div class="flex justify-between items-center">
+  <div class="flex space-x-3">
+    <input
+      id="filter"
+      type="text"
+      class="input"
+      placeholder="Filter..."
+      hx-get="/admin/catalog/table"
+      hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
+      hx-target="#table-catalog"
+      hx-vals='js:{"filter": document.getElementById("filter").value}'
+    />
+    <button
+      class="button"
+      hx-get="/admin/catalog/table"
+      hx-target="#table-catalog"
+      hx-vals='js:{"filter": document.getElementById("filter").value}'
+    >
+      <span class="icon__small">
+        <i class="fas fa-search"></i>
+      </span>
+    </button>
+    <button
+      class="button"
+      hx-get="/admin/catalog/table"
+      hx-target="#table-catalog"
+      hx-on:click="document.getElementById('filter').value=''"
+    >
+      <span class="icon__small">
+        <i class="fas fa-backspace"></i>
+      </span>
+    </button>
   </div>
 
-  <div class="has-text-right">
-    <div class="columns is-mobile is-vcentered">
-      <div class="column is-flex is-align-items-center">
-        <input
-          id="filter"
-          type="text"
-          class="input is-small"
-          placeholder="Filter..."
-          hx-get="/admin/catalog/table"
-          hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
-          hx-target="#table-catalog"
-          hx-vals='js:{"filter": document.getElementById("filter").value}'
-        >
-        <button class="button is-light is-small ml-2"
-          hx-get="/admin/catalog/table"
-          hx-target="#table-catalog"
-          hx-vals='js:{"filter": document.getElementById("filter").value}'
-          >
-          <span class="icon is-small">
-            <i class="fas fa-search"></i>
-          </span>
-        </button>
-        <button class="button is-light is-small ml-2"
-          hx-get="/admin/catalog/table"
-          hx-target="#table-catalog"
-          hx-on:click="document.getElementById('filter').value=''"
-          >
-          <span class="icon is-small">
-            <i class="fas fa-backspace"></i>
-          </span>
-        </button>
-      </div>
-
-      {% if current_user.is_admin() %}
-      <div class="column is-flex is-justify-content-flex-end">
-        <a href="/admin/catalog/layers/new" class="button is-light">
-          <span class="icon is-small">
-            <i class="fas fa-layer-group"></i>
-          </span>
-          <span>ADD LAYER</span>
-        </a>
-      </div>
-      {% endif %}
-    </div>
+  {% if current_user.is_admin() %}
+  <div>
+    <a href="/admin/catalog/layers/new" class="button space-x-2">
+      <span class="icon is-small">
+        <i class="fas fa-layer-group"></i>
+      </span>
+      <span>ADD LAYER</span>
+    </a>
   </div>
+  {% endif %}
+</div>
 
-  <div id="table-catalog"
-    hx-get="/admin/catalog/table"
-    hx-swap="innerHTML"
-    hx-trigger="load"
-  ></div>
+<div
+  id="table-catalog"
+  hx-get="/admin/catalog/table"
+  hx-swap="innerHTML"
+  hx-trigger="load"
+  class="mt-4"
+></div>
 
- {% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
     // Functions to open and close a modal
     function openModal($el) {
-      $el.classList.add('is-active');
+      $el.classList.add("is-active");
     }
 
     function closeModal($el) {
-      $el.classList.remove('is-active');
+      $el.classList.remove("is-active");
     }
 
     function closeAllModals() {
-      (document.querySelectorAll('.modal') || []).forEach(($modal) => {
+      (document.querySelectorAll(".modal") || []).forEach(($modal) => {
         closeModal($modal);
       });
     }
 
     // Add a click event on buttons to open a specific modal
-    (document.querySelectorAll('.js-modal-trigger') || []).forEach(($trigger) => {
-      const modal = $trigger.dataset.target;
-      const $target = document.getElementById(modal);
+    (document.querySelectorAll(".js-modal-trigger") || []).forEach(
+      ($trigger) => {
+        const modal = $trigger.dataset.target;
+        const $target = document.getElementById(modal);
 
-      $trigger.addEventListener('click', () => {
-        openModal($target);
-      });
-    });
+        $trigger.addEventListener("click", () => {
+          openModal($target);
+        });
+      }
+    );
 
     // Add a click event on various child elements to close the parent modal
-    (document.querySelectorAll('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot .button') || []).forEach(($close) => {
-      const $target = $close.closest('.modal');
+    (
+      document.querySelectorAll(
+        ".modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot .button"
+      ) || []
+    ).forEach(($close) => {
+      const $target = $close.closest(".modal");
 
-      $close.addEventListener('click', () => {
+      $close.addEventListener("click", () => {
         closeModal($target);
       });
     });
 
     // Add a keyboard event to close all modals
-    document.addEventListener('keydown', (event) => {
-      if (event.code === 'Escape') {
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "Escape") {
         closeAllModals();
       }
     });
   });
 
-  document.addEventListener('htmx:afterOnLoad', initializePage);
+  document.addEventListener("htmx:afterOnLoad", initializePage);
+
+  const closeModal = () => {
+    document
+      .getElementById("modal-configuration")
+      .classList.remove("is-active");
+  };
 </script>
 {% endblock %}

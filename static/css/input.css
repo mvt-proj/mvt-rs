@@ -1,0 +1,221 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.navbar {
+  @apply p-4 flex justify-between items-center;
+  @apply bg-zinc-800 text-white shadow-lg;
+  @apply dark:bg-zinc-800;
+}
+
+.navbar__admin {
+  @apply p-4 flex justify-between items-center rounded-lg;
+  @apply bg-zinc-100 text-white shadow-lg;
+  @apply dark:bg-zinc-800;
+}
+
+.box {
+  @apply p-6 rounded-lg shadow-lg;
+  @apply bg-white text-gray-800;
+  @apply dark:bg-zinc-800 dark:text-white;
+}
+
+.input {
+  @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2;
+  @apply bg-zinc-100 text-zinc-800 focus:ring-zinc-800;
+  @apply dark:bg-zinc-700 dark:text-white  dark:focus:ring-zinc-500;
+}
+
+.textarea {
+  @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2;
+  @apply bg-zinc-100 text-zinc-800 focus:ring-zinc-800;
+  @apply dark:bg-zinc-700 dark:text-white  dark:focus:ring-zinc-500;
+}
+
+.button {
+  @apply flex px-4 py-2;
+  @apply rounded-lg bg-zinc-800 text-white hover:bg-white hover:text-zinc-800 transition-colors;
+}
+
+.danger {
+  @apply bg-red-500 text-white;
+}
+
+.button__outline {
+  @apply flex px-4 py-2 rounded-lg border-2 transition-colors;
+  @apply border-gray-500 hover:bg-gray-500 hover:text-white;
+  @apply dark:border-white dark:hover:bg-white dark:hover:text-zinc-800;
+}
+
+.title {
+  @apply text-3xl font-bold;
+}
+
+.table {
+  @apply w-full border-collapse border overflow-hidden rounded-lg shadow-md;
+  @apply border-zinc-300 bg-zinc-100 text-zinc-700;
+  @apply dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300;
+}
+
+.table thead th {
+  @apply font-bold uppercase text-sm tracking-wide px-3 py-2 text-left;
+  @apply bg-zinc-800 text-zinc-200;
+  @apply dark:bg-zinc-900  dark:text-zinc-200;
+}
+
+.table tbody td {
+  @apply px-4 py-3 text-left align-middle whitespace-nowrap;
+}
+
+.table tbody tr {
+  @apply border-b;
+  @apply border-zinc-300;
+  @apply dark:border-zinc-700;
+}
+
+.table tbody tr:last-child {
+  @apply border-b-0;
+}
+
+.icon__small {
+  @apply text-lg align-middle;
+}
+
+.menu {
+  @apply flex flex-col gap-2;
+}
+
+.menu-label {
+  @apply text-lg font-bold;
+}
+
+.menu-list {
+  @apply flex flex-col gap-2;
+}
+
+.menu-item {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg transition-colors;
+  @apply bg-zinc-100 text-zinc-800 hover:bg-zinc-200 hover:text-zinc-900;
+  @apply dark:bg-zinc-800 dark:text-white dark:hover:bg-white dark:hover:text-zinc-800;
+}
+
+.select {
+  @apply relative;
+}
+
+.select select {
+  @apply w-full rounded-lg border border-zinc-300 focus:outline-none focus:ring-2;
+  @apply bg-zinc-100 text-zinc-800 focus:ring-zinc-800;
+  @apply dark:bg-zinc-700 dark:text-white dark:border-zinc-500 dark:focus:ring-zinc-500;
+}
+
+.select option {
+  @apply p-4 border-b border-zinc-300;
+  @apply bg-white text-zinc-800;
+  @apply dark:bg-zinc-800 dark:text-white;
+}
+
+.select option:checked {
+  @apply bg-zinc-500 text-white;
+  @apply dark:bg-zinc-600 dark:text-zinc-300;
+}
+
+@media (prefers-color-scheme: light) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
+
+  ::-webkit-scrollbar-horizontal {
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track-horizontal {
+    background: #e0e0e0;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb-horizontal {
+    background-color: #888;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb-horizontal:hover {
+    background-color: #555;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #2c2c2c;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
+
+  ::-webkit-scrollbar-horizontal {
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track-horizontal {
+    background: #2c2c2c;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb-horizontal {
+    background-color: #888;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb-horizontal:hover {
+    background-color: #555;
+  }
+}
+
+.modal {
+  @apply fixed inset-0 z-50 items-center justify-center hidden h-screen w-screen bg-black bg-opacity-50;
+}
+
+.modal-card {
+  @apply p-4 relative shadow-lg rounded-lg;
+  @apply bg-white text-zinc-800;
+  @apply dark:bg-zinc-800 dark:text-white;
+}
+
+.modal-close {
+  @apply absolute top-0 right-0 p-4;
+}
+
+.modal-header {
+  @apply flex justify-between items-center p-4; 
+}
+
+.is-active {
+  @apply flex;
+}

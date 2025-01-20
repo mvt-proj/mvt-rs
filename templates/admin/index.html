@@ -1,21 +1,10 @@
-{% extends "layout_admin.html" %}
+{% extends "layout_admin.html" %} {% block admin_content %}
 
-{% block admin_content %}
+<h1 class="title text-center mb-3">Welcome</h1>
 
-  <h1 class="title is-5 mb-3 has-text-grey-darker">Welcome</h1>
-
-  <aside class="menu mb-6">
-    <p class="menu-label">
-      In this section, you can manage your app, including:
-    </p>
-    <ul class="menu-list">
-      <li><a>Users: You can create, edit and delete users.</a></li>
-      <li><a>Layers: You can create, edit and delete layers.</a></li>
-    </ul>
-   </aside>
-
-  <div class="has-text-centered">
-    <img src="/static/images/logo.png" class="has-ratio" width="300">
-  </div>
+<p class="text-center">
+  This is the admin panel for the MVT-Server. You can manage groups, users,
+  categories, catalog, and styles.
+</p>
 
 {% endblock %}

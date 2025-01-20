@@ -1,20 +1,21 @@
-{% extends "admin/layout_admin.html" %}
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
+<div class="flex justify-between items-center">
+  <h1 class="title text-center">List of Styles</h1>
 
-{% block admin_content %}
-  <h1 class="title is-5 has-text-grey-darker">List of Styles</h1>
-
-  <div class="has-text-right">
+  <div class="text-right">
     {% if current_user.is_admin() %}
-    <a href="/admin/styles/new" class="button is-light">
-      <span class="icon is-small">
+    <a href="/admin/styles/new" class="button space-x-2">
+      <span class="icon__small">
         <i class="fas fa-palette"></i>
       </span>
       <span>ADD STYLE</span>
     </a>
     {% endif %}
   </div>
+</div>
 
-  <table class="table is-fullwidth">
+<div class="overflow-auto mt-4 rounded-lg">
+  <table class="table">
     <thead>
       <tr>
         <th scope="col">Category</th>
@@ -26,52 +27,53 @@
     </thead>
     <tbody>
       {% for style in styles %}
-        <tr>
-          <td>
-            <span class="has-text-weight-semibold">{{ style.category.name }}</span>
-          </td>
-          <td>
-            {{ style.name }}
-          </td>
-          <td>
-            {{ style.description }}
-          </td>
-          <td class="has-text-info">
-            <span id="url-{{ style.category.name }}:{{ style.name }}">
-              <span class="server"></span>/services/styles/{{ style.category.name }}:{{ style.name }}
-            </span>
-          </td>
-          <td class="has-text-right">
-            {% if current_user.is_admin() %}
-            <div class="is-flex is-justify-content-right">
-              <button class="button is-white"
-                onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}')">
-                <span class="icon">
-                  <i class="fas fa-copy"></i>
-                </span>
-              </button>
-              <a href="/admin/styles/edit/{{ style.id }}" class="button is-white">
-                <span class="icon">
-                  <i class="fas fa-pen"></i>
-                </span>
-               </a>
-                <a href="/admin/styles/delete/{{ style.id }}" class="button is-danger is-outlined"
-                  onclick="return confirm('Are you sure you want to delete this style?');" >
-                  <span class="icon">
-                    <i class="fas fa-trash"></i>
-                  </span>
-                </a>
-            </div>
-            {% endif %}
-          </td>
-        </tr>
+      <tr>
+        <td>
+          <span class="font-semibold">{{ style.category.name }}</span>
+        </td>
+        <td>{{ style.name }}</td>
+        <td>{{ style.description }}</td>
+        <td class="text-blue-500">
+          <span id="url-{{ style.category.name }}:{{ style.name }}">
+            <span class="server"></span>/services/styles/{{ style.category.name
+            }}:{{ style.name }}
+          </span>
+        </td>
+        <td class="text-right">
+          {% if current_user.is_admin() %}
+          <div class="flex justify-end space-x-2">
+            <button
+              class="button"
+              onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}')"
+            >
+              <span class="icon">
+                <i class="fas fa-copy"></i>
+              </span>
+            </button>
+            <a href="/admin/styles/edit/{{ style.id }}" class="button">
+              <span class="icon">
+                <i class="fas fa-pen"></i>
+              </span>
+            </a>
+            <a
+              href="/admin/styles/delete/{{ style.id }}"
+              class="button danger"
+              onclick="return confirm('Are you sure you want to delete this style?');"
+            >
+              <span class="icon">
+                <i class="fas fa-trash"></i>
+              </span>
+            </a>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
-{% endblock %}
-
-{% block scripts %}
+</div>
+{% endblock %} {% block scripts %}
 <script>
-  document.addEventListener('DOMContentLoaded', initializePage);
+  document.addEventListener("DOMContentLoaded", initializePage);
 </script>
 {% endblock %}

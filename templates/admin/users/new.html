@@ -3,43 +3,43 @@
 
 {% block admin_content %}
 
-  <div class="has-text-left">
-    <a href="/admin/users" class="button is-light">
-      <span class="icon is-small">
+  <div class="flex justify-start items-center mb-6">
+    <a href="/admin/users" class="button space-x-2">
+      <span class="icon__small">
         <i class="fas fa-arrow-left"></i>
       </span>
       <span>Back</span>
     </a>
   </div>
 
-  <div class="columns is-centered">
-    <div class="column is-three-quarters">
+  <div class="max-w-3xl w-full mx-auto px-6">
+    <div class="box">
 
-      <h1 class="mb-3 title is-5 has-text-grey-darker">New User</h1>
+      <h1 class="mb-3 title text-center">New User</h1>
 
       <form action="/admin/users/create" method="post">
-        <div class="field">
+        <div class="mb-4">
           <label class="label">Username</label>
-          <div class="control">
+          <div class="mt-1">
             <input class="input" name="username" type="text" placeholder="Username">
           </div>
         </div>
-        <div class="field">
+        <div class="mb-4">
           <label class="label">Email</label>
-          <div class="control">
+          <div class="mt-1">
             <input class="input" name="email" type="email" placeholder="Email">
           </div>
         </div>
-        <div class="field">
+        <div class="mb-4">
           <label class="label">Password</label>
-          <div class="control">
+          <div class="mt-1">
             <input class="input" name="password" type="password" placeholder="Password">
           </div>
         </div>
-        <div class="field">
+        <div class="mb-4">
           <label class="label" for="fields">Groups</label>
-          <div class="control">
-            <div class="select is-multiple">
+          <div class="mt-1">
+            <div class="select">
               <select name="groups" id="groups" multiple size="8" required>
                 {% for group in groups %}
                   <option value="{{ group.name }}">{{ group.name }}</option>
@@ -49,9 +49,9 @@
           </div>
         </div>
 
-        <div class="field">
-          <div class="control has-text-centered">
-            <button class="button is-fullwidth is-link">Create User</button>
+        <div class="mb-4">
+          <div class="flex justify-center items-center">
+            <button class="button__outline">Create User</button>
           </div>
         </div>
       </form>

@@ -1,80 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MVT-Server</title>
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.png" />
+    <script src="/static/js/htmx.min.js"></script>
+    <script src="/static/js/client-side-templates.js"></script>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MVT-Server</title>
-  <link rel="icon" type="image/x-icon" href="/static/images/favicon.png">
-  <script src="/static/js/htmx.min.js"></script>
-  <script src="/static/js/client-side-templates.js"></script>
+    <link rel="stylesheet" href="/static/css/tailwind.css" />
+    <link rel="stylesheet" href="/static/css/fa.all.min.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    {% block head %}{% endblock %}
+  </head>
 
-  <link rel="stylesheet" href="/static/css/bulma.min.css">
-  <link rel="stylesheet" href="/static/css/fa.all.min.css" />
-  <link rel="stylesheet" href="/static/css/style.css">
-  {% block head %}{% endblock %}
-</head>
-
-<body>
-  <header>
-    <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
-      <div class="container">
-        <div class="navbar-brand">
-          <figure class="navbar-item image">
-            <img src="/static/images/mvtserver.png">
-          </figure>
-
-          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </a>
+  <body
+    class="bg-gray-200 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col"
+  >
+    <header>
+      <nav class="navbar">
+        <h1 class="text-2xl font-bold">MVT-Server</h1>
+        <div class="flex space-x-4">
+          <a href="/">Home</a>
+          <a href="/catalog">Catalog</a>
+          <a href="/styles">Styles</a>
         </div>
-        <div class="navbar-menu">
-          <div class="navbar-start">
-            <a class="navbar-item" href="/">Home</a>
-            <a class="navbar-item" href="/catalog">Catalog</a>
-            <a class="navbar-item" href="/styles">Styles</a>
-          </div>
+        <div class="flex space-x-4">
+          {% if self.base.is_auth %}
+          <a class="button__outline" href="/admin"> Admin </a>
+          <a class="button__outline" href="/changepassword"> Password </a>
+          <a class="button__outline" href="/logout"> Logout </a>
+          {% else %}
+          <a class="button__outline" href="/login"> Login </a>
+          {% endif %}
         </div>
-        <div class="navbar-end">
-          <div class="navbar-item">
-            <div class="buttons">
-              {% if self.base.is_auth %}
-              <a class="button is-outlined is-light" href="/admin">
-                Admin
-              </a>
-              <a class="button is-outlined is-light" href="/changepassword">
-                Password
-              </a>
-              <a class="button is-outlined is-light" href="/logout">
-                Logout
-              </a>
-              {% else %}
-              <a class="button is-outlined is-light" href="/login">
-                Login
-              </a>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </div>
-    </nav>
-  </header>
-  <main class="container is-max-widescreen mt-5 mb-6 p-4">
-    {% block content %}{% endblock %}
-  </main>
+      </nav>
+    </header>
 
-  <footer class="footer has-background-dark fixed-footer py-2">
-    <div class="content has-text-centered">
-      <p class="has-text-grey-lighter">
-        MVT-Server
-      </p>
-    </div>
-  </footer>
-  <script src="/static/js/mvt.js"></script>
-  {% block scripts %}{% endblock %}
+    <main class="p-4 flex-grow">
+      {% block content %}{% endblock %}
+    </main>
 
-</body>
+    <footer class="p-4 bg-zinc-800 text-white text-center">
+      <p>&copy; 2025 MVT-Server</p>
+    </footer>
 
+    <script src="/static/js/mvt.js"></script>
+    {% block scripts %}{% endblock %}
+  </body>
 </html>

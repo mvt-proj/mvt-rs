@@ -6,78 +6,74 @@
   <script src="/static/js/jsoneditor.min.js"></script>
 {% endblock %}
 
-
 {% block admin_content %}
-
-<div class="has-text-left">
-  <a href="/admin/styles" class="button is-light">
-    <span class="icon is-small">
+<div class="flex justify-start items-center mb-6">
+  <a href="/admin/styles" class="button space-x-2">
+    <span class="icon__small mr-2">
       <i class="fas fa-arrow-left"></i>
     </span>
     <span>Back</span>
   </a>
 </div>
 
-<div class="columns is-centered">
-  <div class="column is-three-quarters">
-    <h1 class="mb-3 title is-5 has-text-grey-darker">Edit Style {{ style.name }}</h1>
+<div class="max-w-3xl w-full mx-auto px-6">
+  <div class="box">
+    <h1 class="title mb-6 text-center">Edit Style: {{ style.name }}</h1>
 
     <form action="/admin/styles/update" method="post">
-
-      <div class="field">
+      
+      <!-- ID (readonly) -->
+      <div class="mb-4">
         <label class="label">ID</label>
-        <div class="control">
+        <div class="mt-1">
           <input class="input" name="id" type="text" placeholder="ID" value="{{ style.id }}" readonly>
         </div>
       </div>
 
-      <!--Category-->
-      <div class="field">
+      <!-- Category -->
+      <div class="mb-4">
         <label class="label">Category</label>
-        <div class="control">
-          <div class="select is-fullwidth">
-            <select name="category" id="category">
-              {% for category in categories %}
+        <div class="mt-1">
+          <select name="category" id="category" class="input">
+            {% for category in categories %}
               <option value="{{ category.id }}" {% if category.id == style.category.id %}selected{% endif %}>{{ category.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
+            {% endfor %}
+          </select>
         </div>
       </div>
 
-      <div class="field">
+      <!-- Name -->
+      <div class="mb-4">
         <label class="label">Name</label>
-        <div class="control">
+        <div class="mt-1">
           <input class="input" name="name" type="text" placeholder="Name" value="{{ style.name }}">
         </div>
       </div>
 
-      <div class="field">
+      <!-- Description -->
+      <div class="mb-4">
         <label class="label">Description</label>
-        <div class="control">
+        <div class="mt-1">
           <input class="input" name="description" type="text" placeholder="Description" value="{{ style.description }}">
         </div>
       </div>
 
       <!-- JSON Editor for Style -->
-      <div class="field">
+      <div class="mb-4">
         <label class="label">Style</label>
-        <div class="control">
-          <!-- JSON Editor container -->
+        <div class="mt-1">
           <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
-          <!-- Hidden input to store JSON -->
           <input type="hidden" id="jsonInput" name="style">
         </div>
       </div>
 
-      <div id="jsonError" class="has-text-danger" style="display: none;">
+      <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">
         Invalid JSON format. Please check the syntax.
       </div>
 
-      <div class="field">
-        <div class="control has-text-centered">
-          <button class="button is-fullwidth is-link">Update Style</button>
-        </div>
+      <!-- Submit Button -->
+      <div class="flex justify-center items-center">
+        <button class="button__outline">Update Style</button>
       </div>
     </form>
   </div>
@@ -103,11 +99,13 @@
       errorMessage.style.display = 'block';
     }
 
+    // Hide the "powered by" text of the editor (optional)
     const acePowered = document.querySelector('.jsoneditor-poweredBy');
     if (acePowered) {
       acePowered.style.display = 'none';
     }
 
+    // Form submission handling
     document.querySelector('form').addEventListener('submit', (event) => {
       try {
         const json = editor.get();
