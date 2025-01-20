@@ -215,7 +215,7 @@
 }
 
 .modal-header {
-  @apply flex justify-between items-center p-4; 
+  @apply flex justify-between items-center p-4;
 }
 
 .is-active {

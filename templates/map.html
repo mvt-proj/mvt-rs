@@ -115,12 +115,17 @@
     }
 
     let feature = features[0];
-    // let popupContent = '<h5 class="title is-5">' + feature.layer.id + '</h5>';
-    let popupContent = '<h5 class="title is-5">{{ alias }}</h5>';
-
-    for (var prop in feature.properties) {
-      popupContent += '<p><strong>' + prop + ':</strong> ' + feature.properties[prop] + '</p>';
-    }
+    let popupContent = `
+      <div style="
+        max-height: 200px;
+        overflow-y: auto;
+        color: black;"
+      >
+        <h5 style="font-size: 1.25rem; line-height: 1.75rem;">{{ alias }}</h5>
+        ${Object.entries(feature.properties)
+          .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
+          .join('')}
+      </div>`;
 
     new maplibregl.Popup()
       .setLngLat(e.lngLat)
