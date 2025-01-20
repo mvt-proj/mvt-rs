@@ -1,20 +1,21 @@
-{% extends "admin/layout_admin.html" %}
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
+<div class="flex justify-between items-center">
+  <h1 class="title text-center">List of Categories</h1>
 
-{% block admin_content %}
-  <h1 class="title is-5 has-text-grey-darker">List of Categories</h1>
-
-  <div class="has-text-right">
+  <div class="text-right">
     {% if current_user.is_admin() %}
-    <a href="/admin/categories/new" class="button is-light">
-      <span class="icon is-small">
+    <a href="/admin/categories/new" class="button space-x-2">
+      <span class="icon__small">
         <i class="fas fa-list"></i>
       </span>
       <span>ADD CATEGORY</span>
     </a>
     {% endif %}
   </div>
+</div>
 
-  <table class="table is-fullwidth">
+<div class="overflow-auto mt-4 rounded-lg">
+  <table class="table">
     <thead>
       <tr>
         <th scope="col">Name</th>
@@ -24,32 +25,34 @@
     </thead>
     <tbody>
       {% for category in categories %}
-        <tr>
-          <td>
-            <span class="has-text-weight-semibold">{{ category.name }}</span>
-          </td>
-          <td>
-            {{ category.description }}
-          </td>
-          <td class="has-text-right">
-            {% if current_user.is_admin() %}
-            <div class="is-flex is-justify-content-right">
-              <a href="/admin/categories/edit/{{ category.id }}" class="button is-white">
-                <span class="icon">
-                  <i class="fas fa-pen"></i>
-                </span>
-               </a>
-               <a href="/admin/categories/delete/{{ category.id }}" class="button is-danger is-outlined"
-                  onclick="return confirm('Are you sure you want to delete this category?');" >
-                   <span class="icon">
-                   <i class="fas fa-trash"></i>
-                   </span>
-               </a>
-            </div>
-            {% endif %}
-          </td>
-        </tr>
+      <tr>
+        <td>
+          <span class="font-semibold">{{ category.name }}</span>
+        </td>
+        <td>{{ category.description }}</td>
+        <td class="text-right">
+          {% if current_user.is_admin() %}
+          <div class="flex justify-end space-x-2">
+            <a href="/admin/categories/edit/{{ category.id }}" class="button">
+              <span class="icon">
+                <i class="fas fa-pen"></i>
+              </span>
+            </a>
+            <a
+              href="/admin/categories/delete/{{ category.id }}"
+              class="button danger"
+              onclick="return confirm('Are you sure you want to delete this category?');"
+            >
+              <span class="icon">
+                <i class="fas fa-trash"></i>
+              </span>
+            </a>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
 {% endblock %}

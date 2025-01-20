@@ -5,3 +5,4 @@ htmx-lsp.core
 /layers
 /config
 .env
+node_modules

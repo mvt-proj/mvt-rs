@@ -1,33 +1,39 @@
-{% extends "layout.html" %}
-
-{% block content %}
-<section class="section">
-  <div class="container">
-    <div class="columns is-centered">
-      <div class="column is-half">
-        <div class="box">
-          <h1 class="title is-4">Login</h1>
-          <form action="/auth/login" method="post">
-            <div class="field">
-              <label class="label">Email</label>
-              <div class="control">
-                <input class="input" type="email" name="email" required>
-              </div>
-            </div>
-            <div class="field">
-              <label class="label">Password</label>
-              <div class="control">
-                <input class="input" type="password" name="password" required>
-              </div>
-            </div>
-            <div class="field">
-              <div class="control">
-                <button class="button is-link">Login</button>
-              </div>
-            </div>
-          </form>
+{% extends "layout.html" %} {% block content %}
+<section class="h-[calc(100vh-165px)] flex items-center justify-center">
+  <div class="max-w-3xl w-full mx-auto px-6">
+    <div class="box">
+      <h1 class="title text-3xl font-bold mb-6">Login</h1>
+      <form action="/auth/login" method="post">
+        <div class="mb-4">
+          <label class="block text-lg font-medium mb-2" for="email"
+            >Email</label
+          >
+          <div class="relative">
+            <input
+              class="input"
+              type="email"
+              name="email"
+              required
+            />
+          </div>
         </div>
-      </div>
+        <div class="mb-4">
+          <label class="block text-lg font-medium mb-2" for="password"
+            >Password</label
+          >
+          <div class="relative">
+            <input
+              class="input"
+              type="password"
+              name="password"
+              required
+            />
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <button class="button__outline ">Login</button>
+        </div>
+      </form>
     </div>
   </div>
 </section>

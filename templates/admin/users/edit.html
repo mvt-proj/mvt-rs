@@ -1,68 +1,92 @@
-{% extends "admin/layout_admin.html" %}
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
 
-{% block admin_content %}
+<div class="flex justify-start items-center mb-6">
+  <a href="/admin/users" class="button space-x-2">
+    <span class="icon__small">
+      <i class="fas fa-arrow-left"></i>
+    </span>
+    <span>Back</span>
+  </a>
+</div>
 
-  <div class="has-text-left">
-    <a href="/admin/users" class="button is-light">
-      <span class="icon is-small">
-        <i class="fas fa-arrow-left"></i>
-      </span>
-      <span>Back</span>
-    </a>
+<div class="max-w-3xl w-full mx-auto px-6">
+  <div class="box">
+    <h1 class="mb-3 title text-center">
+      Edit User {{ user.username }}
+    </h1>
+
+    <form action="/admin/users/update" method="post">
+      <div class="mb-4">
+        <label class="label">ID</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            name="id"
+            type="text"
+            placeholder="ID"
+            value="{{ user.id }}"
+            readonly
+          />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="label">Username</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            name="username"
+            type="text"
+            placeholder="Username"
+            value="{{ user.username }}"
+          />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="label">Email</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            name="email"
+            type="email"
+            placeholder="Email"
+            value="{{ user.email }}"
+          />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="label">Password</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            name="password"
+            type="password"
+            placeholder="Password"
+          />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="label" for="fields">Groups</label>
+        <div class="mt-1">
+          <div class="select is-multiple">
+            <select name="groups" id="groups" multiple size="8" required>
+              {% for group in groups %} {% if
+              user.groups_as_vec_string().contains(group.name) %}
+              <option value="{{group.name}}" selected>{{group.name}}</option>
+              {% else %}
+              <option value="{{group.name}}">{{group.name}}</option>
+              {% endif %} {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="flex justify-center items-center">
+          <button class="button__outline">Update User</button>
+        </div>
+      </div>
+    </form>
   </div>
+</div>
 
-  <div class="columns is-centered">
-    <div class="column is-three-quarters">
-
-      <h1 class="mb-3 title is-5 has-text-grey-darker">Edit User {{ user.username }}</h1>
-
-      <form action="/admin/users/update" method="post">
-        <div class="field">
-          <label class="label">ID</label>
-          <div class="control">
-            <input class="input" name="id" type="text" placeholder="ID" value="{{ user.id }}" readonly>
-          </div>
-        </div>
-        <div class="field">
-          <label class="label">Username</label>
-          <div class="control">
-            <input class="input" name="username" type="text" placeholder="Username" value="{{ user.username }}">
-          </div>
-        </div>
-        <div class="field">
-          <label class="label">Email</label>
-          <div class="control">
-            <input class="input" name="email" type="email" placeholder="Email" value="{{ user.email }}">
-          </div>
-        </div>
-        <div class="field">
-          <label class="label">Password</label>
-          <div class="control">
-            <input class="input" name="password" type="password" placeholder="Password">
-          </div>
-        </div>
-        <div class="field">
-          <label class="label" for="fields">Groups</label>
-          <div class="control">
-            <div class="select is-multiple">
-              <select name="groups" id="groups" multiple size="8" required>
-                {% for group in groups %}
-                  {% if user.groups_as_vec_string().contains(group.name) %}
-                    <option value="{{group.name}}" selected>{{group.name}}</option>
-                  {% else %}
-                    <option value="{{group.name}}">{{group.name}}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-        </div>
-        <div class="field">
-          <div class="control has-text-centered">
-            <button class="button is-fullwidth is-link">Update User</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
 {% endblock %}

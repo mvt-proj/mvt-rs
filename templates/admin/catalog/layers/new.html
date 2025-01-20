@@ -1,303 +1,429 @@
-{% extends "admin/layout_admin.html" %}
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
 
-{% block admin_content %}
+<div class="flex justify-start items-center">
+  <a href="/admin/catalog" class="button space-x-2">
+    <span class="icon is-small">
+      <i class="fas fa-arrow-left"></i>
+    </span>
+    <span>Back</span>
+  </a>
+</div>
 
-  <div class="has-text-left">
-    <a href="/admin/catalog" class="button is-light">
-      <span class="icon is-small">
-        <i class="fas fa-arrow-left"></i>
-      </span>
-      <span>Back</span>
-    </a>
+<div class="max-w-3xl w-full mx-auto px-6">
+  <div class="box">
+    <h1 class="title mb-6 text-center">New Layer</h1>
+
+    <form action="/admin/catalog/layers/create" method="post">
+      <input type="hidden" name="id" id="id" value="" />
+
+      <!--Category-->
+      <div class="mb-4">
+        <label class="label" for="category">Category</label>
+        <div class="mt-1">
+          <div class="select">
+            <select name="category" id="category" class="input">
+              {% for category in categories %}
+              <option value="{{ category.id }}">{{ category.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- geometry -->
+      <div class="mb-4">
+        <label class="label" for="geometry">Geometry</label>
+        <div class="mt-1">
+          <div class="select">
+            <select name="geometry" id="geometry" class="input">
+              <option value="points">Points</option>
+              <option value="lines">Lines</option>
+              <option value="polygons">Polygons</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- name -->
+      <div class="mb-4">
+        <label class="label" for="name">Name</label>
+        <div class="mt-1">
+          <input class="input" type="text" name="name" id="name" required />
+        </div>
+      </div>
+
+      <!-- alias -->
+      <div class="mb-4">
+        <label class="label" for="alias">Alias</label>
+        <div class="mt-1">
+          <input class="input" type="text" name="alias" id="alias" required />
+        </div>
+      </div>
+
+      <!-- schema -->
+      <div class="mb-4">
+        <label class="label" for="schema">Schema</label>
+        <div class="mt-1">
+          <div
+            class="select"
+            hx-get="/admin/database/schemas"
+            hx-swap="innerHTML"
+            hx-trigger="load"
+          ></div>
+        </div>
+      </div>
+
+      <!-- table -->
+      <div class="mb-4">
+        <label class="label" for="table">Table</label>
+        <div class="mt-1">
+          <div class="select">
+            <select
+              name="table"
+              id="table"
+              class="input"
+              hx-get="/admin/database/fields"
+              hx-target="#fields"
+              hx-trigger="change"
+              hx-include="[name='schema']"
+              required
+            ></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- fields -->
+      <div class="mb-4">
+        <label class="label" for="fields">Fields</label>
+        <div class="mt-1">
+          <div class="select is-multiple">
+            <select
+              name="fields"
+              id="fields"
+              multiple
+              size="8"
+              required
+            ></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- geom -->
+      <div class="mb-4">
+        <label class="label" for="geom">Geom</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="geom"
+            id="geom"
+            value="geom"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- srid -->
+      <div class="mb-4">
+        <label class="label" for="srid">SRID</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="srid"
+            id="srid"
+            value="4326"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- sql_mode -->
+      <div class="mb-4">
+        <label class="label" for="sql_mode">SQL Mode</label>
+        <div class="mt-1">
+          <div class="select">
+            <select name="sql_mode" id="sql_mode" class="input">
+              <option value="CTE">Common Table Expression</option>
+              <option value="SQ">Subquery</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- filter -->
+      <div class="mb-4">
+        <label class="label" for="filter">Filter</label>
+        <div class="mt-1">
+          <textarea
+            class="textarea"
+            name="filter"
+            id="filter"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- buffer -->
+      <div class="mb-4">
+        <label class="label" for="buffer">Buffer</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            type="buffer"
+            name="buffer"
+            id="buffer"
+            value="256"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- extent -->
+      <div class="mb-4">
+        <label class="label" for="extent">Extent</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="extent"
+            id="extent"
+            value="4096"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- zmin -->
+      <div class="mb-4">
+        <label class="label" for="zmin">ZMin</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="zmin"
+            id="zmin"
+            value="0"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- zmax -->
+      <div class="mb-4">
+        <label class="label" for="zmin">ZMax</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="zmax"
+            id="zmax"
+            value="22"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- zmax_do_not_simplify -->
+      <div class="mb-4">
+        <label class="label" for="zmax_do_not_simplify"
+          >ZMax do not simplify</label
+        >
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="zmax_do_not_simplify"
+            id="zmax_do_not_simplify"
+            value="16"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- buffer_do_not_simplify -->
+      <div class="mb-4">
+        <label class="label" for="buffer_do_not_simplify"
+          >Buffer do not simplify</label
+        >
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="buffer_do_not_simplify"
+            id="buffer_do_not_simplify"
+            value="256"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- extent_do_not_simplify -->
+      <div class="mb-4">
+        <label class="label" for="extent_do_not_simplify"
+          >Extent do not simplify</label
+        >
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="extent_do_not_simplify"
+            id="extent_do_not_simplify"
+            value="4096"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- clip_geom -->
+      <div class="mb-4">
+        <label class="label" for="clip_geom">Clip Geom</label>
+        <div class="mt-1">
+          <label class="radio">
+            <input
+              type="radio"
+              name="clip_geom"
+              id="clip_geom_true"
+              value="true"
+              checked
+            />
+            True
+          </label>
+          <label class="radio">
+            <input
+              type="radio"
+              name="clip_geom"
+              id="clip_geom_false"
+              value="false"
+            />
+            False
+          </label>
+        </div>
+      </div>
+
+      <!-- delete_cache_on_start -->
+      <div class="mb-4">
+        <label class="label" for="delete_cache_on_start"
+          >Delete cache on start</label
+        >
+        <div class="mt-1">
+          <label class="radio">
+            <input
+              type="radio"
+              name="delete_cache_on_start"
+              id="delete_cache_on_start_true"
+              value="true"
+            />
+            True
+          </label>
+          <label class="radio">
+            <input
+              type="radio"
+              name="delete_cache_on_start"
+              id="delete_cache_on_start_false"
+              value="false"
+              checked
+            />
+            False
+          </label>
+        </div>
+        <p class="help is-info">Delete cache on server start</p>
+      </div>
+
+      <!-- max_cache_age -->
+      <div class="mb-4">
+        <label class="label" for="max_cache_age">Max cache age</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            type="text"
+            name="max_cache_age"
+            id="max_cache_age"
+            value="0"
+            required
+          />
+        </div>
+        <p class="help is-info">
+          Time must enter in seconds. The value of 0 means infinity
+        </p>
+      </div>
+
+      <!-- published -->
+      <div class="mb-4">
+        <label class="label" for="published">Published</label>
+        <div class="mt-1">
+          <label class="radio">
+            <input
+              type="radio"
+              name="published"
+              id="published_true"
+              value="true"
+              checked
+            />
+            True
+          </label>
+          <label class="radio">
+            <input
+              type="radio"
+              name="published"
+              id="published_false"
+              value="false"
+            />
+            False
+          </label>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="label" for="fields">Allowed Groups</label>
+        <div class="mt-1">
+          <div class="select is-multiple">
+            <select name="groups" id="groups" multiple size="8">
+              {% for group in groups %}
+              <option value="{{ group.name }}">{{ group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="flex justify-center items-center">
+          <button class="button__outline">Add Layer</button>
+        </div>
+      </div>
+    </form>
   </div>
-
-  <div class="mb-6 columns is-centered">
-    <div class="column is-three-quarters">
-
-      <h1 class="mb-6 title is-5 has-text-grey-darker">New Layer</h1>
-
-      <form action="/admin/catalog/layers/create" method="post">
-
-        <input type="hidden" name="id" id="id" value="">
-
-        <!--Category-->
-        <div class="field">
-          <label class="label" for="category">Category</label>
-          <div class="control">
-            <div class="select">
-              <select name="category" id="category">
-                {% for category in categories %}
-                  <option value="{{ category.id }}">{{ category.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-
-        <!-- geometry -->
-        <div class="field">
-            <label class="label" for="geometry">Geometry</label>
-            <div class="control">
-                <div class="select">
-                    <select name="geometry" id="geometry">
-                        <option value="points">Points</option>
-                        <option value="lines">Lines</option>
-                        <option value="polygons">Polygons</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- name -->
-        <div class="field">
-          <label class="label" for="name">Name</label>
-          <div class="control">
-            <input class="input" type="text" name="name" id="name" required>
-          </div>
-        </div>
-
-        <!-- alias -->
-        <div class="field">
-          <label class="label" for="alias">Alias</label>
-          <div class="control">
-            <input class="input" type="text" name="alias" id="alias" required>
-          </div>
-        </div>
-
-        <!-- schema -->
-        <div class="field">
-          <label class="label" for="schema">Schema</label>
-          <div class="control">
-            <div class="select"
-              hx-get="/admin/database/schemas"
-              hx-swap="innerHTML"
-              hx-trigger="load"
-            >
-            </div>
-          </div>
-        </div>
-
-        <!-- table -->
-        <div class="field">
-          <label class="label" for="table">Table</label>
-          <div class="control">
-            <div class="select">
-              <select name="table" id="table"
-                hx-get="/admin/database/fields"
-                hx-target="#fields"
-                hx-trigger="change"
-                hx-include="[name='schema']"
-                required
-              >
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- fields -->
-        <div class="field">
-          <label class="label" for="fields">Fields</label>
-          <div class="control">
-            <div class="select is-multiple">
-              <select name="fields" id="fields" multiple size="8" required>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- geom -->
-        <div class="field">
-          <label class="label" for="geom">Geom</label>
-          <div class="control">
-            <input class="input" type="text" name="geom" id="geom" value="geom" required>
-          </div>
-        </div>
-
-        <!-- srid -->
-        <div class="field">
-          <label class="label" for="srid">SRID</label>
-          <div class="control">
-            <input class="input" type="text" name="srid" id="srid" value="4326" required>
-          </div>
-        </div>
-
-        <!-- sql_mode -->
-        <div class="field">
-          <label class="label" for="sql_mode">SQL Mode</label>
-          <div class="control">
-            <div class="select">
-              <select name="sql_mode" id="sql_mode">
-                <option value="CTE">Common Table Expression</option>
-                <option value="SQ">Subquery</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- filter -->
-        <div class="field">
-          <label class="label" for="filter">Filter</label>
-          <div class="control">
-            <textarea class="textarea" name="filter" id="filter" rows="3"></textarea>
-          </div>
-        </div>
-
-        <!-- buffer -->
-        <div class="field">
-          <label class="label" for="buffer">Buffer</label>
-          <div class="control">
-            <input class="input" type="buffer" name="buffer" id="buffer" value="256" required>
-          </div>
-        </div>
-
-        <!-- extent -->
-        <div class="field">
-          <label class="label" for="extent">Extent</label>
-          <div class="control">
-            <input class="input" type="text" name="extent" id="extent" value="4096" required>
-          </div>
-        </div>
-
-        <!-- zmin -->
-        <div class="field">
-          <label class="label" for="zmin">ZMin</label>
-          <div class="control">
-            <input class="input" type="text" name="zmin" id="zmin" value="0" required>
-          </div>
-        </div>
-
-        <!-- zmax -->
-        <div class="field">
-          <label class="label" for="zmin">ZMax</label>
-          <div class="control">
-            <input class="input" type="text" name="zmax" id="zmax" value="22" required>
-          </div>
-        </div>
-
-        <!-- zmax_do_not_simplify -->
-        <div class="field">
-          <label class="label" for="zmax_do_not_simplify">ZMax do not simplify</label>
-          <div class="control">
-            <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="16" required>
-          </div>
-        </div>
-
-        <!-- buffer_do_not_simplify -->
-        <div class="field">
-          <label class="label" for="buffer_do_not_simplify">Buffer do not simplify</label>
-          <div class="control">
-            <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="256" required>
-          </div>
-        </div>
-
-        <!-- extent_do_not_simplify -->
-        <div class="field">
-          <label class="label" for="extent_do_not_simplify">Extent do not simplify</label>
-          <div class="control">
-            <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="4096" required>
-          </div>
-        </div>
-
-        <!-- clip_geom -->
-        <div class="field">
-          <label class="label" for="clip_geom">Clip Geom</label>
-          <div class="control">
-            <label class="radio">
-              <input type="radio" name="clip_geom" id="clip_geom_true" value="true" checked>
-              True
-            </label>
-            <label class="radio">
-              <input type="radio" name="clip_geom" id="clip_geom_false" value="false">
-              False
-            </label>
-          </div>
-        </div>
-
-        <!-- delete_cache_on_start -->
-        <div class="field">
-          <label class="label" for="delete_cache_on_start">Delete cache on start</label>
-          <div class="control">
-            <label class="radio">
-              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_true" value="true">
-              True
-            </label>
-            <label class="radio">
-              <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_false" value="false" checked>
-              False
-            </label>
-          </div>
-          <p class="help is-info">Delete cache on server start</p>
-        </div>
-
-        <!-- max_cache_age -->
-        <div class="field">
-          <label class="label" for="max_cache_age">Max cache age</label>
-          <div class="control">
-            <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="0" required>
-          </div>
-          <p class="help is-info">Time must enter in seconds. The value of 0 means infinity</p>
-        </div>
-
-        <!-- published -->
-        <div class="field">
-          <label class="label" for="published">Published</label>
-          <div class="control">
-            <label class="radio">
-              <input type="radio" name="published" id="published_true" value="true" checked>
-              True
-            </label>
-            <label class="radio">
-              <input type="radio" name="published" id="published_false" value="false">
-              False
-            </label>
-          </div>
-        </div>
-
-        <div class="field">
-          <label class="label" for="fields">Allowed Groups</label>
-          <div class="control">
-            <div class="select is-multiple">
-              <select name="groups" id="groups" multiple size="8">
-                {% for group in groups %}
-                  <option value="{{ group.name }}">{{ group.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="control has-text-centered">
-            <button class="button is-fullwidth is-link">Add Layer</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-{% endblock %}
-
-{% block scripts %}
+</div>
+{% endblock %} {% block scripts %}
 <script>
-  document.addEventListener('htmx:afterSwap', function(event) {
+  document.addEventListener("htmx:afterSwap", function (event) {
     var target = event.detail.target;
 
-    if (target.id === 'fields') {
+    if (target.id === "fields") {
       var schemaValue = document.querySelector('[name="schema"]').value;
       var tableValue = document.querySelector('[name="table"]').value;
       var geomValue = document.querySelector('[name="geom"]').value;
-      var url = '/admin/database/srid?schema=' + encodeURIComponent(schemaValue) + '&table=' + encodeURIComponent(tableValue) + '&geometry=' + encodeURIComponent(geomValue);
+      var url =
+        "/admin/database/srid?schema=" +
+        encodeURIComponent(schemaValue) +
+        "&table=" +
+        encodeURIComponent(tableValue) +
+        "&geometry=" +
+        encodeURIComponent(geomValue);
 
       fetch(url)
-        .then(response => {
+        .then((response) => {
           if (!response.ok) {
-            throw new Error('Error al cargar SRID');
+            throw new Error("Error al cargar SRID");
           }
           return response.json();
         })
-        .then(data => {
+        .then((data) => {
           document.querySelector('[name="srid"]').value = data;
         })
-        .catch(error => {
-          console.error('Error:', error);
+        .catch((error) => {
+          console.error("Error:", error);
         });
     }
   });
