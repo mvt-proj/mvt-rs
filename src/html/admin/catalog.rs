@@ -6,10 +6,10 @@ use uuid::Uuid;
 use crate::{
     auth::{Auth, Group, User},
     error::{AppError, AppResult},
-    get_app_state, get_auth, get_catalog,
+    get_app_state, get_auth,
     html::main::BaseTemplateData,
     models::{
-        catalog::{Catalog, Layer, StateLayer},
+        catalog::{Layer, StateLayer},
         category::Category,
     },
 };
@@ -19,13 +19,6 @@ use crate::{
 struct CatalogTemplate<'a> {
     current_user: &'a User,
     base: BaseTemplateData,
-}
-
-#[derive(Template)]
-#[template(path = "admin/catalog/table.html")]
-struct CatalogTableTemplate<'a> {
-    layers: &'a Vec<Layer>,
-    current_user: &'a User,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -79,53 +72,6 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()
     let template = CatalogTemplate {
         current_user: &current_user,
         base,
-    };
-    let html_render = template.render()?;
-    res.render(Text::Html(html_render));
-    Ok(())
-}
-
-#[handler]
-pub async fn table_catalog(
-    req: &mut Request,
-    res: &mut Response,
-    depot: &mut Depot,
-) -> AppResult<()> {
-    let filter = req.query::<String>("filter");
-
-    let mut catalog: Catalog = get_catalog().clone();
-    let mut user: Option<User> = None;
-
-    if let Some(filter) = filter {
-        catalog.layers = catalog
-            .layers
-            .iter()
-            .filter(|layer| {
-                layer.alias.to_lowercase().contains(&filter.to_lowercase())
-                    || layer
-                        .category
-                        .name
-                        .to_lowercase()
-                        .contains(&filter.to_lowercase())
-            })
-            .cloned()
-            .collect();
-    }
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(usr) = auth.get_user_by_id(&userid) {
-                user = Some(usr.clone());
-            }
-        }
-    }
-
-    let current_user = user.unwrap();
-
-    let template = CatalogTableTemplate {
-        layers: &catalog.layers,
-        current_user: &current_user,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));

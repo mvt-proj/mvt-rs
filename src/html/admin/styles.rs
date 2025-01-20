@@ -12,7 +12,7 @@ use crate::{
 
 #[derive(Template)]
 #[template(path = "admin/styles/styles.html")]
-struct ListCategoriesTemplate<'a> {
+struct ListStylesTemplate<'a> {
     styles: &'a Vec<Style>,
     current_user: &'a User,
     base: BaseTemplateData,
@@ -47,7 +47,7 @@ pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     let current_user = user.unwrap();
 
     let styles = Style::get_all_styles().await?;
-    let template = ListCategoriesTemplate {
+    let template = ListStylesTemplate {
         styles: &styles,
         current_user: &current_user,
         base,

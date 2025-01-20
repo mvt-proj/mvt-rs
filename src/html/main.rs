@@ -2,7 +2,8 @@ use askama::Template;
 use salvo::prelude::*;
 
 use crate::{
-    auth::Auth,
+    auth::{Auth, User},
+    error::AppResult,
     get_auth, get_catalog,
     models::{
         catalog::{Catalog, Layer, StateLayer},
@@ -39,17 +40,31 @@ struct E404Template {
 }
 
 #[derive(Template)]
-#[template(path = "catalog.html")]
-struct CatalogTemplate<'a> {
-    layers: &'a Vec<Layer>,
+#[template(path = "catalog/catalog.html")]
+struct CatalogTemplate {
     base: BaseTemplateData,
 }
 
 #[derive(Template)]
-#[template(path = "styles.html")]
+#[template(path = "catalog/table.html")]
+struct CatalogTableTemplate<'a> {
+    layers: &'a Vec<Layer>,
+    current_user: &'a Option<User>,
+    is_guest_or_non_admin: bool,
+}
+
+#[derive(Template)]
+#[template(path = "styles/styles.html")]
 struct StylesTemplate<'a> {
     styles: &'a Vec<Style>,
     base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "styles/table.html")]
+struct StylesTableTemplate<'a> {
+    styles: &'a Vec<Style>,
+    current_user: &'a Option<User>,
 }
 
 #[derive(Template)]
@@ -140,8 +155,6 @@ pub async fn error404(res: &mut Response, depot: &mut Depot) {
 
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) {
-    let catalog: Catalog = get_catalog().clone();
-
     let mut is_auth = false;
 
     if let Some(session) = depot.session_mut() {
@@ -155,11 +168,57 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) {
 
     let base = BaseTemplateData { is_auth };
 
-    let template = CatalogTemplate {
-        layers: &catalog.get_published_layers(),
-        base,
-    };
+    let template = CatalogTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
+}
+
+#[handler]
+pub async fn table_catalog(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    let filter = req.query::<String>("filter");
+
+    let mut catalog: Catalog = get_catalog().clone();
+    let mut user: Option<User> = None;
+
+    if let Some(filter) = filter {
+        catalog.layers = catalog
+            .layers
+            .iter()
+            .filter(|layer| {
+                layer.alias.to_lowercase().contains(&filter.to_lowercase())
+                    || layer
+                        .category
+                        .name
+                        .to_lowercase()
+                        .contains(&filter.to_lowercase())
+                    || layer.name.to_lowercase().contains(&filter.to_lowercase())
+            })
+            .cloned()
+            .collect();
+    }
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(usr) = auth.get_user_by_id(&userid) {
+                user = Some(usr.clone());
+            }
+        }
+    }
+
+    let is_guest_or_non_admin = user.is_none() || user.as_ref().map_or(true, |usr| !usr.is_admin());
+
+    let template = CatalogTableTemplate {
+        layers: &catalog.layers,
+        current_user: &user,
+        is_guest_or_non_admin,
+    };
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
 }
 
 #[handler]
@@ -235,4 +294,50 @@ pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
         base,
     };
     res.render(Text::Html(template.render().unwrap()));
+}
+
+#[handler]
+pub async fn table_styles(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    let filter = req.query::<String>("filter");
+    let mut user: Option<User> = None;
+
+    if let Some(session) = depot.session_mut() {
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if let Some(usr) = auth.get_user_by_id(&userid) {
+                user = Some(usr.clone());
+            }
+        }
+    }
+
+    let mut styles = Style::get_all_styles().await?;
+
+    if let Some(filter) = filter {
+        styles = styles
+            .into_iter()
+            .filter(|style| {
+                style.name.to_lowercase().contains(&filter.to_lowercase())
+                    || style
+                        .description
+                        .to_lowercase()
+                        .contains(&filter.to_lowercase())
+                    || style
+                        .category
+                        .name
+                        .to_lowercase()
+                        .contains(&filter.to_lowercase())
+            })
+            .collect();
+    }
+
+    let template = StylesTableTemplate {
+        styles: &styles,
+        current_user: &user,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
 }

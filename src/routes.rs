@@ -60,7 +60,9 @@ pub fn app_router() -> salvo::Router {
                 .post(auth::change_password),
         )
         .push(Router::with_path("catalog").get(html::main::page_catalog))
+        .push(Router::with_path("catalogtable").get(html::main::table_catalog))
         .push(Router::with_path("styles").get(html::main::page_styles))
+        .push(Router::with_path("styletable").get(html::main::table_styles))
         .push(Router::with_path("map/{layer_name}").get(html::main::page_map))
         .push(Router::with_path("health").get(health::get_health))
         .push(
@@ -126,7 +128,6 @@ pub fn app_router() -> salvo::Router {
                     Router::with_path("catalog")
                         .hoop(auth::require_user_admin)
                         .get(html::admin::catalog::page_catalog)
-                        .push(Router::with_path("table").get(html::admin::catalog::table_catalog))
                         .push(Router::with_path("layers/new").get(html::admin::main::new_layer))
                         .push(
                             Router::with_path("layers/create")

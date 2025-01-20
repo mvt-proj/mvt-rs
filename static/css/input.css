@@ -34,6 +34,7 @@
 
 .button {
   @apply flex px-4 py-2;
+  @apply disabled:opacity-50;
   @apply rounded-lg bg-zinc-800 text-white hover:bg-white hover:text-zinc-800 transition-colors;
 }
 
@@ -43,6 +44,7 @@
 
 .button__outline {
   @apply flex px-4 py-2 rounded-lg border-2 transition-colors;
+  @apply disabled:opacity-50;
   @apply border-gray-500 hover:bg-gray-500 hover:text-white;
   @apply dark:border-white dark:hover:bg-white dark:hover:text-zinc-800;
 }

@@ -1,21 +1,5 @@
-{% extends "admin/layout_admin.html" %} {% block admin_content %}
-<h1 class="title text-center mb-4">Catalog of registered layers</h1>
-
-<div id="modal-configuration" class="modal">
-  <div class="modal-card">
-    <header class="modal-header">
-      <p class="font-bold text-1xl text-center">Configuration</p>
-      <button class="modal-close" onclick="closeModal()">
-        <span class="icon">
-          <i class="fas fa-times"></i>
-        </span>
-      </button>
-    </header>
-    <section class="modal-body">
-      <div id="data-json"></div>
-    </section>
-  </div>
-</div>
+{% extends "layout.html" %} {% block content %}
+<h1 class="title text-center">Catalog of published layers</h1>
 
 <div class="flex justify-between items-center">
   <div class="flex space-x-3">
@@ -50,17 +34,6 @@
       </span>
     </button>
   </div>
-
-  {% if current_user.is_admin() %}
-  <div>
-    <a href="/admin/catalog/layers/new" class="button space-x-2">
-      <span class="icon is-small">
-        <i class="fas fa-layer-group"></i>
-      </span>
-      <span>ADD LAYER</span>
-    </a>
-  </div>
-  {% endif %}
 </div>
 
 <div
@@ -70,15 +43,9 @@
   hx-trigger="load"
   class="mt-4"
 ></div>
-
-{% endblock %} {% block scripts %}
+{% endblock %} 
+{% block scripts %}
 <script>
   document.addEventListener("htmx:afterOnLoad", initializePage);
-
-  const closeModal = () => {
-    document
-      .getElementById("modal-configuration")
-      .classList.remove("is-active");
-  };
 </script>
 {% endblock %}
