@@ -56,11 +56,18 @@ pub async fn list_groups(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 
 #[handler]
 pub async fn create_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> AppResult<()> {
-    Group::new(
+    let group = Group::new(
         new_group.name.to_string(),
         new_group.description.to_string(),
     )
-    .await?;
+    .await;
+
+    if let Err(err) = group {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    group?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
@@ -70,14 +77,25 @@ pub async fn create_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> Ap
 
 #[handler]
 pub async fn edit_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> AppResult<()> {
-    let group = Group::from_id(&new_group.id.unwrap()).await?;
+    let group = Group::from_id(&new_group.id.unwrap()).await;
 
-    group
+    if let Err(err) = group {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let group = group?;
+
+    if let Err(err) = group
         .update_group(
             new_group.name.to_string(),
             new_group.description.to_string(),
         )
-        .await?;
+        .await
+    {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
@@ -89,10 +107,21 @@ pub async fn edit_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> AppR
 pub async fn delete_group(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let id = req
         .param::<String>("id")
-        .ok_or(AppError::RequestParamError("schema".to_string()))?;
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
 
-    let group = Group::from_id(&id).await?;
-    group.delete_group().await?;
+    let group = Group::from_id(&id).await;
+
+    if let Err(err) = group {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let group = group?;
+
+    if let Err(err) = group.delete_group().await {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(err);
+    }
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);

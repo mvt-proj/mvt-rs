@@ -1,4 +1,5 @@
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
+use salvo::catcher::Catcher;
 use salvo::cors::{self as cors, Cors};
 // use salvo::http::Method;
 use salvo::logging::Logger;
@@ -12,7 +13,7 @@ use crate::{
     services::{styles, tiles},
 };
 
-pub fn app_router() -> salvo::Router {
+pub fn app_router() -> Service {
     let cache_30s = Cache::new(
         MokaStore::builder()
             .time_to_live(Duration::from_secs(30))
@@ -37,11 +38,10 @@ pub fn app_router() -> salvo::Router {
         .defaults("index.html")
         .auto_list(true);
 
-    Router::new()
+    let router = Router::new()
         .hoop(Logger::default())
         .hoop(session_handler)
         .get(html::main::index)
-        .push(Router::with_path("error404").get(html::main::error404))
         .push(Router::with_path("login").get(html::main::login))
         .push(
             Router::with_path("logout")
@@ -218,5 +218,7 @@ pub fn app_router() -> salvo::Router {
                 .push(Router::with_path("tiles/{layer_name}/{z}/{x}/{y}.pbf").get(tiles::mvt))
                 .push(Router::with_path("styles/{style_name}").get(styles::index)),
         )
-        .push(Router::with_path("static/{**path}").get(static_dir))
+        .push(Router::with_path("static/{**path}").get(static_dir));
+
+        Service::new(router).catcher(Catcher::default().hoop(html::main::handle_errors))
 }

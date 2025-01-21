@@ -377,7 +377,14 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
 pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -> AppResult<()> {
     let auth: Auth = get_auth().clone();
 
-    let user = auth.get_user_by_email_and_password(&data.email, &data.password)?;
+    let user = auth.get_user_by_email_and_password(&data.email, &data.password);
+
+    if let Err(err) = user {
+        res.status_code(StatusCode::UNAUTHORIZED);
+        return Err(err);
+    }
+
+    let user = user?;
 
     let mut session = Session::new();
     session.insert("userid", user.id.clone()).unwrap();
@@ -419,16 +426,27 @@ pub async fn change_password<'a>(
 ) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let user_id = depot
-        .session_mut()
-        .and_then(|session| session.get::<String>("userid"))
-        .ok_or(AppError::SessionNotFound)?;
+    let user_id = depot.session_mut().and_then(|session| session.get::<String>("userid")).ok_or(AppError::SessionNotFound);
 
-    let mut user = app_state
+    if let Err(err) = user_id {
+        res.status_code(StatusCode::CONFLICT);
+        return Err(err);
+    }
+
+    let user_id = user_id?;
+
+    let user = app_state
         .auth
         .get_user_by_id(&user_id)
-        .ok_or(AppError::UserNotFoundError(user_id.clone()))?
-        .clone();
+        .ok_or(AppError::UserNotFoundError(user_id.clone()));
+
+
+    if let Err(err) = user {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let mut user = user?.clone();
 
     let app_config = args::parse_args().await?;
 

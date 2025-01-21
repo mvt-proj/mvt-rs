@@ -60,11 +60,18 @@ pub async fn create_category<'a>(
     res: &mut Response,
     new_category: NewCategory<'a>,
 ) -> AppResult<()> {
-    Category::new(
+    let category = Category::new(
         new_category.name.to_string(),
         new_category.description.to_string(),
     )
-    .await?;
+    .await;
+
+    if let Err(err) = category {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    category?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
@@ -74,13 +81,26 @@ pub async fn create_category<'a>(
 
 #[handler]
 pub async fn edit_category<'a>(res: &mut Response, new_category: NewCategory<'a>) -> AppResult<()> {
-    let category = Category::from_id(new_category.id.as_ref().unwrap()).await?;
-    category
+    let category = Category::from_id(new_category.id.as_ref().unwrap()).await;
+
+    if let Err(err) = category {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let updated_category = category?
         .update_category(
             new_category.name.to_string(),
             new_category.description.to_string(),
         )
-        .await?;
+        .await;
+
+    if let Err(err) = updated_category {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    updated_category?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
@@ -92,10 +112,25 @@ pub async fn edit_category<'a>(res: &mut Response, new_category: NewCategory<'a>
 pub async fn delete_category(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let id = req
         .param::<String>("id")
-        .ok_or(AppError::RequestParamError("schema".to_string()))?;
+        .ok_or(AppError::RequestParamError("schema".to_string()));
+
+    if let Err(err) = id {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    let id = id?;
+
     let category = Category::from_id(&id).await?;
 
-    category.delete_category().await?;
+    let deleted_category = category.delete_category().await;
+    if let Err(err) = deleted_category {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    deleted_category?;
+
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/categories"));

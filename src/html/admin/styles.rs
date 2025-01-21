@@ -58,35 +58,63 @@ pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 
 #[handler]
 pub async fn create_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppResult<()> {
-    Style::new(
+    let category = Category::from_id(&new_style.category).await;
+
+    if let Err(err) = category {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    let result = Style::new(
         new_style.name.to_string(),
-        Category::from_id(&new_style.category).await?,
+        category.unwrap(),
         new_style.description.to_string(),
         new_style.style.to_string(),
     )
-    .await?;
+    .await;
+
+    if let Err(err) = result {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(err);
+    }
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
 
 #[handler]
 pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppResult<()> {
-    let style = Style::from_id(&new_style.id.unwrap()).await?;
-    style
+    let style = Style::from_id(&new_style.id.unwrap()).await;
+
+    if let Err(err) = style {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let category = Category::from_id(&new_style.category).await;
+
+    if let Err(err) = category {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    let result = style.unwrap()
         .update_style(
             new_style.name.to_string(),
-            Category::from_id(&new_style.category).await?,
+            category.unwrap(),
             new_style.description.to_string(),
             new_style.style.to_string(),
         )
-        .await?;
+        .await;
+
+    if let Err(err) = result {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(err);
+    }
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
 
@@ -94,13 +122,23 @@ pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppR
 pub async fn delete_style(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let id = req
         .param::<String>("id")
-        .ok_or(AppError::RequestParamError("schema".to_string()))?;
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
 
-    let style = Style::from_id(&id).await?;
-    style.delete_style().await?;
+    let style = Style::from_id(&id).await;
+
+    if let Err(err) = style {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let result = style.unwrap().delete_style().await;
+
+    if let Err(err) = result {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(err);
+    }
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }

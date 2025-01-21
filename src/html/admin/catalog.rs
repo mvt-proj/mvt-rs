@@ -84,7 +84,14 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     let uuid = Uuid::new_v4();
     let hex_string = uuid.simple().to_string();
 
-    let category = Category::from_id(&new_layer.category).await?;
+    let category = Category::from_id(&new_layer.category).await;
+
+    if let Err(err) = category {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let category = category?;
 
     let selected_groups: Vec<Group> = new_layer
         .groups
@@ -125,7 +132,13 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         groups: Some(selected_groups),
     };
 
-    app_state.catalog.add_layer(layer).await?;
+    let layer = app_state.catalog.add_layer(layer).await;
+
+    if let Err(err) = layer {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
@@ -136,7 +149,14 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let category = Category::from_id(&new_layer.category).await?;
+    let category = Category::from_id(&new_layer.category).await;
+
+    if let Err(err) = category {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(err);
+    }
+
+    let category = category?;
 
     let selected_groups: Vec<Group> = new_layer
         .groups
@@ -177,7 +197,13 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         groups: Some(selected_groups),
     };
 
-    app_state.catalog.update_layer(layer).await?;
+    let layer = app_state.catalog.update_layer(layer).await;
+
+    if let Err(err) = layer {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
@@ -191,7 +217,13 @@ pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResul
     let layer_id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
-    app_state.catalog.delete_layer(layer_id).await?;
+    let layer = app_state.catalog.delete_layer(layer_id).await;
+
+    if let Err(err) = layer {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
     res.render(Redirect::other("/admin/catalog"));
     Ok(())
 }
@@ -203,7 +235,13 @@ pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult
     let layer_id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
-    app_state.catalog.swich_layer_published(&layer_id).await?;
+    let layer = app_state.catalog.swich_layer_published(&layer_id).await;
+
+    if let Err(err) = layer {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/catalog"));
@@ -216,12 +254,23 @@ pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> Ap
 
     let layer_id = req
         .param::<String>("id")
-        .ok_or(AppError::RequestParamError("id".to_string()))?;
+        .ok_or(AppError::RequestParamError("id".to_string()));
+
+    if let Err(err) = layer_id {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
+    let layer_id = layer_id?;
+
     let layer = app_state.catalog.find_layer_by_id(&layer_id, StateLayer::Any);
     if let Some(layer) = layer {
         let layer_name = &layer.name;
         let cache_wrapper = &app_state.cache_wrapper;
         cache_wrapper.delete_layer_cache(layer_name).await?
+    } else {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(AppError::CacheNotFount(format!("{layer_id}")));
     }
     res.render(Redirect::other("/admin/catalog"));
     Ok(())

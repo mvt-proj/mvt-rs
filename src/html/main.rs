@@ -22,6 +22,13 @@ struct IndexTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "error.html")]
+pub struct ErrorTemplate {
+    pub status: u16,
+    pub message: String
+}
+
+#[derive(Template)]
 #[template(path = "login.html")]
 struct LoginTemplate {
     base: BaseTemplateData,
@@ -30,12 +37,6 @@ struct LoginTemplate {
 #[derive(Template)]
 #[template(path = "changepassword.html")]
 struct ChangePasswordTemplate {
-    base: BaseTemplateData,
-}
-
-#[derive(Template)]
-#[template(path = "error404.html")]
-struct E404Template {
     base: BaseTemplateData,
 }
 
@@ -131,25 +132,6 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
     let base = BaseTemplateData { is_auth };
 
     let template = ChangePasswordTemplate { base };
-    res.render(Text::Html(template.render().unwrap()));
-}
-
-#[handler]
-pub async fn error404(res: &mut Response, depot: &mut Depot) {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
-    let base = BaseTemplateData { is_auth };
-
-    let template = E404Template { base };
     res.render(Text::Html(template.render().unwrap()));
 }
 
@@ -339,5 +321,23 @@ pub async fn table_styles(
         current_user: &user,
     };
     res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn handle_errors(res: &mut Response, ctrl: &mut FlowCtrl) -> AppResult<()> {
+    if let Some(status) = res.status_code {
+        if status.as_u16() >= 400 && status.as_u16() <= 600 {
+            let template = ErrorTemplate {
+                status: status.as_u16(),
+                message: status.canonical_reason().unwrap().to_string()
+            };
+
+            res.render(Text::Html(template.render()?));
+            ctrl.skip_rest();
+            return Ok(());
+        }
+    }
+
     Ok(())
 }

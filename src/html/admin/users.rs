@@ -64,7 +64,12 @@ pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> 
 pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppResult<()> {
     let auth: Auth = get_auth().clone();
     let app_state = get_app_state();
-    let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
+    let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string());
+
+    if let Err(err) = encrypt_psw {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(AppError::PasswordHashError(err));
+    }
 
     let selected_groups: Vec<Group> = new_user
         .groups
@@ -76,17 +81,17 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         id: Uuid::new_v4().to_string(),
         username: new_user.username.to_string(),
         email: new_user.email,
-        password: encrypt_psw,
+        password: encrypt_psw.unwrap(),
         groups: selected_groups,
     };
 
-    create_cf_user(&user, None).await?;
+    if let Err(err) = create_cf_user(&user, None).await {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(AppError::SQLError(err));
+    }
 
     app_state.auth.users.push(user);
-
-    res.headers_mut()
-        .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/users"));
+    res.status_code(StatusCode::CREATED);
     Ok(())
 }
 
@@ -95,14 +100,21 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
     let auth: Auth = get_auth().clone();
     let app_state = get_app_state();
 
-    let encrypt_psw: String;
-    if new_user.password.to_string().is_empty() {
+    let encrypt_psw = if new_user.password.is_empty() {
         match auth.get_user_by_id(new_user.id.clone().unwrap().as_str()) {
-            Some(user) => encrypt_psw = user.password.clone(),
-            None => encrypt_psw = "".to_string(),
-        };
+            Some(user) => Ok(user.password.clone()),
+            None => {
+                res.status_code(StatusCode::NOT_FOUND);
+                return Err(AppError::UserNotFound);
+            }
+        }
     } else {
-        encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string())?;
+        auth.get_encrypt_psw(new_user.password.to_string())
+    };
+
+    if let Err(err) = encrypt_psw {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(AppError::PasswordHashError(err));
     }
 
     let selected_groups: Vec<Group> = new_user
@@ -115,13 +127,16 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         id: new_user.id.unwrap(),
         username: new_user.username.to_string(),
         email: new_user.email,
-        password: encrypt_psw,
+        password: encrypt_psw.unwrap(),
         groups: selected_groups,
     };
-    app_state.auth.update_user(user).await?;
-    res.headers_mut()
-        .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/users"));
+
+    if let Err(err) = app_state.auth.update_user(user).await {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(err);
+    }
+
+    res.status_code(StatusCode::OK);
     Ok(())
 }
 
@@ -131,11 +146,16 @@ pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) -> AppResult
 
     let id = req
         .param::<String>("id")
-        .ok_or(AppError::RequestParamError("schema".to_string()))?;
-    app_state.auth.delete_user(id).await?;
-    res.headers_mut()
-        .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin/users"));
+        .ok_or_else(|| {
+            res.status_code(StatusCode::BAD_REQUEST);
+            AppError::RequestParamError("id".to_string())
+        })?;
 
+    if let Err(err) = app_state.auth.delete_user(id).await {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        return Err(err);
+    }
+
+    res.status_code(StatusCode::NO_CONTENT);
     Ok(())
 }
