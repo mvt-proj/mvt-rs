@@ -80,6 +80,7 @@ pub async fn create_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> Ap
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
 
@@ -115,6 +116,7 @@ pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppR
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
 
@@ -140,5 +142,6 @@ pub async fn delete_style(req: &mut Request, res: &mut Response) -> AppResult<()
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/admin/styles"));
     Ok(())
 }

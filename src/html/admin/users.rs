@@ -91,7 +91,9 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
     }
 
     app_state.auth.users.push(user);
-    res.status_code(StatusCode::CREATED);
+    res.headers_mut()
+        .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/admin/users"));
     Ok(())
 }
 
@@ -136,7 +138,9 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         return Err(err);
     }
 
-    res.status_code(StatusCode::OK);
+    res.headers_mut()
+        .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/admin/users"));
     Ok(())
 }
 
@@ -156,6 +160,8 @@ pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) -> AppResult
         return Err(err);
     }
 
-    res.status_code(StatusCode::NO_CONTENT);
+    res.headers_mut()
+        .insert("content-type", "text/html".parse()?);
+    res.render(Redirect::other("/admin/users"));
     Ok(())
 }
