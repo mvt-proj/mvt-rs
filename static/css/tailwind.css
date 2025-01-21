@@ -645,6 +645,14 @@ video {
   height: calc(100vh - 165px);
 }
 
+.h-full {
+  height: 100%;
+}
+
+.max-h-\[calc\(100vh-4rem\)\] {
+  max-height: calc(100vh - 4rem);
+}
+
 .min-h-screen {
   min-height: 100vh;
 }
@@ -725,6 +733,10 @@ video {
 
 .overflow-x-auto {
   overflow-x: auto;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
 }
 
 .rounded-lg {

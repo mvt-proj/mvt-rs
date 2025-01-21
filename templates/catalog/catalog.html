@@ -1,6 +1,22 @@
 {% extends "layout.html" %} {% block content %}
 <h1 class="title text-center">Catalog of published layers</h1>
 
+<div id="modal-configuration" class="modal">
+  <div class="modal-card overflow-auto max-w-3xl w-full max-h-[calc(100vh-4rem)] h-full">
+    <header class="modal-header">
+      <p class="font-bold text-1xl text-center">Configuration</p>
+      <button class="modal-close" onclick="closeModal()">
+        <span class="icon">
+          <i class="fas fa-times"></i>
+        </span>
+      </button>
+    </header>
+    <section class="modal-body">
+      <div id="data-json" class="overflow-y-auto"></div>
+    </section>
+  </div>
+</div>
+
 <div class="flex justify-between items-center">
   <div class="flex space-x-3">
     <input
@@ -43,9 +59,15 @@
   hx-trigger="load"
   class="mt-4"
 ></div>
-{% endblock %} 
+{% endblock %}
 {% block scripts %}
 <script>
   document.addEventListener("htmx:afterOnLoad", initializePage);
+
+  const closeModal = () => {
+    document
+      .getElementById("modal-configuration")
+      .classList.remove("is-active");
+  };
 </script>
 {% endblock %}
