@@ -13,7 +13,7 @@ use crate::{
     services::{styles, tiles},
 };
 
-pub fn app_router() -> Service {
+pub fn app_router(session_secret: String) -> Service {
     let cache_30s = Cache::new(
         MokaStore::builder()
             .time_to_live(Duration::from_secs(30))
@@ -29,7 +29,7 @@ pub fn app_router() -> Service {
 
     let session_handler = SessionHandler::builder(
         CookieStore::new(),
-        b"a2b59cdf777c0d2802e825617849f355b82c0926212bb6302abc239d8f67ba87",
+        session_secret.as_bytes()
     )
     .build()
     .unwrap();

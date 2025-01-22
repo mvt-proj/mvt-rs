@@ -139,7 +139,7 @@ async fn main() -> AppResult<()> {
     let acceptor = TcpListener::new(format!("{}:{}", app_config.host, app_config.port))
         .bind()
         .await;
-    Server::new(acceptor).serve(routes::app_router()).await;
+    Server::new(acceptor).serve(routes::app_router(app_config.session_secret)).await;
 
     Ok(())
 }

@@ -10,6 +10,7 @@ pub struct AppConfig {
     pub db_conn: String,
     pub redis_conn: String,
     pub jwt_secret: String,
+    pub session_secret: String,
     pub db_pool_size_min: u32,
     pub db_pool_size_max: u32,
     pub salt_string: String,
@@ -73,6 +74,14 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .required(false)
                 .help("JWT secret key"),
         )
+        .arg(
+            Arg::new("sessionsecret")
+                .short('s')
+                .long("sessionsecret")
+                .value_name("SESSIONSECRET")
+                .required(false)
+                .help("Session secret key"),
+        )
         .get_matches();
 
     let config_dir = matches
@@ -92,6 +101,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
     let mut db_conn = String::new();
     let mut redis_conn = String::new();
     let mut jwt_secret = String::new();
+    let mut session_secret = String::new();
 
     if matches.contains_id("host") {
         host = matches
@@ -128,6 +138,13 @@ pub async fn parse_args() -> AppResult<AppConfig> {
             .to_string();
     }
 
+    if matches.contains_id("sessionsecret") {
+        session_secret = matches
+            .get_one::<String>("sessionsecret")
+            .expect("required")
+            .to_string();
+    }
+
     if host.is_empty() {
         host = std::env::var("IPHOST").expect("IPHOST needs to be defined");
     }
@@ -148,6 +165,10 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         jwt_secret = std::env::var("JWTSECRET").expect("JWTSECRET needs to be defined");
     }
 
+    if session_secret.is_empty() {
+        session_secret = std::env::var("SESSIONSECRET").expect("SESSIONSECRET needs to be defined");
+    }
+
     let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
     let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
     let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
@@ -163,6 +184,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         db_conn,
         redis_conn,
         jwt_secret,
+        session_secret,
         db_pool_size_min,
         db_pool_size_max,
         salt_string,
