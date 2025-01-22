@@ -387,6 +387,7 @@ pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -
     let user = user?;
 
     let mut session = Session::new();
+    session.expire_in(std::time::Duration::from_secs(60 * 20));
     session.insert("userid", user.id.clone()).unwrap();
     depot.set_session(session);
 
