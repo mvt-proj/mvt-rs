@@ -56,8 +56,7 @@ struct CatalogTableTemplate<'a> {
 
 #[derive(Template)]
 #[template(path = "styles/styles.html")]
-struct StylesTemplate<'a> {
-    styles: &'a Vec<Style>,
+struct StylesTemplate<> {
     base: BaseTemplateData,
 }
 
@@ -257,7 +256,6 @@ pub async fn page_map(
 
 #[handler]
 pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
-    let styles = Style::get_all_styles().await.unwrap();
     let mut is_auth = false;
 
     if let Some(session) = depot.session_mut() {
@@ -272,7 +270,6 @@ pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
     let base = BaseTemplateData { is_auth };
 
     let template = StylesTemplate {
-        styles: &styles,
         base,
     };
     res.render(Text::Html(template.render().unwrap()));
