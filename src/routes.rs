@@ -9,8 +9,8 @@ use salvo::session::CookieStore;
 use std::time::Duration;
 
 use crate::{
-    api, auth, health, html,
-    services::{styles, tiles},
+    api, auth, html,
+    services::{health, styles, tiles},
 };
 
 pub fn app_router(session_secret: String) -> Service {

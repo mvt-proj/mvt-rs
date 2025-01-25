@@ -12,7 +12,6 @@ mod database;
 mod db;
 mod diskcache;
 mod error;
-mod health;
 mod html;
 mod models;
 mod rediscache;
