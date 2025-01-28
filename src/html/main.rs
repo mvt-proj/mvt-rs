@@ -120,16 +120,7 @@ pub async fn index(res: &mut Response, depot: &mut Depot) {
 
 #[handler]
 pub async fn login(res: &mut Response, depot: &mut Depot) {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
+    let is_auth = is_authenticated(depot);
     if is_auth {
         res.render(Redirect::other("/"));
     }
