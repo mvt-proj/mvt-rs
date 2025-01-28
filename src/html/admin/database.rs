@@ -3,7 +3,10 @@ use askama::Template;
 use salvo::prelude::*;
 
 use crate::{
-    database::{query_fields, query_schemas, query_srid, query_tables, query_extent, Field, Schema, Srid, Table, Extent},
+    database::{
+        query_extent, query_fields, query_schemas, query_srid, query_tables, Extent, Field, Schema,
+        Srid, Table,
+    },
     error::{AppError, AppResult},
 };
 

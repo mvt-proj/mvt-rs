@@ -119,6 +119,8 @@ pub async fn query_extent(schema: String, table: String, geometry: String) -> Ap
             FROM {schema}.{table};
         "#
     );
-    let data = sqlx::query_as::<_, Extent>(&sql).fetch_one(&pg_pool).await?;
+    let data = sqlx::query_as::<_, Extent>(&sql)
+        .fetch_one(&pg_pool)
+        .await?;
     Ok(data)
 }
