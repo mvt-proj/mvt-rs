@@ -3,10 +3,9 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Auth, User},
+    auth::User,
     error::{AppError, AppResult},
-    get_auth,
-    html::main::BaseTemplateData,
+    html::main::{BaseTemplateData, get_session_data},
     models::category::Category,
 };
 
@@ -29,20 +28,7 @@ struct NewCategory<'a> {
 #[handler]
 pub async fn list_categories(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let app_state = crate::get_app_state();
-
-    let mut is_auth = false;
-    let mut user: Option<User> = None;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(usr) = auth.get_user_by_id(&userid) {
-                is_auth = true;
-                user = Some(usr.clone());
-            }
-        }
-    }
-
+    let (is_auth, user) = get_session_data(depot);
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
 

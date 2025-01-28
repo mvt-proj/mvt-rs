@@ -1,8 +1,8 @@
 use crate::{
-    auth::{Auth, Group, User},
+    auth::{Group, User},
     error::{AppError, AppResult},
     get_auth, get_catalog, get_categories,
-    html::main::BaseTemplateData,
+    html::main::{BaseTemplateData, is_authenticated},
     models::{
         catalog::{Layer, StateLayer},
         category::Category,
@@ -93,19 +93,8 @@ struct EditGroupTemplate {
 
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
-
     let template = IndexTemplate { base };
     res.render(Text::Html(template.render()?));
     Ok(())
@@ -114,17 +103,7 @@ pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 #[handler]
 pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let auth = get_auth().clone();
-
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
+    let is_auth = is_authenticated(depot);
 
     let base = BaseTemplateData { is_auth };
 
@@ -138,17 +117,7 @@ pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let id = req
@@ -172,17 +141,7 @@ pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot)
 pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let categories = get_categories().clone();
     let groups = get_auth().groups.clone();
-
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
+    let is_auth = is_authenticated(depot);
 
     let base = BaseTemplateData { is_auth };
 
@@ -197,17 +156,7 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let categories = get_categories().clone();
@@ -231,17 +180,7 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot
 
 #[handler]
 pub async fn new_category(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let template = NewCategoryTemplate { base };
@@ -255,17 +194,7 @@ pub async fn edit_category(
     res: &mut Response,
     depot: &mut Depot,
 ) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let id = req
@@ -282,16 +211,7 @@ pub async fn edit_category(
 
 #[handler]
 pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
+    let is_auth = is_authenticated(depot);
 
     let base = BaseTemplateData { is_auth };
 
@@ -303,17 +223,7 @@ pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let id = req
@@ -332,17 +242,7 @@ pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot
 
 #[handler]
 pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let template = NewGroupTemplate { base };
@@ -352,17 +252,7 @@ pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_group(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let id = req

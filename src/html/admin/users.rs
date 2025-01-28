@@ -12,7 +12,7 @@ use crate::{
     config::users::create_user as create_cf_user,
     error::{AppError, AppResult},
     get_app_state, get_auth,
-    html::main::BaseTemplateData,
+    html::main::{BaseTemplateData, get_session_data},
 };
 
 #[derive(Template)]
@@ -35,18 +35,8 @@ struct NewUser<'a> {
 
 #[handler]
 pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let mut is_auth = false;
-    let mut user: Option<User> = None;
+    let (is_auth, user) = get_session_data(depot);
     let auth: Auth = get_auth().clone();
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            if let Some(usr) = auth.get_user_by_id(&userid) {
-                is_auth = true;
-                user = Some(usr.clone());
-            }
-        }
-    }
 
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();

@@ -15,6 +15,39 @@ pub struct BaseTemplateData {
     pub is_auth: bool,
 }
 
+pub fn is_authenticated(depot: &mut Depot) -> bool {
+    if let Some(session) = depot.session_mut() {
+        if session.is_expired() {
+            return false;
+        }
+        if let Some(userid) = session.get::<String>("userid") {
+            let auth: Auth = get_auth().clone();
+            if auth.get_user_by_id(&userid).is_some() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+pub fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
+    let is_auth = is_authenticated(depot);
+    let mut user: Option<User> = None;
+
+    if is_auth {
+        if let Some(session) = depot.session_mut() {
+            if let Some(userid) = session.get::<String>("userid") {
+                let auth: Auth = get_auth().clone();
+                if let Some(usr) = auth.get_user_by_id(&userid) {
+                    user = Some(usr.clone());
+                }
+            }
+        }
+    }
+    (is_auth, user)
+}
+
+
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
@@ -79,17 +112,7 @@ struct MapTemplate<'a> {
 
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let template = IndexTemplate { base };
@@ -108,6 +131,9 @@ pub async fn login(res: &mut Response, depot: &mut Depot) {
             }
         }
     }
+    if is_auth {
+        res.render(Redirect::other("/"));
+    }
 
     let base = BaseTemplateData { is_auth };
 
@@ -117,17 +143,11 @@ pub async fn login(res: &mut Response, depot: &mut Depot) {
 
 #[handler]
 pub async fn change_password(res: &mut Response, depot: &mut Depot) {
-    let mut is_auth = false;
+    let is_auth = is_authenticated(depot);
 
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
+    if !is_auth {
+        res.render(Redirect::other("/login"));
     }
-
     let base = BaseTemplateData { is_auth };
 
     let template = ChangePasswordTemplate { base };
@@ -136,16 +156,7 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
 
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
+    let is_auth = is_authenticated(depot);
 
     let base = BaseTemplateData { is_auth };
 
@@ -160,9 +171,8 @@ pub async fn table_catalog(
     depot: &mut Depot,
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
-
     let mut catalog: Catalog = get_catalog().clone();
-    let mut user: Option<User> = None;
+    let (_is_auth, user) = get_session_data(depot);
 
     if let Some(filter) = filter {
         catalog.layers = catalog
@@ -179,15 +189,6 @@ pub async fn table_catalog(
             })
             .cloned()
             .collect();
-    }
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(usr) = auth.get_user_by_id(&userid) {
-                user = Some(usr.clone());
-            }
-        }
     }
 
     let is_guest_or_non_admin = user.is_none() || user.as_ref().map_or(true, |usr| !usr.is_admin());
@@ -214,16 +215,7 @@ pub async fn page_map(
     let category = parts.first().unwrap_or(&"");
     let name = parts.get(1).unwrap_or(&"");
 
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
+    let is_auth = is_authenticated(depot);
 
     let base = BaseTemplateData { is_auth };
 
@@ -256,17 +248,7 @@ pub async fn page_map(
 
 #[handler]
 pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
-    let mut is_auth = false;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(_) = auth.get_user_by_id(&userid) {
-                is_auth = true
-            }
-        }
-    }
-
+    let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
     let template = StylesTemplate {
@@ -282,17 +264,7 @@ pub async fn table_styles(
     depot: &mut Depot,
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
-    let mut user: Option<User> = None;
-
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
-            if let Some(usr) = auth.get_user_by_id(&userid) {
-                user = Some(usr.clone());
-            }
-        }
-    }
-
+    let (_is_auth, user) = get_session_data(depot);
     let mut styles = Style::get_all_styles().await?;
 
     if let Some(filter) = filter {

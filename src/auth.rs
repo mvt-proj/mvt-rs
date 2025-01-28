@@ -387,7 +387,6 @@ pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -
     let user = user?;
 
     let mut session = Session::new();
-    session.expire_in(std::time::Duration::from_secs(60 * 20));
     session.insert("userid", user.id.clone()).unwrap();
     depot.set_session(session);
 
@@ -401,6 +400,7 @@ pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -
 pub async fn logout(depot: &mut Depot, res: &mut Response) -> AppResult<()> {
     if let Some(session) = depot.session_mut() {
         session.remove("userid");
+        // session.destroy();
     }
     res.render(Redirect::other("/"));
     Ok(())

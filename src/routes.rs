@@ -31,6 +31,7 @@ pub fn app_router(session_secret: String) -> Service {
         CookieStore::new(),
         session_secret.as_bytes()
     )
+    .session_ttl(Some(Duration::from_secs(60 * 20)))
     .build()
     .unwrap();
 
