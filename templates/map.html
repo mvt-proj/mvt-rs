@@ -79,11 +79,14 @@
   zoomLevelElement.innerText = 1;
 
   let bounds = [[{{ extent.xmin}}, {{ extent.ymin}}], [{{ extent.xmax}}, {{ extent.ymax}}]];
-  map.fitBounds(bounds, {
-    padding: 20,
-    maxZoom: 16
-  });
-
+  try {
+    map.fitBounds(bounds, {
+      padding: 20,
+      maxZoom: 16
+    });
+  } catch (error) {
+    console.error("Error:", error);
+  }
 
   map.on('load', function () {
     map.addLayer({
