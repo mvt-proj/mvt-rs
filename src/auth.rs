@@ -427,7 +427,10 @@ pub async fn change_password<'a>(
 ) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let user_id = depot.session_mut().and_then(|session| session.get::<String>("userid")).ok_or(AppError::SessionNotFound);
+    let user_id = depot
+        .session_mut()
+        .and_then(|session| session.get::<String>("userid"))
+        .ok_or(AppError::SessionNotFound);
 
     if let Err(err) = user_id {
         res.status_code(StatusCode::CONFLICT);
@@ -440,7 +443,6 @@ pub async fn change_password<'a>(
         .auth
         .get_user_by_id(&user_id)
         .ok_or(AppError::UserNotFoundError(user_id.clone()));
-
 
     if let Err(err) = user {
         res.status_code(StatusCode::NOT_FOUND);

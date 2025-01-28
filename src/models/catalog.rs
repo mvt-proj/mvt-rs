@@ -138,7 +138,10 @@ impl Layer {
             self.get_max_cache_age()
         );
         rv += &format!("<strong>Published:</strong> {}<br>", self.published);
-        rv += &format!("<strong>Allowed Groups: </strong> {}", self.groups_as_string());
+        rv += &format!(
+            "<strong>Allowed Groups: </strong> {}",
+            self.groups_as_string()
+        );
         rv
     }
 

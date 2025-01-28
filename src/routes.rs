@@ -27,13 +27,10 @@ pub fn app_router(session_secret: String) -> Service {
         .allow_headers(cors::Any)
         .into_handler();
 
-    let session_handler = SessionHandler::builder(
-        CookieStore::new(),
-        session_secret.as_bytes()
-    )
-    .session_ttl(Some(Duration::from_secs(60 * 20)))
-    .build()
-    .unwrap();
+    let session_handler = SessionHandler::builder(CookieStore::new(), session_secret.as_bytes())
+        .session_ttl(Some(Duration::from_secs(60 * 20)))
+        .build()
+        .unwrap();
 
     let static_dir = StaticDir::new(["static"])
         .defaults("index.html")
@@ -221,5 +218,5 @@ pub fn app_router(session_secret: String) -> Service {
         )
         .push(Router::with_path("static/{**path}").get(static_dir));
 
-        Service::new(router).catcher(Catcher::default().hoop(html::main::handle_errors))
+    Service::new(router).catcher(Catcher::default().hoop(html::main::handle_errors))
 }

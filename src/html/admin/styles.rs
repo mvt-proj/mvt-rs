@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::User,
     error::{AppError, AppResult},
-    html::main::{BaseTemplateData, get_session_data},
+    html::main::{get_session_data, BaseTemplateData},
     models::{category::Category, styles::Style},
 };
 
@@ -28,7 +28,7 @@ struct NewStyle<'a> {
 
 #[handler]
 pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (is_auth, user) =get_session_data(depot);
+    let (is_auth, user) = get_session_data(depot);
 
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
@@ -85,7 +85,8 @@ pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppR
         return Err(err);
     }
 
-    let result = style.unwrap()
+    let result = style
+        .unwrap()
         .update_style(
             new_style.name.to_string(),
             category.unwrap(),

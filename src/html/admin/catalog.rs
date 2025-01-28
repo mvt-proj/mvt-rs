@@ -7,7 +7,7 @@ use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
     get_app_state,
-    html::main::{BaseTemplateData, get_session_data},
+    html::main::{get_session_data, BaseTemplateData},
     models::{
         catalog::{Layer, StateLayer},
         category::Category,
@@ -250,7 +250,9 @@ pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> Ap
 
     let layer_id = layer_id?;
 
-    let layer = app_state.catalog.find_layer_by_id(&layer_id, StateLayer::Any);
+    let layer = app_state
+        .catalog
+        .find_layer_by_id(&layer_id, StateLayer::Any);
     if let Some(layer) = layer {
         let layer_name = &layer.name;
         let cache_wrapper = &app_state.cache_wrapper;

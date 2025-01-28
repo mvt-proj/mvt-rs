@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
-    html::main::{BaseTemplateData, get_session_data},
+    html::main::{get_session_data, BaseTemplateData},
 };
 
 #[derive(Template)]

@@ -12,7 +12,7 @@ use crate::{
     config::users::create_user as create_cf_user,
     error::{AppError, AppResult},
     get_app_state, get_auth,
-    html::main::{BaseTemplateData, get_session_data},
+    html::main::{get_session_data, BaseTemplateData},
 };
 
 #[derive(Template)]
@@ -138,12 +138,10 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
     let app_state = get_app_state();
 
-    let id = req
-        .param::<String>("id")
-        .ok_or_else(|| {
-            res.status_code(StatusCode::BAD_REQUEST);
-            AppError::RequestParamError("id".to_string())
-        })?;
+    let id = req.param::<String>("id").ok_or_else(|| {
+        res.status_code(StatusCode::BAD_REQUEST);
+        AppError::RequestParamError("id".to_string())
+    })?;
 
     if let Err(err) = app_state.auth.delete_user(id).await {
         res.status_code(StatusCode::INTERNAL_SERVER_ERROR);

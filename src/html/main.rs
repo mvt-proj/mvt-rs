@@ -47,7 +47,6 @@ pub fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
     (is_auth, user)
 }
 
-
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
@@ -58,7 +57,7 @@ struct IndexTemplate {
 #[template(path = "error.html")]
 pub struct ErrorTemplate {
     pub status: u16,
-    pub message: String
+    pub message: String,
 }
 
 #[derive(Template)]
@@ -89,7 +88,7 @@ struct CatalogTableTemplate<'a> {
 
 #[derive(Template)]
 #[template(path = "styles/styles.html")]
-struct StylesTemplate<> {
+struct StylesTemplate {
     base: BaseTemplateData,
 }
 
@@ -251,9 +250,7 @@ pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
     let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
-    let template = StylesTemplate {
-        base,
-    };
+    let template = StylesTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
 }
 
@@ -299,7 +296,7 @@ pub async fn handle_errors(res: &mut Response, ctrl: &mut FlowCtrl) -> AppResult
         if status.as_u16() >= 400 && status.as_u16() <= 600 {
             let template = ErrorTemplate {
                 status: status.as_u16(),
-                message: status.canonical_reason().unwrap().to_string()
+                message: status.canonical_reason().unwrap().to_string(),
             };
 
             res.render(Text::Html(template.render()?));
