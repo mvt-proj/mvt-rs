@@ -157,7 +157,8 @@ pub fn app_router(session_secret: String) -> Service {
                         .push(Router::with_path("schemas").get(html::admin::database::schemas))
                         .push(Router::with_path("tables").get(html::admin::database::tables))
                         .push(Router::with_path("fields").get(html::admin::database::fields))
-                        .push(Router::with_path("srid").get(html::admin::database::srid)),
+                        .push(Router::with_path("srid").get(html::admin::database::srid))
+                        .push(Router::with_path("extent").get(html::admin::database::extent))
                 ),
         )
         .push(
@@ -192,7 +193,11 @@ pub fn app_router(session_secret: String) -> Service {
                                 .push(
                                     Router::with_path("srid/{schema}/{table}/{geometry}")
                                         .get(api::database::srid),
-                                ),
+                                )
+                                // .push(
+                                //     Router::with_path("extend/{schema}/{table}/{geometry}")
+                                //         .get(api::database::extent),
+                                // )
                         )
                         .push(
                             Router::with_path("catalog/layer")

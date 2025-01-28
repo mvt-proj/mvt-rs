@@ -9,7 +9,7 @@
   <section>
       <div class="columns">
         <div class="column">
-          <h1 class="title is-4">{{ alias }}</h1>
+          <h1 class="title">{{ layer.alias }}</h1>
         </div>
         <div class="column has-text-right">
           <p>Zoom level: <span class="has-text-weight-bold" id="zoom-level"></span></p>
@@ -33,17 +33,17 @@
   }
 
   var paint;
-  if ('{{ geometry}}' === 'circle') {
+  if ('{{ geometry }}' === 'circle') {
     paint = {
       'circle-radius': 5,
       'circle-color': '#8108ff'
     };
-  } else if ('{{ geometry}}'  === 'line') {
+  } else if ('{{ geometry }}'  === 'line') {
     paint = {
       'line-width': 2,
       'line-color': '#8108ff'
     };
-  } else if ('{{ geometry}}'  === 'fill') {
+  } else if ('{{ geometry }}'  === 'fill') {
     paint = {
       'fill-opacity': 0.5,
       'fill-color': '#8108ff'
@@ -71,24 +71,36 @@
         }
       ]
     },
-    center: [0, 0], // starting position [lng, lat]
+    center: [0, 0],
     zoom: 1
   });
 
   var zoomLevelElement = document.getElementById('zoom-level');
   zoomLevelElement.innerText = 1;
 
+
+  fetch(`${protocol}//${host}:${port}/admin/database/extent?schema={{ layer.schema }}&table={{ layer.table_name }}&geometry=geom`)
+    .then(response => response.json())
+    .then(data => {
+      let bounds = [[data.xmin, data.ymin], [data.xmax, data.ymax]];
+      map.fitBounds(bounds, {
+        padding: 20,
+        maxZoom: 16
+      });
+    })
+    .catch(error => console.error('Error fetching extent:', error));
+
   map.on('load', function () {
     map.addLayer({
-      id: '{{ name }}',
+      id: '{{ layer.name }}',
       type: '{{ geometry }}',
       source: {
         type: 'vector',
-        tiles: [`${protocol}//${host}:${port}/services/tiles/{{ category }}:{{ name }}/{z}/{x}/{y}.pbf`],
+        tiles: [`${protocol}//${host}:${port}/services/tiles/{{ layer.category.name }}:{{ layer.name }}/{z}/{x}/{y}.pbf`],
         minzoom: 0,
         maxzoom: 22
       },
-      'source-layer': '{{ name }}',
+      'source-layer': '{{ layer.name }}',
       paint: paint
     });
 
@@ -107,8 +119,8 @@
   });
 
 
-  map.on('click', '{{ name }}', (e) => {
-    let features = map.queryRenderedFeatures(e.point, { layers: ['{{ name }}'] });
+  map.on('click', '{{ layer.name }}', (e) => {
+    let features = map.queryRenderedFeatures(e.point, { layers: ['{{ layer.name }}'] });
 
     if (!features.length) {
       return;
@@ -121,7 +133,7 @@
         overflow-y: auto;
         color: black;"
       >
-        <h5 style="font-size: 1.25rem; line-height: 1.75rem;">{{ alias }}</h5>
+        <h5 style="font-size: 1.25rem; line-height: 1.75rem;">{{ layer.alias }}</h5>
         ${Object.entries(feature.properties)
           .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
           .join('')}
@@ -134,11 +146,11 @@
       .addTo(map);
   });
 
-  map.on('mouseenter', '{{ name }}', () => {
+  map.on('mouseenter', '{{ layer.name }}', () => {
     map.getCanvas().style.cursor = 'pointer';
   });
 
-  map.on('mouseleave', '{{ name }}', () => {
+  map.on('mouseleave', '{{ layer.name }}', () => {
     map.getCanvas().style.cursor = '';
   });
 

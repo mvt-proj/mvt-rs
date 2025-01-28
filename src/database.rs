@@ -25,6 +25,14 @@ pub struct Srid {
     pub name: i32,
 }
 
+#[derive(FromRow, Serialize, Debug)]
+pub struct Extent {
+    pub xmin: f64,
+    pub ymin: f64,
+    pub xmax: f64,
+    pub ymax: f64,
+}
+
 pub async fn query_schemas() -> AppResult<Vec<Schema>> {
     let pg_pool: PgPool = get_db_pool().clone();
 
@@ -95,5 +103,22 @@ pub async fn query_srid(schema: String, table: String, geometry: String) -> AppR
     );
 
     let data = sqlx::query_as::<_, Srid>(&sql).fetch_one(&pg_pool).await?;
+    Ok(data)
+}
+
+pub async fn query_extent(schema: String, table: String, geometry: String) -> AppResult<Extent> {
+    let pg_pool: PgPool = get_db_pool().clone();
+
+    let sql = format!(
+        r#"
+            SELECT
+              ST_XMin(ST_Extent(ST_Transform({geometry}, 4326))) AS xmin,
+              ST_YMin(ST_Extent(ST_Transform({geometry}, 4326))) AS ymin,
+              ST_XMax(ST_Extent(ST_Transform({geometry}, 4326))) AS xmax,
+              ST_YMax(ST_Extent(ST_Transform({geometry}, 4326))) AS ymax
+            FROM {schema}.{table};
+        "#
+    );
+    let data = sqlx::query_as::<_, Extent>(&sql).fetch_one(&pg_pool).await?;
     Ok(data)
 }

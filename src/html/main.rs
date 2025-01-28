@@ -102,10 +102,8 @@ struct StylesTableTemplate<'a> {
 #[derive(Template)]
 #[template(path = "map.html")]
 struct MapTemplate<'a> {
-    category: &'a str,
-    name: &'a str,
-    alias: &'a str,
     geometry: &'a str,
+    layer: Layer,
     base: BaseTemplateData,
 }
 
@@ -225,10 +223,8 @@ pub async fn page_map(
     };
 
     let template = MapTemplate {
-        category: &lyr.category.name,
-        name: &lyr.name,
-        alias: &lyr.alias,
         geometry,
+        layer: lyr.clone(),
         base,
     };
 
