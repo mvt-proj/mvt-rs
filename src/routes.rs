@@ -4,14 +4,28 @@ use salvo::cors::{self as cors, Cors};
 // use salvo::http::Method;
 use salvo::logging::Logger;
 use salvo::prelude::*;
-use salvo::serve_static::StaticDir;
+// use salvo::serve_static::StaticDir;
 use salvo::session::CookieStore;
 use std::time::Duration;
+use include_dir::{include_dir, Dir};
 
 use crate::{
     api, auth, html,
     services::{health, styles, tiles},
 };
+
+const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
+
+#[handler]
+async fn serve_static(req: &mut Request, res: &mut Response) {
+    let path = req.uri().path().trim_start_matches("/static/");
+    
+    if let Some(file) = STATIC_DIR.get_file(path) {
+        let _ = res.write_body(file.contents());
+    } else {
+        res.status_code(StatusCode::NOT_FOUND);
+    }
+}
 
 pub fn app_router(session_secret: String) -> Service {
     let cache_30s = Cache::new(
@@ -32,9 +46,9 @@ pub fn app_router(session_secret: String) -> Service {
         .build()
         .unwrap();
 
-    let static_dir = StaticDir::new(["static"])
-        .defaults("index.html")
-        .auto_list(true);
+    // let static_dir = StaticDir::new(["static"])
+    //     .defaults("index.html")
+    //     .auto_list(true);
 
     let router = Router::new()
         .hoop(Logger::default())
@@ -220,7 +234,8 @@ pub fn app_router(session_secret: String) -> Service {
                 .push(Router::with_path("tiles/{layer_name}/{z}/{x}/{y}.pbf").get(tiles::mvt))
                 .push(Router::with_path("styles/{style_name}").get(styles::index)),
         )
-        .push(Router::with_path("static/{**path}").get(static_dir));
+        // .push(Router::with_path("static/{**path}").get(static_dir));
+        .push(Router::with_path("static/{**path}").get(serve_static));
 
     Service::new(router).catcher(Catcher::default().hoop(html::main::handle_errors))
 }
