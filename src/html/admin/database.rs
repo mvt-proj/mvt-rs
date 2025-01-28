@@ -4,7 +4,7 @@ use salvo::prelude::*;
 
 use crate::{
     database::{
-        query_extent, query_fields, query_schemas, query_srid, query_tables, Extent, Field, Schema,
+        query_fields, query_schemas, query_srid, query_tables, Field, Schema,
         Srid, Table,
     },
     error::{AppError, AppResult},
@@ -121,20 +121,4 @@ pub async fn srid(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let html_render = template.render()?;
     res.render(Text::Html(html_render));
     Ok(())
-}
-
-#[handler]
-pub async fn extent(req: &mut Request) -> AppResult<Json<Extent>> {
-    let schema = req
-        .query::<String>("schema")
-        .ok_or(AppError::RequestParamError("schema".to_string()))?;
-    let table = req
-        .query::<String>("table")
-        .ok_or(AppError::RequestParamError("table".to_string()))?;
-    let geometry = req
-        .query::<String>("geometry")
-        .ok_or(AppError::RequestParamError("geometry".to_string()))?;
-    let rv = query_extent(schema, table, geometry).await?;
-
-    Ok(Json(rv))
 }

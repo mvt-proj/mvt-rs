@@ -1,7 +1,9 @@
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
 
-use crate::{error::AppResult, get_db_pool};
+use crate::{
+    models::catalog::Layer,
+    error::AppResult, get_db_pool};
 
 #[derive(FromRow, Serialize, Debug)]
 pub struct Schema {
@@ -106,8 +108,11 @@ pub async fn query_srid(schema: String, table: String, geometry: String) -> AppR
     Ok(data)
 }
 
-pub async fn query_extent(schema: String, table: String, geometry: String) -> AppResult<Extent> {
+pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
     let pg_pool: PgPool = get_db_pool().clone();
+    let schema = &layer.schema;
+    let table = &layer.table_name;
+    let geometry = layer.get_geom();
 
     let sql = format!(
         r#"

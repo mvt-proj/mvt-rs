@@ -75,20 +75,15 @@
     zoom: 1
   });
 
-  var zoomLevelElement = document.getElementById('zoom-level');
+  let zoomLevelElement = document.getElementById('zoom-level');
   zoomLevelElement.innerText = 1;
 
+  let bounds = [[{{ extent.xmin}}, {{ extent.ymin}}], [{{ extent.xmax}}, {{ extent.ymax}}]];
+  map.fitBounds(bounds, {
+    padding: 20,
+    maxZoom: 16
+  });
 
-  fetch(`${protocol}//${host}:${port}/admin/database/extent?schema={{ layer.schema }}&table={{ layer.table_name }}&geometry=geom`)
-    .then(response => response.json())
-    .then(data => {
-      let bounds = [[data.xmin, data.ymin], [data.xmax, data.ymax]];
-      map.fitBounds(bounds, {
-        padding: 20,
-        maxZoom: 16
-      });
-    })
-    .catch(error => console.error('Error fetching extent:', error));
 
   map.on('load', function () {
     map.addLayer({

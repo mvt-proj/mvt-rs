@@ -5,9 +5,10 @@ use crate::{
     auth::{Auth, User},
     error::AppResult,
     get_auth, get_catalog,
+    database::{Extent, query_extent},
     models::{
         catalog::{Catalog, Layer, StateLayer},
-        styles::Style,
+        styles::Style
     },
 };
 
@@ -104,6 +105,7 @@ struct StylesTableTemplate<'a> {
 struct MapTemplate<'a> {
     geometry: &'a str,
     layer: Layer,
+    extent: Extent,
     base: BaseTemplateData,
 }
 
@@ -222,9 +224,12 @@ pub async fn page_map(
         _ => &lyr.geometry,
     };
 
+    let extent = query_extent(&lyr).await.unwrap();
+
     let template = MapTemplate {
         geometry,
         layer: lyr.clone(),
+        extent,
         base,
     };
 
