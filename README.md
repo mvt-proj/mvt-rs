@@ -13,27 +13,34 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 
 ## Environment Variables (.env)
 
-The server uses environment variables for its configuration. Make sure to create a `.env` file at the root of your project with the following variables:
-
-- `DBCONN`: The connection URL for the PostgreSQL database.
-  Example: `postgres://user:pass@host/db`
-
-- `POOLSIZEMIN`: Minimum size of the connection pool. Example: `3`
-
-- `POOLSIZEMAX`: Maximum size of the connection pool. Example: `5`
-
-- `IPHOST`: The IP address where the server will listen. Example: `0.0.0.0`
-
-- `PORT`: The port on which the server will run. Example: `5880`
-
-- `REDISCONN`: The connection URL for the Redis. If a Redis connection is provided, it is assumed that Redis should be used as the primary cache, overriding disk cache usage. Example: `redis://127.0.0.1:6379`
-
-- `SALTSTRING`: User passwords are stored encrypted using Argon2. This variable is used to enhance the security of the password hashing process.
-
-- `JWTSECRET`: It is used to create and validate JWT tokens.
+### The server uses environment variables for its configuration.
+### Make sure to create a `.env` file at the root of your project with the following variables:
 
 
+```sh
+# Database connection URL (PostgreSQL)
+DBCONN=postgres://user:pass@host/db
 
+# Connection pool size
+POOLSIZEMIN=3   # Minimum size of the connection pool
+POOLSIZEMAX=5   # Maximum size of the connection pool
+
+# Server settings
+IPHOST=0.0.0.0  # The IP address where the server will listen
+PORT=5880       # The port on which the server will run
+
+# Redis connection (optional, overrides disk cache if provided)
+REDISCONN=redis://127.0.0.1:6379
+
+# Security settings
+SALTSTRING=randomsalt    # Used for Argon2 password hashing
+JWTSECRET=supersecretjwt # Used to create and validate JWT tokens
+SESSIONSECRET=supersecretsession # Secret key for session management
+
+# Directories
+CONFIG=config  # Directory path for configuration files
+CACHE=cache    # Directory path for cache storage
+```
 
 Remember the `.env` file has to kept secure and not shared in public repositories.
 
@@ -88,15 +95,36 @@ cargo build --release
 ## Arguments
 
 ```
-Usage: mvt-rs [OPTIONS]
+Usage: mvt-server [OPTIONS]
 
 Options:
-  -c, --config <CONFIGDIR>     Directory where config files are placed [default: config]
-  -b, --cache <CACHEDIR>       Directory where cache files are placed [default: cache]
-  -i, --host <HOST>            Bind address
-  -p, --port <PORT>            Bind port
-  -d, --dbconn <DBCONN>        Database connection
-  -r, --redisconn <REDISCONN>  Redis connection
-  -j, --jwtsecret <JWTSECRET>  JWT secret key
-  -h, --help                   Print help
+  -c, --config <CONFIGDIR>             Directory where config file is placed [default: config]
+  -b, --cache <CACHEDIR>               Directory where cache files are placed [default: cache]
+  -i, --host <HOST>                    Bind address [default: 0.0.0.0]
+  -p, --port <PORT>                    Bind port [default: 5887]
+  -d, --dbconn <DBCONN>                Database connection
+  -r, --redisconn <REDISCONN>          Redis connection
+  -j, --jwtsecret <JWTSECRET>          JWT secret key
+  -s, --sessionsecret <SESSIONSECRET>  Session secret key
+  -m, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
+  -x, --dbpoolmax <DBPOOLMAX>          Maximum database pool size [default: 5]
+  -a, --saltstring <SALTSTRING>        Salt string for password hashing
+  -h, --help                           Print help
+```
+
+## Example
+
+```
+./mvt-server \      
+  --config config_folder \
+  --cache cache_folder \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --dbconn "postgres://user:password@localhost:5432/mydb" \
+  --redisconn "redis://127.0.0.1:6379" \
+  --jwtsecret "supersecretjwt" \
+  --sessionsecret "supersecretsession" \
+  --dbpoolmin 5 \
+  --dbpoolmax 20 \
+  --saltstring "randomsalt"
 ```
