@@ -294,7 +294,7 @@ impl Auth {
         let jwt_secret = get_jwt_secret();
         for user in self.users.clone().into_iter() {
             if username == user.username && self.validate_psw(user, psw)? {
-                let exp = OffsetDateTime::now_utc() + Duration::days(14);
+                let exp = OffsetDateTime::now_utc() + Duration::days(1);
                 let claim = JwtClaims {
                     username: username.to_owned(),
                     exp: exp.unix_timestamp(),
