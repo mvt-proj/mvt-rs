@@ -1,5 +1,6 @@
 use crate::error::AppResult;
 use clap::{Arg, Command};
+use std::env;
 
 #[derive(Debug)]
 pub struct AppConfig {
@@ -17,6 +18,8 @@ pub struct AppConfig {
 }
 
 pub async fn parse_args() -> AppResult<AppConfig> {
+    dotenv::dotenv().ok();
+
     let matches = Command::new("mvt-server: a vector tiles server")
         .arg(
             Arg::new("configdir")
@@ -55,7 +58,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('d')
                 .long("dbconn")
                 .value_name("DBCONN")
-                .required(false)
                 .help("Database connection"),
         )
         .arg(
@@ -63,7 +65,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('r')
                 .long("redisconn")
                 .value_name("REDISCONN")
-                .required(false)
                 .help("Redis connection"),
         )
         .arg(
@@ -71,7 +72,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('j')
                 .long("jwtsecret")
                 .value_name("JWTSECRET")
-                .required(false)
                 .help("JWT secret key"),
         )
         .arg(
@@ -79,102 +79,58 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('s')
                 .long("sessionsecret")
                 .value_name("SESSIONSECRET")
-                .required(false)
                 .help("Session secret key"),
+        )
+        .arg(
+            Arg::new("dbpoolmin")
+                .short('m')
+                .long("dbpoolmin")
+                .value_name("DBPOOLMIN")
+                .help("Minimum database pool size"),
+        )
+        .arg(
+            Arg::new("dbpoolmax")
+                .short('x')
+                .long("dbpoolmax")
+                .value_name("DBPOOLMAX")
+                .help("Maximum database pool size"),
+        )
+        .arg(
+            Arg::new("saltstring")
+                .short('a')
+                .long("saltstring")
+                .value_name("SALTSTRING")
+                .help("Salt string for password hashing"),
         )
         .get_matches();
 
-    let config_dir = matches
-        .get_one::<String>("configdir")
-        .expect("required")
-        .to_string();
+    let get_value = |key: &str, arg_name: &str, default: Option<&str>| -> String {
+        matches
+            .get_one::<String>(arg_name)
+            .cloned()
+            .or_else(|| env::var(key).ok())
+            .or_else(|| default.map(String::from))
+            .unwrap_or_else(|| panic!("{} is required", key))
+    };
 
-    let cache_dir = matches
-        .get_one::<String>("cachedir")
-        .expect("required")
-        .to_string();
+    let config_dir = get_value("CONFIG", "configdir", Some("config"));
+    let cache_dir = get_value("CACHE", "cachedir", Some("cache"));
+    let host = get_value("IPHOST", "host", Some("0.0.0.0"));
+    let port = get_value("PORT", "port", Some("5887"));
+    let db_conn = get_value("DBCONN", "dbconn", None);
+    let redis_conn = get_value("REDISCONN", "redisconn", Some(""));
+    let jwt_secret = get_value("JWTSECRET", "jwtsecret", None);
+    let session_secret = get_value("SESSIONSECRET", "sessionsecret", None);
+    let salt_string = get_value("SALTSTRING", "saltstring", None);
 
-    dotenv::dotenv().ok();
+    let db_pool_size_min: u32 = get_value("POOLSIZEMIN", "dbpoolmin", Some("2"))
+        .parse()
+        .expect("Invalid POOLSIZEMIN value");
+    let db_pool_size_max: u32 = get_value("POOLSIZEMAX", "dbpoolmax", Some("5"))
+        .parse()
+        .expect("Invalid POOLSIZEMAX value");
 
-    let mut host = String::new();
-    let mut port = String::new();
-    let mut db_conn = String::new();
-    let mut redis_conn = String::new();
-    let mut jwt_secret = String::new();
-    let mut session_secret = String::new();
-
-    if matches.contains_id("host") {
-        host = matches
-            .get_one::<String>("host")
-            .expect("required")
-            .to_string();
-    }
-
-    if matches.contains_id("port") {
-        port = matches
-            .get_one::<String>("port")
-            .expect("required")
-            .to_string();
-    }
-
-    if matches.contains_id("dbconn") {
-        db_conn = matches
-            .get_one::<String>("dbconn")
-            .expect("required")
-            .to_string();
-    }
-
-    if matches.contains_id("redisconn") {
-        redis_conn = matches
-            .get_one::<String>("redisconn")
-            .expect("required")
-            .to_string();
-    }
-
-    if matches.contains_id("jwtsecret") {
-        jwt_secret = matches
-            .get_one::<String>("jwtsecret")
-            .expect("required")
-            .to_string();
-    }
-
-    if matches.contains_id("sessionsecret") {
-        session_secret = matches
-            .get_one::<String>("sessionsecret")
-            .expect("required")
-            .to_string();
-    }
-
-    if host.is_empty() {
-        host = std::env::var("IPHOST").expect("IPHOST needs to be defined");
-    }
-
-    if port.is_empty() {
-        port = std::env::var("PORT").expect("PORT needs to be defined");
-    }
-
-    if db_conn.is_empty() {
-        db_conn = std::env::var("DBCONN").expect("DBCONN needs to be defined");
-    }
-
-    if redis_conn.is_empty() {
-        redis_conn = std::env::var("REDISCONN").unwrap_or_default();
-    }
-
-    if jwt_secret.is_empty() {
-        jwt_secret = std::env::var("JWTSECRET").expect("JWTSECRET needs to be defined");
-    }
-
-    if session_secret.is_empty() {
-        session_secret = std::env::var("SESSIONSECRET").expect("SESSIONSECRET needs to be defined");
-    }
-
-    let db_pool_size_min = std::env::var("POOLSIZEMIN").unwrap_or("2".to_string());
-    let db_pool_size_max = std::env::var("POOLSIZEMAX").unwrap_or("5".to_string());
-    let salt_string = std::env::var("SALTSTRING").expect("SALTSTRING needs to be defined");
-
-    let db_pool_size_min: u32 = db_pool_size_min.parse().unwrap_or(3);
-    let db_pool_size_max: u32 = db_pool_size_max.parse().unwrap_or(5);
+    dbg!(matches);
 
     Ok(AppConfig {
         config_dir,
