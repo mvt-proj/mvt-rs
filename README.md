@@ -111,3 +111,20 @@ Options:
   -a, --saltstring <SALTSTRING>        Salt string for password hashing
   -h, --help                           Print help
 ```
+
+## Example
+
+```
+./mvt-server \      
+  --config config_folder \
+  --cache cache_folder \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --dbconn "postgres://user:password@localhost:5432/mydb" \
+  --redisconn "redis://127.0.0.1:6379" \
+  --jwtsecret "supersecretjwt" \
+  --sessionsecret "supersecretsession" \
+  --dbpoolmin 5 \
+  --dbpoolmax 20 \
+  --saltstring "randomsalt"
+```
