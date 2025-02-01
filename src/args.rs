@@ -130,8 +130,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         .parse()
         .expect("Invalid POOLSIZEMAX value");
 
-    dbg!(matches);
-
     Ok(AppConfig {
         config_dir,
         cache_dir,
