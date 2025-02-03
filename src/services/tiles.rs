@@ -16,6 +16,7 @@ use crate::{
     error::AppResult,
     get_app_state, get_catalog, get_db_pool,
     models::catalog::{Catalog, Layer, StateLayer},
+    html::main::get_session_data
 };
 
 fn convert_fields(fields: Vec<String>) -> String {
@@ -163,7 +164,7 @@ async fn get_tile(
 }
 
 #[handler]
-pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
+pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let layer_name = req.param::<String>("layer_name").unwrap_or("".to_string());
     let parts: Vec<&str> = layer_name.split(':').collect();
     let category = parts.first().unwrap_or(&"");
@@ -208,7 +209,8 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
                     lyr_groups.iter().any(|g| user_group_ids.contains(&g.id))
                 });
 
-                if !has_common_group {
+                let (is_auth, _user) = get_session_data(depot);
+                if !has_common_group & !is_auth {
                     res.body(salvo::http::ResBody::Once(Bytes::new()));
                     return Ok(());
                 }
