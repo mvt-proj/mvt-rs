@@ -3,6 +3,7 @@ use salvo::http::header::HeaderValue;
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::time::Instant;
 
 enum Via {
@@ -11,6 +12,7 @@ enum Via {
 }
 
 use crate::{
+    auth::User,
     error::AppResult,
     get_app_state, get_catalog, get_db_pool,
     models::catalog::{Catalog, Layer, StateLayer},
@@ -175,48 +177,76 @@ pub async fn mvt(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let pg_pool: PgPool = get_db_pool().clone();
     let catalog: Catalog = get_catalog().clone();
 
-    let layer = catalog.find_layer_by_category_and_name(category, name, StateLayer::Published);
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,
     );
+    let layer = catalog.find_layer_by_category_and_name(category, name, StateLayer::Published);
 
-    match layer {
-        Some(lyr) => {
-            let zmin = lyr.zmin.unwrap_or(0);
-            let zmax = lyr.zmax.unwrap_or(22);
-            if z < zmin || z > zmax {
-                res.body(salvo::http::ResBody::Once(Bytes::new()));
-                return Ok(());
-            }
-            let start_time = Instant::now();
-            let (tile, via) = get_tile(pg_pool, lyr.clone(), x, y, z, filter).await?;
-            let elapsed_time = start_time.elapsed();
-            let elapsed_time_str = format!("{}", elapsed_time.as_millis());
-            res.headers_mut().insert(
-                "X-Data-Source-Time",
-                HeaderValue::from_str(&elapsed_time_str)
-                    .unwrap_or_else(|_| HeaderValue::from_static("0")),
-            );
+    if let Some(lyr) = layer {
+        // ====================================================================================
+        if let Some(lyr_groups) = lyr.groups.as_ref() {
+            if !lyr_groups.is_empty() {
+                let authorization = req
+                    .headers()
+                    .get("authorization")
+                    .and_then(|ah| ah.to_str().ok())
+                    .unwrap_or("");
 
-            match via {
-                Via::Database => {
-                    res.headers_mut()
-                        .insert("X-Cache", HeaderValue::from_static("MISS"));
+                let user: Option<User> = if !authorization.is_empty() {
+                    let app_state = crate::get_app_state();
+                    app_state
+                        .auth
+                        .get_user_by_authorization(authorization)?
+                        .cloned()
+                } else {
+                    None
+                };
+
+                let has_common_group = user.as_ref().map_or(false, |user| {
+                    let user_group_ids: HashSet<_> = user.groups.iter().map(|g| &g.id).collect();
+                    lyr_groups.iter().any(|g| user_group_ids.contains(&g.id))
+                });
+
+                if !has_common_group {
+                    res.body(salvo::http::ResBody::Once(Bytes::new()));
+                    return Ok(());
                 }
-                Via::Cache => {
-                    res.headers_mut()
-                        .insert("X-Cache", HeaderValue::from_static("HIT Cached"));
-                }
             }
-
-            res.body(salvo::http::ResBody::Once(tile));
-            Ok(())
         }
-        None => {
-            tracing::warn!("the layer {}:{} is not found", category, name);
+        // ====================================================================================
+
+        let zmin = lyr.zmin.unwrap_or(0);
+        let zmax = lyr.zmax.unwrap_or(22);
+        if z < zmin || z > zmax {
             res.body(salvo::http::ResBody::Once(Bytes::new()));
-            Ok(())
+            return Ok(());
         }
+        let start_time = Instant::now();
+        let (tile, via) = get_tile(pg_pool, lyr.clone(), x, y, z, filter).await?;
+        let elapsed_time = start_time.elapsed();
+        let elapsed_time_str = format!("{}", elapsed_time.as_millis());
+        res.headers_mut().insert(
+            "X-Data-Source-Time",
+            HeaderValue::from_str(&elapsed_time_str)
+                .unwrap_or_else(|_| HeaderValue::from_static("0")),
+        );
+
+        match via {
+            Via::Database => {
+                res.headers_mut()
+                    .insert("X-Cache", HeaderValue::from_static("MISS"));
+            }
+            Via::Cache => {
+                res.headers_mut()
+                    .insert("X-Cache", HeaderValue::from_static("HIT Cached"));
+            }
+        }
+
+        res.body(salvo::http::ResBody::Once(tile));
+    } else {
+        tracing::warn!("the layer {}:{} is not found", category, name);
+        res.body(salvo::http::ResBody::Once(Bytes::new()));
     }
+    Ok(())
 }

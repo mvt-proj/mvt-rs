@@ -21,7 +21,7 @@ use argon2::{
     Argon2,
 };
 
-fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
+fn decode_basic_auth(base64_string: &str) -> AppResult<(String, String)> {
     let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
 
     if parts.len() != 2 || parts[0] != "Basic" {
@@ -45,7 +45,7 @@ fn decode_basic_auth(base64_string: &str) -> AppResult<String> {
         ));
     }
 
-    Ok(auth_parts[0].to_string())
+    Ok((auth_parts[0].to_string(), auth_parts[1].to_string()))
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -242,6 +242,15 @@ impl Auth {
         false
     }
 
+    pub fn get_user_by_authorization(&mut self, authorization: &str) -> AppResult<Option<&User>> {
+        let user = self.get_current_username_and_password(authorization)?;
+        if self.validate_user(&user.0, &user.1) {
+            return Ok(self.find_user_by_name(&user.0));
+
+        }
+        Ok(None)
+    }
+
     pub async fn create_user(&mut self, user: User) -> AppResult<User> {
         self.users.push(user.clone());
         create_user(&user, None).await?;
@@ -279,15 +288,30 @@ impl Auth {
             .position(|usr| usr.username == target_name)
     }
 
-    pub fn get_current_user(&self, authorization_str: &str) -> Option<&User> {
-        let current_username = match decode_basic_auth(authorization_str) {
-            Ok(username) => username,
+    // fn get_current_user(&self, authorization_str: &str) -> Option<&User> {
+    //     let (current_username, _password) = match decode_basic_auth(authorization_str) {
+    //         Ok(username) => {
+    //             username
+    //         },
+    //         Err(err) => {
+    //             eprintln!("Error: {}", err);
+    //             return None;
+    //         }
+    //     };
+    //     self.find_user_by_name(&current_username)
+    // }
+
+    fn get_current_username_and_password(&self, authorization_str: &str) -> AppResult<(String, String)> {
+        let (current_username, password) = match decode_basic_auth(authorization_str) {
+            Ok(username) => {
+                username
+            },
             Err(err) => {
                 eprintln!("Error: {}", err);
-                return None;
+                return Ok((String::new(), String::new()));
             }
         };
-        self.find_user_by_name(&current_username)
+        Ok((current_username, password))
     }
 
     pub fn login(&mut self, username: &str, psw: &str) -> AppResult<String> {
