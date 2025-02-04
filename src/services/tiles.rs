@@ -15,8 +15,8 @@ use crate::{
     auth::User,
     error::AppResult,
     get_app_state, get_catalog, get_db_pool,
+    html::main::get_session_data,
     models::catalog::{Catalog, Layer, StateLayer},
-    html::main::get_session_data
 };
 
 fn convert_fields(fields: Vec<String>) -> String {
@@ -165,23 +165,22 @@ async fn get_tile(
 
 #[handler]
 pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let layer_name = req.param::<String>("layer_name").unwrap_or("".to_string());
-    let parts: Vec<&str> = layer_name.split(':').collect();
-    let category = parts.first().unwrap_or(&"");
-    let name = parts.get(1).unwrap_or(&"");
-
-    let x = req.param::<u32>("x").unwrap_or(0);
-    let y = req.param::<u32>("y").unwrap_or(0);
-    let z = req.param::<u32>("z").unwrap_or(0);
-    let filter = req.query::<String>("filter").unwrap_or(String::from(""));
-
-    let pg_pool: PgPool = get_db_pool().clone();
-    let catalog: Catalog = get_catalog().clone();
-
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,
     );
+
+    let layer_name = req.param::<String>("layer_name").unwrap_or_default();
+    let (category, name) = layer_name.split_once(':').unwrap_or(("", ""));
+
+    let x = req.param::<u32>("x").unwrap_or(0);
+    let y = req.param::<u32>("y").unwrap_or(0);
+    let z = req.param::<u32>("z").unwrap_or(0);
+    let filter = req.query::<String>("filter").unwrap_or_default();
+
+    let pg_pool: PgPool = get_db_pool().clone();
+    let catalog: Catalog = get_catalog().clone();
+
     let layer = catalog.find_layer_by_category_and_name(category, name, StateLayer::Published);
 
     if let Some(lyr) = layer {
@@ -224,6 +223,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Ap
             res.body(salvo::http::ResBody::Once(Bytes::new()));
             return Ok(());
         }
+
         let start_time = Instant::now();
         let (tile, via) = get_tile(pg_pool, lyr.clone(), x, y, z, filter).await?;
         let elapsed_time = start_time.elapsed();
