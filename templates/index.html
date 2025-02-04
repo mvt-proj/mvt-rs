@@ -2,14 +2,31 @@
 
 {% block content %}
 
-  <h1 class="title text-center">Welcome</h1>
+<div class="flex justify-center items-center">
+  <div class="text-center max-w-2xl px-6">
+    <h1 class="text-3xl font-bold">Welcome to mvt server</h1>
+    <p class="mt-2 text-lg text-gray-700">
+      A simple, fast, and powerful server for vector tiles distribution.
+    </p>
 
-  <p class="mt-4 text-center">
-    A simple, fast, and powerful vector tiles server. You can view the served layers from the 'Catalog' menu.
-  </p>
+    <div class="mt-6 text-left">
+      <h2 class="text-xl font-semibold">With mvt server, you can:</h2>
+      <ul class="mt-2 list-disc list-inside text-gray-600">
+        <li>Serve high-performance vector layers.</li>
+        <li>Manage map styles with an integrated style server.</li>
+        <li>Handle users and groups with flexible access control.</li>
+        <li><strong>Coming soon:</strong> A metadata server compliant with <span class="font-mono font-semibold">ISO 19115</span> for spatial data documentation.</li>
+      </ul>
+    </div>
 
-  <div class="flex justify-center items-center mt-4">
-    <img src="/static/images/fondo_azul.webp" alt="MVT-Server" class="w-1/4" />
+    <p class="mt-6 text-lg text-gray-700">
+      Explore the available layers in the <span class="font-semibold">"Catalog"</span> menu and customize their appearance in the <span class="font-semibold">"Styles"</span> section.
+    </p>
+
+    <div class="mt-8 flex justify-center">
+      <img src="/static/images/fondo_azul.webp" alt="mvt sserver Logo" class="w-1/2 rounded-lg shadow-md" />
+    </div>
   </div>
+</div>
 
-  {% endblock %}
+{% endblock %}
