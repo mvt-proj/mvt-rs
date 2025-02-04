@@ -210,7 +210,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Ap
                 });
 
                 let (is_auth, _user) = get_session_data(depot);
-                if !has_common_group & !is_auth {
+                if !has_common_group && !is_auth {
                     res.body(salvo::http::ResBody::Once(Bytes::new()));
                     return Ok(());
                 }
