@@ -416,7 +416,7 @@ pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/"));
+    res.render(Redirect::other("/admin"));
     Ok(())
 }
 
