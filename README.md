@@ -10,6 +10,9 @@ This is a simple and high-speed vector tile server developed in Rust, using the 
 
 Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local or remote. It relies on the use of the PostGIS function ST_AsMVT. More information can be found at https://postgis.net/docs/en/ST_AsMVT.html.
 
+## Tutorial
+
+[You can find the tutorial at](TUTORIAL.md)
 
 ## Environment Variables (.env)
 
@@ -115,7 +118,7 @@ Options:
 ## Example
 
 ```
-./mvt-server \      
+./mvt-server \
   --config config_folder \
   --cache cache_folder \
   --host 127.0.0.1 \
