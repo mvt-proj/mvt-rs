@@ -12,7 +12,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 
 ## Tutorial
 
-[You can find the tutorial at](TUTORIAL.md)
+[Show tutorial](TUTORIAL.md)
 
 ## Environment Variables (.env)
 
