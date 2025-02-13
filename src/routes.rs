@@ -5,9 +5,9 @@ use salvo::cors::{self as cors, Cors};
 use salvo::logging::Logger;
 use salvo::prelude::*;
 // use salvo::serve_static::StaticDir;
+use include_dir::{include_dir, Dir};
 use salvo::session::CookieStore;
 use std::time::Duration;
-use include_dir::{include_dir, Dir};
 
 use crate::{
     api, auth, html,
@@ -19,7 +19,7 @@ const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
 #[handler]
 async fn serve_static(req: &mut Request, res: &mut Response) {
     let path = req.uri().path().trim_start_matches("/static/");
-    
+
     if let Some(file) = STATIC_DIR.get_file(path) {
         let _ = res.write_body(file.contents());
     } else {
@@ -171,8 +171,7 @@ pub fn app_router(session_secret: String) -> Service {
                         .push(Router::with_path("schemas").get(html::admin::database::schemas))
                         .push(Router::with_path("tables").get(html::admin::database::tables))
                         .push(Router::with_path("fields").get(html::admin::database::fields))
-                        .push(Router::with_path("srid").get(html::admin::database::srid))
-                        // .push(Router::with_path("extent").get(html::admin::database::extent)
+                        .push(Router::with_path("srid").get(html::admin::database::srid)), // .push(Router::with_path("extent").get(html::admin::database::extent)
                 ),
         )
         .push(
@@ -183,6 +182,7 @@ pub fn app_router(session_secret: String) -> Service {
                         .post(api::users::login)
                         .options(handler::empty()),
                 )
+                .push(Router::with_path("catalog/layer").get(api::catalog::list))
                 .push(
                     Router::with_path("admin")
                         .hoop(auth::jwt_auth_handler())

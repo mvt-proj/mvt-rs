@@ -12,8 +12,8 @@ pub async fn list(req: &mut Request, res: &mut Response) {
 
     for layer in &mut layers {
         layer.url = Some(format!(
-            "{scheme}://{host}/tiles/{}/{{z}}/{{x}}]/{{y}}].pbf",
-            layer.name
+            "{scheme}://{host}/services/tiles/{}:{}/{{z}}/{{x}}]/{{y}}].pbf",
+            layer.category.name, layer.name
         ));
     }
 
