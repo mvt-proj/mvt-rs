@@ -63,14 +63,7 @@ By default, the cache files are stored in the "cache" directory located at the r
 `./mvt-rs --cache /tmp/cache`
 
 
-
-
-## To-Do
-
-- Something very basic has been developed to manage users and layers using templates. Additionally, an API for the admin has been started, so that it can be developed as a standalone app.
-
-
-## Running
+## Installation
 
 To run the server, ensure you have Rust installed on your system.
 
@@ -131,3 +124,9 @@ Options:
   --dbpoolmax 20 \
   --saltstring "randomsalt"
 ```
+
+## To-Do
+
+- Metadata management
+- Improve the API
+- Create tutorial
