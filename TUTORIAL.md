@@ -7,7 +7,7 @@
 
 ## Table of Contents
 1. [Requirements](#requirements)
-2. [Installation](#installation)
+2. [Installation / Compilation](#installation-/-compilation)
 3. [Running the Application](#running-the-application)
    - [Desktop Environment](#desktop-environment)
    - [Server with Nginx](#server-with-nginx)
