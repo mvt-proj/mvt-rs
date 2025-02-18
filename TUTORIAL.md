@@ -231,13 +231,32 @@ The mvt-server administration panel gives you complete control over the publicat
 ![imagen](https://github.com/user-attachments/assets/8868309a-5b31-4f3f-b916-1f667dd656b0)
 
 
+### Testing the Layer
+
+You can check if the parameters entered in the form are correct and if the layer has been successfully published by using the "Map" button.
+
+![imagen](https://github.com/user-attachments/assets/532e617d-7db5-4041-b0cf-84c7af764183)
+
+
 ## Consuming Services
 
 ### QGIS
-1. Layers → Add Vector Layer
-2. Source: `XYZ Tiles`
-3. URL: `http://server/tiles/{z}/{x}/{y}.pbf`
-4. Style: Load generated `.qml` file
+1. Add Source Vector Layer (click with the right button)
+2. New Generic Connection
+3. Source URL: copy de url from published layer
+4. URL Style: It will be seen later, for now leave empty
+
+![imagen](https://github.com/user-attachments/assets/5479944a-6a52-443f-8518-b88c04f5f75c)
+
+![imagen](https://github.com/user-attachments/assets/c16021d4-7d99-4d6d-b622-035a6d6c20b5)
+
+![imagen](https://github.com/user-attachments/assets/8a6e3daa-4b6f-4877-97d4-e5e6184b35f8)
+
+![imagen](https://github.com/user-attachments/assets/e6e9e9ad-743c-4269-bef6-cae1335d8755)
+
+
+
+
 
 ### Web Clients
 **MapLibre GL JS**:
