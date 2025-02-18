@@ -204,32 +204,40 @@ The mvt-server administration panel gives you complete control over the publicat
 
 
 
+## Serving a data layer
+
+1. Go to the "Catalog" menu
+2. Select "Add Layer"
+3. Fill out the form
+
+![imagen](https://github.com/user-attachments/assets/53e36cec-57b3-411d-a0ac-d032b812b57b)
 
 
-## Configuration
-[Installation / Compilation](#installation--compilation)
+    The "Name" field must contain a single word preferably in lowercase. In "Alias", you can enter a more descriptive label.
+   
+    The form allows you to list available schemas in the PostgreSQL database. After selecting a schema, the tables (geographic layers) will be displayed. Finally, once a table is selected, its fields will be shown. It is recommended to publish only the necessary fields.
+   
+    It is also advisable to properly configure ZMin and ZMax to improve performance. For example, setting ZMin = 0 for a small locality layer is unnecessary. After adding the layer, you can use the map to assign appropriate zoom values.
+   
+    Most of the following fields can be left with their default values.
 
-## Publishing Layers & Styles
-1. Load data in GeoPackage or PostGIS format
-2. Generate tileset:
-   ```bash
-   ./application --publish-layer my_layer --format mvt --zoom-levels 0-14
-   ```
-3. Associate Mapbox GL style:
-   ```json
-   {
-     "version": 8,
-     "sources": {
-       "my-layer": {
-         "type": "vector",
-         "url": "http://server/tiles/my_layer.json"
-       }
-     },
-     "layers": [...]
-   }
-   ```
+   When setting up the cache, consider how frequently the layer updates:
+
+    - For layers that change infrequently, it is recommended to set Cache = 0 (infinite cache duration).
+    - The cache can be cleared or purged at any time using the corresponding button.
+    - Each layer manages its own cache expiration independently.
+
+
+![imagen](https://github.com/user-attachments/assets/8868309a-5b31-4f3f-b916-1f667dd656b0)
+
 
 ## Consuming Services
+
+### QGIS
+1. Layers → Add Vector Layer
+2. Source: `XYZ Tiles`
+3. URL: `http://server/tiles/{z}/{x}/{y}.pbf`
+4. Style: Load generated `.qml` file
 
 ### Web Clients
 **MapLibre GL JS**:
@@ -258,11 +266,7 @@ const vectorLayer = new VectorTileLayer({
 });
 ```
 
-### QGIS
-1. Layers → Add Vector Layer
-2. Source: `XYZ Tiles`
-3. URL: `http://server/tiles/{z}/{x}/{y}.pbf`
-4. Style: Load generated `.qml` file
+
 
 ## Troubleshooting
 **Common Issue**: Tiles not visible
