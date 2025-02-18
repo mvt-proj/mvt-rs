@@ -26,28 +26,102 @@
 
 ## Requirements
 - Operating System (Freebsd, Linux, Windows)
-- Access to a PostgreSQL server with PostGIS installed. The **mvt server** will be able to publish geographic layers as vector tiles.
+- Access to a PostgreSQL server with PostGIS version 3.0.0 or higher installed, either local or remote. The **mvt server** will be able to publish geographic layers as vector tiles.
 - Port `5800` available (or configurable)
 
-## Installation
-```bash
-# Example for Linux installation
-curl -sL https://your.application/install.sh | bash
+## Installation / Compilation
+
+For now, the only option is to download the code and compile it manually. In the future, binaries will be provided for different operating systems. To compile the server, ensure you have Rust installed on your system.
+
+https://www.rust-lang.org/tools/install
+
+
+Then, you can compile and run the project as follows:
+
+```sh
+# Clone the repository
+git clone https://github.com/mvt-proj/mvt-rs.git
+# Navigate to the project directory
+cd mvt-rs
+
+# Compile for production
+cargo build --release
 ```
 
-```bash
-# Manual alternative
-wget https://your.application/latest.tar.gz
-tar -xzvf latest.tar.gz
-cd application/
-```
+The binary will be generated in the **/target/release/** directory.
+
+You can move it to another location if needed, but remember that the environment variables must be set either in the shell or in the .env file. Alternatively, you can start the server by passing the required arguments.
 
 ## Running the Application
 
-### Desktop Environment
-```bash
-./start-application --port 8080 --cache-size 512
+### Arguments
+
 ```
+Usage: mvt-server [OPTIONS]
+
+Options:
+  -c, --config <CONFIGDIR>             Directory where config file is placed [default: config]
+  -b, --cache <CACHEDIR>               Directory where cache files are placed [default: cache]
+  -i, --host <HOST>                    Bind address [default: 0.0.0.0]
+  -p, --port <PORT>                    Bind port [default: 5887]
+  -d, --dbconn <DBCONN>                Database connection
+  -r, --redisconn <REDISCONN>          Redis connection
+  -j, --jwtsecret <JWTSECRET>          JWT secret key
+  -s, --sessionsecret <SESSIONSECRET>  Session secret key
+  -m, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
+  -x, --dbpoolmax <DBPOOLMAX>          Maximum database pool size [default: 5]
+  -a, --saltstring <SALTSTRING>        Salt string for password hashing
+  -h, --help                           Print help
+```
+
+### Example
+
+```
+./mvt-server \
+  --config config_folder \
+  --cache cache_folder \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --dbconn "postgres://my_user:my_password@localhost:5432/mydb" \
+  --redisconn "redis://127.0.0.1:6379" \
+  --jwtsecret "supersecretjwt" \
+  --sessionsecret "supersecretsession" \
+  --dbpoolmin 5 \
+  --dbpoolmax 20 \
+  --saltstring "randomsalt"
+```
+
+### Environment Variables (.env)
+
+**Make sure to create a `.env` file at the root of your project with the following variables:**
+
+```sh
+# Database connection URL (PostgreSQL)
+DBCONN=postgres://user:pass@host:port/db
+
+# Connection pool size
+POOLSIZEMIN=3   # Minimum size of the connection pool
+POOLSIZEMAX=5   # Maximum size of the connection pool
+
+# Server settings
+IPHOST=0.0.0.0  # The IP address where the server will listen
+PORT=5800       # The port on which the server will run
+
+# Redis connection (optional, overrides disk cache if provided)
+REDISCONN=redis://127.0.0.1:6379
+
+# Security settings
+SALTSTRING=randomsalt    # Used for Argon2 password hashing
+JWTSECRET=supersecretjwt # Used to create and validate JWT tokens
+SESSIONSECRET=supersecretsession # Secret key for session management
+
+# Directories
+CONFIG=config  # Directory path for configuration files
+CACHE=cache    # Directory path for cache storage
+```
+
+Remember the `.env` file has to kept secure and not shared in public repositories.
+
 
 ### Server with Nginx
 Example reverse proxy configuration (`/etc/nginx/sites-available/application.conf`):
@@ -69,12 +143,15 @@ server {
 ```
 
 ## First Use & Authentication
-1. Access `http://localhost:8080/login`
-2. Create admin user:
-   ```bash
-   ./application --create-user admin@domain.com --role admin
-   ```
-3. Set password on first login
+
+When the server starts for the first time, the necessary components for its configuration will be automatically generated. An initial user with the 'admin' role will be created with the following credentials:
+
+- Email: **admin@mail.com**
+- Password: **admin**
+
+
+Access `http://localhost:8000`
+
 
 ## Configuration
 
