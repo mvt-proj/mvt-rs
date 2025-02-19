@@ -109,6 +109,13 @@ struct MapTemplate<'a> {
     base: BaseTemplateData,
 }
 
+#[derive(Template)]
+#[template(path = "mapview.html")]
+struct MapViewTemplate {
+    base: BaseTemplateData,
+    style: Style,
+}
+
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) {
     let is_auth = is_authenticated(depot);
@@ -236,6 +243,27 @@ pub async fn page_map(
     res.render(Text::Html(template.render().unwrap()));
     Ok(())
 }
+
+#[handler]
+pub async fn page_map_view(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> Result<(), StatusError> {
+    let style_id = req.param::<String>("style_id").unwrap();
+    let style = Style::from_id(&style_id).await.unwrap();
+    let is_auth = is_authenticated(depot);
+    let base = BaseTemplateData { is_auth };
+
+    let template = MapViewTemplate {
+        base,
+        style,
+    };
+
+    res.render(Text::Html(template.render().unwrap()));
+    Ok(())
+}
+
 
 #[handler]
 pub async fn page_styles(res: &mut Response, depot: &mut Depot) {

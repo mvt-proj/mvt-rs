@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block head %}
+  <link href='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css' rel='stylesheet' />
+  <script src='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js'></script>
+{% endblock %}
+
+{% block content %}
+  <section>
+      <div class="columns">
+        <div class="column">
+          <h1 class="title">{{ style.description }} {{ "HELLO"|lower }}</h1>
+        </div>
+        <div class="column has-text-right">
+          <p>Zoom level: <span class="has-text-weight-bold" id="zoom-level"></span></p>
+        </div>
+      </div>
+
+      <figure class="image">
+        <div id="map" class="is-fullwidth is-fullheight"></div>
+      </figure>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let map = new maplibregl.Map({
+    container: 'map',
+    style: JSON.parse('{{ style.style|safe }}')
+  });
+
+  let zoomLevelElement = document.getElementById('zoom-level');
+  zoomLevelElement.innerText = 1;
+
+
+  map.on('load', function () {
+    map.addControl(
+      new maplibregl.NavigationControl({
+      visualizePitch: true,
+      showZoom: true,
+      showCompass: true
+      })
+    );
+
+    map.on('zoom', function () {
+      let currentZoom = map.getZoom().toFixed(1);
+      zoomLevelElement.innerText = currentZoom;
+    });
+  });
+</script>
+{% endblock %}

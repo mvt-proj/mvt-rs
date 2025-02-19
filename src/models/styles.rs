@@ -7,6 +7,7 @@ use crate::{
     models::category::Category,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Style {
@@ -35,6 +36,10 @@ impl Style {
         create_style(style.clone(), None).await?;
 
         Ok(style)
+    }
+
+    pub fn to_json(&self) -> Value {
+        json!(self.style)
     }
 
     pub async fn get_all_styles() -> AppResult<Vec<Self>> {
