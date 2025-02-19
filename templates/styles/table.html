@@ -33,6 +33,7 @@
                 <i class="fas fa-copy"></i>
               </span>
             </button>
+            {% if style.is_map() %}
             <a
               href="/mapview/{{ style.id }}"
               class="button"
@@ -43,6 +44,7 @@
                 <i class="fas fa-map"></i>
               </span>
             </a>
+          {% endif %}
           {% if let Some(current_user) = self.current_user %}
             {% if current_user.is_admin() %}
               <a href="/admin/styles/edit/{{ style.id }}" class="button">

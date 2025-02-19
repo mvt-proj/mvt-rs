@@ -39,7 +39,12 @@ impl Style {
     }
 
     pub fn to_json(&self) -> Value {
-        json!(self.style)
+        serde_json::from_str(&self.style).unwrap_or_else(|_| json!({}))
+    }
+
+    pub fn is_map(&self) -> bool {
+        let json_value = self.to_json();
+        json_value.get("version").is_some()
     }
 
     pub async fn get_all_styles() -> AppResult<Vec<Self>> {
