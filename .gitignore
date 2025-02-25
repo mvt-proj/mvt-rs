@@ -4,5 +4,6 @@ htmx-lsp.core
 /cache
 /layers
 /config
+/map_assets
 .env
 node_modules
