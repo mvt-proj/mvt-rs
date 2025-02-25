@@ -1,5 +1,3 @@
-console.log("mvt-server");
-
 function initializePage() {
   let protocol = window.location.protocol;
   let host = window.location.hostname;
