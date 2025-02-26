@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="title text-center mb-4">List of Sprites</h1>
+
+
+<div class="overflow-auto mt-4 rounded-lg">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Url</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sprite in sprites %}
+      <tr>
+        <td>
+          <span class="font-semibold">{{ sprite }}</span>
+        </td>
+        <td class="text-blue-500">
+          <span id="url-{{ sprite }}">
+            <span class="server"></span>/services/sprites/{{ sprite }}
+          </span>
+        </td>
+        <td class="text-right">
+          <div class="flex justify-end space-x-2">
+            <button
+              class="button"
+              onclick="copyToClipboard('url-{{ sprite }}')"
+            >
+              <span class="icon">
+                <i class="fas fa-copy"></i>
+              </span>
+            </button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", initializePage);
+</script>
+{% endblock %}

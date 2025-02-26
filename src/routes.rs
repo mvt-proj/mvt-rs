@@ -1,10 +1,10 @@
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::catcher::Catcher;
 use salvo::cors::{self as cors, Cors};
-// use salvo::http::Method;
 use salvo::logging::Logger;
 use salvo::prelude::*;
-// use salvo::serve_static::StaticDir;
+use rust_embed::RustEmbed;
+use salvo::serve_static::static_embed;
 use include_dir::{include_dir, Dir};
 use salvo::session::CookieStore;
 use std::time::Duration;
@@ -15,6 +15,10 @@ use crate::{
 };
 
 const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
+
+#[derive(RustEmbed)]
+#[folder = "map_assets"]
+struct MapAssets;
 
 #[handler]
 async fn serve_static(req: &mut Request, res: &mut Response) {
@@ -46,10 +50,6 @@ pub fn app_router(session_secret: String) -> Service {
         .build()
         .unwrap();
 
-    // let static_dir = StaticDir::new(["static"])
-    //     .defaults("index.html")
-    //     .auto_list(true);
-
     let router = Router::new()
         .hoop(Logger::default())
         .hoop(session_handler)
@@ -75,6 +75,7 @@ pub fn app_router(session_secret: String) -> Service {
         .push(Router::with_path("catalogtable").get(html::main::table_catalog))
         .push(Router::with_path("styles").get(html::main::page_styles))
         .push(Router::with_path("styletable").get(html::main::table_styles))
+        .push(Router::with_path("sprites").get(html::main::page_sprites))
         .push(Router::with_path("map/{layer_name}").get(html::main::page_map))
         .push(Router::with_path("mapview/{style_id}").get(html::main::page_map_view))
         .push(Router::with_path("health").get(health::get_health))
@@ -172,7 +173,8 @@ pub fn app_router(session_secret: String) -> Service {
                         .push(Router::with_path("schemas").get(html::admin::database::schemas))
                         .push(Router::with_path("tables").get(html::admin::database::tables))
                         .push(Router::with_path("fields").get(html::admin::database::fields))
-                        .push(Router::with_path("srid").get(html::admin::database::srid)), // .push(Router::with_path("extent").get(html::admin::database::extent)
+                        .push(Router::with_path("srid").get(html::admin::database::srid))
+                        // .push(Router::with_path("extent").get(html::admin::database::extent)
                 ),
         )
         .push(
@@ -233,9 +235,9 @@ pub fn app_router(session_secret: String) -> Service {
                 .options(handler::empty())
                 .push(Router::with_path("tiles").get(tiles::mvt))
                 .push(Router::with_path("tiles/{layer_name}/{z}/{x}/{y}.pbf").get(tiles::mvt))
-                .push(Router::with_path("styles/{style_name}").get(styles::index)),
+                .push(Router::with_path("styles/{style_name}").get(styles::index))
+                .push(Router::with_path("{**path}").get(static_embed::<MapAssets>().fallback("index.html")))
         )
-        // .push(Router::with_path("static/{**path}").get(static_dir));
         .push(Router::with_path("static/{**path}").get(serve_static));
 
     Service::new(router).catcher(Catcher::default().hoop(html::main::handle_errors))
