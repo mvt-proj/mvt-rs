@@ -61,6 +61,9 @@ pub enum AppError {
     #[error("Error creating file or reading directory: {0}")]
     FileCreationError(#[from] tokio::io::Error),
 
+    #[error("Error reading directory or file: {0}")]
+    NotFound(String),
+
     #[error("User not found")]
     UserNotFound,
 
