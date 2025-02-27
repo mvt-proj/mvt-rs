@@ -34,6 +34,9 @@ bb8 = "0.9"
 bb8-redis = "0.21"
 include_dir = {version = "0.7.4", features = ["glob"] }
 
+[build-dependencies]
+
+
 [profile.release]
 opt-level = 'z' # Optimize for size
 lto = true
