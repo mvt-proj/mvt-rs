@@ -58,7 +58,7 @@ pub enum AppError {
     #[error("Error initializing 'Catalog': {0}")]
     CatalogInitializationError(String),
 
-    #[error("Error creating file: {0}")]
+    #[error("Error creating file or reading directory: {0}")]
     FileCreationError(#[from] tokio::io::Error),
 
     #[error("User not found")]
