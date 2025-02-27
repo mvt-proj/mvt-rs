@@ -320,8 +320,34 @@ pub async fn table_styles(
     Ok(())
 }
 
+// #[handler]
+// pub async fn page_sprites(res: &mut Response, depot: &mut Depot)  -> AppResult<()>{
+//     let is_auth = is_authenticated(depot);
+//     let base = BaseTemplateData { is_auth };
+//     let dir_path = "map_assets/sprites";
+//
+//     let mut entries = fs::read_dir(dir_path).await?;
+//     let mut unique_names: HashSet<String> = HashSet::new();
+//
+//     while let Some(entry) = entries.next_entry().await? {
+//         let path = entry.path();
+//
+//         if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
+//             if let Some(name_without_ext) = file_name.split('.').next() {
+//                 unique_names.insert(name_without_ext.to_string());
+//             }
+//         }
+//     }
+//     let sprites: Vec<String> = unique_names.into_iter().collect();
+//
+//     let template = SpritesTemplate { base, sprites };
+//     res.render(Text::Html(template.render().unwrap()));
+//     Ok(())
+// }
+
+
 #[handler]
-pub async fn page_sprites(res: &mut Response, depot: &mut Depot)  -> AppResult<()>{
+pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
     let dir_path = "map_assets/sprites";
@@ -332,12 +358,13 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot)  -> AppResult<(
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
 
-        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-            if let Some(name_without_ext) = file_name.split('.').next() {
-                unique_names.insert(name_without_ext.to_string());
+        if entry.file_type().await?.is_dir() {
+            if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
+                unique_names.insert(dir_name.to_string());
             }
         }
     }
+
     let sprites: Vec<String> = unique_names.into_iter().collect();
 
     let template = SpritesTemplate { base, sprites };
