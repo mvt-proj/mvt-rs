@@ -24,9 +24,6 @@ mvt-server not only allows you to publish geographic layers in vector tile forma
    - [QGIS](#qgis)
 8. [Serving Styles](#serving-styles)
 9. [Serving Glyphs and Sprites in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
-10. [Troubleshooting](#troubleshooting)
-11. [Additional Resources](#additional-resources)
-
 ---
 
 ## Requirements
@@ -372,23 +369,6 @@ A MapLibre style would then reference it as follows:
 
 More details on glyph support will be added in future updates.
 
-Conclusion
+### Conclusion
 
 By properly structuring your assets and configuring your MapLibre style, you can serve custom sprites and, soon, glyphs with your mvt server. This setup allows for scalable and customizable vector tile rendering.
-
-
-
-## Troubleshooting
-**Common Issue**: Tiles not visible
-```bash
-# Verify tile generation
-curl -I http://localhost:8080/tiles/0/0/0.pbf
-
-# Check application logs
-journalctl -u application-service --since "5 minutes ago"
-```
-
-## Additional Resources
-- [Example Repository](https://github.com/your-examples/demos)
-- [Mapbox GL Style Spec Documentation](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
-- [QGIS Style Templates](resource_link)
