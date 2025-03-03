@@ -22,9 +22,10 @@ mvt-server not only allows you to publish geographic layers in vector tile forma
 7. [Consuming Services](#consuming-services)
    - [Web Clients](#web-clients)
    - [QGIS](#qgis)
-8. [Serving Glyphs and Sprites in mvt server](#serving-glyphs-and-sprites-in-mvt-server)    
-9. [Troubleshooting](#troubleshooting)
-10. [Additional Resources](#additional-resources)
+8. [Serving Styles](#serving-styles)
+9. [Serving Glyphs and Sprites in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
+10. [Troubleshooting](#troubleshooting)
+11. [Additional Resources](#additional-resources)
 
 ---
 
@@ -133,13 +134,13 @@ Example reverse proxy configuration (`/etc/nginx/sites-available/application.con
 server {
     listen 80;
     server_name yourdomain.com;
-    
+
     location / {
         proxy_pass http://localhost:5800;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
-    
+
     # For WebSockets if needed
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -171,7 +172,7 @@ The mvt-server administration panel is an essential tool for managing all aspect
 
 #### 1. Groups (User Roles)
 
-    Creation and Management: Define user groups or roles with different levels of access and permissions. This allows you to control who can perform administrative tasks, publish layers, create styles, etc.    
+    Creation and Management: Define user groups or roles with different levels of access and permissions. This allows you to control who can perform administrative tasks, publish layers, create styles, etc.
     Permission Assignment: Assign specific permissions to each group to granularly control access to the server's various functionalities.
 
 #### 2. Users
@@ -183,7 +184,7 @@ The mvt-server administration panel is an essential tool for managing all aspect
 #### 3. Categories
 
     Logical Organization: Categories act as namespaces to organize your layers and styles logically. This is especially useful when working with a large number of layers, as it allows you to keep them organized and easy to find.
-    
+
 
 #### 4. Catalog (Layer Publishing)
 
@@ -215,11 +216,11 @@ The mvt-server administration panel gives you complete control over the publicat
 
 
     The "Name" field must contain a single word preferably in lowercase. In "Alias", you can enter a more descriptive label.
-   
+
     The form allows you to list available schemas in the PostgreSQL database. After selecting a schema, the tables (geographic layers) will be displayed. Finally, once a table is selected, its fields will be shown. It is recommended to publish only the necessary fields.
-   
+
     It is also advisable to properly configure ZMin and ZMax to improve performance. For example, setting ZMin = 0 for a small locality layer is unnecessary. After adding the layer, you can use the map to assign appropriate zoom values.
-   
+
     Most of the following fields can be left with their default values.
 
    When setting up the cache, consider how frequently the layer updates:
@@ -257,8 +258,6 @@ You can check if the parameters entered in the form are correct and if the layer
 
 
 
-
-
 ### Web Clients
 **MapLibre GL JS**:
 ```javascript
@@ -285,6 +284,16 @@ const vectorLayer = new VectorTileLayer({
   })
 });
 ```
+
+## Serving Styles
+
+### Introduction
+The mvt server can also serve styles that define how vector tiles are rendered. These styles can be consumed in different ways:
+
+1. **For rendering in QGIS:** Styles are applied at the layer level, specifying how a layer should be rendered with colors, labels, symbols, and color scales.
+
+2. **For use in MapLibre:** Styles define a complete "project," including sources, layers, metadata, layer styles, sprites, glyphs, zoom levels, and map center. More details can be found in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
+
 
 ## Serving Glyphs and Sprites in mvt server
 
@@ -383,8 +392,3 @@ journalctl -u application-service --since "5 minutes ago"
 - [Example Repository](https://github.com/your-examples/demos)
 - [Mapbox GL Style Spec Documentation](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
 - [QGIS Style Templates](resource_link)
-
-
-
-
-
