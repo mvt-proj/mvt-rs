@@ -22,8 +22,9 @@ mvt-server not only allows you to publish geographic layers in vector tile forma
 7. [Consuming Services](#consuming-services)
    - [Web Clients](#web-clients)
    - [QGIS](#qgis)
-8. [Troubleshooting](#troubleshooting)
-9. [Additional Resources](#additional-resources)
+8. [Serving Glyphs and Sprites in mvt server](#serving-glyphs-and-sprites-in-mvt-server)    
+9. [Troubleshooting](#troubleshooting)
+10. [Additional Resources](#additional-resources)
 
 ---
 
@@ -284,6 +285,87 @@ const vectorLayer = new VectorTileLayer({
   })
 });
 ```
+
+## Serving Glyphs and Sprites in mvt server
+
+### Introduction
+
+In mvt server, sprites and glyphs are essential for rendering vector tiles with custom icons and fonts. This section explains how to structure your assets and configure your MapLibre style to use them correctly.
+
+### Directory Structure
+
+Your assets should be organized as follows:
+```
+map_assets
+├── glyphs
+└── sprites
+    ├── fa-brand
+    │   ├── sprite.json
+    │   └── sprite.png
+    ├── fa-regular
+    │   ├── sprite.json
+    │   ├── sprite.png
+    │   ├── sprite@2x.json
+    │   └── sprite@2x.png
+    ├── fa-solid
+    │   ├── sprite.json
+    │   └── sprite.png
+    ├── maplibre
+    │   ├── sprite.json
+    │   ├── sprite.png
+    │   ├── sprite@2x.json
+    │   └── sprite@2x.png
+    └── maptiler
+        ├── sprite.json
+        ├── sprite.png
+        ├── sprite@2x.json
+        └── sprite@2x.png
+```
+
+### Serving Sprites
+
+Sprites are served dynamically by mvt server. Each sprite set is accessible via a URL like this:
+
+`http://127.0.0.1:5887/services/sprites/{sprite_name}/sprite`
+
+For example, to use the maplibre sprite set:
+
+`http://127.0.0.1:5887/services/sprites/maplibre/sprite`
+
+To configure this in your MapLibre style JSON:
+```
+{
+  "version": 8,
+  "sprite": "http://127.0.0.1:5887/services/sprites/maplibre/sprite",
+  "sources": { ... },
+  "layers": [ ... ]
+}
+```
+
+This tells MapLibre to fetch the sprite JSON and images from your MVT Server.
+
+### Creating Custom Sprites with Spreet
+
+To create your own sprite sets, you can use [Spreet](https://github.com/flother/spreet), a simple tool for generating sprite sheets and metadata from individual images.
+
+### Serving Glyphs (Coming Soon)
+
+Currently, the glyphs directory is prepared for future support. Glyphs are used to render text labels in vector tiles. When implemented, the service will provide glyphs at a URL like:
+
+`http://127.0.0.1:5887/services/glyphs/{fontstack}/{range}.pbf`
+
+A MapLibre style would then reference it as follows:
+```
+{
+  "glyphs": "http://127.0.0.1:5887/services/glyphs/{fontstack}/{range}.pbf"
+}
+```
+
+More details on glyph support will be added in future updates.
+
+Conclusion
+
+By properly structuring your assets and configuring your MapLibre style, you can serve custom sprites and, soon, glyphs with your mvt server. This setup allows for scalable and customizable vector tile rendering.
 
 
 
