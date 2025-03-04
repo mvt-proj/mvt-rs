@@ -246,7 +246,6 @@ impl Auth {
         let user = self.get_current_username_and_password(authorization)?;
         if self.validate_user(&user.0, &user.1) {
             return Ok(self.find_user_by_name(&user.0));
-
         }
         Ok(None)
     }
@@ -301,11 +300,12 @@ impl Auth {
     //     self.find_user_by_name(&current_username)
     // }
 
-    fn get_current_username_and_password(&self, authorization_str: &str) -> AppResult<(String, String)> {
+    fn get_current_username_and_password(
+        &self,
+        authorization_str: &str,
+    ) -> AppResult<(String, String)> {
         let (current_username, password) = match decode_basic_auth(authorization_str) {
-            Ok(username) => {
-                username
-            },
+            Ok(username) => username,
             Err(err) => {
                 eprintln!("Error: {}", err);
                 return Ok((String::new(), String::new()));

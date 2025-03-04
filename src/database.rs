@@ -1,9 +1,7 @@
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
 
-use crate::{
-    models::catalog::Layer,
-    error::AppResult, get_db_pool};
+use crate::{error::AppResult, get_db_pool, models::catalog::Layer};
 
 #[derive(FromRow, Serialize, Debug)]
 pub struct Schema {

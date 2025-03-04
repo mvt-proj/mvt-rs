@@ -1,16 +1,16 @@
 use askama::Template;
 use salvo::prelude::*;
-use tokio::fs;
 use std::collections::HashSet;
+use tokio::fs;
 
 use crate::{
     auth::{Auth, User},
+    database::{query_extent, Extent},
     error::AppResult,
     get_auth, get_catalog,
-    database::{Extent, query_extent},
     models::{
         catalog::{Catalog, Layer, StateLayer},
-        styles::Style
+        styles::Style,
     },
 };
 
@@ -108,7 +108,6 @@ struct SpritesTemplate {
     base: BaseTemplateData,
     sprites: Vec<String>,
 }
-
 
 #[derive(Template)]
 #[template(path = "map.html")]
@@ -265,15 +264,11 @@ pub async fn page_map_view(
     let is_auth = is_authenticated(depot);
     let base = BaseTemplateData { is_auth };
 
-    let template = MapViewTemplate {
-        base,
-        style,
-    };
+    let template = MapViewTemplate { base, style };
 
     res.render(Text::Html(template.render().unwrap()));
     Ok(())
 }
-
 
 #[handler]
 pub async fn page_styles(res: &mut Response, depot: &mut Depot) {

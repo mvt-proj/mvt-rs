@@ -1,11 +1,11 @@
+use include_dir::{include_dir, Dir};
+use rust_embed::RustEmbed;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::catcher::Catcher;
 use salvo::cors::{self as cors, Cors};
 use salvo::logging::Logger;
 use salvo::prelude::*;
-use rust_embed::RustEmbed;
 use salvo::serve_static::static_embed;
-use include_dir::{include_dir, Dir};
 use salvo::session::CookieStore;
 use std::time::Duration;
 
@@ -173,8 +173,7 @@ pub fn app_router(session_secret: String) -> Service {
                         .push(Router::with_path("schemas").get(html::admin::database::schemas))
                         .push(Router::with_path("tables").get(html::admin::database::tables))
                         .push(Router::with_path("fields").get(html::admin::database::fields))
-                        .push(Router::with_path("srid").get(html::admin::database::srid))
-                        // .push(Router::with_path("extent").get(html::admin::database::extent)
+                        .push(Router::with_path("srid").get(html::admin::database::srid)), // .push(Router::with_path("extent").get(html::admin::database::extent)
                 ),
         )
         .push(
@@ -236,7 +235,10 @@ pub fn app_router(session_secret: String) -> Service {
                 .push(Router::with_path("tiles").get(tiles::mvt))
                 .push(Router::with_path("tiles/{layer_name}/{z}/{x}/{y}.pbf").get(tiles::mvt))
                 .push(Router::with_path("styles/{style_name}").get(styles::index))
-                .push(Router::with_path("{**path}").get(static_embed::<MapAssets>().fallback("index.html")))
+                .push(
+                    Router::with_path("{**path}")
+                        .get(static_embed::<MapAssets>().fallback("index.html")),
+                ),
         )
         .push(Router::with_path("static/{**path}").get(serve_static));
 
