@@ -38,68 +38,6 @@ fn convert_fields(fields: Vec<String>) -> String {
     vec_fields.join(", ")
 }
 
-fn build_sql_query(
-    sql_mode: &str,
-    name: &str,
-    schema: &str,
-    table: &str,
-    fields: &str,
-    geom: &str,
-    z: u32,
-    x: u32,
-    y: u32,
-    extent: u32,
-    buffer: u32,
-    clip_geom: &str,
-    srid: u32,
-    query_placeholder: &str,
-) -> String {
-    match sql_mode {
-        "CTE" => format!(
-            r#"
-            WITH mvtgeom AS (
-                SELECT
-                    {fields},
-                    ST_AsMVTGeom(
-                        ST_Transform({geom}, 3857),
-                        ST_TileEnvelope({z}, {x}, {y}),
-                        {extent},
-                        {buffer},
-                        {clip_geom}
-                    ) AS geom
-                FROM "{schema}"."{table}"
-                WHERE
-                    {geom} && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
-                    AND {geom} IS NOT NULL
-                    {query_placeholder}
-            )
-            SELECT ST_AsMVT(mvtgeom.*, '{name}', {extent}, 'geom') AS tile
-            FROM mvtgeom;
-            "#
-        ),
-        _ => format!(
-            r#"
-            SELECT ST_AsMVT(tile, '{name}', {extent}, 'geom') FROM (
-                SELECT
-                    {fields},
-                    ST_AsMVTGeom(
-                        ST_Transform({geom}, 3857),
-                        ST_TileEnvelope({z}, {x}, {y}),
-                        {extent},
-                        {buffer},
-                        {clip_geom}
-                    ) AS geom
-                FROM "{schema}"."{table}"
-                WHERE
-                    {geom} && ST_Transform(ST_TileEnvelope({z}, {x}, {y}), {srid})
-                    AND {geom} IS NOT NULL
-                    {query_placeholder}
-            ) as tile;
-            "#
-        ),
-    }
-}
-
 async fn query_database(
     pg_pool: PgPool,
     layer_conf: Layer,
@@ -132,32 +70,68 @@ async fn query_database(
         )
     };
 
-    let clip_geom = layer_conf.clip_geom.unwrap_or(true).to_string();
-    let query_placeholder = if !query.is_empty() {
-        format!("AND {query}")
-    } else {
-        String::new()
+    let clip_geom = layer_conf.clip_geom.unwrap_or(true);
+
+    let base_sql = match sql_mode.as_str() {
+        "CTE" => {
+            r#"
+            WITH mvtgeom AS (
+                SELECT
+                    {fields},
+                    ST_AsMVTGeom(
+                        ST_Transform({geom}, 3857),
+                        ST_TileEnvelope($1, $2, $3),
+                        $4, $5, $6
+                    ) AS geom
+                FROM "{schema}"."{table}"
+                WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
+                    AND {geom} IS NOT NULL
+            )
+            SELECT ST_AsMVT(mvtgeom.*, $8, $4, 'geom') AS tile FROM mvtgeom;
+            "#
+        }
+        _ => {
+            r#"
+            SELECT ST_AsMVT(tile, $8, $4, 'geom') FROM (
+                SELECT
+                    {fields},
+                    ST_AsMVTGeom(
+                        ST_Transform({geom}, 3857),
+                        ST_TileEnvelope($1, $2, $3),
+                        $4, $5, $6
+                    ) AS geom
+                FROM "{schema}"."{table}"
+                WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
+                    AND {geom} IS NOT NULL
+            ) as tile;
+            "#
+        }
     };
 
-    let sql = build_sql_query(
-        &sql_mode,
-        &name,
-        &schema,
-        &table,
-        &fields,
-        &geom,
-        z,
-        x,
-        y,
-        extent,
-        buffer,
-        &clip_geom,
-        srid,
-        &query_placeholder,
-    );
+    let mut sql_query = base_sql
+        .replace("{fields}", &fields)
+        .replace("{schema}", &schema)
+        .replace("{table}", &table)
+        .replace("{geom}", &geom);
 
-    let rec: (Option<Vec<u8>>,) = sqlx::query_as(&sql).fetch_one(&pg_pool).await?;
+    if !query.is_empty() {
+        sql_query.push_str(" AND ");
+        sql_query.push_str(&query);
+    }
+
+    let query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(&sql_query)
+        .bind(z as i32)
+        .bind(x as i32)
+        .bind(y as i32)
+        .bind(extent as i32)
+        .bind(buffer as i32)
+        .bind(clip_geom)
+        .bind(srid as i32)
+        .bind(name);
+
+    let rec = query_builder.fetch_one(&pg_pool).await?;
     let tile = rec.0.unwrap_or_default();
+
     Ok(tile.into())
 }
 
