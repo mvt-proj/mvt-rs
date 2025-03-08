@@ -1181,6 +1181,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "htmlize"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e81e415f6d22240930e82ae0f541b2dd494ca37daaf10c1d7b32546f3b1159f"
+dependencies = [
+ "memchr",
+ "paste",
+]
+
+[[package]]
 name = "http"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1751,6 +1761,7 @@ dependencies = [
  "chrono",
  "clap",
  "dotenv",
+ "htmlize",
  "include_dir",
  "jsonwebtoken",
  "log",
@@ -1990,6 +2001,12 @@ dependencies = [
  "rand_core 0.6.4",
  "subtle",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "path-slash"
