@@ -5,9 +5,10 @@ use sqlx::PgPool;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::time::Instant;
+use regex::Regex;
 
 use crate::{
-    error::AppResult,
+    error::{AppResult, AppError},
     get_app_state, get_catalog, get_db_pool,
     html::main::get_session_data,
     models::catalog::{Catalog, Layer, StateLayer},
@@ -38,6 +39,85 @@ fn convert_fields(fields: Vec<String>) -> String {
     vec_fields.join(", ")
 }
 
+fn is_inside_quotes(filter: &str, pos: usize) -> bool {
+    let mut in_quotes = false;
+    for (i, c) in filter.chars().enumerate() {
+        if c == '\'' {
+            in_quotes = !in_quotes;
+        }
+        if i == pos {
+            return in_quotes;
+        }
+    }
+    false
+}
+
+fn validate_filter(filter: &str) -> AppResult<()> {
+    let dangerous_keywords = [
+        "DELETE", "UPDATE", "INSERT", "DROP", "TRUNCATE", "CREATE", "EXEC", "EXECUTE",
+    ];
+
+    let pattern = format!(r"(?i)\b(?:{})\b", dangerous_keywords.join("|"));
+    let re = Regex::new(&pattern).map_err(|e| AppError::InvalidInput(format!("Regex error: {}", e)))?;
+
+    let forbidden_patterns = vec![";", "--", "/*", "*/", "OR 1=1"];
+    for pattern in forbidden_patterns {
+        if filter.contains(pattern) {
+            return Err(AppError::InvalidInput(format!(
+                "Invalid filter: contains forbidden pattern '{}'",
+                pattern
+            )));
+        }
+    }
+
+    for cap in re.find_iter(filter) {
+        if !is_inside_quotes(filter, cap.start()) {
+            return Err(AppError::InvalidInput(format!(
+                "Invalid filter: contains dangerous keyword '{}'",
+                cap.as_str()
+            )));
+        }
+    }
+
+    Ok(())
+}
+
+fn build_sql_template(sql_mode: &str) -> &'static str {
+    match sql_mode {
+        "CTE" => r#"
+            WITH mvtgeom AS (
+                SELECT
+                    {fields},
+                    ST_AsMVTGeom(
+                        ST_Transform({geom}, 3857),
+                        ST_TileEnvelope($1, $2, $3),
+                        $4, $5, $6
+                    ) AS geom
+                FROM "{schema}"."{table}"
+                WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
+                    AND {geom} IS NOT NULL
+                    {query_placeholder}
+            )
+            SELECT ST_AsMVT(mvtgeom.*, $8, $4, 'geom') AS tile FROM mvtgeom;
+        "#,
+        _ => r#"
+            SELECT ST_AsMVT(tile, $8, $4, 'geom') FROM (
+                SELECT
+                    {fields},
+                    ST_AsMVTGeom(
+                        ST_Transform({geom}, 3857),
+                        ST_TileEnvelope($1, $2, $3),
+                        $4, $5, $6
+                    ) AS geom
+                FROM "{schema}"."{table}"
+                WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
+                    AND {geom} IS NOT NULL
+                    {query_placeholder}
+            ) as tile;
+        "#,
+    }
+}
+
 async fn query_database(
     pg_pool: PgPool,
     layer_conf: Layer,
@@ -53,6 +133,15 @@ async fn query_database(
     let geom = layer_conf.geom.unwrap_or_else(|| "geom".to_string());
     let sql_mode = layer_conf.sql_mode.unwrap_or_else(|| "CTE".to_string());
     let srid = layer_conf.srid.unwrap_or(DEFAULT_SRID);
+
+    let query_placeholder = if !query.is_empty() {
+        if let Err(_) = validate_filter(&query) {
+            return Ok(Bytes::new());
+        }
+        Some(format!(" AND {}", query))
+    } else {
+        None
+    };
 
     let (buffer, extent) = if z
         >= layer_conf
@@ -72,52 +161,13 @@ async fn query_database(
 
     let clip_geom = layer_conf.clip_geom.unwrap_or(true);
 
-    let base_sql = match sql_mode.as_str() {
-        "CTE" => {
-            r#"
-            WITH mvtgeom AS (
-                SELECT
-                    {fields},
-                    ST_AsMVTGeom(
-                        ST_Transform({geom}, 3857),
-                        ST_TileEnvelope($1, $2, $3),
-                        $4, $5, $6
-                    ) AS geom
-                FROM "{schema}"."{table}"
-                WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
-                    AND {geom} IS NOT NULL
-            )
-            SELECT ST_AsMVT(mvtgeom.*, $8, $4, 'geom') AS tile FROM mvtgeom;
-            "#
-        }
-        _ => {
-            r#"
-            SELECT ST_AsMVT(tile, $8, $4, 'geom') FROM (
-                SELECT
-                    {fields},
-                    ST_AsMVTGeom(
-                        ST_Transform({geom}, 3857),
-                        ST_TileEnvelope($1, $2, $3),
-                        $4, $5, $6
-                    ) AS geom
-                FROM "{schema}"."{table}"
-                WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
-                    AND {geom} IS NOT NULL
-            ) as tile;
-            "#
-        }
-    };
-
-    let mut sql_query = base_sql
+    let sql_template = build_sql_template(&sql_mode);
+    let sql_query = sql_template
         .replace("{fields}", &fields)
         .replace("{schema}", &schema)
         .replace("{table}", &table)
-        .replace("{geom}", &geom);
-
-    if !query.is_empty() {
-        sql_query.push_str(" AND ");
-        sql_query.push_str(&query);
-    }
+        .replace("{geom}", &geom)
+        .replace("{query_placeholder}", query_placeholder.as_deref().unwrap_or(""));
 
     let query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(&sql_query)
         .bind(z as i32)
@@ -134,6 +184,7 @@ async fn query_database(
 
     Ok(tile.into())
 }
+
 
 async fn get_tile(
     pg_pool: PgPool,
@@ -169,9 +220,11 @@ async fn get_tile(
     )
     .await?;
 
-    cache_wrapper
-        .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
-        .await?;
+    if filter.is_empty() {
+        cache_wrapper
+            .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
+            .await?;
+    }
 
     Ok((tile, Via::Database))
 }

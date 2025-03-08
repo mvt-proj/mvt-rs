@@ -33,7 +33,7 @@ redis = { version = "0.29", features = ["tokio-comp"] }
 bb8 = "0.9"
 bb8-redis = "0.21"
 include_dir = {version = "0.7.4", features = ["glob"] }
-# regex = "1.11.1"
+regex = "1.11.1"
 htmlize = "1.0.5"
 
 [build-dependencies]
