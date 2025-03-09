@@ -218,7 +218,10 @@ pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let base = BaseTemplateData { is_auth };
 
     let categories = get_categories().await.read().await;
-    let template = NewStyleTemplate { categories: (&categories).to_vec(), base };
+    let template = NewStyleTemplate {
+        categories: (&categories).to_vec(),
+        base,
+    };
     res.render(Text::Html(template.render()?));
     Ok(())
 }

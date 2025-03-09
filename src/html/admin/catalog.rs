@@ -4,10 +4,14 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Group, User}, error::{AppError, AppResult}, get_auth, get_cache_wrapper, get_catalog, html::main::{get_session_data, BaseTemplateData}, models::{
+    auth::{Group, User},
+    error::{AppError, AppResult},
+    get_auth, get_cache_wrapper, get_catalog,
+    html::main::{get_session_data, BaseTemplateData},
+    models::{
         catalog::{Layer, StateLayer},
         category::Category,
-    }
+    },
 };
 
 #[derive(Template)]
@@ -196,7 +200,6 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 
 #[handler]
 pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
-
     let layer_id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
@@ -235,7 +238,6 @@ pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult
 
 #[handler]
 pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
-
     let layer_id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;

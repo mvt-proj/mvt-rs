@@ -1,8 +1,8 @@
 use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
 use sqlx::{PgPool, SqlitePool};
-use tokio::sync::{RwLock, OnceCell};
 use std::sync::OnceLock;
+use tokio::sync::{OnceCell, RwLock};
 
 mod api;
 mod args;
@@ -110,7 +110,6 @@ async fn main() -> AppResult<()> {
         app_config.db_pool_size_max,
     )
     .await?;
-
 
     let categories = get_cf_categories(Some(&cf_pool)).await?;
     let cache_wrapper = cachewrapper::initialize_cache(

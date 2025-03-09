@@ -3,9 +3,9 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    get_categories,
     auth::User,
     error::{AppError, AppResult},
+    get_categories,
     html::main::{get_session_data, BaseTemplateData},
     models::category::Category,
 };

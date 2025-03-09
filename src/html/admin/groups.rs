@@ -3,7 +3,10 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Group, User}, error::{AppError, AppResult}, get_auth, html::main::{get_session_data, BaseTemplateData}
+    auth::{Group, User},
+    error::{AppError, AppResult},
+    get_auth,
+    html::main::{get_session_data, BaseTemplateData},
 };
 
 #[derive(Template)]

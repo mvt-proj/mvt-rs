@@ -1,14 +1,17 @@
 use bytes::Bytes;
+use regex::Regex;
 use salvo::http::header::HeaderValue;
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::time::Instant;
-use regex::Regex;
 
 use crate::{
-    error::{AppError, AppResult}, get_auth, get_cache_wrapper, get_catalog, get_db_pool, html::main::get_session_data, models::catalog::{Layer, StateLayer}
+    error::{AppError, AppResult},
+    get_auth, get_cache_wrapper, get_catalog, get_db_pool,
+    html::main::get_session_data,
+    models::catalog::{Layer, StateLayer},
 };
 
 const DEFAULT_BUFFER: u32 = 256;
@@ -55,7 +58,8 @@ fn validate_filter(filter: &str) -> AppResult<()> {
     ];
 
     let pattern = format!(r"(?i)\b(?:{})\b", dangerous_keywords.join("|"));
-    let re = Regex::new(&pattern).map_err(|e| AppError::InvalidInput(format!("Regex error: {}", e)))?;
+    let re =
+        Regex::new(&pattern).map_err(|e| AppError::InvalidInput(format!("Regex error: {}", e)))?;
 
     let forbidden_patterns = vec![";", "--", "/*", "*/", "OR 1=1"];
     for pattern in forbidden_patterns {
@@ -81,7 +85,8 @@ fn validate_filter(filter: &str) -> AppResult<()> {
 
 fn build_sql_template(sql_mode: &str) -> &'static str {
     match sql_mode {
-        "CTE" => r#"
+        "CTE" => {
+            r#"
             WITH mvtgeom AS (
                 SELECT
                     {fields},
@@ -96,8 +101,10 @@ fn build_sql_template(sql_mode: &str) -> &'static str {
                     {query_placeholder}
             )
             SELECT ST_AsMVT(mvtgeom.*, $8, $4, 'geom') AS tile FROM mvtgeom;
-        "#,
-        _ => r#"
+        "#
+        }
+        _ => {
+            r#"
             SELECT ST_AsMVT(tile, $8, $4, 'geom') FROM (
                 SELECT
                     {fields},
@@ -111,7 +118,8 @@ fn build_sql_template(sql_mode: &str) -> &'static str {
                     AND {geom} IS NOT NULL
                     {query_placeholder}
             ) as tile;
-        "#,
+        "#
+        }
     }
 }
 
@@ -164,7 +172,10 @@ async fn query_database(
         .replace("{schema}", &schema)
         .replace("{table}", &table)
         .replace("{geom}", &geom)
-        .replace("{query_placeholder}", query_placeholder.as_deref().unwrap_or(""));
+        .replace(
+            "{query_placeholder}",
+            query_placeholder.as_deref().unwrap_or(""),
+        );
 
     let query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(&sql_query)
         .bind(z as i32)
@@ -181,7 +192,6 @@ async fn query_database(
 
     Ok(tile.into())
 }
-
 
 async fn get_tile(
     pg_pool: PgPool,
@@ -242,9 +252,7 @@ async fn validate_user_groups(req: &Request, layer: &Layer, depot: &mut Depot) -
 
     let user = if !authorization.is_empty() {
         let mut auth = get_auth().await.write().await;
-        auth
-            .get_user_by_authorization(authorization)?
-            .cloned()
+        auth.get_user_by_authorization(authorization)?.cloned()
     } else {
         None
     };

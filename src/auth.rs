@@ -8,9 +8,9 @@ use time::{Duration, OffsetDateTime};
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
+use crate::args;
 use crate::config::groups::{create_group, delete_group, update_group};
 use crate::config::users::{create_user, delete_user, get_users, update_user};
-use crate::args;
 use crate::{
     config::groups::get_groups,
     error::{AppError, AppResult},
@@ -83,11 +83,7 @@ impl Group {
 
     pub async fn from_id(id: &str) -> AppResult<Self> {
         let auth = get_auth().await.read().await;
-        let group = auth
-            .groups
-            .iter()
-            .find(|group| group.id == id)
-            .unwrap();
+        let group = auth.groups.iter().find(|group| group.id == id).unwrap();
         Ok(group.clone())
     }
 
@@ -101,10 +97,7 @@ impl Group {
         update_group(self.id.clone(), &group, None).await?;
         let mut auth = get_auth().await.write().await;
 
-        let position = auth
-            .groups
-            .iter()
-            .position(|group| group.id == self.id);
+        let position = auth.groups.iter().position(|group| group.id == self.id);
 
         match position {
             Some(pos) => {
@@ -120,10 +113,7 @@ impl Group {
 
     pub async fn delete_group(&self) -> AppResult<()> {
         let mut auth = get_auth().await.write().await;
-        let position = auth
-            .groups
-            .iter()
-            .position(|group| group.id == self.id);
+        let position = auth.groups.iter().position(|group| group.id == self.id);
 
         delete_group(self.id.clone(), None).await?;
 

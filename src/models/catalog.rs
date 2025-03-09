@@ -6,9 +6,8 @@ use crate::{
     error::AppResult,
     models::category::Category,
 };
-use serde::{Deserialize, Serialize};
 use htmlize::escape_all_quotes;
-
+use serde::{Deserialize, Serialize};
 
 pub enum StateLayer {
     Any,
@@ -56,7 +55,7 @@ impl Layer {
     }
 
     pub fn get_filter(&self) -> String {
-       self.filter.as_deref().unwrap_or("").to_string()
+        self.filter.as_deref().unwrap_or("").to_string()
     }
 
     pub fn get_srid(&self) -> u32 {
@@ -109,11 +108,17 @@ impl Layer {
         rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
         rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
         rv += &format!("<strong>Table:</strong> {}<br>", self.table_name);
-        rv += &format!("<strong>Fields:</strong> {}<br>", escape_all_quotes(self.fields.join(", ")).to_string());
+        rv += &format!(
+            "<strong>Fields:</strong> {}<br>",
+            escape_all_quotes(self.fields.join(", ")).to_string()
+        );
         rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
         rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
         rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
-        rv += &format!("<strong>Filter:</strong> {}<br>",  escape_all_quotes(self.get_filter()).to_string());
+        rv += &format!(
+            "<strong>Filter:</strong> {}<br>",
+            escape_all_quotes(self.get_filter()).to_string()
+        );
         rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());
         rv += &format!("<strong>Extent:</strong> {}<br>", self.get_extent());
         rv += &format!("<strong>Zmin:</strong> {}<br>", self.get_zmin());

@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::categories::{create_category, delete_category, get_category_by_id, update_category}, error::AppResult, get_catalog, get_categories
+    config::categories::{create_category, delete_category, get_category_by_id, update_category},
+    error::AppResult,
+    get_catalog, get_categories,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -43,9 +45,7 @@ impl Category {
         update_category(None, category.clone()).await?;
         let mut categories = get_categories().await.write().await;
 
-        let position = categories
-            .iter()
-            .position(|c| c.id == self.id);
+        let position = categories.iter().position(|c| c.id == self.id);
 
         match position {
             Some(pos) => {
@@ -58,10 +58,7 @@ impl Category {
 
         let mut catalog = get_catalog().await.write().await;
 
-        let position = catalog
-            .layers
-            .iter()
-            .position(|l| l.category.id == self.id);
+        let position = catalog.layers.iter().position(|l| l.category.id == self.id);
 
         if let Some(pos) = position {
             catalog.layers[pos].category = category.clone();
@@ -74,9 +71,7 @@ impl Category {
         delete_category(None, &self.id.clone()).await?;
         let mut categories = get_categories().await.write().await;
 
-        let position = categories
-            .iter()
-            .position(|c| c.id == self.id);
+        let position = categories.iter().position(|c| c.id == self.id);
 
         if let Some(pos) = position {
             categories.remove(pos);

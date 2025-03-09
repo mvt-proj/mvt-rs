@@ -24,7 +24,7 @@ pub async fn is_authenticated(depot: &mut Depot) -> bool {
             return false;
         }
         if let Some(userid) = session.get::<String>("userid") {
-            let auth  = get_auth().await.read().await;
+            let auth = get_auth().await.read().await;
             if auth.get_user_by_id(&userid).is_some() {
                 return true;
             }
@@ -244,7 +244,6 @@ pub async fn page_map(
         (lyr, geometry)
     };
 
-
     let extent = query_extent(&lyr).await.unwrap();
 
     let template = MapTemplate {
@@ -257,7 +256,6 @@ pub async fn page_map(
     res.render(Text::Html(template.render().unwrap()));
     Ok(())
 }
-
 
 #[handler]
 pub async fn page_map_view(

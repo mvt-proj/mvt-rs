@@ -36,7 +36,7 @@ fn unauthorized(res: &mut Response) {
 
 #[handler]
 pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) {
-    let mut auth  = get_auth().await.write().await;
+    let mut auth = get_auth().await.write().await;
     let token = auth
         .login(login_data.username, &login_data.password)
         .unwrap();
