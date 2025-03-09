@@ -8,7 +8,6 @@ use time::{Duration, OffsetDateTime};
 use jsonwebtoken::{self, EncodingKey};
 use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
-use crate::args;
 use crate::config::groups::{create_group, delete_group, update_group};
 use crate::config::users::{create_user, delete_user, get_users, update_user};
 use crate::{
@@ -17,7 +16,9 @@ use crate::{
     get_auth, get_jwt_secret,
 };
 use argon2::{
-    password_hash::{PasswordHasher, SaltString},
+    PasswordHash,
+    PasswordVerifier,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
     Argon2,
 };
 
@@ -186,11 +187,10 @@ pub struct Auth {
     config_dir: String,
     pub groups_path: String,
     pub users_path: String,
-    salt_string: String,
 }
 
 impl Auth {
-    pub async fn new(config_dir: &str, salt_string: String, pool: &SqlitePool) -> AppResult<Self> {
+    pub async fn new(config_dir: &str, pool: &SqlitePool) -> AppResult<Self> {
         let groups = get_groups(Some(pool)).await?;
         let users = get_users(Some(pool)).await?;
         let groups_path = format!("{}/groups.json", config_dir);
@@ -202,7 +202,6 @@ impl Auth {
             config_dir: config_dir.to_string(),
             groups_path,
             users_path,
-            salt_string,
         })
     }
 
@@ -211,17 +210,16 @@ impl Auth {
     }
 
     pub fn get_encrypt_psw(&self, psw: String) -> Result<String, argon2::password_hash::Error> {
-        let salt = SaltString::encode_b64(self.salt_string.as_bytes())?;
+        let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
         let password_hash = argon2.hash_password(psw.as_bytes(), &salt)?.to_string();
         Ok(password_hash)
     }
 
     fn validate_psw(&self, user: User, psw: &str) -> AppResult<bool> {
-        let salt = SaltString::encode_b64(self.salt_string.as_bytes())?;
-        let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(psw.as_bytes(), &salt)?.to_string();
-        Ok(password_hash == user.password)
+        let parsed_hash = PasswordHash::new(&user.password)?;
+        Argon2::default().verify_password(psw.as_bytes(), &parsed_hash)?;
+        Ok(true)
     }
 
     pub fn validate_user(&mut self, username: &str, psw: &str) -> bool {
@@ -277,19 +275,6 @@ impl Auth {
             .iter()
             .position(|usr| usr.username == target_name)
     }
-
-    // fn get_current_user(&self, authorization_str: &str) -> Option<&User> {
-    //     let (current_username, _password) = match decode_basic_auth(authorization_str) {
-    //         Ok(username) => {
-    //             username
-    //         },
-    //         Err(err) => {
-    //             eprintln!("Error: {}", err);
-    //             return None;
-    //         }
-    //     };
-    //     self.find_user_by_name(&current_username)
-    // }
 
     fn get_current_username_and_password(
         &self,
@@ -463,17 +448,8 @@ pub async fn change_password<'a>(
     }
 
     let mut user = user?.clone();
-
-    let app_config = args::parse_args().await?;
-
-    let argon2 = Argon2::default();
-    let salt = SaltString::encode_b64(app_config.salt_string.as_bytes())
-        .map_err(|_| AppError::ConfigurationError("Invalid salt string".to_string()))?;
-    let new_password = argon2
-        .hash_password(data.password.as_bytes(), &salt)
-        .map_err(AppError::PasswordHashError)?;
-
-    user.password = new_password.to_string();
+    let new_password = auth.get_encrypt_psw(data.password.to_string())?;
+    user.password = new_password;
     auth.update_user(user).await?;
 
     res.render(Redirect::other("/"));

@@ -36,7 +36,6 @@ PORT=5880       # The port on which the server will run
 REDISCONN=redis://127.0.0.1:6379
 
 # Security settings
-SALTSTRING=randomsalt    # Used for Argon2 password hashing
 JWTSECRET=supersecretjwt # Used to create and validate JWT tokens
 SESSIONSECRET=supersecretsession # Secret key for session management
 
@@ -104,7 +103,6 @@ Options:
   -s, --sessionsecret <SESSIONSECRET>  Session secret key
   -m, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
   -x, --dbpoolmax <DBPOOLMAX>          Maximum database pool size [default: 5]
-  -a, --saltstring <SALTSTRING>        Salt string for password hashing
   -h, --help                           Print help
 ```
 
@@ -121,8 +119,7 @@ Options:
   --jwtsecret "supersecretjwt" \
   --sessionsecret "supersecretsession" \
   --dbpoolmin 5 \
-  --dbpoolmax 20 \
-  --saltstring "randomsalt"
+  --dbpoolmax 20
 ```
 
 ## To-Do

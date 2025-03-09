@@ -14,7 +14,6 @@ pub struct AppConfig {
     pub session_secret: String,
     pub db_pool_size_min: u32,
     pub db_pool_size_max: u32,
-    pub salt_string: String,
 }
 
 pub async fn parse_args() -> AppResult<AppConfig> {
@@ -95,13 +94,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .value_name("DBPOOLMAX")
                 .help("Maximum database pool size"),
         )
-        .arg(
-            Arg::new("saltstring")
-                .short('a')
-                .long("saltstring")
-                .value_name("SALTSTRING")
-                .help("Salt string for password hashing"),
-        )
         .get_matches();
 
     let get_value = |key: &str, arg_name: &str, default: Option<&str>| -> String {
@@ -121,7 +113,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
     let redis_conn = get_value("REDISCONN", "redisconn", Some(""));
     let jwt_secret = get_value("JWTSECRET", "jwtsecret", None);
     let session_secret = get_value("SESSIONSECRET", "sessionsecret", None);
-    let salt_string = get_value("SALTSTRING", "saltstring", None);
 
     let db_pool_size_min: u32 = get_value("POOLSIZEMIN", "dbpoolmin", Some("2"))
         .parse()
@@ -141,6 +132,5 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         session_secret,
         db_pool_size_min,
         db_pool_size_max,
-        salt_string,
     })
 }

@@ -1,5 +1,5 @@
 use argon2::{
-    password_hash::{PasswordHasher, SaltString},
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
 use sqlx::{migrate::Migrator, SqlitePool};
@@ -7,10 +7,11 @@ use std::path::Path;
 
 use std::fs;
 use uuid::Uuid;
+use crate::error::AppResult;
 
 static MIGRATOR: Migrator = sqlx::migrate!();
 
-pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx::Error> {
+pub async fn init_sqlite(db_path: &str) -> AppResult<SqlitePool> {
     let db_url = format!("sqlite:{}", db_path);
 
     if !Path::new(db_path).exists() {
@@ -34,13 +35,9 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
     if admin_exists.is_none() {
         println!("Admin user not found, creating default admin user...");
 
+        let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
-        let salt = SaltString::encode_b64(salt.as_bytes()).unwrap();
-        let password_hash = argon2
-            .hash_password("admin".to_string().as_bytes(), &salt)
-            .unwrap()
-            .to_string();
-
+        let password_hash = argon2.hash_password("admin".to_string().as_bytes(), &salt).unwrap().to_string();
         let admin_role_id = "7091390e-5cec-47d7-9d39-4f068d945788";
 
         sqlx::query(
@@ -51,8 +48,6 @@ pub async fn init_sqlite(db_path: &str, salt: String) -> Result<SqlitePool, sqlx
         .bind(admin_role_id)
         .execute(&pool)
         .await?;
-    } else {
-        println!("Admin user already exists, skipping creation.");
     }
 
     println!("Database initialized successfully.");

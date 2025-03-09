@@ -22,6 +22,9 @@ pub enum AppError {
     #[error("Error executing SQL: `{0}`")]
     SQLError(#[from] sqlx::Error),
 
+    #[error("Migrate error: `{0}`")]
+    MigrateError(#[from] sqlx::migrate::MigrateError),
+
     #[error("Basic Authentication error: {0}")]
     BasicAuthError(String),
 
