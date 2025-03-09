@@ -18,7 +18,7 @@ pub struct AppConfig {
 }
 
 pub async fn parse_args() -> AppResult<AppConfig> {
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
 
     let matches = Command::new("mvt-server: a vector tiles server")
         .arg(

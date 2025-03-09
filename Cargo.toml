@@ -9,7 +9,7 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 [dependencies]
 rust-embed = "8.6"
 uuid = { version = "1.14.0", features = ["v4", "fast-rng"] }
-dotenv = "0.15.0"
+dotenvy = "0.15.0"
 clap = "4.5"
 bytes = "1.10"
 argon2 = { version = "0.5", features = ["std"] }
