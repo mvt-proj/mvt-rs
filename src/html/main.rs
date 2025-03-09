@@ -4,12 +4,12 @@ use std::collections::HashSet;
 use tokio::fs;
 
 use crate::{
-    auth::{Auth, User},
+    auth::User,
     database::{query_extent, Extent},
     error::AppResult,
     get_auth, get_catalog,
     models::{
-        catalog::{Catalog, Layer, StateLayer},
+        catalog::{Layer, StateLayer},
         styles::Style,
     },
 };
@@ -18,13 +18,13 @@ pub struct BaseTemplateData {
     pub is_auth: bool,
 }
 
-pub fn is_authenticated(depot: &mut Depot) -> bool {
+pub async fn is_authenticated(depot: &mut Depot) -> bool {
     if let Some(session) = depot.session_mut() {
         if session.is_expired() {
             return false;
         }
         if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
+            let auth  = get_auth().await.read().await;
             if auth.get_user_by_id(&userid).is_some() {
                 return true;
             }
@@ -33,14 +33,14 @@ pub fn is_authenticated(depot: &mut Depot) -> bool {
     false
 }
 
-pub fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
-    let is_auth = is_authenticated(depot);
+pub async fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
+    let is_auth = is_authenticated(depot).await;
     let mut user: Option<User> = None;
 
     if is_auth {
         if let Some(session) = depot.session_mut() {
             if let Some(userid) = session.get::<String>("userid") {
-                let auth: Auth = get_auth().clone();
+                let auth = get_auth().await.read().await;
                 if let Some(usr) = auth.get_user_by_id(&userid) {
                     user = Some(usr.clone());
                 }
@@ -127,7 +127,7 @@ struct MapViewTemplate {
 
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let template = IndexTemplate { base };
@@ -136,7 +136,7 @@ pub async fn index(res: &mut Response, depot: &mut Depot) {
 
 #[handler]
 pub async fn login(res: &mut Response, depot: &mut Depot) {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     if is_auth {
         res.render(Redirect::other("/"));
     }
@@ -149,7 +149,7 @@ pub async fn login(res: &mut Response, depot: &mut Depot) {
 
 #[handler]
 pub async fn change_password(res: &mut Response, depot: &mut Depot) {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
 
     if !is_auth {
         res.render(Redirect::other("/login"));
@@ -162,7 +162,7 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
 
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
 
     let base = BaseTemplateData { is_auth };
 
@@ -177,8 +177,8 @@ pub async fn table_catalog(
     depot: &mut Depot,
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
-    let mut catalog: Catalog = get_catalog().clone();
-    let (_is_auth, user) = get_session_data(depot);
+    let mut catalog = get_catalog().await.write().await;
+    let (_is_auth, user) = get_session_data(depot).await;
 
     if let Some(filter) = filter {
         catalog.layers = catalog
@@ -215,36 +215,41 @@ pub async fn page_map(
     res: &mut Response,
     depot: &mut Depot,
 ) -> Result<(), StatusError> {
-    let catalog: Catalog = get_catalog().clone();
     let layer_name = req.param::<String>("layer_name").unwrap();
     let parts: Vec<&str> = layer_name.split(':').collect();
-    let category = parts.first().unwrap_or(&"");
-    let name = parts.get(1).unwrap_or(&"");
+    let category = parts.first().unwrap_or(&"").to_string();
+    let name = parts.get(1).unwrap_or(&"").to_string(); // 🔹 Clonar para no mantener referencia
 
-    let is_auth = is_authenticated(depot);
-
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
-    let lyr = catalog
-        .find_layer_by_category_and_name(category, name, StateLayer::Published)
-        .ok_or_else(|| {
-            StatusError::not_found()
-                .brief("Layer not found")
-                .cause("The specified layer does not exist or is not published")
-        })?;
+    let (lyr, geometry) = {
+        let catalog = get_catalog().await.read().await; // 🔓 Bloque limitado
+        let lyr = catalog
+            .find_layer_by_category_and_name(&category, &name, StateLayer::Published)
+            .ok_or_else(|| {
+                StatusError::not_found()
+                    .brief("Layer not found")
+                    .cause("The specified layer does not exist or is not published")
+            })?
+            .clone();
 
-    let geometry = match lyr.geometry.as_str() {
-        "points" => "circle",
-        "lines" => "line",
-        "polygons" => "fill",
-        _ => &lyr.geometry,
+        let geometry = match lyr.geometry.as_str() {
+            "points" => "circle".to_string(),
+            "lines" => "line".to_string(),
+            "polygons" => "fill".to_string(),
+            _ => lyr.geometry.clone(),
+        };
+
+        (lyr, geometry)
     };
+
 
     let extent = query_extent(&lyr).await.unwrap();
 
     let template = MapTemplate {
-        geometry,
-        layer: lyr.clone(),
+        geometry: &geometry,
+        layer: lyr,
         extent,
         base,
     };
@@ -252,6 +257,7 @@ pub async fn page_map(
     res.render(Text::Html(template.render().unwrap()));
     Ok(())
 }
+
 
 #[handler]
 pub async fn page_map_view(
@@ -261,7 +267,7 @@ pub async fn page_map_view(
 ) -> Result<(), StatusError> {
     let style_id = req.param::<String>("style_id").unwrap();
     let style = Style::from_id(&style_id).await.unwrap();
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let template = MapViewTemplate { base, style };
@@ -272,7 +278,7 @@ pub async fn page_map_view(
 
 #[handler]
 pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let template = StylesTemplate { base };
@@ -286,7 +292,7 @@ pub async fn table_styles(
     depot: &mut Depot,
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
-    let (_is_auth, user) = get_session_data(depot);
+    let (_is_auth, user) = get_session_data(depot).await;
     let mut styles = Style::get_all_styles().await?;
 
     if let Some(filter) = filter {
@@ -317,7 +323,7 @@ pub async fn table_styles(
 
 #[handler]
 pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
     let dir_path = "map_assets/sprites";
 

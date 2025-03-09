@@ -4,14 +4,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Group, User},
-    error::{AppError, AppResult},
-    get_app_state,
-    html::main::{get_session_data, BaseTemplateData},
-    models::{
+    auth::{Group, User}, error::{AppError, AppResult}, get_auth, get_cache_wrapper, get_catalog, html::main::{get_session_data, BaseTemplateData}, models::{
         catalog::{Layer, StateLayer},
         category::Category,
-    },
+    }
 };
 
 #[derive(Template)]
@@ -53,7 +49,7 @@ struct NewLayer<'a> {
 
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (is_auth, user) = get_session_data(depot);
+    let (is_auth, user) = get_session_data(depot).await;
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
     let template = CatalogTemplate {
@@ -67,7 +63,6 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()
 
 #[handler]
 pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
-    let app_state = get_app_state();
     let uuid = Uuid::new_v4();
     let hex_string = uuid.simple().to_string();
 
@@ -79,6 +74,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     }
 
     let category = category?;
+    let auth = get_auth().await.read().await;
 
     let selected_groups: Vec<Group> = new_layer
         .groups
@@ -86,7 +82,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         .map(|groups| {
             groups
                 .iter()
-                .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+                .filter_map(|group_name| auth.find_group_by_name(group_name).cloned())
                 .collect::<Vec<Group>>()
         })
         .unwrap_or_default();
@@ -119,7 +115,8 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         groups: Some(selected_groups),
     };
 
-    let layer = app_state.catalog.add_layer(layer).await;
+    let mut catalog = get_catalog().await.write().await;
+    let layer = catalog.add_layer(layer).await;
 
     if let Err(err) = layer {
         res.status_code(StatusCode::BAD_REQUEST);
@@ -134,8 +131,6 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 
 #[handler]
 pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
-    let app_state = get_app_state();
-
     let category = Category::from_id(&new_layer.category).await;
 
     if let Err(err) = category {
@@ -144,6 +139,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     }
 
     let category = category?;
+    let auth = get_auth().await.read().await;
 
     let selected_groups: Vec<Group> = new_layer
         .groups
@@ -151,7 +147,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         .map(|groups| {
             groups
                 .iter()
-                .filter_map(|group_name| app_state.auth.find_group_by_name(group_name).cloned())
+                .filter_map(|group_name| auth.find_group_by_name(group_name).cloned())
                 .collect::<Vec<Group>>()
         })
         .unwrap_or_default();
@@ -184,7 +180,8 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         groups: Some(selected_groups),
     };
 
-    let layer = app_state.catalog.update_layer(layer).await;
+    let mut catalog = get_catalog().await.write().await;
+    let layer = catalog.update_layer(layer).await;
 
     if let Err(err) = layer {
         res.status_code(StatusCode::BAD_REQUEST);
@@ -199,12 +196,12 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 
 #[handler]
 pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
-    let app_state = get_app_state();
 
     let layer_id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
-    let layer = app_state.catalog.delete_layer(layer_id).await;
+    let mut catalog = get_catalog().await.write().await;
+    let layer = catalog.delete_layer(layer_id).await;
 
     if let Err(err) = layer {
         res.status_code(StatusCode::BAD_REQUEST);
@@ -217,12 +214,13 @@ pub async fn delete_layer<'a>(res: &mut Response, req: &mut Request) -> AppResul
 
 #[handler]
 pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let app_state = get_app_state();
-
     let layer_id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
-    let layer = app_state.catalog.swich_layer_published(&layer_id).await;
+
+    let mut catalog = get_catalog().await.write().await; // 🔓 Bloque limitado
+
+    let layer = catalog.swich_layer_published(&layer_id).await;
 
     if let Err(err) = layer {
         res.status_code(StatusCode::BAD_REQUEST);
@@ -237,30 +235,24 @@ pub async fn swich_published(req: &mut Request, res: &mut Response) -> AppResult
 
 #[handler]
 pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
-    let app_state = get_app_state();
 
     let layer_id = req
         .param::<String>("id")
-        .ok_or(AppError::RequestParamError("id".to_string()));
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
 
-    if let Err(err) = layer_id {
-        res.status_code(StatusCode::BAD_REQUEST);
-        return Err(err);
-    }
+    let layer_name = {
+        let catalog = get_catalog().await.read().await;
+        if let Some(layer) = catalog.find_layer_by_id(&layer_id, StateLayer::Any) {
+            layer.name.clone()
+        } else {
+            res.status_code(StatusCode::BAD_REQUEST);
+            return Err(AppError::CacheNotFount(format!("{layer_id}")));
+        }
+    };
 
-    let layer_id = layer_id?;
+    let cache_wrapper = get_cache_wrapper();
+    cache_wrapper.delete_layer_cache(&layer_name).await?;
 
-    let layer = app_state
-        .catalog
-        .find_layer_by_id(&layer_id, StateLayer::Any);
-    if let Some(layer) = layer {
-        let layer_name = &layer.name;
-        let cache_wrapper = &app_state.cache_wrapper;
-        cache_wrapper.delete_layer_cache(layer_name).await?
-    } else {
-        res.status_code(StatusCode::BAD_REQUEST);
-        return Err(AppError::CacheNotFount(format!("{layer_id}")));
-    }
     res.render(Redirect::other("/admin/catalog"));
     Ok(())
 }

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Auth, AuthorizeState, DataToken, Group, User},
-    get_app_state, get_auth,
+    auth::{AuthorizeState, DataToken, Group, User},
+    get_auth,
 };
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -36,7 +36,7 @@ fn unauthorized(res: &mut Response) {
 
 #[handler]
 pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) {
-    let mut auth: Auth = get_auth().clone();
+    let mut auth  = get_auth().await.write().await;
     let token = auth
         .login(login_data.username, &login_data.password)
         .unwrap();
@@ -51,15 +51,14 @@ pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) {
 
 #[handler]
 pub async fn index(res: &mut Response) {
-    let auth: Auth = get_auth().clone();
-    let users = auth.users;
+    let auth = get_auth().await.read().await;
+    let users = &auth.users;
     res.render(Json(&users));
 }
 
 #[handler]
 pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
-    let auth: Auth = get_auth().clone();
-    let app_state = get_app_state();
+    let mut auth = get_auth().await.write().await;
     let encrypt_psw = auth.get_encrypt_psw(data.password.to_string()).unwrap();
     let user = User {
         id: Uuid::new_v4().to_string(),
@@ -69,6 +68,6 @@ pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
         groups: Vec::new(),
     };
 
-    app_state.auth.create_user(user.clone()).await.unwrap();
+    auth.create_user(user.clone()).await.unwrap();
     res.render(Json(&user));
 }

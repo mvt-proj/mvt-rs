@@ -1,7 +1,8 @@
 use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
 use sqlx::{PgPool, SqlitePool};
-use std::cell::OnceCell;
+use tokio::sync::{RwLock, OnceCell};
+use std::sync::OnceLock;
 
 mod api;
 mod args;
@@ -24,49 +25,46 @@ use db::make_db_pool;
 use error::AppResult;
 use models::{catalog::Catalog, category::Category};
 
-#[derive(Debug)]
-pub struct AppState {
-    db_pool: PgPool,
-    cf_pool: SqlitePool,
-    catalog: Catalog,
-    cache_wrapper: CacheWrapper,
-    auth: Auth,
-    jwt_secret: String,
-    categories: Vec<Category>,
-}
-
-static mut APP_STATE: OnceCell<AppState> = OnceCell::new();
-
-pub fn get_app_state() -> &'static mut AppState {
-    unsafe { APP_STATE.get_mut().unwrap() }
-}
-
+static POSTGRES_DB: OnceLock<PgPool> = OnceLock::new();
+#[inline]
 pub fn get_db_pool() -> &'static PgPool {
-    unsafe { &APP_STATE.get().unwrap().db_pool }
+    POSTGRES_DB.get().unwrap()
 }
 
+static SQLITE_CONF: OnceLock<SqlitePool> = OnceLock::new();
+#[inline]
 pub fn get_cf_pool() -> &'static SqlitePool {
-    unsafe { &APP_STATE.get().unwrap().cf_pool }
+    SQLITE_CONF.get().unwrap()
 }
 
-pub fn get_catalog() -> &'static Catalog {
-    unsafe { &APP_STATE.get().unwrap().catalog }
-}
-
-pub fn get_cache_wrapper() -> &'static CacheWrapper {
-    unsafe { &APP_STATE.get().unwrap().cache_wrapper }
-}
-
-pub fn get_auth() -> &'static Auth {
-    unsafe { &APP_STATE.get().unwrap().auth }
-}
-
+static JWT_SECRET: OnceLock<String> = OnceLock::new();
+#[inline]
 pub fn get_jwt_secret() -> &'static String {
-    unsafe { &APP_STATE.get().unwrap().jwt_secret }
+    JWT_SECRET.get().unwrap()
 }
 
-pub fn get_categories() -> &'static Vec<Category> {
-    unsafe { &APP_STATE.get().unwrap().categories }
+static CACHE_WRAPPER: OnceLock<CacheWrapper> = OnceLock::new();
+#[inline]
+pub fn get_cache_wrapper() -> &'static CacheWrapper {
+    CACHE_WRAPPER.get().unwrap()
+}
+
+static CATALOG: OnceCell<RwLock<Catalog>> = OnceCell::const_new();
+#[inline]
+pub async fn get_catalog() -> &'static RwLock<Catalog> {
+    CATALOG.get().unwrap()
+}
+
+static CATEGORIES: OnceCell<RwLock<Vec<Category>>> = OnceCell::const_new();
+#[inline]
+pub async fn get_categories() -> &'static RwLock<Vec<Category>> {
+    CATEGORIES.get().unwrap()
+}
+
+static AUTH: OnceCell<RwLock<Auth>> = OnceCell::const_new();
+#[inline]
+pub async fn get_auth() -> &'static RwLock<Auth> {
+    AUTH.get().unwrap()
 }
 
 async fn initialize_auth(
@@ -113,6 +111,7 @@ async fn main() -> AppResult<()> {
     )
     .await?;
 
+
     let categories = get_cf_categories(Some(&cf_pool)).await?;
     let cache_wrapper = cachewrapper::initialize_cache(
         Some(app_config.redis_conn),
@@ -121,19 +120,13 @@ async fn main() -> AppResult<()> {
     )
     .await?;
 
-    let app_state = AppState {
-        db_pool,
-        cf_pool,
-        catalog,
-        auth,
-        jwt_secret: app_config.jwt_secret,
-        cache_wrapper,
-        categories,
-    };
-
-    unsafe {
-        APP_STATE.set(app_state).unwrap();
-    }
+    POSTGRES_DB.set(db_pool).unwrap();
+    SQLITE_CONF.set(cf_pool).unwrap();
+    JWT_SECRET.set(app_config.jwt_secret).unwrap();
+    CACHE_WRAPPER.set(cache_wrapper).unwrap();
+    CATALOG.set(RwLock::new(catalog)).unwrap();
+    CATEGORIES.set(RwLock::new(categories)).unwrap();
+    AUTH.set(RwLock::new(auth)).unwrap();
 
     let acceptor = TcpListener::new(format!("{}:{}", app_config.host, app_config.port))
         .bind()

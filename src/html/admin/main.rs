@@ -93,7 +93,7 @@ struct EditGroupTemplate {
 
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
     let template = IndexTemplate { base };
     res.render(Text::Html(template.render()?));
@@ -102,13 +102,13 @@ pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let auth = get_auth().clone();
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
 
     let base = BaseTemplateData { is_auth };
+    let auth = get_auth().await.read().await;
 
     let template = NewUserTemplate {
-        groups: auth.groups,
+        groups: auth.groups.clone(),
         base,
     };
     res.render(Text::Html(template.render()?));
@@ -117,20 +117,20 @@ pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("username".to_string()))?;
-    let auth = get_auth().clone();
+    let auth = get_auth().await.read().await;
     let user = auth
         .get_user_by_id(&id)
         .ok_or_else(|| AppError::UserNotFoundError(id.clone()))?;
 
     let template = EditUserTemplate {
         user: user.clone(),
-        groups: auth.groups,
+        groups: auth.groups.clone(),
         base,
     };
     res.render(Text::Html(template.render()?));
@@ -139,14 +139,15 @@ pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot)
 
 #[handler]
 pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let categories = get_categories().clone();
-    let groups = get_auth().groups.clone();
-    let is_auth = is_authenticated(depot);
+    let categories = get_categories().await.read().await;
+    let auth = get_auth().await.read().await;
+    let groups = auth.groups.clone();
+    let is_auth = is_authenticated(depot).await;
 
     let base = BaseTemplateData { is_auth };
 
     let template = NewLayerTemplate {
-        categories,
+        categories: (&categories).to_vec(),
         groups,
         base,
     };
@@ -156,21 +157,22 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
-    let categories = get_categories().clone();
+    let categories = get_categories().await.read().await;
     let layer_id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("layer_id".to_string()))?;
-    let catalog = get_catalog().clone();
-    let groups = get_auth().groups.clone();
+    let catalog = get_catalog().await.read().await;
+    let auth = get_auth().await.read().await;
+    let groups = auth.groups.clone();
     let layer = catalog
         .find_layer_by_id(&layer_id, StateLayer::Any)
         .unwrap();
     let template = EditLayerTemplate {
         layer: layer.clone(),
-        categories,
+        categories: (&categories).to_vec(),
         groups,
         base,
     };
@@ -180,7 +182,7 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot
 
 #[handler]
 pub async fn new_category(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let template = NewCategoryTemplate { base };
@@ -194,7 +196,7 @@ pub async fn edit_category(
     res: &mut Response,
     depot: &mut Depot,
 ) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let id = req
@@ -211,29 +213,29 @@ pub async fn edit_category(
 
 #[handler]
 pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
 
     let base = BaseTemplateData { is_auth };
 
-    let categories = get_categories().clone();
-    let template = NewStyleTemplate { categories, base };
+    let categories = get_categories().await.read().await;
+    let template = NewStyleTemplate { categories: (&categories).to_vec(), base };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
 
 #[handler]
 pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
     let style = Style::from_id(&id).await?;
-    let categories = get_categories().clone();
+    let categories = get_categories().await.read().await;
     let template = EditStyleTemplate {
         style: style.clone(),
-        categories,
+        categories: (&categories).to_vec(),
         base,
     };
     res.render(Text::Html(template.render()?));
@@ -242,7 +244,7 @@ pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot
 
 #[handler]
 pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let template = NewGroupTemplate { base };
@@ -252,7 +254,7 @@ pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn edit_group(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot);
+    let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
     let id = req

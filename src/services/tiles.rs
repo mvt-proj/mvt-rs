@@ -8,10 +8,7 @@ use std::time::Instant;
 use regex::Regex;
 
 use crate::{
-    error::{AppResult, AppError},
-    get_app_state, get_catalog, get_db_pool,
-    html::main::get_session_data,
-    models::catalog::{Catalog, Layer, StateLayer},
+    error::{AppError, AppResult}, get_auth, get_cache_wrapper, get_catalog, get_db_pool, html::main::get_session_data, models::catalog::{Layer, StateLayer}
 };
 
 const DEFAULT_BUFFER: u32 = 256;
@@ -203,8 +200,7 @@ async fn get_tile(
         Cow::Owned(layer_conf.clone().filter.unwrap_or_default())
     };
 
-    let app_state = get_app_state();
-    let cache_wrapper = &app_state.cache_wrapper;
+    let cache_wrapper = get_cache_wrapper();
 
     if let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await {
         return Ok((tile, Via::Cache));
@@ -245,9 +241,8 @@ async fn validate_user_groups(req: &Request, layer: &Layer, depot: &mut Depot) -
         .unwrap_or("");
 
     let user = if !authorization.is_empty() {
-        let app_state = crate::get_app_state();
-        app_state
-            .auth
+        let mut auth = get_auth().await.write().await;
+        auth
             .get_user_by_authorization(authorization)?
             .cloned()
     } else {
@@ -259,7 +254,7 @@ async fn validate_user_groups(req: &Request, layer: &Layer, depot: &mut Depot) -
         groups.iter().any(|g| user_group_ids.contains(&g.id))
     });
 
-    let (is_auth, _) = get_session_data(depot);
+    let (is_auth, _) = get_session_data(depot).await;
     Ok(has_common_group || is_auth)
 }
 
@@ -278,7 +273,8 @@ pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Ap
     let filter = req.query::<String>("filter").unwrap_or_default();
 
     let pg_pool: PgPool = get_db_pool().clone();
-    let catalog: Catalog = get_catalog().clone();
+    // let catalog: Catalog = get_catalog().clone();
+    let catalog = get_catalog().await.read().await;
 
     let Some(layer) =
         catalog.find_layer_by_category_and_name(category, name, StateLayer::Published)

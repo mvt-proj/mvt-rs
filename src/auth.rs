@@ -10,7 +10,7 @@ use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
 
 use crate::config::groups::{create_group, delete_group, update_group};
 use crate::config::users::{create_user, delete_user, get_users, update_user};
-use crate::{args, get_app_state};
+use crate::args;
 use crate::{
     config::groups::get_groups,
     error::{AppError, AppResult},
@@ -76,13 +76,14 @@ impl Group {
         };
 
         create_group(&group, None).await?;
-        get_app_state().auth.groups.push(group.clone());
+        let mut auth = get_auth().await.write().await;
+        auth.groups.push(group.clone());
         Ok(group)
     }
 
     pub async fn from_id(id: &str) -> AppResult<Self> {
-        let group = get_app_state()
-            .auth
+        let auth = get_auth().await.read().await;
+        let group = auth
             .groups
             .iter()
             .find(|group| group.id == id)
@@ -98,19 +99,19 @@ impl Group {
         };
 
         update_group(self.id.clone(), &group, None).await?;
+        let mut auth = get_auth().await.write().await;
 
-        let position = get_app_state()
-            .auth
+        let position = auth
             .groups
             .iter()
             .position(|group| group.id == self.id);
 
         match position {
             Some(pos) => {
-                get_app_state().auth.groups[pos] = group.clone();
+                auth.groups[pos] = group.clone();
             }
             None => {
-                get_app_state().auth.groups.push(group.clone());
+                auth.groups.push(group.clone());
             }
         }
 
@@ -118,8 +119,8 @@ impl Group {
     }
 
     pub async fn delete_group(&self) -> AppResult<()> {
-        let position = get_app_state()
-            .auth
+        let mut auth = get_auth().await.write().await;
+        let position = auth
             .groups
             .iter()
             .position(|group| group.id == self.id);
@@ -128,7 +129,7 @@ impl Group {
 
         match position {
             Some(pos) => {
-                get_app_state().auth.groups.remove(pos);
+                auth.groups.remove(pos);
             }
             None => {
                 println!("Group not found");
@@ -376,7 +377,7 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
 pub async fn require_user_admin(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     if let Some(session) = depot.session_mut() {
         if let Some(userid) = session.get::<String>("userid") {
-            let auth: Auth = get_auth().clone();
+            let auth = get_auth().await.read().await;
             if let Some(user) = auth.get_user_by_id(&userid) {
                 if !user.is_admin() {
                     res.render(Redirect::other("/admin"));
@@ -399,7 +400,7 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
 
 #[handler]
 pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -> AppResult<()> {
-    let auth: Auth = get_auth().clone();
+    let auth = get_auth().await.read().await;
 
     let user = auth.get_user_by_email_and_password(&data.email, &data.password);
 
@@ -449,8 +450,6 @@ pub async fn change_password<'a>(
     res: &mut Response,
     data: ChangePassword<'a>,
 ) -> AppResult<()> {
-    let app_state = get_app_state();
-
     let user_id = depot
         .session_mut()
         .and_then(|session| session.get::<String>("userid"))
@@ -462,9 +461,9 @@ pub async fn change_password<'a>(
     }
 
     let user_id = user_id?;
+    let auth = get_auth().await.read().await;
 
-    let user = app_state
-        .auth
+    let user = auth
         .get_user_by_id(&user_id)
         .ok_or(AppError::UserNotFoundError(user_id.clone()));
 
@@ -485,8 +484,9 @@ pub async fn change_password<'a>(
         .map_err(AppError::PasswordHashError)?;
 
     user.password = new_password.to_string();
+    let mut auth = get_auth().await.write().await;
 
-    app_state.auth.update_user(user).await?;
+    auth.update_user(user).await?;
 
     res.render(Redirect::other("/"));
 

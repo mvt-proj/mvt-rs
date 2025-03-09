@@ -28,7 +28,7 @@ struct NewStyle<'a> {
 
 #[handler]
 pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (is_auth, user) = get_session_data(depot);
+    let (is_auth, user) = get_session_data(depot).await;
 
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();

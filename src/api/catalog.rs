@@ -1,11 +1,11 @@
 use salvo::prelude::*;
 
-use crate::{get_app_state, get_catalog, models::catalog::Layer};
+use crate::{get_catalog, models::catalog::Layer};
 
 #[handler]
 pub async fn list(req: &mut Request, res: &mut Response) {
-    let catalog = get_catalog().clone();
-    let mut layers = catalog.layers;
+    let catalog = get_catalog().await.read().await;
+    let mut layers = catalog.layers.clone();
     let scheme = req.scheme().to_string();
 
     let host = req.headers().get("host").unwrap().to_str().unwrap();
@@ -21,15 +21,13 @@ pub async fn list(req: &mut Request, res: &mut Response) {
 }
 
 #[handler]
-// pub async fn create_layer(req: &mut Request, res: &mut Response) -> Result<Json<Layer>, StatusError>{
 pub async fn create_layer(req: &mut Request, res: &mut Response) {
-    // let catalog = get_catalog().clone();
-    let app_state = get_app_state();
     let layer = req.parse_json::<Layer>().await;
 
     match layer {
         Ok(lyr) => {
-            let _ = app_state.catalog.add_layer(lyr.clone()).await;
+            let mut catalog = get_catalog().await.write().await;
+            let _ = catalog.add_layer(lyr.clone()).await;
             res.render(Json(lyr))
         }
         Err(e) => res.render(format!("{:?}", e)),

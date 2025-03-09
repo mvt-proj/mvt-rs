@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::categories::{create_category, delete_category, get_category_by_id, update_category},
-    error::AppResult,
-    get_app_state,
+    config::categories::{create_category, delete_category, get_category_by_id, update_category}, error::AppResult, get_catalog, get_categories
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -22,8 +20,9 @@ impl Category {
         };
 
         create_category(None, category.clone()).await?;
+        let mut categories = get_categories().await.write().await;
 
-        get_app_state().categories.push(category.clone());
+        categories.push(category.clone());
 
         Ok(category)
     }
@@ -42,29 +41,30 @@ impl Category {
         };
 
         update_category(None, category.clone()).await?;
+        let mut categories = get_categories().await.write().await;
 
-        let position = get_app_state()
-            .categories
+        let position = categories
             .iter()
             .position(|c| c.id == self.id);
 
         match position {
             Some(pos) => {
-                get_app_state().categories[pos] = category.clone();
+                categories[pos] = category.clone();
             }
             None => {
-                get_app_state().categories.push(category.clone());
+                categories.push(category.clone());
             }
         }
 
-        let position = get_app_state()
-            .catalog
+        let mut catalog = get_catalog().await.write().await;
+
+        let position = catalog
             .layers
             .iter()
             .position(|l| l.category.id == self.id);
 
         if let Some(pos) = position {
-            get_app_state().catalog.layers[pos].category = category.clone();
+            catalog.layers[pos].category = category.clone();
         }
 
         Ok(category)
@@ -72,14 +72,14 @@ impl Category {
 
     pub async fn delete_category(&self) -> AppResult<()> {
         delete_category(None, &self.id.clone()).await?;
+        let mut categories = get_categories().await.write().await;
 
-        let position = get_app_state()
-            .categories
+        let position = categories
             .iter()
             .position(|c| c.id == self.id);
 
         if let Some(pos) = position {
-            get_app_state().categories.remove(pos);
+            categories.remove(pos);
         }
 
         Ok(())

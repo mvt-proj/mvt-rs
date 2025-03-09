@@ -8,10 +8,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{Auth, Group, User},
+    auth::{Group, User},
     config::users::create_user as create_cf_user,
     error::{AppError, AppResult},
-    get_app_state, get_auth,
+    get_auth,
     html::main::{get_session_data, BaseTemplateData},
 };
 
@@ -35,8 +35,8 @@ struct NewUser<'a> {
 
 #[handler]
 pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (is_auth, user) = get_session_data(depot);
-    let auth: Auth = get_auth().clone();
+    let (is_auth, user) = get_session_data(depot).await;
+    let auth = get_auth().await.read().await;
 
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
@@ -52,8 +52,7 @@ pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> 
 
 #[handler]
 pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppResult<()> {
-    let auth: Auth = get_auth().clone();
-    let app_state = get_app_state();
+    let mut auth = get_auth().await.write().await;
     let encrypt_psw = auth.get_encrypt_psw(new_user.password.to_string());
 
     if let Err(err) = encrypt_psw {
@@ -80,7 +79,7 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         return Err(AppError::SQLError(err));
     }
 
-    app_state.auth.users.push(user);
+    auth.users.push(user);
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/users"));
@@ -89,8 +88,7 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 
 #[handler]
 pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppResult<()> {
-    let auth: Auth = get_auth().clone();
-    let app_state = get_app_state();
+    let mut auth = get_auth().await.write().await;
 
     let encrypt_psw = if new_user.password.is_empty() {
         match auth.get_user_by_id(new_user.id.clone().unwrap().as_str()) {
@@ -123,7 +121,7 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         groups: selected_groups,
     };
 
-    if let Err(err) = app_state.auth.update_user(user).await {
+    if let Err(err) = auth.update_user(user).await {
         res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
         return Err(err);
     }
@@ -136,14 +134,14 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
 
 #[handler]
 pub async fn delete_user<'a>(res: &mut Response, req: &mut Request) -> AppResult<()> {
-    let app_state = get_app_state();
+    let mut auth = get_auth().await.write().await;
 
     let id = req.param::<String>("id").ok_or_else(|| {
         res.status_code(StatusCode::BAD_REQUEST);
         AppError::RequestParamError("id".to_string())
     })?;
 
-    if let Err(err) = app_state.auth.delete_user(id).await {
+    if let Err(err) = auth.delete_user(id).await {
         res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
         return Err(err);
     }

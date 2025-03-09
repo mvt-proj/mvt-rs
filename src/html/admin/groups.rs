@@ -3,9 +3,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{Group, User},
-    error::{AppError, AppResult},
-    html::main::{get_session_data, BaseTemplateData},
+    auth::{Group, User}, error::{AppError, AppResult}, get_auth, html::main::{get_session_data, BaseTemplateData}
 };
 
 #[derive(Template)]
@@ -26,15 +24,14 @@ struct NewGroup<'a> {
 
 #[handler]
 pub async fn list_groups(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let app_state = crate::get_app_state();
-
-    let (is_auth, user) = get_session_data(depot);
+    let (is_auth, user) = get_session_data(depot).await;
 
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
+    let auth = get_auth().await.read().await;
 
     let template = ListGroupsTemplate {
-        groups: &app_state.auth.groups,
+        groups: &auth.groups,
         current_user: &current_user,
         base,
     };

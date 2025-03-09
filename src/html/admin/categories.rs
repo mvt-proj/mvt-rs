@@ -3,6 +3,7 @@ use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    get_categories,
     auth::User,
     error::{AppError, AppResult},
     html::main::{get_session_data, BaseTemplateData},
@@ -27,13 +28,14 @@ struct NewCategory<'a> {
 
 #[handler]
 pub async fn list_categories(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let app_state = crate::get_app_state();
-    let (is_auth, user) = get_session_data(depot);
+    let (is_auth, user) = get_session_data(depot).await;
     let base = BaseTemplateData { is_auth };
     let current_user = user.unwrap();
 
+    let categories = get_categories().await.read().await;
+
     let template = ListCategoriesTemplate {
-        categories: &app_state.categories,
+        categories: &categories,
         current_user: &current_user,
         base,
     };
