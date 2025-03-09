@@ -451,7 +451,7 @@ pub async fn change_password<'a>(
     }
 
     let user_id = user_id?;
-    let auth = get_auth().await.read().await;
+    let mut auth = get_auth().await.write().await;
 
     let user = auth
         .get_user_by_id(&user_id)
@@ -474,8 +474,6 @@ pub async fn change_password<'a>(
         .map_err(AppError::PasswordHashError)?;
 
     user.password = new_password.to_string();
-    let mut auth = get_auth().await.write().await;
-
     auth.update_user(user).await?;
 
     res.render(Redirect::other("/"));
