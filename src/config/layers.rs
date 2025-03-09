@@ -41,6 +41,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
         let geometry: String = row.get("geometry");
         let name: String = row.get("name");
         let alias: String = row.get("alias");
+        let description: String = row.get("description");
         let schema: String = row.get("schema");
         let table_name: String = row.get("table_name");
         let fields: String = row.get("fields");
@@ -97,6 +98,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
             geometry,
             name,
             alias,
+            description,
             schema,
             table_name,
             fields: fields_vec,
@@ -130,12 +132,12 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
 
     sqlx::query(
         "INSERT INTO layers (
-            id, category, geometry, name, alias, schema, table_name, fields, filter, srid, geom,
+            id, category, geometry, name, alias, description, schema, table_name, fields, filter, srid, geom,
             sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify,
             buffer_do_not_simplify, extent_do_not_simplify, clip_geom,
             delete_cache_on_start, max_cache_age, published, url, groups
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )",
     )
     .bind(&layer.id)
@@ -143,6 +145,7 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(&layer.geometry)
     .bind(&layer.name)
     .bind(&layer.alias)
+    .bind(&layer.description)
     .bind(&layer.schema)
     .bind(&layer.table_name)
     .bind(fields)
@@ -321,7 +324,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
 
     sqlx::query(
         "UPDATE layers SET
-            category = ?, geometry = ?, name = ?, alias = ?, schema = ?, table_name = ?, fields = ?,
+            category = ?, geometry = ?, name = ?, alias = ?, description = ?, schema = ?, table_name = ?, fields = ?,
             filter = ?, srid = ?, geom = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?,
             zmax = ?, zmax_do_not_simplify = ?, buffer_do_not_simplify = ?,
             extent_do_not_simplify = ?, clip_geom = ?, delete_cache_on_start = ?,
@@ -331,6 +334,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(&layer.geometry)
     .bind(&layer.name)
     .bind(&layer.alias)
+    .bind(&layer.description)
     .bind(&layer.schema)
     .bind(&layer.table_name)
     .bind(fields)

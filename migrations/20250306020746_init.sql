@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS layers (
     geometry TEXT NOT NULL,
     name TEXT NOT NULL,
     alias TEXT NOT NULL,
+    description TEXT NOT NULL,
     schema TEXT NOT NULL,
     table_name TEXT NOT NULL,
     fields TEXT NOT NULL,
@@ -53,14 +54,6 @@ CREATE TABLE IF NOT EXISTS styles (
     description TEXT NOT NULL,
     style TEXT NOT NULL
 );
-
--- Insertar roles
---INSERT INTO groups (id, name, description) VALUES
---    ('7091390e-5cec-47d7-9d39-4f068d945788', 'admin', 'admin role');
-
--- Insertar categoría pública
---INSERT INTO categories (id, name, description) VALUES
---    ('cf8cdae0-78e8-490e-84bc-b75a5d1fa625', 'public', 'public category');
 
 
 INSERT OR IGNORE INTO groups (id, name, description) VALUES

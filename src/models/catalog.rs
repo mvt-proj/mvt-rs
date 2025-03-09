@@ -21,6 +21,7 @@ pub struct Layer {
     pub geometry: String,
     pub name: String,
     pub alias: String,
+    pub description: String,
     pub schema: String,
     pub table_name: String,
     pub fields: Vec<String>,
@@ -106,6 +107,7 @@ impl Layer {
         let mut rv = format!("<strong>ID:</strong> {}<br>", self.id);
         rv += &format!("<strong>Name:</strong> {}<br>", self.name);
         rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
+        rv += &format!("<strong>Description:</strong> {}<br>", escape_all_quotes(self.description.clone()));
         rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
         rv += &format!("<strong>Table:</strong> {}<br>", self.table_name);
         rv += &format!(
@@ -149,7 +151,9 @@ impl Layer {
             "<strong>Allowed Groups: </strong> {}",
             self.groups_as_string()
         );
+        rv = rv.replace("\n", "\\n").replace("\r", "");
         rv
+
     }
 
     // pub fn groups_as_string(&self) -> String {
