@@ -248,7 +248,7 @@ pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> Ap
             layer.name.clone()
         } else {
             res.status_code(StatusCode::BAD_REQUEST);
-            return Err(AppError::CacheNotFount(format!("{layer_id}")));
+            return Err(AppError::CacheNotFount(layer_id.to_string()));
         }
     };
 

@@ -197,7 +197,8 @@ pub async fn table_catalog(
             .collect();
     }
 
-    let is_guest_or_non_admin = user.is_none() || user.as_ref().map_or(true, |usr| !usr.is_admin());
+    // let is_guest_or_non_admin = user.is_none() || user.as_ref().map_or(true, |usr| !usr.is_admin());
+    let is_guest_or_non_admin = user.is_none() || user.as_ref().is_none_or(|usr| !usr.is_admin());
 
     let template = CatalogTableTemplate {
         layers: &catalog.layers,
@@ -294,21 +295,18 @@ pub async fn table_styles(
     let mut styles = Style::get_all_styles().await?;
 
     if let Some(filter) = filter {
-        styles = styles
-            .into_iter()
-            .filter(|style| {
-                style.name.to_lowercase().contains(&filter.to_lowercase())
-                    || style
-                        .description
-                        .to_lowercase()
-                        .contains(&filter.to_lowercase())
-                    || style
-                        .category
-                        .name
-                        .to_lowercase()
-                        .contains(&filter.to_lowercase())
-            })
-            .collect();
+        styles.retain(|style| {
+            style.name.to_lowercase().contains(&filter.to_lowercase())
+                || style
+                    .description
+                    .to_lowercase()
+                    .contains(&filter.to_lowercase())
+                || style
+                    .category
+                    .name
+                    .to_lowercase()
+                    .contains(&filter.to_lowercase())
+        });
     }
 
     let template = StylesTableTemplate {

@@ -110,14 +110,14 @@ impl Layer {
         rv += &format!("<strong>Table:</strong> {}<br>", self.table_name);
         rv += &format!(
             "<strong>Fields:</strong> {}<br>",
-            escape_all_quotes(self.fields.join(", ")).to_string()
+            escape_all_quotes(self.fields.join(", "))
         );
         rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
         rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
         rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
         rv += &format!(
             "<strong>Filter:</strong> {}<br>",
-            escape_all_quotes(self.get_filter()).to_string()
+            escape_all_quotes(self.get_filter())
         );
         rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());
         rv += &format!("<strong>Extent:</strong> {}<br>", self.get_extent());

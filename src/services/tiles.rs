@@ -140,7 +140,7 @@ async fn query_database(
     let srid = layer_conf.srid.unwrap_or(DEFAULT_SRID);
 
     let query_placeholder = if !query.is_empty() {
-        if let Err(_) = validate_filter(&query) {
+        if validate_filter(&query).is_err() {
             return Ok(Bytes::new());
         }
         Some(format!(" AND {}", query))
@@ -257,7 +257,7 @@ async fn validate_user_groups(req: &Request, layer: &Layer, depot: &mut Depot) -
         None
     };
 
-    let has_common_group = user.as_ref().map_or(false, |user| {
+    let has_common_group = user.as_ref().is_some_and(|user| {
         let user_group_ids: HashSet<_> = user.groups.iter().map(|g| &g.id).collect();
         groups.iter().any(|g| user_group_ids.contains(&g.id))
     });
@@ -292,7 +292,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Ap
         return Ok(());
     };
 
-    if !validate_user_groups(&req, &layer, depot).await? {
+    if !validate_user_groups(req, layer, depot).await? {
         res.body(salvo::http::ResBody::Once(Bytes::new()));
         return Ok(());
     }

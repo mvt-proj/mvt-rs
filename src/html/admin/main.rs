@@ -147,7 +147,7 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let base = BaseTemplateData { is_auth };
 
     let template = NewLayerTemplate {
-        categories: (&categories).to_vec(),
+        categories: (categories).to_vec(),
         groups,
         base,
     };
@@ -172,7 +172,7 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot
         .unwrap();
     let template = EditLayerTemplate {
         layer: layer.clone(),
-        categories: (&categories).to_vec(),
+        categories: (categories).to_vec(),
         groups,
         base,
     };
@@ -219,7 +219,7 @@ pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
     let categories = get_categories().await.read().await;
     let template = NewStyleTemplate {
-        categories: (&categories).to_vec(),
+        categories: (categories).to_vec(),
         base,
     };
     res.render(Text::Html(template.render()?));
@@ -238,7 +238,7 @@ pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot
     let categories = get_categories().await.read().await;
     let template = EditStyleTemplate {
         style: style.clone(),
-        categories: (&categories).to_vec(),
+        categories: (categories).to_vec(),
         base,
     };
     res.render(Text::Html(template.render()?));

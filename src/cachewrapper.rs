@@ -73,8 +73,8 @@ impl CacheWrapper {
                     .join(z.to_string())
                     .join(x.to_string());
                 let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
-                let path = PathBuf::from(tilepath);
-                disk_cache.get_cache(path, max_cache_age).await
+                // let path = PathBuf::from(tilepath);
+                disk_cache.get_cache(tilepath, max_cache_age).await
             }
         }
     }
@@ -102,8 +102,8 @@ impl CacheWrapper {
                     .join(z.to_string())
                     .join(x.to_string());
                 let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
-                let path = PathBuf::from(tilepath);
-                disk_cache.write_tile_to_file(&path, tile).await
+                // let path = PathBuf::from(tilepath);
+                disk_cache.write_tile_to_file(&tilepath, tile).await
             }
         }
     }

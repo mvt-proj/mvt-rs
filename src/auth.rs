@@ -392,7 +392,7 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
 pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -> AppResult<()> {
     let auth = get_auth().await.read().await;
 
-    let user = auth.get_user_by_email_and_password(&data.email, &data.password);
+    let user = auth.get_user_by_email_and_password(data.email, data.password);
 
     if let Err(err) = user {
         res.status_code(StatusCode::UNAUTHORIZED);
