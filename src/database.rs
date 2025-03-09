@@ -52,57 +52,69 @@ pub async fn query_schemas() -> AppResult<Vec<Schema>> {
 pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
     let pg_pool: PgPool = get_db_pool().clone();
 
-    let sql = format!(
-        r#"
-            SELECT
-                table_name name,
-                column_name geometry
-            FROM
-                information_schema.columns
-            WHERE
-                table_schema = '{schema}'
-                AND data_type = 'USER-DEFINED'
-                AND udt_name = 'geometry'
-            ORDER BY
-                table_name;
-        "#
-    );
+    let sql = r#"
+        SELECT
+            table_name AS name,
+            column_name AS geometry
+        FROM
+            information_schema.columns
+        WHERE
+            table_schema = $1
+            AND data_type = 'USER-DEFINED'
+            AND udt_name = 'geometry'
+        ORDER BY
+            table_name;
+    "#;
 
-    let data = sqlx::query_as::<_, Table>(&sql).fetch_all(&pg_pool).await?;
+    let data = sqlx::query_as::<_, Table>(sql)
+        .bind(schema)
+        .fetch_all(&pg_pool)
+        .await?;
+
     Ok(data)
 }
+
 
 pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>> {
     let pg_pool: PgPool = get_db_pool().clone();
 
-    let sql = format!(
-        r#"
-            SELECT
-                column_name name,
-                udt_name udt
-            FROM
-                information_schema.columns
-            WHERE table_schema = '{schema}'
-              AND table_name = '{table}';
-        "#
-    );
+    let sql = r#"
+        SELECT
+            column_name AS name,
+            udt_name AS udt
+        FROM
+            information_schema.columns
+        WHERE
+            table_schema = $1
+            AND table_name = $2;
+    "#;
 
-    let data = sqlx::query_as::<_, Field>(&sql).fetch_all(&pg_pool).await?;
+    let data = sqlx::query_as::<_, Field>(sql)
+        .bind(schema)
+        .bind(table)
+        .fetch_all(&pg_pool)
+        .await?;
+
     Ok(data)
 }
 
 pub async fn query_srid(schema: String, table: String, geometry: String) -> AppResult<Srid> {
     let pg_pool: PgPool = get_db_pool().clone();
+    let full_table = format!("{}.{}", schema, table);
+    let sql = r#"
+        SELECT Find_SRID($1, $2, $3) AS name
+        FROM {}
+        LIMIT 1;
+    "#;
 
-    let sql = format!(
-        r#"
-            SELECT Find_SRID('{schema}', '{table}', '{geometry}') AS name
-            FROM {schema}.{table}
-            LIMIT 1;
-        "#
-    );
+    let sql = sql.replace("{}", &full_table);
+    let data = sqlx::query_as::<_, Srid>(&sql)
+        .bind(&schema)
+        .bind(&table)
+        .bind(&geometry)
+        .fetch_one(&pg_pool)
+        .await?;
 
-    let data = sqlx::query_as::<_, Srid>(&sql).fetch_one(&pg_pool).await?;
     Ok(data)
 }
 
@@ -112,16 +124,20 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
     let table = &layer.table_name;
     let geometry = layer.get_geom();
 
+    let full_table = format!("{}.{}", schema, table);
+
     let sql = format!(
         r#"
-            SELECT
-              ST_XMin(ST_Extent(ST_Transform({geometry}, 4326))) AS xmin,
-              ST_YMin(ST_Extent(ST_Transform({geometry}, 4326))) AS ymin,
-              ST_XMax(ST_Extent(ST_Transform({geometry}, 4326))) AS xmax,
-              ST_YMax(ST_Extent(ST_Transform({geometry}, 4326))) AS ymax
-            FROM {schema}.{table};
-        "#
+        SELECT
+          ST_XMin(ST_Extent(ST_Transform({geometry}, 4326))) AS xmin,
+          ST_YMin(ST_Extent(ST_Transform({geometry}, 4326))) AS ymin,
+          ST_XMax(ST_Extent(ST_Transform({geometry}, 4326))) AS xmax,
+          ST_YMax(ST_Extent(ST_Transform({geometry}, 4326))) AS ymax
+        FROM {};
+        "#,
+        full_table
     );
+
     let data = sqlx::query_as::<_, Extent>(&sql)
         .fetch_one(&pg_pool)
         .await?;
