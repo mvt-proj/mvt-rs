@@ -185,23 +185,17 @@ pub struct Auth {
     pub groups: Vec<Group>,
     pub users: Vec<User>,
     config_dir: String,
-    pub groups_path: String,
-    pub users_path: String,
 }
 
 impl Auth {
     pub async fn new(config_dir: &str, pool: &SqlitePool) -> AppResult<Self> {
         let groups = get_groups(Some(pool)).await?;
         let users = get_users(Some(pool)).await?;
-        let groups_path = format!("{}/groups.json", config_dir);
-        let users_path = format!("{}/users.json", config_dir);
 
         Ok(Self {
             groups,
             users,
             config_dir: config_dir.to_string(),
-            groups_path,
-            users_path,
         })
     }
 
