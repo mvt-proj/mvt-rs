@@ -134,10 +134,39 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
+}
+```
 
-    # For WebSockets if needed
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
+#### Setting Up a Load Balancer with Nginx
+
+Configure Nginx as a load balancer to distribute traffic across multiple backend servers. Load balancing improves application performance, enhances availability, and ensures fault tolerance.
+
+##### Prerequisites
+
+   - A Unix server with Nginx installed.
+   - Three (for example) backend servers running on ports 5800, 5801, and 5802.
+
+It is recommended to use Redis as a cache in this case."
+
+```nginx
+http {
+    upstream backend_servers {
+        server localhost:5800;
+        server localhost:5801;
+        server localhost:5802;
+    }
+
+    server {
+        listen 80;
+        server_name yourdomain.com;
+
+        location / {
+            proxy_pass http://backend_servers;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+    }
 }
 ```
 
@@ -151,7 +180,7 @@ When the server starts for the first time, the necessary components for its conf
 The initial access credentials for mvt-server are: email **admin@mail.com** and password **admin**. It is of utmost importance that, upon your first access to the platform, you change this default password to a new, strong password of your choice. This will help protect your server and data from unauthorized access
 
 
-Access `http://localhost:8000`
+Access `http://localhost:5800`
 
 To access the mvt-server administration interface, simply enter the address http://localhost:5800 (or the corresponding domain if it is hosted on a remote server) in your web browser. Once there, you can manage your geographic layers, styles, and other server configurations.
 
