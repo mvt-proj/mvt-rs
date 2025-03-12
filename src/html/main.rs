@@ -6,7 +6,7 @@ use tokio::fs;
 use crate::{
     auth::User,
     database::{query_extent, Extent},
-    error::AppResult,
+    error::{AppResult, AppError},
     get_auth, get_catalog,
     models::{
         catalog::{Layer, StateLayer},
@@ -323,8 +323,15 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
     let base = BaseTemplateData { is_auth };
     let dir_path = "map_assets/sprites";
 
-    let mut entries = fs::read_dir(dir_path).await?;
+    let entries = fs::read_dir(dir_path).await;
+
+    if let Err(_err) = entries {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(AppError::NotFound(format!("The directory {} does not exist", dir_path)));
+    }
+
     let mut unique_names: HashSet<String> = HashSet::new();
+    let mut entries = entries.unwrap();
 
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
@@ -337,11 +344,12 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
     }
 
     let sprites: Vec<String> = unique_names.into_iter().collect();
-
     let template = SpritesTemplate { base, sprites };
+
     res.render(Text::Html(template.render()?));
     Ok(())
 }
+
 
 #[handler]
 pub async fn handle_errors(res: &mut Response, ctrl: &mut FlowCtrl) -> AppResult<()> {
