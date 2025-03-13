@@ -23,7 +23,9 @@ mvt-server not only allows you to publish geographic layers in vector tile forma
    - [Web Clients](#web-clients)
    - [QGIS](#qgis)
 8. [Serving Styles](#serving-styles)
-9. [Serving Glyphs and Sprites in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
+9. [Serving Sprites and Glyphs in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
+   - [Sprites](#serving-sprites)
+   - [Glyphs](#serving-glyphs) 
 ---
 
 ## Requirements
@@ -380,20 +382,98 @@ This tells MapLibre to fetch the sprite JSON and images from your MVT Server.
 
 To create your own sprite sets, you can use [Spreet](https://github.com/flother/spreet), a simple tool for generating sprite sheets and metadata from individual images.
 
-### Serving Glyphs (Coming Soon)
+### Serving Glyphs
 
-Currently, the glyphs directory is prepared for future support. Glyphs are used to render text labels in vector tiles. When implemented, the service will provide glyphs at a URL like:
+#### Creating Glyphs for mvt server
 
-`http://127.0.0.1:5887/services/glyphs/{fontstack}/{range}.pbf`
+This tutorial will guide you through the process of generating glyphs for the **mvt server** using **fontnik**. Glyphs allow the map server to render text labels properly.
 
-A MapLibre style would then reference it as follows:
+##### 1. Setting Up the Project
+
+Create a new project directory and install `fontnik`:
+
+```sh
+$ mkdir glyphs-project
+$ cd glyphs-project
+$ npm install fontnik
+# or using pnpm
+$ pnpm install fontnik
 ```
+
+##### 2. Downloading a Font
+
+Download a font of your choice. In this example, we will use **EmblemaOne** from Google Fonts:
+
+[Google Fonts - Emblema One](https://fonts.google.com/specimen/Emblema+One)
+
+Extract the downloaded ZIP file and move `EmblemaOne-Regular.ttf` into the `glyphs-project` directory.
+
+##### 3. Generating Glyphs
+
+Create a directory to store the glyphs:
+
+```sh
+$ mkdir -p glyphs/EmblemaOne-Regular
+```
+
+Run the following commands to generate glyph files for different Unicode ranges:
+
+```sh
+$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 0, end: 255}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/0-255.pbf', data))"
+
+$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 256, end: 511}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/256-511.pbf', data))"
+
+$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 512, end: 767}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/512-767.pbf', data))"
+```
+
+###### Resulting Directory Structure
+
+After running these commands, your `glyphs` directory should have the following structure:
+
+```
+glyphs/
+└── EmblemaOne-Regular/
+    ├── 0-255.pbf
+    ├── 256-511.pbf
+    └── 512-767.pbf
+```
+
+##### 4. Deploying Glyphs to mvt server
+
+Move or copy the `EmblemaOne-Regular` directory into your **mvt server's** glyphs directory:
+
+```sh
+$ mv glyphs/EmblemaOne-Regular /path/to/map_assets/glyphs/
+```
+
+mvt server will now be able to serve the glyphs.
+
+##### 5. Configuring MapLibre to Use the Glyphs
+
+In your **MapLibre** style JSON, add the glyphs path in the root:
+
+```json
 {
-  "glyphs": "http://127.0.0.1:5887/services/glyphs/{fontstack}/{range}.pbf"
+  "glyphs": "http://127.0.0.1:5800/services/glyphs/{fontstack}/{range}.pbf"
 }
 ```
 
-More details on glyph support will be added in future updates.
+In the **layout** section, specify the font name where needed:
+
+```json
+"text-font": ["EmblemaOne-Regular"]
+```
+
+###### Important Note
+The current version of the mvt server supports only one font in the array. This is because the server ensures the font's existence beforehand through the administration panel.
+
+The glyphs available on the server can be viewed from the Glyphs menu.
+
+---
+
+You have now successfully created and configured glyphs for your mvt server! 🎉
+
+
 
 ### Conclusion
 
