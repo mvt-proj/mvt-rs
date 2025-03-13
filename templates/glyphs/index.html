@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="title text-center mb-4">Available Glyps</h1>
+
+<div class="overflow-auto mt-4 rounded-lg">
+
+
+  <div class="flex justify-between items-center bg-white rounded-lg border border-zinc-300 py-4 px-5 mb-8 space-x-2">
+    <span id="url-glyphs" class="text-blue-500">
+      <span class="server"></span>/services/glyphs/{fontstack}/{range}.pbf
+    </span>
+
+    <button
+      class="button"
+      onclick="copyToClipboard('url-glyphs')"
+    >
+      <span class="icon">
+        <i class="fas fa-copy"></i>
+      </span>
+    </button>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for glyph in glyphs %}
+      <tr>
+        <td>
+          <span id="{{ glyph }}" class="font-semibold">{{ glyph }}</span>
+        </td>
+        <td class="text-right">
+          <div class="flex justify-end space-x-2">
+              <button
+                class="button"
+                onclick="copyToClipboard('{{ glyph }}')"
+              >
+                <span class="icon">
+                  <i class="fas fa-copy"></i>
+                </span>
+              </button>
+          </div>
+        </td>
+
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", initializePage);
+</script>
+{% endblock %}

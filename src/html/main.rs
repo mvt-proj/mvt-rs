@@ -110,6 +110,13 @@ struct SpritesTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "glyphs/index.html")]
+struct GlyphsTemplate {
+    base: BaseTemplateData,
+    glyphs: Vec<String>,
+}
+
+#[derive(Template)]
 #[template(path = "map.html")]
 struct MapTemplate<'a> {
     geometry: &'a str,
@@ -350,6 +357,36 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
     Ok(())
 }
 
+#[handler]
+pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let base = BaseTemplateData { is_auth };
+    let dir_path = "map_assets/glyphs";
+
+    let entries = fs::read_dir(dir_path).await;
+
+    if let Err(_err) = entries {
+        res.status_code(StatusCode::NOT_FOUND);
+        return Err(AppError::NotFound(format!("The directory {} does not exist", dir_path)));
+    }
+
+    let mut unique_names: HashSet<String> = HashSet::new();
+    let mut entries = entries.unwrap();
+
+    while let Some(entry) = entries.next_entry().await? {
+        let path = entry.path();
+
+        if entry.file_type().await?.is_dir() {
+            if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
+                unique_names.insert(dir_name.to_string());
+            }
+        }
+    }
+    let glyphs: Vec<String> = unique_names.into_iter().collect();
+    let template = GlyphsTemplate { base, glyphs };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
 
 #[handler]
 pub async fn handle_errors(res: &mut Response, ctrl: &mut FlowCtrl) -> AppResult<()> {
