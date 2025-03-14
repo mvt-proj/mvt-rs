@@ -5,8 +5,10 @@
         <th scope="col"></th>
         <th scope="col">Category</th>
         <th scope="col">Alias</th>
-        <th scope="col">Table</th>
-        <th scope="col">URL</th>
+        {% if !is_guest_or_non_admin %}
+          <th scope="col">Table</th>
+        {% endif %}
+        <th scope="col">Source</th>
         <th scope="col"></th>
       </tr>
     </thead>
@@ -26,7 +28,9 @@
         </td>
         <td>{{ layer.category.name }}</td>
         <td>{{ layer.alias }}</td>
-        <td>{{ layer.schema }}.{{ layer.table_name }}</td>
+        {% if !is_guest_or_non_admin %}
+          <td>{{ layer.schema }}.{{ layer.table_name }}</td>
+        {% endif %}
         <td class="text-blue-500">
           <span id="url-{{ layer.category.name }}:{{ layer.name }}">
             <span class="server"></span>/services/tiles/{{ layer.category.name
