@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use regex::Regex;
-use salvo::http::header::HeaderValue;
+use salvo::http::{header::HeaderValue, HeaderMap};
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::borrow::Cow;
@@ -324,5 +324,89 @@ pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Ap
     }
 
     res.body(salvo::http::ResBody::Once(tile));
+    Ok(())
+}
+
+#[handler]
+pub async fn composite(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    res.headers_mut().insert(
+        "content-type",
+        "application/x-protobuf;type=mapbox-vector".parse()?,
+    );
+
+    let layers = req.param::<String>("layers").unwrap_or_default();
+    let x = req.param::<u32>("x").unwrap_or(0);
+    let y = req.param::<u32>("y").unwrap_or(0);
+    let z = req.param::<u32>("z").unwrap_or(0);
+
+    let layers_vec: Vec<String> = layers
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    let pg_pool: PgPool = get_db_pool().clone();
+    let catalog = get_catalog().await.read().await;
+
+    let mut output_data = Vec::new();
+    let mut data_source_times = Vec::new();
+    let mut cache_hits = 0;
+    let mut cache_misses = 0;
+
+    for layer_name in layers_vec {
+        let filter = String::new();
+        let (category, name) = layer_name.split_once(':').unwrap_or(("", ""));
+        let Some(layer) =
+            catalog.find_layer_by_category_and_name(category, name, StateLayer::Published)
+        else {
+            tracing::warn!("the layer {}:{} is not found", category, name);
+            continue;
+        };
+
+        if !validate_user_groups(req, layer, depot).await? {
+            continue;
+        }
+
+        let zmin = layer.zmin.unwrap_or(0);
+        let zmax = layer.zmax.unwrap_or(22);
+        if z < zmin || z > zmax {
+            continue;
+        }
+
+        let start_time = Instant::now();
+        let (tile, via) = get_tile(pg_pool.clone(), layer.clone(), x, y, z, filter).await?;
+        let elapsed_time = start_time.elapsed().as_millis();
+
+        data_source_times.push(format!("{}: {}ms", layer_name, elapsed_time));
+
+        match via {
+            Via::Database => cache_misses += 1,
+            Via::Cache => cache_hits += 1,
+        }
+
+        output_data.push(tile);
+    }
+
+    let mut headers = HeaderMap::new();
+
+    if !data_source_times.is_empty() {
+        let times_str = data_source_times.join(", ");
+        headers.insert(
+            "X-Data-Source-Time",
+            HeaderValue::from_str(&times_str).unwrap_or_else(|_| HeaderValue::from_static("0")),
+        );
+    }
+
+    headers.insert(
+        "X-Cache",
+        HeaderValue::from_str(&format!("HIT: {}, MISS: {}", cache_hits, cache_misses))
+            .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
+    );
+
+    res.headers_mut().extend(headers);
+
+    let final_output = Bytes::from(output_data.concat());
+    res.body(salvo::http::ResBody::Once(final_output));
+
     Ok(())
 }

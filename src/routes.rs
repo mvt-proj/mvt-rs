@@ -235,6 +235,7 @@ pub fn app_router(session_secret: String) -> Service {
                 .options(handler::empty())
                 .push(Router::with_path("tiles").get(tiles::mvt))
                 .push(Router::with_path("tiles/{layer_name}/{z}/{x}/{y}.pbf").get(tiles::mvt))
+                .push(Router::with_path("tiles/composite/{layers}/{z}/{x}/{y}.pbf").get(tiles::composite))
                 .push(Router::with_path("styles/{style_name}").get(styles::index))
                 .push(
                     Router::with_path("{**path}")
