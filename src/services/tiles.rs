@@ -281,7 +281,6 @@ pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Ap
     let filter = req.query::<String>("filter").unwrap_or_default();
 
     let pg_pool: PgPool = get_db_pool().clone();
-    // let catalog: Catalog = get_catalog().clone();
     let catalog = get_catalog().await.read().await;
 
     let Some(layer) =
