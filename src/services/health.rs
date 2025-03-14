@@ -1,11 +1,13 @@
 use salvo::prelude::*;
 use serde::Serialize;
+use time::OffsetDateTime;
 
 #[derive(Debug, Serialize)]
 pub struct Health {
     title: String,
     message: String,
-    timestamp: chrono::DateTime<chrono::Local>,
+    #[serde(with = "time::serde::rfc3339")]
+    timestamp: OffsetDateTime,
 }
 
 #[handler]
@@ -13,7 +15,7 @@ pub async fn get_health(res: &mut Response) {
     let data = Health {
         title: "mvt server".to_string(),
         message: "Simple and high-speed vector tiles server developed in Rust".to_string(),
-        timestamp: chrono::offset::Local::now(),
+        timestamp: OffsetDateTime::now_utc(),
     };
     res.render(Json(&data));
 }
