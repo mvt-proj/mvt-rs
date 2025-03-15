@@ -16,10 +16,8 @@ use crate::{
     get_auth, get_jwt_secret,
 };
 use argon2::{
-    PasswordHash,
-    PasswordVerifier,
-    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
-    Argon2,
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+    Argon2, PasswordHash, PasswordVerifier,
 };
 
 fn decode_basic_auth(base64_string: &str) -> AppResult<(String, String)> {
@@ -308,7 +306,10 @@ impl Auth {
         self.users
             .iter()
             .find(|user| {
-                user.email == email && self.validate_psw((*user).clone(), password).unwrap_or(false)
+                user.email == email
+                    && self
+                        .validate_psw((*user).clone(), password)
+                        .unwrap_or(false)
             })
             .cloned()
             .ok_or(AppError::UserNotFound)

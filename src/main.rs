@@ -67,11 +67,8 @@ pub async fn get_auth() -> &'static RwLock<Auth> {
     AUTH.get().unwrap()
 }
 
-async fn initialize_auth(
-    config_dir: &str,
-    pool: &SqlitePool,
-) -> AppResult<Auth> {
-    let auth = Auth::new(config_dir,  pool).await?;
+async fn initialize_auth(config_dir: &str, pool: &SqlitePool) -> AppResult<Auth> {
+    let auth = Auth::new(config_dir, pool).await?;
     Ok(auth)
 }
 
@@ -94,11 +91,7 @@ async fn main() -> AppResult<()> {
     let db_conn = &format!("{}/mvtrs.db", app_config.config_dir);
     let cf_pool = config::db::init_sqlite(db_conn).await?;
 
-    let auth = initialize_auth(
-        &app_config.config_dir,
-        &cf_pool,
-    )
-    .await?;
+    let auth = initialize_auth(&app_config.config_dir, &cf_pool).await?;
     let catalog = initialize_catalog(&cf_pool).await?;
 
     let db_pool = make_db_pool(

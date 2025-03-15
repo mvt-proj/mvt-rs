@@ -267,7 +267,11 @@ async fn validate_user_groups(req: &Request, layer: &Layer, depot: &mut Depot) -
 }
 
 #[handler]
-pub async fn get_single_layer_tile(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn get_single_layer_tile(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,
@@ -328,7 +332,11 @@ pub async fn get_single_layer_tile(req: &mut Request, res: &mut Response, depot:
 }
 
 #[handler]
-pub async fn get_composite_layers_tile(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn get_composite_layers_tile(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,
@@ -412,7 +420,11 @@ pub async fn get_composite_layers_tile(req: &mut Request, res: &mut Response, de
 }
 
 #[handler]
-pub async fn get_category_layers_tile(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn get_category_layers_tile(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,

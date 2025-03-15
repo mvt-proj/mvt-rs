@@ -74,7 +74,6 @@ pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
     Ok(data)
 }
 
-
 pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>> {
     let pg_pool: PgPool = get_db_pool().clone();
 

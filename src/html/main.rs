@@ -6,7 +6,7 @@ use tokio::fs;
 use crate::{
     auth::User,
     database::{query_extent, Extent},
-    error::{AppResult, AppError},
+    error::{AppError, AppResult},
     get_auth, get_catalog,
     models::{
         catalog::{Layer, StateLayer},
@@ -334,7 +334,10 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
 
     if let Err(_err) = entries {
         res.status_code(StatusCode::NOT_FOUND);
-        return Err(AppError::NotFound(format!("The directory {} does not exist", dir_path)));
+        return Err(AppError::NotFound(format!(
+            "The directory {} does not exist",
+            dir_path
+        )));
     }
 
     let mut unique_names: HashSet<String> = HashSet::new();
@@ -367,7 +370,10 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 
     if let Err(_err) = entries {
         res.status_code(StatusCode::NOT_FOUND);
-        return Err(AppError::NotFound(format!("The directory {} does not exist", dir_path)));
+        return Err(AppError::NotFound(format!(
+            "The directory {} does not exist",
+            dir_path
+        )));
     }
 
     let mut unique_names: HashSet<String> = HashSet::new();

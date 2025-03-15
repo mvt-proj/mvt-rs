@@ -5,9 +5,9 @@ use argon2::{
 use sqlx::{migrate::Migrator, SqlitePool};
 use std::path::Path;
 
+use crate::error::AppResult;
 use std::fs;
 use uuid::Uuid;
-use crate::error::AppResult;
 
 static MIGRATOR: Migrator = sqlx::migrate!();
 
@@ -37,7 +37,10 @@ pub async fn init_sqlite(db_path: &str) -> AppResult<SqlitePool> {
 
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password("admin".to_string().as_bytes(), &salt).unwrap().to_string();
+        let password_hash = argon2
+            .hash_password("admin".to_string().as_bytes(), &salt)
+            .unwrap()
+            .to_string();
         let admin_role_id = "7091390e-5cec-47d7-9d39-4f068d945788";
 
         sqlx::query(
