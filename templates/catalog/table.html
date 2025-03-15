@@ -4,6 +4,7 @@
       <tr>
         <th scope="col"></th>
         <th scope="col">Category</th>
+        <th scope="col">Layer Name</th>
         <th scope="col">Alias</th>
         {% if !is_guest_or_non_admin %}
           <th scope="col">Table</th>
@@ -27,6 +28,7 @@
           </span>
         </td>
         <td>{{ layer.category.name }}</td>
+        <td>{{ layer.name }}</td>
         <td>{{ layer.alias }}</td>
         {% if !is_guest_or_non_admin %}
           <td>{{ layer.schema }}.{{ layer.table_name }}</td>
