@@ -20,10 +20,11 @@ mvt-server not only allows you to publish geographic layers in vector tile forma
    - [Command Arguments](#command-arguments)
 6. [Publishing Layers & Styles](#publishing-layers--styles)
 7. [Consuming Services](#consuming-services)
-   - [Web Clients](#web-clients)
+   - [About the Sources](#about-the-sources)
    - [QGIS](#qgis)
-8. [Serving Styles](#serving-styles)
-9. [Serving Sprites and Glyphs in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
+   - [Web Clients](#web-clients)   
+9. [Serving Styles](#serving-styles)
+10. [Serving Sprites and Glyphs in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
    - [Sprites](#serving-sprites)
    - [Glyphs](#serving-glyphs) 
 ---
@@ -266,6 +267,74 @@ You can check if the parameters entered in the form are correct and if the layer
 
 
 ## Consuming Services
+
+### About the Sources 
+
+This server provides access to *vector tiles* through three types of *sources*:  
+
+1. Single-layer source
+2. Multi-layer source
+3. Category-based source
+
+#### 1. Retrieving Tiles from a Single Layer
+
+To get *vector tiles* from a single layer, use the following route:  
+
+**Source:**  
+```
+http://127.0.0.1:5887/services/tiles/category:layer_name/{z}/{x}/{y}.pbf
+```
+
+---
+
+#### 2. Retrieving Tiles from Multiple Layers  
+
+To combine multiple layers into a single *tile*, use this route:  
+
+**Source:**  
+```
+http://127.0.0.1:5887/services/tiles/multi/category_1:layer_name_1,category_2:layer_name_2/{z}/{x}/{y}.pbf
+```
+
+🔹 *This endpoint returns a composite tile containing both `"layer_name_1"` and `"layer_name_2"` layers.*  
+
+**Notes:**  
+- Multiple layers can be specified using commas (`,`).  
+- Useful for displaying combined data in the client.  
+
+---
+
+#### 3. Retrieving Tiles by Category
+
+To fetch all layers that belong to a specific category, use the following route:  
+
+**Source:**  
+```
+http://127.0.0.1:5887/services/tiles/category/category_1/{z}/{x}/{y}.pbf
+```
+
+🔹 *This endpoint returns a tile containing all layers in the `"category_1"` category.*  
+
+---
+
+#### Summary and Final Notes
+
+---
+
+- Each layer within a composite tile follows its own rules regarding visibility, publishing, caching, etc.
+- Leveraging the server's built-in caching capabilities, the composition is performed at the server level rather than in the database..
+
+---
+
+| Source Type | Base Route | Example |
+|------------|-----------|---------|
+| **Single layer** | `/services/tiles/{layer}/{z}/{x}/{y}.pbf` | `/services/tiles/rivers/12/2345/3210.pbf` |
+| **Multiple layers** | `/services/tiles/multi/{layers}/{z}/{x}/{y}.pbf` | `/services/tiles/multi/rivers,roads/12/2345/3210.pbf` |
+| **By category** | `/services/tiles/category/{category}/{z}/{x}/{y}.pbf` | `/services/tiles/category/hydrography/12/2345/3210.pbf` |
+
+This system offers flexibility in working with *vector tiles*, allowing both individual layer access and dynamic layer composition.  
+
+---
 
 ### QGIS
 1. Add Source Vector Layer (click with the right button)
