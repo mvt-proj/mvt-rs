@@ -233,9 +233,9 @@ pub fn app_router(session_secret: String) -> Service {
                 .hoop(cache_30s)
                 .hoop(cors_handler)
                 .options(handler::empty())
-                .push(Router::with_path("tiles").get(tiles::mvt))
-                .push(Router::with_path("tiles/{layer_name}/{z}/{x}/{y}.pbf").get(tiles::mvt))
-                .push(Router::with_path("tiles/composite/{layers}/{z}/{x}/{y}.pbf").get(tiles::composite))
+                .push(Router::with_path("tiles/{layer_name}/{z}/{x}/{y}.pbf").get(tiles::get_single_layer_tile))
+                .push(Router::with_path("tiles/multi/{layers}/{z}/{x}/{y}.pbf").get(tiles::get_composite_layers_tile))
+                .push(Router::with_path("tiles/category/{category}/{z}/{x}/{y}.pbf").get(tiles::get_category_layers_tile))
                 .push(Router::with_path("styles/{style_name}").get(styles::index))
                 .push(
                     Router::with_path("{**path}")

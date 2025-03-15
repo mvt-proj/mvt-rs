@@ -107,7 +107,10 @@ impl Layer {
         let mut rv = format!("<strong>ID:</strong> {}<br>", self.id);
         rv += &format!("<strong>Name:</strong> {}<br>", self.name);
         rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
-        rv += &format!("<strong>Description:</strong> {}<br>", escape_all_quotes(self.description.clone()));
+        rv += &format!(
+            "<strong>Description:</strong> {}<br>",
+            escape_all_quotes(self.description.clone())
+        );
         rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
         rv += &format!("<strong>Table:</strong> {}<br>", self.table_name);
         rv += &format!(
@@ -153,20 +156,11 @@ impl Layer {
         );
         rv = rv.replace("\n", "\\n").replace("\r", "");
         rv
-
     }
-
-    // pub fn groups_as_string(&self) -> String {
-    //     self.groups
-    //         .iter()
-    //         .map(|group| group.name.clone())
-    //         .collect::<Vec<String>>()
-    //         .join(" | ")
-    // }
 
     pub fn groups_as_string(&self) -> String {
         self.groups
-            .as_ref() // Convierte Option<Vec<Group>> en Option<&Vec<Group>>
+            .as_ref()
             .map(|groups| {
                 groups
                     .iter()
@@ -174,26 +168,19 @@ impl Layer {
                     .collect::<Vec<String>>()
                     .join(" | ")
             })
-            .unwrap_or_default() // Si self.groups es None, retorna una cadena vacía
+            .unwrap_or_default()
     }
-
-    // pub fn groups_as_vec_string(&self) -> Vec<String> {
-    //     self.groups
-    //         .iter()
-    //         .map(|group| group.name.clone())
-    //         .collect::<Vec<String>>()
-    // }
 
     pub fn groups_as_vec_string(&self) -> Vec<String> {
         self.groups
-            .as_ref() // Convierte Option<Vec<Group>> en Option<&Vec<Group>>
+            .as_ref()
             .map(|groups| {
                 groups
                     .iter()
                     .map(|group| group.name.clone())
                     .collect::<Vec<String>>()
             })
-            .unwrap_or_default() // Retorna un Vec vacío si self.groups es None
+            .unwrap_or_default()
     }
 
     pub fn is_admin(&self) -> bool {
@@ -244,6 +231,20 @@ impl Catalog {
                     && layer.published
             }),
         }
+    }
+
+    pub fn find_layers_by_category<'a>(
+        &'a self,
+        target_category: &'a str,
+        state: StateLayer,
+    ) -> Vec<&'a Layer> {
+        self.layers
+            .iter()
+            .filter(|layer| match state {
+                StateLayer::Any => layer.category.name == target_category,
+                StateLayer::Published => layer.category.name == target_category && layer.published,
+            })
+            .collect()
     }
 
     pub fn find_layer_position_by_name(

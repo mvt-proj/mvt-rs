@@ -267,7 +267,7 @@ async fn validate_user_groups(req: &Request, layer: &Layer, depot: &mut Depot) -
 }
 
 #[handler]
-pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn get_single_layer_tile(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,
@@ -328,7 +328,7 @@ pub async fn mvt(req: &mut Request, res: &mut Response, depot: &mut Depot) -> Ap
 }
 
 #[handler]
-pub async fn composite(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn get_composite_layers_tile(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     res.headers_mut().insert(
         "content-type",
         "application/x-protobuf;type=mapbox-vector".parse()?,
@@ -378,6 +378,78 @@ pub async fn composite(req: &mut Request, res: &mut Response, depot: &mut Depot)
         let elapsed_time = start_time.elapsed().as_millis();
 
         data_source_times.push(format!("{}: {}ms", layer_name, elapsed_time));
+
+        match via {
+            Via::Database => cache_misses += 1,
+            Via::Cache => cache_hits += 1,
+        }
+
+        output_data.push(tile);
+    }
+
+    let mut headers = HeaderMap::new();
+
+    if !data_source_times.is_empty() {
+        let times_str = data_source_times.join(", ");
+        headers.insert(
+            "X-Data-Source-Time",
+            HeaderValue::from_str(&times_str).unwrap_or_else(|_| HeaderValue::from_static("0")),
+        );
+    }
+
+    headers.insert(
+        "X-Cache",
+        HeaderValue::from_str(&format!("HIT: {}, MISS: {}", cache_hits, cache_misses))
+            .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
+    );
+
+    res.headers_mut().extend(headers);
+
+    let final_output = Bytes::from(output_data.concat());
+    res.body(salvo::http::ResBody::Once(final_output));
+
+    Ok(())
+}
+
+#[handler]
+pub async fn get_category_layers_tile(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    res.headers_mut().insert(
+        "content-type",
+        "application/x-protobuf;type=mapbox-vector".parse()?,
+    );
+
+    let category = req.param::<String>("category").unwrap_or_default();
+    let x = req.param::<u32>("x").unwrap_or(0);
+    let y = req.param::<u32>("y").unwrap_or(0);
+    let z = req.param::<u32>("z").unwrap_or(0);
+
+    let pg_pool: PgPool = get_db_pool().clone();
+    let catalog = get_catalog().await.read().await;
+
+    let layers_vec = catalog.find_layers_by_category(&category, StateLayer::Published);
+    let mut output_data = Vec::new();
+    let mut data_source_times = Vec::new();
+    let mut cache_hits = 0;
+    let mut cache_misses = 0;
+
+    for layer in layers_vec {
+        let filter = String::new();
+
+        if !validate_user_groups(req, layer, depot).await? {
+            continue;
+        }
+
+        let zmin = layer.zmin.unwrap_or(0);
+        let zmax = layer.zmax.unwrap_or(22);
+        if z < zmin || z > zmax {
+            continue;
+        }
+
+        let start_time = Instant::now();
+        let (tile, via) = get_tile(pg_pool.clone(), layer.clone(), x, y, z, filter).await?;
+        let elapsed_time = start_time.elapsed().as_millis();
+
+        data_source_times.push(format!("{}: {}ms", layer.name, elapsed_time));
 
         match via {
             Via::Database => cache_misses += 1,
