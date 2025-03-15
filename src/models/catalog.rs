@@ -42,6 +42,7 @@ pub struct Layer {
     /// max_cache_age: on seconds: default 0 -> infinite
     pub max_cache_age: Option<u64>,
     pub published: bool,
+    #[serde(rename = "source")]
     pub url: Option<String>,
     pub groups: Option<Vec<Group>>,
 }
