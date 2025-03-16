@@ -10,6 +10,21 @@ This is a simple and high-speed vector tile server developed in Rust, using the 
 
 Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local or remote. It relies on the use of the PostGIS function ST_AsMVT. More information can be found at https://postgis.net/docs/en/ST_AsMVT.html.
 
+## Key Features
+
+- On-the-fly vector tile generation using PostgreSQL/PostGIS.
+- Web-based administration with user, group, layer, style, and category management.
+- Integrated caching with support for disk or Redis storage.
+- Granular cache control at the layer level.
+- Multiple source variants:
+  - **Single layer**: one layer per source.
+  - **Multi-layer by composition**: combining multiple layers into a single source.
+  - **Multi-layer by category**: grouping layers by thematic categories.
+- Built-in glyph and sprite server for custom styles.
+- Layer access control via Basic Authentication.
+- Alpha-stage API for querying and managing the layer catalog.
+
+
 ## Tutorial
 
 [Show tutorial](TUTORIAL.md)
