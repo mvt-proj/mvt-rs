@@ -25,6 +25,8 @@ use db::make_db_pool;
 use error::AppResult;
 use models::{catalog::Catalog, category::Category};
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 static POSTGRES_DB: OnceLock<PgPool> = OnceLock::new();
 #[inline]
 pub fn get_db_pool() -> &'static PgPool {
