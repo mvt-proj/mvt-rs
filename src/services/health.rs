@@ -1,7 +1,7 @@
+use crate::VERSION;
 use salvo::prelude::*;
 use serde::Serialize;
 use time::OffsetDateTime;
-use crate::VERSION;
 
 #[derive(Debug, Serialize)]
 pub struct Health {

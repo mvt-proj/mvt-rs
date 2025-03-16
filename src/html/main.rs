@@ -1,8 +1,8 @@
+use crate::VERSION;
 use askama::Template;
 use salvo::prelude::*;
 use std::collections::HashSet;
 use tokio::fs;
-use crate::VERSION;
 
 use crate::{
     auth::User,
@@ -139,7 +139,10 @@ pub async fn index(res: &mut Response, depot: &mut Depot) {
     let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
-    let template = IndexTemplate { base, version: VERSION.to_string() };
+    let template = IndexTemplate {
+        base,
+        version: VERSION.to_string(),
+    };
     res.render(Text::Html(template.render().unwrap()));
 }
 
