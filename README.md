@@ -13,7 +13,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 ## Key Features
 
 - On-the-fly vector tile generation using PostgreSQL/PostGIS.
-- Web-based administration with user, group, layer, style, and category management.
+- Web-based administration for managing users, groups, layers, styles, categories, and more..
 - Integrated caching with support for disk or Redis storage.
 - Granular cache control at the layer level.
 - Multiple source variants:
@@ -21,7 +21,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
   - **Multi-layer by composition**: combining multiple layers into a single source.
   - **Multi-layer by category**: grouping layers by thematic categories.
 - Built-in glyph and sprite server for custom styles.
-- Layer access control via Basic Authentication.
+- Layer access control via Basic Authentication (with future support for JWT).
 - Alpha-stage API for querying and managing the layer catalog.
 
 
