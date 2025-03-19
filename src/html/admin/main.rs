@@ -241,11 +241,8 @@ pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 #[handler]
 pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-   let translate: HashMap<String, String> = HashMap::new();
+    let translate: HashMap<String, String> = HashMap::new();
     let base = BaseTemplateData { is_auth, translate };
-
-
-
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;
@@ -265,9 +262,6 @@ pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate: HashMap<String, String> = HashMap::new();
     let base = BaseTemplateData { is_auth, translate };
-
-
-
     let template = NewGroupTemplate { base };
     res.render(Text::Html(template.render()?));
     Ok(())

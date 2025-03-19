@@ -14,11 +14,11 @@ mod db;
 mod diskcache;
 mod error;
 mod html;
+mod i18n;
 mod models;
 mod rediscache;
 mod routes;
 mod services;
-mod i18n;
 
 use auth::Auth;
 use cachewrapper::CacheWrapper;

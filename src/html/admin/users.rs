@@ -43,7 +43,6 @@ pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> 
     let translate: HashMap<String, String> = HashMap::new();
     let base = BaseTemplateData { is_auth, translate };
 
-
     let current_user = user.unwrap();
 
     let template = ListUsersTemplate {

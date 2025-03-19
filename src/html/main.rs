@@ -144,10 +144,7 @@ pub async fn index(res: &mut Response, depot: &mut Depot) {
         .cloned()
         .unwrap_or_default();
 
-    let base = BaseTemplateData {
-        is_auth,
-        translate,
-    };
+    let base = BaseTemplateData { is_auth, translate };
 
     let template = IndexTemplate {
         base,

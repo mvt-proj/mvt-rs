@@ -1,7 +1,7 @@
-use include_dir::{include_dir, Dir};
 use accept_language::parse;
 use fluent::{FluentBundle, FluentResource};
 use fluent_syntax::ast;
+use include_dir::{include_dir, Dir};
 use salvo::prelude::*;
 use std::collections::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;
@@ -26,7 +26,6 @@ pub struct I18n {
 }
 
 impl I18n {
-
     pub fn new(locales: &[&str]) -> Self {
         let mut bundles = HashMap::new();
         let mut locales_to_load = vec!["en-US"];
@@ -53,9 +52,7 @@ impl I18n {
                 }
             };
 
-            let ftl_content = ftl_file
-                .contents_utf8()
-                .expect("Invalid UTF-8 FTL content");
+            let ftl_content = ftl_file.contents_utf8().expect("Invalid UTF-8 FTL content");
 
             let resource = match FluentResource::try_new(ftl_content.to_string()) {
                 Ok(res) => res,
