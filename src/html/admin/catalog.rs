@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -55,7 +57,8 @@ struct NewLayer<'a> {
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (is_auth, user) = get_session_data(depot).await;
-    let base = BaseTemplateData { is_auth };
+    let translate: HashMap<String, String> = HashMap::new();
+    let base = BaseTemplateData { is_auth, translate };
     let current_user = user.unwrap();
     let template = CatalogTemplate {
         current_user: &current_user,

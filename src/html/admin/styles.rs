@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -29,8 +31,11 @@ struct NewStyle<'a> {
 #[handler]
 pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (is_auth, user) = get_session_data(depot).await;
-
-    let base = BaseTemplateData { is_auth };
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
     let current_user = user.unwrap();
 
     let template = ListStylesTemplate {

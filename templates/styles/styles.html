@@ -1,5 +1,5 @@
 {% extends "layout.html" %} {% block content %}
-<h1 class="title text-center mb-4">List of Styles</h1>
+<h1 class="title text-center mb-4">{{ base.translate["List-of-Styles"] }}</h1>
 
 <div class="flex justify-between items-center">
   <div class="flex space-x-3">
@@ -7,7 +7,7 @@
       id="filter"
       type="text"
       class="input"
-      placeholder="Filter..."
+      placeholder="{{ base.translate["Filter"] }}..."
       hx-get="/styletable"
       hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
       hx-target="#table-style"

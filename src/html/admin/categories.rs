@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -29,7 +31,8 @@ struct NewCategory<'a> {
 #[handler]
 pub async fn list_categories(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (is_auth, user) = get_session_data(depot).await;
-    let base = BaseTemplateData { is_auth };
+    let translate: HashMap<String, String> = HashMap::new();
+    let base = BaseTemplateData { is_auth, translate };
     let current_user = user.unwrap();
 
     let categories = get_categories().await.read().await;

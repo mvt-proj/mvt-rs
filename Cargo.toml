@@ -36,6 +36,7 @@ regex = "1.11.1"
 htmlize = "1.0.5"
 
 fluent = "0.16"
+fluent-syntax = "0.11"
 unic-langid = "0.9"
 accept-language = "3.1"
 

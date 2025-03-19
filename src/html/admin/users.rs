@@ -1,6 +1,8 @@
 // use std::error::Error;
 // use std::fmt;
 
+use std::collections::HashMap;
+
 use askama::Template;
 use salvo::macros::Extractible;
 use salvo::prelude::*;
@@ -38,7 +40,10 @@ pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> 
     let (is_auth, user) = get_session_data(depot).await;
     let auth = get_auth().await.read().await;
 
-    let base = BaseTemplateData { is_auth };
+    let translate: HashMap<String, String> = HashMap::new();
+    let base = BaseTemplateData { is_auth, translate };
+
+
     let current_user = user.unwrap();
 
     let template = ListUsersTemplate {

@@ -1823,6 +1823,7 @@ dependencies = [
  "clap",
  "dotenvy",
  "fluent",
+ "fluent-syntax",
  "htmlize",
  "include_dir",
  "jsonwebtoken",

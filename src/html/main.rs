@@ -4,13 +4,11 @@ use salvo::prelude::*;
 use std::collections::{HashMap, HashSet};
 use tokio::fs;
 
-
 use crate::{
     auth::User,
     database::{query_extent, Extent},
     error::{AppError, AppResult},
     get_auth, get_catalog,
-    i18n::{I18n, get_lang},
     models::{
         catalog::{Layer, StateLayer},
         styles::Style,
@@ -19,6 +17,7 @@ use crate::{
 
 pub struct BaseTemplateData {
     pub is_auth: bool,
+    pub translate: HashMap<String, String>,
 }
 
 pub async fn is_authenticated(depot: &mut Depot) -> bool {
@@ -57,7 +56,6 @@ pub async fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
 #[template(path = "index.html")]
 struct IndexTemplate {
     base: BaseTemplateData,
-    translate: HashMap<String, String>,
     version: String,
 }
 
@@ -138,28 +136,21 @@ struct MapViewTemplate {
 }
 
 #[handler]
-pub async fn index(res: &mut Response, req: &Request, depot: &mut Depot) {
+pub async fn index(res: &mut Response, depot: &mut Depot) {
     let is_auth = is_authenticated(depot).await;
-    let base = BaseTemplateData { is_auth };
 
-    let lang = get_lang(req);
-    let i18n = I18n::new(&[&lang]);
-    let keys = &["welcome",
-        "index-subtitle",
-        "mvt-you-can",
-        "feature-1",
-        "feature-2",
-        "feature-3",
-        "feature-4",
-        "catalog",
-        "styles"
-    ];
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
 
-    let translate = i18n.get_all_translations(&lang, keys);
+    let base = BaseTemplateData {
+        is_auth,
+        translate,
+    };
 
     let template = IndexTemplate {
         base,
-        translate,
         version: VERSION.to_string(),
     };
     res.render(Text::Html(template.render().unwrap()));
@@ -172,7 +163,11 @@ pub async fn login(res: &mut Response, depot: &mut Depot) {
         res.render(Redirect::other("/"));
     }
 
-    let base = BaseTemplateData { is_auth };
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
 
     let template = LoginTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
@@ -185,7 +180,8 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
     if !is_auth {
         res.render(Redirect::other("/login"));
     }
-    let base = BaseTemplateData { is_auth };
+    let translate: HashMap<String, String> = HashMap::new();
+    let base = BaseTemplateData { is_auth, translate };
 
     let template = ChangePasswordTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
@@ -195,7 +191,11 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) {
     let is_auth = is_authenticated(depot).await;
 
-    let base = BaseTemplateData { is_auth };
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
 
     let template = CatalogTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
@@ -253,7 +253,8 @@ pub async fn page_map(
     let name = parts.get(1).unwrap_or(&"").to_string(); // 🔹 Clonar para no mantener referencia
 
     let is_auth = is_authenticated(depot).await;
-    let base = BaseTemplateData { is_auth };
+    let translate: HashMap<String, String> = HashMap::new();
+    let base = BaseTemplateData { is_auth, translate };
 
     let (lyr, geometry) = {
         let catalog = get_catalog().await.read().await; // 🔓 Bloque limitado
@@ -298,7 +299,8 @@ pub async fn page_map_view(
     let style_id = req.param::<String>("style_id").unwrap();
     let style = Style::from_id(&style_id).await.unwrap();
     let is_auth = is_authenticated(depot).await;
-    let base = BaseTemplateData { is_auth };
+    let translate: HashMap<String, String> = HashMap::new();
+    let base = BaseTemplateData { is_auth, translate };
 
     let template = MapViewTemplate { base, style };
 
@@ -309,7 +311,11 @@ pub async fn page_map_view(
 #[handler]
 pub async fn page_styles(res: &mut Response, depot: &mut Depot) {
     let is_auth = is_authenticated(depot).await;
-    let base = BaseTemplateData { is_auth };
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
 
     let template = StylesTemplate { base };
     res.render(Text::Html(template.render().unwrap()));
@@ -351,7 +357,11 @@ pub async fn table_styles(
 #[handler]
 pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let base = BaseTemplateData { is_auth };
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
     let dir_path = "map_assets/sprites";
 
     let entries = fs::read_dir(dir_path).await;
@@ -387,7 +397,11 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
 #[handler]
 pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let base = BaseTemplateData { is_auth };
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
     let dir_path = "map_assets/glyphs";
 
     let entries = fs::read_dir(dir_path).await;

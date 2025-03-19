@@ -22,22 +22,22 @@
         <div
           class="flex flex-row flex-wrap justify-center sm:justify-end items-center space-x-4"
         >
-          <a href="/">Home</a>
-          <a href="/catalog">Catalog</a>
-          <a href="/styles">Styles</a>
-          <a href="/sprites">Sprites</a>
-          <a href="/glyphs">Glyphs</a>
-          <a href="https://github.com/mvt-proj/mvt-rs/blob/main/TUTORIAL.md" target="_blank">Tutorial</a>
+          <a href="/">{{ base.translate["home"] }}</a>
+          <a href="/catalog">{{ base.translate["catalog"] }}</a>
+          <a href="/styles">{{ base.translate["styles"] }}</a>
+          <a href="/sprites">{{ base.translate["sprites"] }}</a>
+          <a href="/glyphs">{{ base.translate["glyphs"] }}</a>
+          <a href="https://github.com/mvt-proj/mvt-rs/blob/main/TUTORIAL.md" target="_blank">{{ base.translate["tutorial"] }}</a>
         </div>
         <div
           class="flex flex-row flex-wrap justify-center sm:justify-end items-center space-x-4"
         >
           {% if self.base.is_auth %}
           <a class="button__outline" href="/admin"> Admin </a>
-          <a class="button__outline" href="/changepassword"> Password </a>
-          <a class="button__outline" href="/logout"> Logout </a>
+          <a class="button__outline" href="/changepassword"> {{ base.translate["password"] }} </a>
+          <a class="button__outline" href="/logout"> {{ base.translate["logout"] }} </a>
           {% else %}
-          <a class="button__outline" href="/login"> Login </a>
+          <a class="button__outline" href="/login"> {{ base.translate["login"] }} </a>
           {% endif %}
         </div>
       </nav>

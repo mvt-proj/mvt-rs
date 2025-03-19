@@ -1,9 +1,0 @@
-welcome = ¡Bienvenido a mvt server Español!
-index-subtitle = Un servidor simple, rápido y potente para la distribución de teselas vectoriales.
-mvt-you-can = Con mvt server podrá
-feature-1 = Servir capas vectoriales de alto rendimiento.
-feature-2 = Gestionar estilos de mapas con un servidor de estilos integrado.
-feature-3 = Gestionar usuarios y grupos con control de acceso flexible.
-feature-4 = <strong>Próximamente:</strong> Un servidor de metadatos compatible con <strong>ISO 19115</strong> para la documentación de datos espaciales.
-catalog = Catálogo
-styles = Estilos
