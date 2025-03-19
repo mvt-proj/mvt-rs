@@ -18,6 +18,7 @@ mod models;
 mod rediscache;
 mod routes;
 mod services;
+mod i18n;
 
 use auth::Auth;
 use cachewrapper::CacheWrapper;

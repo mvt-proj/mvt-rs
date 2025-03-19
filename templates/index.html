@@ -4,23 +4,24 @@
 
 <div class="flex justify-center items-center">
   <div class="text-center max-w-2xl px-6">
-    <h1 class="text-3xl font-bold">Welcome to mvt server  (version {{ version }})</h1>
+    <h1 class="text-3xl font-bold">{{ translate["welcome"] }}  (version {{ version }})</h1>
     <p class="mt-2 text-lg text-gray-700">
-      A simple, fast, and powerful server for vector tiles distribution.
+
+      {{ translate["index-subtitle"] }}
     </p>
 
     <div class="mt-6 text-left">
-      <h2 class="text-xl font-semibold">With mvt server, you can:</h2>
+      <h2 class="text-xl font-semibold">{{ translate["mvt-you-can"] }}:</h2>
       <ul class="mt-2 list-disc list-inside text-gray-600">
-        <li>Serve high-performance vector layers.</li>
-        <li>Manage map styles with an integrated style server.</li>
-        <li>Handle users and groups with flexible access control.</li>
-        <li><strong>Coming soon:</strong> A metadata server compliant with <span class="font-mono font-semibold">ISO 19115</span> for spatial data documentation.</li>
+        <li>{{ translate["feature-1"] }}</li>
+        <li>{{ translate["feature-2"] }}</li>
+        <li>{{ translate["feature-3"] }}</li>
+        <li>{{ translate["feature-4"]|safe }}</li>
       </ul>
     </div>
 
     <p class="mt-6 text-lg text-gray-700">
-      Explore the available layers in the <span class="font-semibold">"Catalog"</span> menu and customize their appearance in the <span class="font-semibold">"Styles"</span> section.
+    Explore the available layers in the <span class="font-semibold">"{{ translate["catalog"] }}"</span> menu and customize their appearance in the <span class="font-semibold">"{{ translate["styles"] }}"</span> section.
     </p>
 
     <div class="mt-8 flex justify-center">

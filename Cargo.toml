@@ -35,6 +35,10 @@ include_dir = {version = "0.7.4", features = ["glob"] }
 regex = "1.11.1"
 htmlize = "1.0.5"
 
+fluent = "0.16"
+unic-langid = "0.9"
+accept-language = "3.1"
+
 [build-dependencies]
 
 

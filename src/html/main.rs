@@ -1,14 +1,16 @@
 use crate::VERSION;
 use askama::Template;
 use salvo::prelude::*;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use tokio::fs;
+
 
 use crate::{
     auth::User,
     database::{query_extent, Extent},
     error::{AppError, AppResult},
     get_auth, get_catalog,
+    i18n::{I18n, get_lang},
     models::{
         catalog::{Layer, StateLayer},
         styles::Style,
@@ -55,6 +57,7 @@ pub async fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
 #[template(path = "index.html")]
 struct IndexTemplate {
     base: BaseTemplateData,
+    translate: HashMap<String, String>,
     version: String,
 }
 
@@ -135,12 +138,28 @@ struct MapViewTemplate {
 }
 
 #[handler]
-pub async fn index(res: &mut Response, depot: &mut Depot) {
+pub async fn index(res: &mut Response, req: &Request, depot: &mut Depot) {
     let is_auth = is_authenticated(depot).await;
     let base = BaseTemplateData { is_auth };
 
+    let lang = get_lang(req);
+    let i18n = I18n::new(&[&lang]);
+    let keys = &["welcome",
+        "index-subtitle",
+        "mvt-you-can",
+        "feature-1",
+        "feature-2",
+        "feature-3",
+        "feature-4",
+        "catalog",
+        "styles"
+    ];
+
+    let translate = i18n.get_all_translations(&lang, keys);
+
     let template = IndexTemplate {
         base,
+        translate,
         version: VERSION.to_string(),
     };
     res.render(Text::Html(template.render().unwrap()));
