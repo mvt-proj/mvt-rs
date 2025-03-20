@@ -367,7 +367,7 @@ pub async fn table_styles(
     let template = StylesTableTemplate {
         styles: &styles,
         current_user: &user,
-        translate
+        translate,
     };
     res.render(Text::Html(template.render()?));
     Ok(())
