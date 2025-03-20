@@ -110,7 +110,10 @@ pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
 
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
     let auth = get_auth().await.read().await;
 
@@ -125,7 +128,10 @@ pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 #[handler]
 pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let id = req
@@ -152,7 +158,10 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let groups = auth.groups.clone();
     let is_auth = is_authenticated(depot).await;
 
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let template = NewLayerTemplate {
@@ -167,7 +176,10 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 #[handler]
 pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let categories = get_categories().await.read().await;
@@ -193,7 +205,10 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot
 #[handler]
 pub async fn new_category(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let template = NewCategoryTemplate { base };
@@ -208,7 +223,10 @@ pub async fn edit_category(
     depot: &mut Depot,
 ) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let id = req
@@ -226,7 +244,10 @@ pub async fn edit_category(
 #[handler]
 pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let categories = get_categories().await.read().await;
@@ -241,7 +262,10 @@ pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 #[handler]
 pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
     let id = req
         .param::<String>("id")
@@ -260,7 +284,10 @@ pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot
 #[handler]
 pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
     let template = NewGroupTemplate { base };
     res.render(Text::Html(template.render()?));
@@ -270,7 +297,10 @@ pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 #[handler]
 pub async fn edit_group(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let id = req

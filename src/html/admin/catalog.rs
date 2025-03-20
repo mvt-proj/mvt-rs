@@ -57,7 +57,10 @@ struct NewLayer<'a> {
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (is_auth, user) = get_session_data(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
     let current_user = user.unwrap();
     let template = CatalogTemplate {

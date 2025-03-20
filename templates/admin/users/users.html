@@ -1,6 +1,6 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
 <div class="flex justify-between items-center">
-  <h1 class="title text-center">List of Users</h1>
+  <h1 class="title text-center">{{ base.translate["list-of-users"]}}</h1>
 
   <div class="text-right">
     {% if current_user.is_admin() %}
@@ -8,7 +8,7 @@
       <span class="icon__small">
         <i class="fas fa-user-plus"></i>
       </span>
-      <span>ADD USER</span>
+      <span>{{ base.translate["add-user"]}}</span>
     </a>
     {% endif %}
   </div>
@@ -18,9 +18,9 @@
   <table class="table">
     <thead>
       <tr>
-        <th scope="col">Username</th>
-        <th scope="col">Email</th>
-        <th scope="col">Groups</th>
+        <th scope="col">{{ base.translate["username"]}}</th>
+        <th scope="col">{{ base.translate["email"]}}</th>
+        <th scope="col">{{ base.translate["groups"]}}</th>
         <th scope="col"></th>
       </tr>
     </thead>

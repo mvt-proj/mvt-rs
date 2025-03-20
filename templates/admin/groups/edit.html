@@ -5,13 +5,13 @@
     <span class="icon is-small">
       <i class="fas fa-arrow-left"></i>
     </span>
-    <span>Back</span>
+    <span>{{ base.translate["back"] }}</span>
   </a>
 </div>
 
 <div class="max-w-3xl w-full mx-auto px-6">
   <div class="box">
-    <h1 class="title mb-6 text-center">Edit Group {{ group.name }}</h1>
+    <h1 class="title mb-6 text-center">{{ base.translate["edit-group"] }} {{ group.name }}</h1>
 
     <form action="/admin/groups/update" method="post">
       <div class="mb-4">
@@ -28,32 +28,32 @@
         </div>
       </div>
       <div class="mb-4">
-        <label class="label">Name</label>
+        <label class="label">{{ base.translate["name"] }}</label>
         <div class="control">
           <input
             class="input"
             name="name"
             type="text"
-            placeholder="Name"
+            placeholder="{{ base.translate["name"] }}"
             value="{{ group.name }}"
           />
         </div>
       </div>
       <div class="mb-4">
-        <label class="label">Description</label>
+        <label class="label">{{ base.translate["description"] }}</label>
         <div class="control">
           <input
             class="input"
             name="description"
             type="text"
-            placeholder="Description"
+            placeholder="{{ base.translate["description"] }}"
             value="{{ group.description }}"
           />
         </div>
       </div>
       <div class="mb-4">
         <div class="flex justify-center items-center">
-          <button class="button__outline is-fullwidth">Update Group</button>
+          <button class="button__outline is-fullwidth">{{ base.translate["update-group"] }}</button>
         </div>
       </div>
     </form>

@@ -5,14 +5,14 @@
     <span class="icon__small">
       <i class="fas fa-arrow-left"></i>
     </span>
-    <span>Back</span>
+    <span>{{ base.translate["back"] }}</span>
   </a>
 </div>
 
 <div class="max-w-3xl w-full mx-auto px-6">
   <div class="box">
     <h1 class="mb-3 title text-center">
-      Edit User {{ user.username }}
+      {{ base.translate["edit-user"] }} {{ user.username }}
     </h1>
 
     <form action="/admin/users/update" method="post">
@@ -30,42 +30,42 @@
         </div>
       </div>
       <div class="mb-4">
-        <label class="label">Username</label>
+        <label class="label">{{ base.translate["username"] }}</label>
         <div class="mt-1">
           <input
             class="input"
             name="username"
             type="text"
-            placeholder="Username"
+            placeholder="{{ base.translate["username"] }}"
             value="{{ user.username }}"
           />
         </div>
       </div>
       <div class="mb-4">
-        <label class="label">Email</label>
+        <label class="label">{{ base.translate["email"] }}</label>
         <div class="mt-1">
           <input
             class="input"
             name="email"
             type="email"
-            placeholder="Email"
+            placeholder="{{ base.translate["email"] }}"
             value="{{ user.email }}"
           />
         </div>
       </div>
       <div class="mb-4">
-        <label class="label">Password</label>
+        <label class="label">{{ base.translate["password"] }}</label>
         <div class="mt-1">
           <input
             class="input"
             name="password"
             type="password"
-            placeholder="Password"
+            placeholder="{{ base.translate["password"] }}"
           />
         </div>
       </div>
       <div class="mb-4">
-        <label class="label" for="fields">Groups</label>
+        <label class="label" for="fields">{{ base.translate["groups"] }}</label>
         <div class="mt-1">
           <div class="select is-multiple">
             <select name="groups" id="groups" multiple size="8" required>
@@ -82,7 +82,7 @@
 
       <div class="mb-4">
         <div class="flex justify-center items-center">
-          <button class="button__outline">Update User</button>
+          <button class="button__outline">{{ base.translate["update-user"] }}</button>
         </div>
       </div>
     </form>

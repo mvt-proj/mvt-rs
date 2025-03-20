@@ -11,7 +11,7 @@
 
 <div class="max-w-3xl w-full mx-auto px-6">
   <div class="box">
-    <h1 class="title mb-6 text-center">Edit Category {{ category.name }}</h1>
+    <h1 class="title mb-6 text-center">{{ base.translate["edit-category"] }} {{ category.name }}</h1>
 
     <form action="/admin/categories/update" method="post">
       <div class="mb-4">
@@ -28,32 +28,32 @@
         </div>
       </div>
       <div class="mb-4">
-        <label class="label">Name</label>
+        <label class="label">{{ base.translate["name"] }}</label>
         <div class="mt-1">
           <input
             class="input"
             name="name"
             type="text"
-            placeholder="Name"
+            placeholder="{{ base.translate["name"] }}"
             value="{{ category.name }}"
           />
         </div>
       </div>
       <div class="mb-4">
-        <label class="label">Description</label>
+        <label class="label">{{ base.translate["description"] }}</label>
         <div class="mt-1">
           <input
             class="input"
             name="description"
             type="text"
-            placeholder="Description"
+            placeholder="{{ base.translate["description"] }}"
             value="{{ category.description }}"
           />
         </div>
       </div>
       <div class="mb-4">
         <div class="flex justify-center items-center">
-          <button class="button__outline">Edit Category</button>
+          <button class="button__outline">{{ base.translate["update-category"] }}</button>
         </div>
       </div>
     </form>

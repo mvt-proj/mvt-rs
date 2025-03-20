@@ -225,7 +225,6 @@ pub async fn table_catalog(
             .collect();
     }
 
-    // let is_guest_or_non_admin = user.is_none() || user.as_ref().map_or(true, |usr| !usr.is_admin());
     let is_guest_or_non_admin = user.is_none() || user.as_ref().is_none_or(|usr| !usr.is_admin());
 
     let template = CatalogTableTemplate {
@@ -250,7 +249,10 @@ pub async fn page_map(
     let name = parts.get(1).unwrap_or(&"").to_string(); // 🔹 Clonar para no mantener referencia
 
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let (lyr, geometry) = {
@@ -296,7 +298,10 @@ pub async fn page_map_view(
     let style_id = req.param::<String>("style_id").unwrap();
     let style = Style::from_id(&style_id).await.unwrap();
     let is_auth = is_authenticated(depot).await;
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let template = MapViewTemplate { base, style };

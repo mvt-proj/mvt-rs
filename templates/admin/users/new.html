@@ -8,36 +8,36 @@
       <span class="icon__small">
         <i class="fas fa-arrow-left"></i>
       </span>
-      <span>Back</span>
+      <span>{{ base.translate["back"] }}</span>
     </a>
   </div>
 
   <div class="max-w-3xl w-full mx-auto px-6">
     <div class="box">
 
-      <h1 class="mb-3 title text-center">New User</h1>
+      <h1 class="mb-3 title text-center">{{ base.translate["new-user"] }}</h1>
 
       <form action="/admin/users/create" method="post">
         <div class="mb-4">
-          <label class="label">Username</label>
+          <label class="label">{{ base.translate["username"] }}</label>
           <div class="mt-1">
-            <input class="input" name="username" type="text" placeholder="Username">
+            <input class="input" name="username" type="text" placeholder="{{ base.translate["username"] }}">
           </div>
         </div>
         <div class="mb-4">
-          <label class="label">Email</label>
+          <label class="label">{{ base.translate["email"] }}</label>
           <div class="mt-1">
-            <input class="input" name="email" type="email" placeholder="Email">
+            <input class="input" name="email" type="email" placeholder="{{ base.translate["email"] }}">
           </div>
         </div>
         <div class="mb-4">
-          <label class="label">Password</label>
+          <label class="label">{{ base.translate["password"] }}</label>
           <div class="mt-1">
-            <input class="input" name="password" type="password" placeholder="Password">
+            <input class="input" name="password" type="password" placeholder="{{ base.translate["password"] }}">
           </div>
         </div>
         <div class="mb-4">
-          <label class="label" for="fields">Groups</label>
+          <label class="label" for="fields">{{ base.translate["groups"] }}</label>
           <div class="mt-1">
             <div class="select">
               <select name="groups" id="groups" multiple size="8" required>
@@ -51,7 +51,7 @@
 
         <div class="mb-4">
           <div class="flex justify-center items-center">
-            <button class="button__outline">Create User</button>
+            <button class="button__outline">{{ base.translate["create-user"] }}</button>
           </div>
         </div>
       </form>
