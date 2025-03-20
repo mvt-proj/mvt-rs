@@ -3,11 +3,12 @@
     <thead>
       <tr>
         <th scope="col"></th>
-        <th scope="col">Category</th>
-        <th scope="col">Layer Name</th>
-        <th scope="col">Alias</th>
+        <th scope="col">{{ translate["category"] }}</th>
+        <th scope="col">{{ translate["layer_name"] }}</th>
+        <th scope="col">{{ translate["alias"] }}</th>
+
         {% if !is_guest_or_non_admin %}
-          <th scope="col">Table</th>
+          <th scope="col">{{ translate["table"] }}</th>
         {% endif %}
         <th scope="col">Source</th>
         <th scope="col"></th>

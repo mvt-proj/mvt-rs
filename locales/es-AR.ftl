@@ -79,6 +79,7 @@ new_password = Nueva Contraseaña
 email = Correo Electrónico
 username = Nombre de Usuario
 name = Nombre
+layer_name = Nombre Capa
 category = Categoría
 description = Descripción
 style = Estilo

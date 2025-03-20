@@ -90,6 +90,7 @@ struct CatalogTableTemplate<'a> {
     layers: &'a Vec<Layer>,
     current_user: &'a Option<User>,
     is_guest_or_non_admin: bool,
+    translate: HashMap<String, String>,
 }
 
 #[derive(Template)]
@@ -103,6 +104,7 @@ struct StylesTemplate {
 struct StylesTableTemplate<'a> {
     styles: &'a Vec<Style>,
     current_user: &'a Option<User>,
+    translate: HashMap<String, String>,
 }
 
 #[derive(Template)]
@@ -231,11 +233,16 @@ pub async fn table_catalog(
     };
 
     let is_guest_or_non_admin = user.is_none() || user.as_ref().is_none_or(|usr| !usr.is_admin());
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
 
     let template = CatalogTableTemplate {
         layers: &layers,
         current_user: &user,
         is_guest_or_non_admin,
+        translate,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));
@@ -352,10 +359,15 @@ pub async fn table_styles(
                     .contains(&filter.to_lowercase())
         });
     }
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
 
     let template = StylesTableTemplate {
         styles: &styles,
         current_user: &user,
+        translate
     };
     res.render(Text::Html(template.render()?));
     Ok(())

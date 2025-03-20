@@ -77,6 +77,7 @@ new_password = New Password
 email = Email
 username = Username
 name = Name
+layer_name = Layer Name
 category = Category
 description = Description
 style = Style
