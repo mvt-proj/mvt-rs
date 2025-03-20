@@ -4,7 +4,9 @@
 
 <div class="flex justify-center items-center">
   <div class="text-center max-w-2xl px-6">
-    <h1 class="text-3xl font-bold">{{ base.translate["welcome"] }}  (version {{ version }})</h1>
+    <h1 class="text-3xl font-bold">{{ base.translate["welcome"] }}
+      <snap class="text-xl text-gray-600">(version {{ version }})</snap>
+    </h1>
     <p class="mt-2 text-lg text-gray-700">
 
       {{ base.translate["index-subtitle"] }}
@@ -20,9 +22,6 @@
       </ul>
     </div>
 
-    <p class="mt-6 text-lg text-gray-700">
-    Explore the available layers in the <span class="font-semibold">"{{ base.translate["catalog"] }}"</span> menu and customize their appearance in the <span class="font-semibold">"{{ base.translate["styles"] }}"</span> section.
-    </p>
 
     <div class="mt-8 flex justify-center">
       <img src="/static/images/fondo_azul.webp" alt="mvt sserver Logo" class="w-1/2 rounded-lg shadow-md" />

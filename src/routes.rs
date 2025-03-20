@@ -207,14 +207,21 @@ pub fn app_router(session_secret: String) -> Service {
                                     Router::with_path("layers/delete_cache/{id}")
                                         .get(html::admin::catalog::delete_layer_cache),
                                 ),
+                        )
+                        .push(
+                            Router::with_path("database")
+                                .push(
+                                    Router::with_path("schemas")
+                                        .get(html::admin::database::schemas),
+                                )
+                                .push(
+                                    Router::with_path("tables").get(html::admin::database::tables),
+                                )
+                                .push(
+                                    Router::with_path("fields").get(html::admin::database::fields),
+                                )
+                                .push(Router::with_path("srid").get(html::admin::database::srid)),
                         ),
-                )
-                .push(
-                    Router::with_path("database")
-                        .push(Router::with_path("schemas").get(html::admin::database::schemas))
-                        .push(Router::with_path("tables").get(html::admin::database::tables))
-                        .push(Router::with_path("fields").get(html::admin::database::fields))
-                        .push(Router::with_path("srid").get(html::admin::database::srid)),
                 ),
         )
         .push(

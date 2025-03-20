@@ -177,7 +177,10 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
     if !is_auth {
         res.render(Redirect::other("/login"));
     }
-    let translate: HashMap<String, String> = HashMap::new();
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
     let template = ChangePasswordTemplate { base };
@@ -205,11 +208,11 @@ pub async fn table_catalog(
     depot: &mut Depot,
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
-    let mut catalog = get_catalog().await.write().await;
+    let catalog = get_catalog().await.read().await;
     let (_is_auth, user) = get_session_data(depot).await;
 
-    if let Some(filter) = filter {
-        catalog.layers = catalog
+    let layers: Vec<Layer> = if let Some(filter) = filter {
+        catalog
             .layers
             .iter()
             .filter(|layer| {
@@ -222,13 +225,15 @@ pub async fn table_catalog(
                     || layer.name.to_lowercase().contains(&filter.to_lowercase())
             })
             .cloned()
-            .collect();
-    }
+            .collect()
+    } else {
+        catalog.layers.clone()
+    };
 
     let is_guest_or_non_admin = user.is_none() || user.as_ref().is_none_or(|usr| !usr.is_admin());
 
     let template = CatalogTableTemplate {
-        layers: &catalog.layers,
+        layers: &layers,
         current_user: &user,
         is_guest_or_non_admin,
     };

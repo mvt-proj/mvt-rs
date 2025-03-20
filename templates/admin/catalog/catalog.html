@@ -4,7 +4,7 @@
 <div id="modal-configuration" class="modal">
   <div class="modal-card overflow-auto max-w-3xl w-full max-h-[calc(100vh-4rem)]">
     <header class="modal-header">
-      <p class="font-bold text-1xl text-center">Configuration</p>
+      <p class="font-bold text-1xl text-center">{{ base.translate["configuration"] }}</p>
       <button class="modal-close" onclick="closeModal()">
         <span class="icon">
           <i class="fas fa-times"></i>
@@ -23,7 +23,7 @@
       id="filter"
       type="text"
       class="input"
-      placeholder="Filter..."
+      placeholder="{{ base.translate["filter"] }}..."
       hx-get="/catalogtable"
       hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
       hx-target="#table-catalog"
@@ -57,7 +57,7 @@
       <span class="icon is-small">
         <i class="fas fa-layer-group"></i>
       </span>
-      <span>ADD LAYER</span>
+      <span>{{ base.translate["add-layer"] }}</span>
     </a>
   </div>
   {% endif %}
@@ -74,6 +74,11 @@
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("htmx:afterOnLoad", initializePage);
+
+  const openModal = (data) => {
+    document.getElementById("data-json").innerHTML = data;
+    document.getElementById("modal-configuration").classList.add("is-active");
+  };
 
   const closeModal = () => {
     document

@@ -5,20 +5,20 @@
     <span class="icon is-small">
       <i class="fas fa-arrow-left"></i>
     </span>
-    <span>Back</span>
+    <span>{{ base.translate["back"] }}</span>
   </a>
 </div>
 
 <div class="max-w-3xl w-full mx-auto px-6">
   <div class="box">
-    <h1 class="title mb-6 text-center">New Layer</h1>
+    <h1 class="title mb-6 text-center">{{ base.translate["new-layer"] }}</h1>
 
     <form action="/admin/catalog/layers/create" method="post">
       <input type="hidden" name="id" id="id" value="" />
 
       <!--Category-->
       <div class="mb-4">
-        <label class="label" for="category">Category</label>
+        <label class="label" for="category">{{ base.translate["category"] }}</label>
         <div class="mt-1">
           <div class="select">
             <select name="category" id="category" class="input">
@@ -32,13 +32,13 @@
 
       <!-- geometry -->
       <div class="mb-4">
-        <label class="label" for="geometry">Geometry</label>
+        <label class="label" for="geometry">{{ base.translate["geometry"] }}</label>
         <div class="mt-1">
           <div class="select">
             <select name="geometry" id="geometry" class="input">
-              <option value="points">Points</option>
-              <option value="lines">Lines</option>
-              <option value="polygons">Polygons</option>
+              <option value="points">{{ base.translate["points"] }}</option>
+              <option value="lines">{{ base.translate["lines"] }}</option>
+              <option value="polygons">{{ base.translate["polygons"] }}</option>
             </select>
           </div>
         </div>
@@ -46,7 +46,7 @@
 
       <!-- name -->
       <div class="mb-4">
-        <label class="label" for="name">Name</label>
+        <label class="label" for="name">{{ base.translate["name"] }}</label>
         <div class="mt-1">
           <input class="input" type="text" name="name" id="name" required />
         </div>
@@ -54,7 +54,7 @@
 
       <!-- alias -->
       <div class="mb-4">
-        <label class="label" for="alias">Alias</label>
+        <label class="label" for="alias">{{ base.translate["alias"] }}</label>
         <div class="mt-1">
           <input class="input" type="text" name="alias" id="alias" required />
         </div>
@@ -62,7 +62,7 @@
 
       <!-- description -->
       <div class="mb-4">
-        <label class="label" for="description">Description</label>
+        <label class="label" for="description">{{ base.translate["description"] }}</label>
         <div class="mt-1">
           <textarea
             class="textarea"
@@ -75,7 +75,7 @@
 
       <!-- schema -->
       <div class="mb-4">
-        <label class="label" for="schema">Schema</label>
+        <label class="label" for="schema">{{ base.translate["schema"] }}</label>
         <div class="mt-1">
           <div
             class="select"
@@ -88,7 +88,7 @@
 
       <!-- table -->
       <div class="mb-4">
-        <label class="label" for="table">Table</label>
+        <label class="label" for="table">{{ base.translate["table"] }}</label>
         <div class="mt-1">
           <div class="select">
             <select
@@ -107,7 +107,7 @@
 
       <!-- fields -->
       <div class="mb-4">
-        <label class="label" for="fields">Fields</label>
+        <label class="label" for="fields">{{ base.translate["fields"] }}</label>
         <div class="mt-1">
           <div class="select is-multiple">
             <select
@@ -123,7 +123,7 @@
 
       <!-- geom -->
       <div class="mb-4">
-        <label class="label" for="geom">Geom</label>
+        <label class="label" for="geom">{{ base.translate["geom"] }}</label>
         <div class="mt-1">
           <input
             class="input"
@@ -153,7 +153,7 @@
 
       <!-- sql_mode -->
       <div class="mb-4">
-        <label class="label" for="sql_mode">SQL Mode</label>
+        <label class="label" for="sql_mode">{{ base.translate["sql_mode"] }}</label>
         <div class="mt-1">
           <div class="select">
             <select name="sql_mode" id="sql_mode" class="input">
@@ -166,7 +166,7 @@
 
       <!-- filter -->
       <div class="mb-4">
-        <label class="label" for="filter">Filter</label>
+        <label class="label" for="filter">{{ base.translate["filter"] }}</label>
         <div class="mt-1">
           <textarea
             class="textarea"
@@ -290,7 +290,7 @@
 
       <!-- clip_geom -->
       <div class="mb-4">
-        <label class="label" for="clip_geom">Clip Geom</label>
+        <label class="label" for="clip_geom">{{ base.translate["clip_geom"] }}</label>
         <div class="mt-1">
           <label class="radio">
             <input
@@ -300,7 +300,7 @@
               value="true"
               checked
             />
-            True
+            {{ base.translate["yes"] }}
           </label>
           <label class="radio">
             <input
@@ -309,15 +309,14 @@
               id="clip_geom_false"
               value="false"
             />
-            False
+            {{ base.translate["no"] }}
           </label>
         </div>
       </div>
 
       <!-- delete_cache_on_start -->
       <div class="mb-4">
-        <label class="label" for="delete_cache_on_start"
-          >Delete cache on start</label
+        <label class="label" for="delete_cache_on_start">{{ base.translate["delete_cache_on_start"] }}</label
         >
         <div class="mt-1">
           <label class="radio">
@@ -327,7 +326,7 @@
               id="delete_cache_on_start_true"
               value="true"
             />
-            True
+            {{ base.translate["yes"] }}
           </label>
           <label class="radio">
             <input
@@ -337,15 +336,14 @@
               value="false"
               checked
             />
-            False
+            {{ base.translate["no"] }}
           </label>
         </div>
-        <p class="help is-info">Delete cache on server start</p>
       </div>
 
       <!-- max_cache_age -->
       <div class="mb-4">
-        <label class="label" for="max_cache_age">Max cache age</label>
+        <label class="label" for="max_cache_age">{{ base.translate["max_cache_age"] }}</label>
         <div class="mt-1">
           <input
             class="input"
@@ -357,13 +355,13 @@
           />
         </div>
         <p class="help is-info">
-          Time must enter in seconds. The value of 0 means infinity
+          {{ base.translate["time_in_seconds"] }}. {{ base.translate["value_infinity"] }}
         </p>
       </div>
 
       <!-- published -->
       <div class="mb-4">
-        <label class="label" for="published">Published</label>
+        <label class="label" for="published">{{ base.translate["published"] }}</label>
         <div class="mt-1">
           <label class="radio">
             <input
@@ -373,7 +371,7 @@
               value="true"
               checked
             />
-            True
+            {{ base.translate["yes"] }}
           </label>
           <label class="radio">
             <input
@@ -382,13 +380,13 @@
               id="published_false"
               value="false"
             />
-            False
+            {{ base.translate["no"] }}
           </label>
         </div>
       </div>
 
       <div class="mb-4">
-        <label class="label" for="fields">Allowed Groups</label>
+        <label class="label" for="fields">{{ base.translate["allowed-groups"] }}</label>
         <div class="mt-1">
           <div class="select is-multiple">
             <select name="groups" id="groups" multiple size="8">
@@ -398,11 +396,12 @@
             </select>
           </div>
         </div>
+        <p class="help is-info">{{ base.translate["empty-allowed-groups"] }}.</p>
       </div>
 
       <div class="mb-4">
         <div class="flex justify-center items-center">
-          <button class="button__outline">Add Layer</button>
+          <button class="button__outline">{{ base.translate["create-layer"] }}</button>
         </div>
       </div>
     </form>

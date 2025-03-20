@@ -7,12 +7,12 @@
     <span class="icon is-small">
       <i class="fas fa-arrow-left"></i>
     </span>
-    <span>Back</span>
+    <span>{{ base.translate["back"] }}</span>
   </a>
 </div>
 <div class="max-w-3xl w-full mx-auto px-6">
   <div class="box">
-    <h1 class="title mb-6 text-center">Edit Layer {{ layer.alias }}</h1>
+    <h1 class="title mb-6 text-center">{{ base.translate["edit-layer"] }} {{ layer.alias }}</h1>
 
       <form action="/admin/catalog/layers/update" method="post">
 
@@ -20,7 +20,7 @@
 
         <!--Selected category-->
         <div class="mb-4">
-          <label class="label" for="category">Category</label>
+          <label class="label" for="category">{{ base.translate["category"] }}</label>
           <div class="mt-1">
             <div class="select">
               <select name="category" id="category" class="input">
@@ -34,13 +34,13 @@
 
         <!-- geometry -->
         <div class="mb-4">
-          <label class="label" for="geometry">Geometry</label>
+          <label class="label" for="geometry">{{ base.translate["geometry"] }}</label>
           <div class="mt-1">
             <div class="select">
               <select name="geometry" id="geometry" class="input">
-                <option value="points" {% if layer.geometry == "points" %}selected{% endif %}>Points</option>
-                <option value="lines" {% if layer.geometry == "lines" %}selected{% endif %}>Lines</option>
-                <option value="polygons" {% if layer.geometry == "polygons" %}selected{% endif %}>Polygons</option>
+                <option value="points" {% if layer.geometry == "points" %}selected{% endif %}>{{ base.translate["points"] }}</option>
+                <option value="lines" {% if layer.geometry == "lines" %}selected{% endif %}>{{ base.translate["lines"] }}</option>
+                <option value="polygons" {% if layer.geometry == "polygons" %}selected{% endif %}>{{ base.translate["polygons"] }}</option>
               </select>
             </div>
           </div>
@@ -48,7 +48,7 @@
 
         <!-- name -->
         <div class="mb-4">
-          <label class="label" for="name">Name</label>
+          <label class="label" for="name">{{ base.translate["name"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="name" id="name" value="{{ layer.name }}" required>
           </div>
@@ -56,7 +56,7 @@
 
         <!-- alias -->
         <div class="mb-4">
-          <label class="label" for="alias">Alias</label>
+          <label class="label" for="alias">{{ base.translate["alias"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="alias" id="alias" value="{{ layer.alias }}" required>
           </div>
@@ -64,7 +64,7 @@
 
         <!-- description -->
       <div class="mb-4">
-        <label class="label" for="description">Description</label>
+        <label class="label" for="description">{{ base.translate["description"] }}</label>
         <div class="mt-1">
           <textarea
             class="textarea"
@@ -77,7 +77,7 @@
 
         <!-- schema -->
         <div class="mb-4">
-          <label class="label" for="schema">Schema</label>
+          <label class="label" for="schema">{{ base.translate["schema"] }}</label>
           <div class="mt-1">
             <div class="select"
               hx-get="/admin/database/schemas"
@@ -91,7 +91,7 @@
 
         <!-- table -->
         <div class="mb-4">
-          <label class="label" for="table">Table</label>
+          <label class="label" for="table">{{ base.translate["table"] }}</label>
           <div class="mt-1">
             <div class="select">
               <select name="table" id="table"
@@ -110,7 +110,7 @@
 
         <!-- fields -->
         <div class="mb-4">
-          <label class="label" for="fields">Fields</label>
+          <label class="label" for="fields">{{ base.translate["fields"] }}</label>
           <div class="mt-1">
             <div class="select is-multiple">
               <select name="fields" id="fields" multiple size="8" required>
@@ -121,7 +121,7 @@
 
         <!-- geom -->
         <div class="mb-4">
-          <label class="label" for="geom">Geom</label>
+          <label class="label" for="geom">{{ base.translate["geom"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="geom" id="geom" value="{{ layer.get_geom() }}" required>
           </div>
@@ -137,7 +137,7 @@
 
         <!-- sql_mode -->
         <div class="mb-4">
-          <label class="label" for="sql_mode">SQL Mode</label>
+          <label class="label" for="sql_mode">{{ base.translate["sql_mode"] }}</label>
           <div class="mt-1">
             <div class="select">
               <select name="sql_mode" id="sql_mode" class="input">
@@ -150,7 +150,7 @@
 
         <!-- filter -->
         <div class="mb-4">
-          <label class="label" for="filter">Filter</label>
+          <label class="label" for="filter">{{ base.translate["filter"] }}</label>
           <div class="mt-1">
             <textarea class="textarea" name="filter" id="filter" rows="3">{{ layer.get_filter() }}</textarea>
           </div>
@@ -214,61 +214,60 @@
 
         <!-- clip_geom -->
         <div class="mb-4">
-          <label class="label" for="clip_geom">Clip Geom</label>
+          <label class="label" for="clip_geom">{{ base.translate["clip_geom"] }}</label>
           <div class="mt-1">
             <label class="radio">
               <input type="radio" name="clip_geom" id="clip_geom_true" value="true" {% if layer.get_clip_geom() %}checked{% endif %}>
-              True
+              {{ base.translate["yes"] }}
             </label>
             <label class="radio">
               <input type="radio" name="clip_geom" id="clip_geom_false" value="false" {% if !layer.get_clip_geom() %}checked{% endif %}>
-              False
+              {{ base.translate["no"] }}
             </label>
           </div>
         </div>
 
         <!-- delete_cache_on_start -->
         <div class="mb-4">
-          <label class="label" for="delete_cache_on_start">Delete cache on start</label>
+          <label class="label" for="delete_cache_on_start">{{ base.translate["delete_cache_on_start"] }}</label>
           <div class="mt-1">
             <label class="radio">
               <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_true" value="true" {% if layer.get_delete_cache_on_start() %}checked{% endif %}>
-              True
+              {{ base.translate["yes"] }}
             </label>
             <label class="radio">
               <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_false" value="false" {% if !layer.get_delete_cache_on_start() %}checked{% endif %}>
-              False
+              {{ base.translate["no"] }}
             </label>
           </div>
-          <p class="help is-info">Delete cache on server start</p>
         </div>
 
         <!-- max_cache_age -->
         <div class="mb-4">
-          <label class="label" for="max_cache_age">Max cache age</label>
+          <label class="label" for="max_cache_age">{{ base.translate["max_cache_age"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="{{ layer.get_max_cache_age() }}" required>
           </div>
-          <p class="help is-info">Time must enter in seconds. The value of 0 means infinity</p>
+          <p class="help is-info">{{ base.translate["time_in_seconds"] }}. {{ base.translate["value_infinity"] }}</p>
         </div>
 
         <!-- published -->
         <div class="mb-4">
-          <label class="label" for="published">Published</label>
+          <label class="label" for="published">{{ base.translate["published"] }}</label>
           <div class="mt-1">
             <label class="radio">
               <input type="radio" name="published" id="published_true" value="true" {% if layer.published %}checked{% endif %}>
-              True
+              {{ base.translate["yes"] }}
             </label>
             <label class="radio">
               <input type="radio" name="published" id="published_false" value="false" {% if !layer.published %}checked{% endif %}>
-              False
+              {{ base.translate["no"] }}
             </label>
           </div>
         </div>
 
         <div class="mb-4">
-          <label class="label" for="fields">Allowed Groups</label>
+          <label class="label" for="fields">{{ base.translate["allowed-groups"] }}</label>
           <div class="mt-1">
             <div class="select is-multiple">
               <select name="groups" id="groups" multiple size="8">
@@ -282,11 +281,12 @@
               </select>
             </div>
           </div>
+          <p class="help is-info">{{ base.translate["empty-allowed-groups"] }}.</p>
         </div>
 
         <div class="mb-4">
           <div class="flex justify-center items-center">
-            <button class="button__outline">Update Layer</button>
+            <button class="button__outline">{{ base.translate["update-layer"] }}</button>
           </div>
         </div>
       </form>

@@ -12,16 +12,16 @@
     <span class="icon__small mr-2">
       <i class="fas fa-arrow-left"></i>
     </span>
-    <span>Back</span>
+    <span>{{ base.translate["back"] }}</span>
   </a>
 </div>
 
 <div class="max-w-3xl w-full mx-auto px-6">
   <div class="box">
-    <h1 class="title mb-6 text-center">Edit Style: {{ style.name }}</h1>
+    <h1 class="title mb-6 text-center">{{ base.translate["edit-style"] }}: {{ style.name }}</h1>
 
     <form action="/admin/styles/update" method="post">
-      
+
       <!-- ID (readonly) -->
       <div class="mb-4">
         <label class="label">ID</label>
@@ -32,7 +32,7 @@
 
       <!-- Category -->
       <div class="mb-4">
-        <label class="label">Category</label>
+        <label class="label">{{ base.translate["category"] }}</label>
         <div class="mt-1">
           <select name="category" id="category" class="input">
             {% for category in categories %}
@@ -44,23 +44,23 @@
 
       <!-- Name -->
       <div class="mb-4">
-        <label class="label">Name</label>
+        <label class="label">{{ base.translate["name"] }}</label>
         <div class="mt-1">
-          <input class="input" name="name" type="text" placeholder="Name" value="{{ style.name }}">
+          <input class="input" name="name" type="text" placeholder="{{ base.translate["name"] }}" value="{{ style.name }}">
         </div>
       </div>
 
       <!-- Description -->
       <div class="mb-4">
-        <label class="label">Description</label>
+        <label class="label">{{ base.translate["description"] }}</label>
         <div class="mt-1">
-          <input class="input" name="description" type="text" placeholder="Description" value="{{ style.description }}">
+          <input class="input" name="description" type="text" placeholder="{{ base.translate["description"] }}" value="{{ style.description }}">
         </div>
       </div>
 
       <!-- JSON Editor for Style -->
       <div class="mb-4">
-        <label class="label">Style</label>
+        <label class="label">{{ base.translate["style"] }}</label>
         <div class="mt-1">
           <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
           <input type="hidden" id="jsonInput" name="style">
@@ -68,12 +68,12 @@
       </div>
 
       <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">
-        Invalid JSON format. Please check the syntax.
+        {{ base.translate["invalid_json"] }}
       </div>
 
       <!-- Submit Button -->
       <div class="flex justify-center items-center">
-        <button class="button__outline">Update Style</button>
+        <button class="button__outline">{{ base.translate["update-style"] }}</button>
       </div>
     </form>
   </div>

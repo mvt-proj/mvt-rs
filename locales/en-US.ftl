@@ -15,6 +15,7 @@ metadata = Metadata
 
 # Pages
 welcome = Welcome to mvt server!
+welcome-admin = Admin Mode!
 index-subtitle = A simple, fast, and powerful server for vector tiles distribution.
 mvt-you-can = With mvt server, you can
 feature-1 = Serve high-performance vector layers.
@@ -28,6 +29,8 @@ list-of-sprites = List of Sprites
 list-of-glyps = List of Glyps
 
 #Admin
+change_password = Change Password
+
 list-of-groups = List of Groups
 add-group = ADD GROUP
 new-group = New Group
@@ -49,17 +52,52 @@ create-category = Create Category
 update-category = Update Category
 edit-category = Edit Category
 
+add-style = ADD STYLE
+new-style = New Style
+create-style = Create Style
+update-style = Update Style
+edit-style = Edit Style
+
+add-layer = PUBLISH LAYER
+new-layer = New Layer
+create-layer = Create Layer
+update-layer = Update Layer
+edit-layer = Edit Layer
+
 # Common
 filter = Filter
 back = Back
-create = Create
+configuration = Configuration
 
 # Maps
 zoom-level = Zoom level
 
 # Fields
+new_password = New Password
 email = Email
 username = Username
 name = Name
 category = Category
 description = Description
+style = Style
+invalid_json = Invalid JSON format. Please check the syntax.
+geometry = Geometry
+points = Points
+lines = Lines
+polygons = Polygons
+alias = Alias
+schema = Schema
+table = Table
+fields = Fields
+sql_mode = SQL Mode
+geom = Geom
+clip_geom = Clip Geom
+delete_cache_on_start = Delete cache on start
+max_cache_age = Max cache age
+time_in_seconds = Time must enter in seconds
+value_infinity = The value of 0 means infinity
+published = Published
+allowed-groups = Allowed Groups
+empty-allowed-groups = If it's empty, all groups are allowed
+yes = Yes
+no = No
