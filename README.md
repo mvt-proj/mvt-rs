@@ -23,6 +23,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 - Built-in glyph and sprite server for custom styles.
 - Layer access control via Basic Authentication (with future support for JWT).
 - Alpha-stage API for querying and managing the layer catalog.
+- Initial i18n support.
 
 
 ## Tutorial
