@@ -43,6 +43,11 @@ accept-language = "3.1"
 
 
 [profile.release]
-opt-level = 'z' # Optimize for size
+# opt-level = 'z' # Optimize for size
+# lto = true
+# codegen-units = 1
+
 lto = true
-codegen-units = 1
+strip = true
+opt-level = 's'
+codegen-units = 3
