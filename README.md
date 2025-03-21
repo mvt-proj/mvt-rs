@@ -67,7 +67,7 @@ Remember the `.env` file has to kept secure and not shared in public repositorie
 There are two ways to perform caching:
 
 - In-memory using MokaStore through the framework itself with a duration of 30 seconds.
-- On disk or on Redis server following the layer's configuration. The disk cache is asynchronous, using `tokio::fs`
+- On disk or on Redis server following the layer's configuration. The disk cache is asynchronous, using **tokio::fs**
 
 If a Redis connection is provided, either through the environment variable REDISCONN or the --redisconn argument, it will serve as the default cache. Otherwise, disk storage will be employed.
 
