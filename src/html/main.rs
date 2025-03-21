@@ -288,7 +288,15 @@ pub async fn page_map(
         (lyr, geometry)
     };
 
-    let extent = query_extent(&lyr).await.unwrap();
+    let extent = query_extent(&lyr).await.unwrap_or_else(|e| {
+        log::error!("Error querying extent: {:?}", e);
+        Extent {
+            xmin: -180.0,
+            ymin: -90.0,
+            xmax: 180.0,
+            ymax: 90.0,
+        }
+    });
 
     let template = MapTemplate {
         geometry: &geometry,
