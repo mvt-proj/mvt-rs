@@ -198,31 +198,31 @@ The mvt-server administration panel is an essential tool for managing all aspect
 
 #### 1. Groups (User Roles)
 
-    Creation and Management: Define user groups or roles with different levels of access and permissions. This allows you to control who can perform administrative tasks, publish layers, create styles, etc.
-    Permission Assignment: Assign specific permissions to each group to granularly control access to the server's various functionalities.
+- Creation and Management: Define user groups or roles with different levels of access and permissions. This allows you to control who can perform administrative tasks, publish layers, create styles, etc.
+- Permission Assignment: Assign specific permissions to each group to granularly control access to the server's various functionalities.
 
 #### 2. Users
 
-    Creation and Management: Create new user accounts and manage existing ones.
-    Role Assignment: Assign users to specific groups to determine their permissions and level of access.
-    Administrative Users: Only users belonging to the "admin" group (or another that is configured as such) will have the ability to perform administrative tasks, such as managing users, groups, categories, catalog, and styles.
+- Creation and Management: Create new user accounts and manage existing ones.
+- Role Assignment: Assign users to specific groups to determine their permissions and level of access.
+- Administrative Users: Only users belonging to the "admin" group (or another that is configured as such) will have the ability to perform administrative tasks, such as managing users, groups, categories, catalog, and styles.
 
 #### 3. Categories
 
-    Logical Organization: Categories act as namespaces to organize your layers and styles logically. This is especially useful when working with a large number of layers, as it allows you to keep them organized and easy to find.
+- Logical Organization: Categories act as namespaces to organize your layers and styles logically. This is especially useful when working with a large number of layers, as it allows you to keep them organized and easy to find.
 
 
 #### 4. Catalog (Layer Publishing)
 
-    Layer Declaration: This is the central section of the administrator. Here you define and declare the geographic layers you want to publish as vector tiles.
-    Layer Configuration: Specify the data source for each layer, projections, and other relevant parameters.
-    Publishing: Once configured, the layers will be available for publishing as vector tiles.
+- Layer Declaration: This is the central section of the administrator. Here you define and declare the geographic layers you want to publish as vector tiles.
+- Layer Configuration: Specify the data source for each layer, projections, and other relevant parameters.
+- Publishing: Once configured, the layers will be available for publishing as vector tiles.
 
 #### 5. Styles
 
-    Creation and Management: Define and manage rendering styles for your layers. Styles determine how the layers will appear on the map (colors, symbols, labels, etc.).
-    Style Publishing: Publish the created styles so they can be used by clients like QGIS.
-    Style Language: mvt-server likely supports a style language like the Maplibre Style Specification, which allows you to define complex and custom styles.
+- Creation and Management: Define and manage rendering styles for your layers. Styles determine how the layers will appear on the map (colors, symbols, labels, etc.).
+- Style Publishing: Publish the created styles so they can be used by clients like QGIS.
+- Style Language: mvt-server likely supports a style language like the Maplibre Style Specification, which allows you to define complex and custom styles.
 
 #### In summary
 
@@ -241,19 +241,19 @@ The mvt-server administration panel gives you complete control over the publicat
 ![imagen](https://github.com/user-attachments/assets/53e36cec-57b3-411d-a0ac-d032b812b57b)
 
 
-    The "Name" field must contain a single word preferably in lowercase. In "Alias", you can enter a more descriptive label.
+The "Name" field must contain a single word preferably in lowercase. In "Alias", you can enter a more descriptive label.
 
-    The form allows you to list available schemas in the PostgreSQL database. After selecting a schema, the tables (geographic layers) will be displayed. Finally, once a table is selected, its fields will be shown. It is recommended to publish only the necessary fields.
+The form allows you to list available schemas in the PostgreSQL database. After selecting a schema, the tables (geographic layers) will be displayed. Finally, once a table is selected, its fields will be shown. It is recommended to publish only the necessary fields.
 
-    It is also advisable to properly configure ZMin and ZMax to improve performance. For example, setting ZMin = 0 for a small locality layer is unnecessary. After adding the layer, you can use the map to assign appropriate zoom values.
+It is also advisable to properly configure ZMin and ZMax to improve performance. For example, setting ZMin = 0 for a small locality layer is unnecessary. After adding the layer, you can use the map to assign appropriate zoom values.
 
-    Most of the following fields can be left with their default values.
+Most of the following fields can be left with their default values.
 
-   When setting up the cache, consider how frequently the layer updates:
+When setting up the cache, consider how frequently the layer updates:
 
-    - For layers that change infrequently, it is recommended to set Cache = 0 (infinite cache duration).
-    - The cache can be cleared or purged at any time using the corresponding button.
-    - Each layer manages its own cache expiration independently.
+- For layers that change infrequently, it is recommended to set Cache = 0 (infinite cache duration).
+- The cache can be cleared or purged at any time using the corresponding button.
+- Each layer manages its own cache expiration independently.
 
 
 ![imagen](https://github.com/user-attachments/assets/8868309a-5b31-4f3f-b916-1f667dd656b0)
