@@ -28,7 +28,7 @@ list-of-styles = List of Styles
 list-of-sprites = List of Sprites
 list-of-glyps = List of Glyps
 
-#Admin
+# Admin
 change_password = Change Password
 
 list-of-groups = List of Groups
