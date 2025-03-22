@@ -22,11 +22,11 @@ mvt-server not only allows you to publish geographic layers in vector tile forma
 7. [Consuming Services](#consuming-services)
    - [About the Sources](#about-the-sources)
    - [QGIS](#qgis)
-   - [Web Clients](#web-clients)   
+   - [Web Clients](#web-clients)
 9. [Serving Styles](#serving-styles)
 10. [Serving Sprites and Glyphs in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
    - [Sprites](#serving-sprites)
-   - [Glyphs](#serving-glyphs) 
+   - [Glyphs](#serving-glyphs)
 ---
 
 ## Requirements
@@ -268,9 +268,9 @@ You can check if the parameters entered in the form are correct and if the layer
 
 ## Consuming Services
 
-### About the Sources 
+### About the Sources
 
-This server provides access to *vector tiles* through three types of *sources*:  
+This server provides access to *vector tiles* through three types of *sources*:
 
 1. Single-layer source
 2. Multi-layer source
@@ -278,42 +278,42 @@ This server provides access to *vector tiles* through three types of *sources*:
 
 #### 1. Retrieving Tiles from a Single Layer
 
-To get *vector tiles* from a single layer, use the following route:  
+To get *vector tiles* from a single layer, use the following route:
 
-**Source:**  
+**Source:**
 ```
 http://127.0.0.1:5887/services/tiles/category:layer_name/{z}/{x}/{y}.pbf
 ```
 
 ---
 
-#### 2. Retrieving Tiles from Multiple Layers  
+#### 2. Retrieving Tiles from Multiple Layers
 
-To combine multiple layers into a single *tile*, use this route:  
+To combine multiple layers into a single *tile*, use this route:
 
-**Source:**  
+**Source:**
 ```
 http://127.0.0.1:5887/services/tiles/multi/category_1:layer_name_1,category_2:layer_name_2/{z}/{x}/{y}.pbf
 ```
 
-🔹 *This endpoint returns a composite tile containing both `"layer_name_1"` and `"layer_name_2"` layers.*  
+🔹 *This endpoint returns a composite tile containing both `"layer_name_1"` and `"layer_name_2"` layers.*
 
-**Notes:**  
-- Multiple layers can be specified using commas (`,`).  
-- Useful for displaying combined data in the client.  
+**Notes:**
+- Multiple layers can be specified using commas (`,`).
+- Useful for displaying combined data in the client.
 
 ---
 
 #### 3. Retrieving Tiles by Category
 
-To fetch all layers that belong to a specific category, use the following route:  
+To fetch all layers that belong to a specific category, use the following route:
 
-**Source:**  
+**Source:**
 ```
 http://127.0.0.1:5887/services/tiles/category/category_1/{z}/{x}/{y}.pbf
 ```
 
-🔹 *This endpoint returns a tile containing all layers in the `"category_1"` category.*  
+🔹 *This endpoint returns a tile containing all layers in the `"category_1"` category.*
 
 ---
 
@@ -332,7 +332,7 @@ http://127.0.0.1:5887/services/tiles/category/category_1/{z}/{x}/{y}.pbf
 | **Multiple layers** | `/services/tiles/multi/{layers}/{z}/{x}/{y}.pbf` | `/services/tiles/multi/rivers,roads/12/2345/3210.pbf` |
 | **By category** | `/services/tiles/category/{category}/{z}/{x}/{y}.pbf` | `/services/tiles/category/hydrography/12/2345/3210.pbf` |
 
-This system offers flexibility in working with *vector tiles*, allowing both individual layer access and dynamic layer composition.  
+This system offers flexibility in working with *vector tiles*, allowing both individual layer access and dynamic layer composition.
 
 ---
 
@@ -353,31 +353,53 @@ This system offers flexibility in working with *vector tiles*, allowing both ind
 
 
 ### Web Clients
-**MapLibre GL JS**:
-```javascript
-map.addSource('my-layer', {
-  type: 'vector',
-  url: 'http://yourdomain/tiles/my_layer'
-});
 
-map.addLayer({
-  id: 'main-layer',
-  source: 'my-layer',
-  'source-layer': 'data',
-  type: 'fill',
-  paint: {'fill-color': '#ff0000'}
-});
+
+This section provides examples of how to consume vector tiles from the **MVT Server** using different mapping libraries: **MapLibre GL JS**, **OpenLayers**, and **Leaflet**.
+
+
+#### MapLibre GL JS
+[View Example](examples/maplibre.html)
+
+This example demonstrates how to integrate vector tiles into a **MapLibre GL JS** map. The best approach is to use **MapLibre styles**, which allow for better layer management and styling flexibility. The example loads three separate sources for polygons, lines, and points:
+- **Polygons:** `public:polygons_example`
+- **Lines:** `public:lines_example`
+- **Points:** `public:points_example`
+
+Alternatively, a single source can be used to load all three layers at once from:
+```
+http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
 ```
 
-**OpenLayers**:
-```javascript
-const vectorLayer = new VectorTileLayer({
-  source: new VectorTileSource({
-    format: new MVT(),
-    url: '/tiles/{z}/{x}/{y}.pbf'
-  })
-});
+#### OpenLayers
+[View Example](examples/openlayers.html)
+
+This example illustrates how to render vector tiles using **OpenLayers**. It loads the same three sources for polygons, lines, and points while also supporting the combined source for improved efficiency.
+
+#### Leaflet
+[View Example](examples/leaflet.html)
+
+This example showcases how to use **Leaflet** with vector tiles. Since Leaflet does not natively support vector tiles, it utilizes plugins to correctly render the data from the MVT Server.
+
+Each example is configured to fetch tiles from:
 ```
+http://127.0.0.1:5887/services/tiles/public:{layer}/{z}/{x}/{y}.pbf
+```
+where `{layer}` can be:
+- `polygons_example`
+- `lines_example`
+- `points_example`
+
+or use the combined source:
+```
+http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
+```
+for all three layers.
+
+These examples provide a starting point for integrating vector tiles into your web mapping applications.
+
+
+
 
 ## Serving Styles
 
