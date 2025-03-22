@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet con Vector Tiles</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.vectorgrid/dist/Leaflet.VectorGrid.bundled.js"></script>
+    <style>
+        #map { height: 100vh; width: 100vw; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const map = L.map('map').setView([-31.0220578, -64.0617445], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const vectorTileOptions = {
+            maxZoom: 22,
+            vectorTileLayerStyles: {
+                'polygons_example': {
+                    fill: true,
+                    fillColor: '#eae3bd',
+                    fillOpacity: 0.5,
+                    stroke: true,
+                    color: '#dcddd3',
+                    weight: 1
+                },
+                'lines_example': {
+                    stroke: true,
+                    color: '#5f6ebe',
+                    weight: 2,
+                    zIndex: 2
+                },
+                'points_example': {
+                    fill: true,
+                    fillColor: '#FF0000',
+                    fillOpacity: 1,
+                    stroke: true,
+                    color: '#FFFFFF',
+                    weight: 1,
+                    radius: 6,
+                    zIndex: 3
+                }
+            }
+        };
+
+        const vectorTiles = L.vectorGrid.protobuf(
+            'http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf',
+            vectorTileOptions
+        ).addTo(map);
+
+        const layerControl = L.control.layers(null, {
+            'Parcelario': vectorTiles
+        }).addTo(map);
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MapLibre Vector Tiles</title>
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                sources: {
+                    'osm-raster': {
+                        type: 'raster',
+                        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                        tileSize: 256,
+                        maxzoom: 19
+                    },
+                    'public-src': {
+                        type: 'vector',
+                        tiles: ['http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf'],
+                        maxzoom: 22
+                    }
+                },
+                layers: [
+                    {
+                        id: 'osm-layer',
+                        type: 'raster',
+                        source: 'osm-raster',
+                        minzoom: 0,
+                        maxzoom: 22
+                    },
+                    {
+                        id: 'example-fill',
+                        source: 'public-src',
+                        'source-layer': 'polygons_example',
+                        type: 'fill',
+                        paint: {
+                            'fill-color': '#eae3bd',
+                            'fill-opacity': 0.5
+                        }
+                    },
+                    {
+                        id: 'example-border',
+                        source: 'public-src',
+                        'source-layer': 'polygons_example',
+                        type: 'line',
+                        paint: {
+                            'line-color': '#dcddd3',
+                            'line-width': 1
+                        }
+                    },
+
+                    {
+                        id: 'example-line'
+                        source: 'public-src',
+                        'source-layer': 'lines_example',
+                        type: 'line',
+                        paint: {
+                            'line-color': '#5f6ebe',
+                            'line-width': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                12, 1,
+                                22, 3
+                            ]
+                        }
+                    },
+                    {
+                        id: 'example-circle',
+                        source: 'public-src',
+                        'source-layer': 'points_example',
+                        type: 'circle',
+                        paint: {
+                            'circle-color': '#FF0000',
+                            'circle-radius': 6,
+                            'circle-stroke-color': '#FFFFFF',
+                            'circle-stroke-width': 1
+                        }
+                    }
+                ]
+            },
+            center: [-64.0617445, -31.0220578],
+            zoom: 13
+        });
+    </script>
+</body>
+</html>

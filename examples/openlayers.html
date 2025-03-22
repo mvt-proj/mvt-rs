@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLayers con Vector Tiles</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    <style>
+        #map { height: 100vh; width: 100vw; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const map = new ol.Map({
+            target: 'map',
+            view: new ol.View({
+                center: ol.proj.fromLonLat([-64.0617445, -31.0220578]),
+                zoom: 13
+            }),
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                })
+            ]
+        });
+
+        const fillLayer = new ol.layer.VectorTile({
+            source: new ol.source.VectorTile({
+                format: new ol.format.MVT(),
+                url: "http://127.0.0.1:5887/services/tiles/public:polygons_example/{z}/{x}/{y}.pbf"
+            }),
+            style: new ol.style.Style({
+                fill: new ol.style.Fill({ color: 'rgba(234, 227, 189, 0.5)' }),
+                stroke: new ol.style.Stroke({ color: '#dcddd3', width: 1 })
+            })
+        });
+        map.addLayer(fillLayer);
+
+        const lineLayer = new ol.layer.VectorTile({
+            source: new ol.source.VectorTile({
+                format: new ol.format.MVT(),
+                url: "http://127.0.0.1:5887/services/tiles/public:lines_example/{z}/{x}/{y}.pbf"
+            }),
+            style: new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: '#5f6ebe', width: 2 })
+            })
+        });
+        map.addLayer(lineLayer);
+
+        const pointLayer = new ol.layer.VectorTile({
+            source: new ol.source.VectorTile({
+                format: new ol.format.MVT(),
+                url: "http://127.0.0.1:5887/services/tiles/public:points_example/{z}/{x}/{y}.pbf"
+            }),
+            style: new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 6,
+                    fill: new ol.style.Fill({ color: '#FF0000' }),
+                    stroke: new ol.style.Stroke({ color: '#FFFFFF', width: 1 })
+                })
+            })
+        });
+        map.addLayer(pointLayer);
+    </script>
+</body>
+</html>
