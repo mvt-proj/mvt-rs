@@ -221,3 +221,7 @@
 .is-active {
   @apply flex;
 }
+
+.is-info {
+  @apply p-2 my-2 bg-blue-50 text-blue-900 border-l-4 border-blue-400 rounded-md;
+}
