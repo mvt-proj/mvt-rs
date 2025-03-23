@@ -129,7 +129,7 @@
 
         <!-- srid -->
         <div class="mb-4">
-          <label class="label" for="srid">SRID</label>
+          <label class="label" for="srid">{{ base.translate["srid"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="srid" id="srid" value="{{ layer.get_srid() }}" required>
           </div>
@@ -158,7 +158,7 @@
 
         <!-- buffer -->
         <div class="mb-4">
-          <label class="label" for="buffer">Buffer</label>
+          <label class="label" for="buffer">{{ base.translate["buffer"] }}</label>
           <div class="mt-1">
             <input class="input" type="buffer" name="buffer" id="buffer" value="{{ layer.get_buffer() }}" required>
           </div>
@@ -166,7 +166,7 @@
 
         <!-- extent -->
         <div class="mb-4">
-          <label class="label" for="extent">Extent</label>
+          <label class="label" for="extent">{{ base.translate["extent"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="extent" id="extent" value="{{ layer.get_extent() }}" required>
           </div>
@@ -174,7 +174,7 @@
 
         <!-- zmin -->
         <div class="mb-4">
-          <label class="label" for="zmin">ZMin</label>
+          <label class="label" for="zmin">{{ base.translate["zmin"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="zmin" id="zmin" value="{{ layer.get_zmin() }}" required>
           </div>
@@ -182,7 +182,7 @@
 
         <!-- zmax -->
         <div class="mb-4">
-          <label class="label" for="zmin">ZMax</label>
+          <label class="label" for="zmin">{{ base.translate["zmax"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="zmax" id="zmax" value="{{ layer.get_zmax() }}" required>
           </div>
@@ -190,7 +190,7 @@
 
         <!-- zmax_do_not_simplify -->
         <div class="mb-4">
-          <label class="label" for="zmax_do_not_simplify">ZMax do not simplify</label>
+          <label class="label" for="zmax_do_not_simplify">{{ base.translate["zmax-change-buffer-extent"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="zmax_do_not_simplify" id="zmax_do_not_simplify" value="{{ layer.get_zmax_do_not_simplify() }}" required>
           </div>
@@ -198,7 +198,7 @@
 
         <!-- buffer_do_not_simplify -->
         <div class="mb-4">
-          <label class="label" for="buffer_do_not_simplify">Buffer do not simplify</label>
+          <label class="label" for="buffer_do_not_simplify">{{ base.translate["buffer-higher-zoom"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="buffer_do_not_simplify" id="buffer_do_not_simplify" value="{{ layer.get_buffer_do_not_simplify() }}" required>
           </div>
@@ -206,7 +206,7 @@
 
         <!-- extent_do_not_simplify -->
         <div class="mb-4">
-          <label class="label" for="extent_do_not_simplify">Extent do not simplify</label>
+          <label class="label" for="extent_do_not_simplify">{{ base.translate["extent-higher-zoom"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="extent_do_not_simplify" id="extent_do_not_simplify" value="{{ layer.get_extent_do_not_simplify() }}" required>
           </div>
