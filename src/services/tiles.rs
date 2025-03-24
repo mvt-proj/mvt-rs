@@ -212,8 +212,10 @@ async fn get_tile(
 
     let cache_wrapper = get_cache_wrapper();
 
-    if let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await {
-        return Ok((tile, Via::Cache));
+    if filter.is_empty() {
+        if let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await {
+            return Ok((tile, Via::Cache));
+        }
     }
 
     let tile: Bytes = query_database(
