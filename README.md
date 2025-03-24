@@ -132,7 +132,7 @@ Options:
   --port 8000 \
   --dbconn "postgres://user:password@localhost:5432/mydb" \
   --dbpoolmin 5 \
-  --dbpoolmax 20
+  --dbpoolmax 20 \
   --redisconn "redis://127.0.0.1:6379" \
   --jwtsecret "supersecretjwt" \
   --sessionsecret "supersecretsession"  
