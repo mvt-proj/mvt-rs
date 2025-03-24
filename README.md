@@ -114,11 +114,11 @@ Options:
   -i, --host <HOST>                    Bind address [default: 0.0.0.0]
   -p, --port <PORT>                    Bind port [default: 5887]
   -d, --dbconn <DBCONN>                Database connection
-  -r, --redisconn <REDISCONN>          Redis connection
-  -j, --jwtsecret <JWTSECRET>          JWT secret key
-  -s, --sessionsecret <SESSIONSECRET>  Session secret key
   -m, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
   -x, --dbpoolmax <DBPOOLMAX>          Maximum database pool size [default: 5]
+  -r, --redisconn <REDISCONN>          Redis connection
+  -j, --jwtsecret <JWTSECRET>          JWT secret key
+  -s, --sessionsecret <SESSIONSECRET>  Session secret key  
   -h, --help                           Print help
 ```
 
@@ -131,11 +131,11 @@ Options:
   --host 127.0.0.1 \
   --port 8000 \
   --dbconn "postgres://user:password@localhost:5432/mydb" \
-  --redisconn "redis://127.0.0.1:6379" \
-  --jwtsecret "supersecretjwt" \
-  --sessionsecret "supersecretsession" \
   --dbpoolmin 5 \
   --dbpoolmax 20
+  --redisconn "redis://127.0.0.1:6379" \
+  --jwtsecret "supersecretjwt" \
+  --sessionsecret "supersecretsession"  
 ```
 
 ## To-Do
