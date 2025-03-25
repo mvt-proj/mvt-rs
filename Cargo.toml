@@ -24,7 +24,7 @@ tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
-sqlx = { version = "0.8", features = [ "runtime-tokio-native-tls" , "postgres", "sqlite", "migrate" ] }
+sqlx = { version = "0.8", features = [ "runtime-tokio-rustls" , "postgres", "sqlite", "migrate" ] }
 
 redis = { version = "0.29", features = ["tokio-comp"] }
 bb8 = "0.9"
