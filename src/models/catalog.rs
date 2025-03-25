@@ -6,7 +6,7 @@ use crate::{
     error::AppResult,
     models::category::Category,
 };
-use htmlize::escape_all_quotes;
+use html_escape::encode_safe;
 use serde::{Deserialize, Serialize};
 
 pub enum StateLayer {
@@ -110,20 +110,20 @@ impl Layer {
         rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
         rv += &format!(
             "<strong>Description:</strong> {}<br>",
-            escape_all_quotes(self.description.clone())
+            encode_safe(&self.description.clone())
         );
         rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
         rv += &format!("<strong>Table:</strong> {}<br>", self.table_name);
         rv += &format!(
             "<strong>Fields:</strong> {}<br>",
-            escape_all_quotes(self.fields.join(", "))
+            encode_safe(&self.fields.join(", "))
         );
         rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
         rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
         rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
         rv += &format!(
             "<strong>Filter:</strong> {}<br>",
-            escape_all_quotes(self.get_filter())
+            encode_safe(&self.get_filter())
         );
         rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());
         rv += &format!("<strong>Extent:</strong> {}<br>", self.get_extent());

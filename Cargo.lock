@@ -1210,13 +1210,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "htmlize"
-version = "1.0.5"
+name = "html-escape"
+version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e81e415f6d22240930e82ae0f541b2dd494ca37daaf10c1d7b32546f3b1159f"
+checksum = "6d1ad449764d627e22bfd7cd5e8868264fc9236e07c752972b4080cd351cb476"
 dependencies = [
- "memchr",
- "paste",
+ "utf8-width",
 ]
 
 [[package]]
@@ -1811,7 +1810,7 @@ dependencies = [
  "dotenvy",
  "fluent",
  "fluent-syntax",
- "htmlize",
+ "html-escape",
  "include_dir",
  "jsonwebtoken",
  "redis",
@@ -1997,12 +1996,6 @@ dependencies = [
  "rand_core 0.6.4",
  "subtle",
 ]
-
-[[package]]
-name = "paste"
-version = "1.0.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "path-slash"
@@ -3759,6 +3752,12 @@ name = "utf16_iter"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8232dd3cdaed5356e0f716d285e4b40b932ac434100fe9b7e0e8e935b9e6246"
+
+[[package]]
+name = "utf8-width"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86bd8d4e895da8537e5315b8254664e6b769c4ff3db18321b297a1e7004392e3"
 
 [[package]]
 name = "utf8_iter"
