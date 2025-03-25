@@ -289,7 +289,7 @@ pub async fn page_map(
     };
 
     let extent = query_extent(&lyr).await.unwrap_or_else(|e| {
-        log::error!("Error querying extent: {:?}", e);
+        tracing::error!("Error querying extent: {:?}", e);
         Extent {
             xmin: -180.0,
             ymin: -90.0,

@@ -13,8 +13,8 @@ pub async fn make_db_pool(
     let mut opts: PgConnectOptions = db_conn.parse()?;
 
     opts = opts
-        .log_statements(log::LevelFilter::Trace)
-        .log_slow_statements(log::LevelFilter::Warn, Duration::from_secs(3));
+        .log_statements(tracing::log::LevelFilter::Warn)
+        .log_slow_statements(tracing::log::LevelFilter::Warn, Duration::from_secs(3));
 
     let pool = PgPoolOptions::new()
         .min_connections(min_connections)
@@ -24,8 +24,3 @@ pub async fn make_db_pool(
 
     Ok(pool)
 }
-
-// pub async fn make_cf_pool(db_conn: &str) -> AppResult<sqlx::SqlitePool> {
-//     let pool = sqlx::SqlitePool::connect(db_conn).await?;
-//     Ok(pool)
-// }

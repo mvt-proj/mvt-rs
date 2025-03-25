@@ -1828,7 +1828,6 @@ dependencies = [
  "htmlize",
  "include_dir",
  "jsonwebtoken",
- "log",
  "redis",
  "regex",
  "rust-embed",

@@ -16,7 +16,6 @@ argon2 = { version = "0.5", features = ["std"] }
 askama = { version = "0.12.1", features = ["serde-json"] }
 thiserror = "2"
 base64 = "0.22"
-log = "0.4"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = "9.3"
 salvo = { version = "0.77", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "serve-static", "session"] }
