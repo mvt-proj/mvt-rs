@@ -107,7 +107,6 @@ delete-cache-on-start = Borrar caché al iniciar el servidor
 max-cache-age = Máxima edad del caché
 info-time-in-seconds = El tiempo debe ingresarse en segundos
 info-value-infinity = Un valor de 0 significa edad infinita
-max-cache-age = Máxima edad del caché
 max-records = Máxima cantidad de registros
 info-max-records = Máxima cantidad de registros a recuperar. Usando 0 ignora esta directiva.
 published = Publicada
