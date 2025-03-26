@@ -99,6 +99,7 @@ fn build_sql_template(sql_mode: &str) -> &'static str {
                 WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
                     AND {geom} IS NOT NULL
                     {query_placeholder}
+                {limit_placeholder}
             )
             SELECT ST_AsMVT(mvtgeom.*, $8, $4, 'geom') AS tile FROM mvtgeom;
         "#
@@ -117,6 +118,7 @@ fn build_sql_template(sql_mode: &str) -> &'static str {
                 WHERE {geom} && ST_Transform(ST_TileEnvelope($1, $2, $3), $7)
                     AND {geom} IS NOT NULL
                     {query_placeholder}
+                {limit_placeholder}
             ) as tile;
         "#
         }
@@ -166,6 +168,13 @@ async fn query_database(
 
     let clip_geom = layer_conf.clip_geom.unwrap_or(true);
 
+    let limit_clause = layer_conf
+        .max_records
+        .filter(|&max| max > 0)
+        .map_or_else(String::new, |max| {
+            format!("ORDER BY RANDOM() LIMIT {}", max)
+        });
+
     let sql_template = build_sql_template(&sql_mode);
     let sql_query = sql_template
         .replace("{fields}", &fields)
@@ -175,7 +184,8 @@ async fn query_database(
         .replace(
             "{query_placeholder}",
             query_placeholder.as_deref().unwrap_or(""),
-        );
+        )
+        .replace("{limit_placeholder}", &limit_clause);
 
     let query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(&sql_query)
         .bind(z as i32)

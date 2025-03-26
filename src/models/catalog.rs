@@ -41,6 +41,7 @@ pub struct Layer {
     pub delete_cache_on_start: Option<bool>,
     /// max_cache_age: on seconds: default 0 -> infinite
     pub max_cache_age: Option<u64>,
+    pub max_records: Option<u64>,
     pub published: bool,
     #[serde(rename = "source")]
     pub url: Option<String>,
@@ -104,6 +105,10 @@ impl Layer {
         self.max_cache_age.unwrap_or(0)
     }
 
+    pub fn get_max_records(&self) -> u64 {
+        self.max_records.unwrap_or(0)
+    }
+
     pub fn info_html(&self) -> String {
         let mut rv = format!("<strong>ID:</strong> {}<br>", self.id);
         rv += &format!("<strong>Name:</strong> {}<br>", self.name);
@@ -149,6 +154,10 @@ impl Layer {
         rv += &format!(
             "<strong>Max cache age:</strong> {}<br>",
             self.get_max_cache_age()
+        );
+        rv += &format!(
+            "<strong>Max records:</strong> {}<br>",
+            self.get_max_records()
         );
         rv += &format!("<strong>Published:</strong> {}<br>", self.published);
         rv += &format!(

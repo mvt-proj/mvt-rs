@@ -251,6 +251,15 @@
           <p class="help is-info">{{ base.translate["info-time_in_seconds"] }}. {{ base.translate["info-value_infinity"] }}</p>
         </div>
 
+        <!-- max_records -->
+        <div class="mb-4">
+          <label class="label" for="max_records">{{ base.translate["max-records"] }}</label>
+          <div class="mt-1">
+            <input class="input" type="text" name="max_records" id="max_records" value="{{ layer.get_max_records() }}" required>
+          </div>
+          <p class="help is-info">{{ base.translate["info-max-records"] }}</p>
+        </div>
+
         <!-- published -->
         <div class="mb-4">
           <label class="label" for="published">{{ base.translate["published"] }}</label>

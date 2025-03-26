@@ -50,6 +50,7 @@ struct NewLayer<'a> {
     delete_cache_on_start: Option<bool>,
     /// max_cache_age: on seconds: default 0 -> infinite
     max_cache_age: Option<u64>,
+    max_records: Option<u64>,
     published: bool,
     groups: Option<Vec<String>>,
 }
@@ -122,6 +123,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         clip_geom: new_layer.clip_geom,
         delete_cache_on_start: new_layer.delete_cache_on_start,
         max_cache_age: new_layer.max_cache_age,
+        max_records: new_layer.max_records,
         published: new_layer.published,
         url: None,
         groups: Some(selected_groups),
@@ -188,6 +190,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         clip_geom: new_layer.clip_geom,
         delete_cache_on_start: new_layer.delete_cache_on_start,
         max_cache_age: new_layer.max_cache_age,
+        max_records: new_layer.max_records,
         published: new_layer.published,
         url: None,
         groups: Some(selected_groups),
