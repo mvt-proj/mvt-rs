@@ -29,7 +29,7 @@ list-of-sprites = List of Sprites
 list-of-glyps = List of Glyps
 
 # Admin
-change_password = Change Password
+change-password = Change Password
 
 list-of-groups = List of Groups
 add-group = ADD GROUP
@@ -73,15 +73,15 @@ configuration = Configuration
 zoom-level = Zoom level
 
 # Fields
-new_password = New Password
+new-password = New Password
 email = Email
 username = Username
 name = Name
-layer_name = Layer Name
+layer-name = Layer Name
 category = Category
 description = Description
 style = Style
-invalid_json = Invalid JSON format. Please check the syntax.
+invalid-json = Invalid JSON format. Please check the syntax.
 geometry = Geometry
 points = Points
 lines = Lines
@@ -90,7 +90,7 @@ alias = Alias
 schema = Schema
 table = Table
 fields = Fields
-sql_mode = SQL Mode
+sql-mode = SQL Mode
 geom = Geom
 srid = SRID
 buffer = Buffer
@@ -100,11 +100,11 @@ zmax = Maximum zoom
 zmax-change-buffer-extent = Zoom threshold for new Buffer/Extent
 buffer-higher-zoom = Buffer (for higher zoom)
 extent-higher-zoom = Extent (for higher zoom)
-clip_geom = Clip Geom
-delete_cache_on_start = Delete cache on start
-max_cache_age = Max cache age
-info-time_in_seconds = Time must enter in seconds
-info-value_infinity = The value of 0 means infinity
+clip-geom = Clip Geom
+delete-cache-on-start = Delete cache on start
+max-cache-age = Max cache age
+info-time-in-seconds = Time must enter in seconds
+info-value-infinity = The value of 0 means infinity
 max-records = Maximum number of records
 info-max-records = Maximum records to retrieve. Using 0 ignores this directive.
 published = Published

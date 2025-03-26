@@ -29,7 +29,7 @@ list-of-sprites = Listado de Sprites
 list-of-glyps = Listado de Glyps
 
 # Admin
-change_password = Cambiar Contraseña
+change-password = Cambiar Contraseña
 
 list-of-groups = Listado de Grupos
 add-group = AGREGAR GRUPO
@@ -75,15 +75,15 @@ configuration = Configuración
 zoom-level = Nivel de Zoom
 
 # Tables
-new_password = Nueva Contraseaña
+new-password = Nueva Contraseaña
 email = Correo Electrónico
 username = Nombre de Usuario
 name = Nombre
-layer_name = Nombre Capa
+layer-name = Nombre Capa
 category = Categoría
 description = Descripción
 style = Estilo
-invalid_json = Formato JSON inválido. Por favor, compruebe la sintaxis.
+invalid-json = Formato JSON inválido. Por favor, compruebe la sintaxis.
 geometry = Geometría
 points = Puntos
 lines = Líneas
@@ -92,7 +92,7 @@ alias = Alias
 schema = Esquema
 table = Tabla
 fields = Campos
-sql_mode = Modo SQL
+sql-mode = Modo SQL
 geom = Geom
 srid = SRID
 buffer = Buffer
@@ -102,12 +102,12 @@ zmax = Zoom mínimo
 zmax-change-buffer-extent = Zoom para cambiar Buffer/Extent
 buffer-higher-zoom = Buffer (para zoom elevado)
 extent-higher-zoom = Extent (para zoom elevado)
-clip_geom = Clip Geom
-delete_cache_on_start = Borrar caché al iniciar el servidor
-max_cache_age = Máxima edad del caché
-info-time_in_seconds = El tiempo debe ingresarse en segundos
-info-value_infinity = Un valor de 0 significa edad infinita
-max_cache_age = Máxima edad del caché
+clip-geom = Clip Geom
+delete-cache-on-start = Borrar caché al iniciar el servidor
+max-cache-age = Máxima edad del caché
+info-time-in-seconds = El tiempo debe ingresarse en segundos
+info-value-infinity = Un valor de 0 significa edad infinita
+max-cache-age = Máxima edad del caché
 max-records = Máxima cantidad de registros
 info-max-records = Máxima cantidad de registros a recuperar. Usando 0 ignora esta directiva.
 published = Publicada

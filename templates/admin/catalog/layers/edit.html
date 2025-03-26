@@ -137,7 +137,7 @@
 
         <!-- sql_mode -->
         <div class="mb-4">
-          <label class="label" for="sql_mode">{{ base.translate["sql_mode"] }}</label>
+          <label class="label" for="sql_mode">{{ base.translate["sql-mode"] }}</label>
           <div class="mt-1">
             <div class="select">
               <select name="sql_mode" id="sql_mode" class="input">
@@ -214,7 +214,7 @@
 
         <!-- clip_geom -->
         <div class="mb-4">
-          <label class="label" for="clip_geom">{{ base.translate["clip_geom"] }}</label>
+          <label class="label" for="clip_geom">{{ base.translate["clip-geom"] }}</label>
           <div class="mt-1">
             <label class="radio">
               <input type="radio" name="clip_geom" id="clip_geom_true" value="true" {% if layer.get_clip_geom() %}checked{% endif %}>
@@ -229,7 +229,7 @@
 
         <!-- delete_cache_on_start -->
         <div class="mb-4">
-          <label class="label" for="delete_cache_on_start">{{ base.translate["delete_cache_on_start"] }}</label>
+          <label class="label" for="delete_cache_on_start">{{ base.translate["delete-cache-on-start"] }}</label>
           <div class="mt-1">
             <label class="radio">
               <input type="radio" name="delete_cache_on_start" id="delete_cache_on_start_true" value="true" {% if layer.get_delete_cache_on_start() %}checked{% endif %}>
@@ -244,11 +244,11 @@
 
         <!-- max_cache_age -->
         <div class="mb-4">
-          <label class="label" for="max_cache_age">{{ base.translate["max_cache_age"] }}</label>
+          <label class="label" for="max_cache_age">{{ base.translate["max-cache-age"] }}</label>
           <div class="mt-1">
             <input class="input" type="text" name="max_cache_age" id="max_cache_age" value="{{ layer.get_max_cache_age() }}" required>
           </div>
-          <p class="help is-info">{{ base.translate["info-time_in_seconds"] }}. {{ base.translate["info-value_infinity"] }}</p>
+          <p class="help is-info">{{ base.translate["info-time-in-seconds"] }}. {{ base.translate["info-value-infinity"] }}</p>
         </div>
 
         <!-- max_records -->
