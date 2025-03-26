@@ -13,7 +13,7 @@ pub async fn make_db_pool(
     let mut opts: PgConnectOptions = db_conn.parse()?;
 
     opts = opts
-        .log_statements(tracing::log::LevelFilter::Warn)
+        .log_statements(tracing::log::LevelFilter::Off)
         .log_slow_statements(tracing::log::LevelFilter::Warn, Duration::from_secs(3));
 
     let pool = PgPoolOptions::new()
