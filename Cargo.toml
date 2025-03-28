@@ -13,7 +13,7 @@ dotenvy = "0.15.0"
 clap = "4.5"
 bytes = "1.10"
 argon2 = { version = "0.5", features = ["std"] }
-askama = { version = "0.12.1", features = ["serde-json"] }
+askama = "0.13"
 thiserror = "2"
 base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
