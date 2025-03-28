@@ -34,17 +34,28 @@
               </span>
             </button>
             {% if style.is_map() %}
-            <a
-              href="/mapview/{{ style.id }}"
-              class="button"
-              title="Map"
-              target="_blank"
-            >
-              <span class="icon">
-                <i class="fas fa-map"></i>
-              </span>
-            </a>
-          {% endif %}
+              <a
+                href="/mapview/{{ style.id }}"
+                class="button"
+                title="Map"
+                target="_blank"
+              >
+                <span class="icon">
+                  <i class="fas fa-map"></i>
+                </span>
+              </a>
+            {% else %}
+              <a
+                class="button__outline flex items-center space-x-2 text-gray-500 cursor-not-allowed opacity-50"
+                href="javascript:void(0)"
+                aria-disabled="true"
+                tabindex="-1"
+              >
+                <span class="icon">
+                  <i class="fas fa-map"></i>
+                </span>
+              </a>
+            {% endif %}
           {% if let Some(current_user) = self.current_user %}
             {% if current_user.is_admin() %}
               <a href="/admin/styles/edit/{{ style.id }}" class="button">

@@ -98,6 +98,18 @@
                       <i class="fas fa-map"></i>
                     </span>
                   </a>
+
+                {% else %}
+                  <a
+                      class="button__outline flex items-center space-x-2 text-gray-500 cursor-not-allowed opacity-50"
+                      href="javascript:void(0)"
+                      aria-disabled="true"
+                      tabindex="-1"
+                    >
+                    <span class="icon">
+                      <i class="fas fa-map"></i>
+                    </span>
+                  </a>
                 {% endif %}
 
                 <a href="/admin/catalog/layers/edit/{{ layer.id }}" class="button" title="Edit">
