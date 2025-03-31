@@ -8,7 +8,7 @@ use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
     get_auth,
-    html::main::{get_session_data, BaseTemplateData},
+    html::main::{BaseTemplateData, get_session_data},
 };
 
 #[derive(Template)]

@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use salvo::prelude::*;
 use salvo::session::Session;
 use serde::{Deserialize, Serialize};
@@ -16,8 +16,8 @@ use crate::{
     get_auth, get_jwt_secret,
 };
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2, PasswordHash, PasswordVerifier,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 
 fn decode_basic_auth(base64_string: &str) -> AppResult<(String, String)> {

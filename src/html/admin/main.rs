@@ -4,7 +4,7 @@ use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
     get_auth, get_catalog, get_categories,
-    html::main::{is_authenticated, BaseTemplateData},
+    html::main::{BaseTemplateData, is_authenticated},
     models::{
         catalog::{Layer, StateLayer},
         category::Category,

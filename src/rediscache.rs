@@ -1,9 +1,9 @@
-use crate::{error::AppResult, Catalog};
+use crate::{Catalog, error::AppResult};
 use bb8_redis::{
+    RedisConnectionManager,
     bb8,
     // redis::{AsyncCommands, RedisResult},
     redis::AsyncCommands,
-    RedisConnectionManager,
 };
 use bytes::Bytes;
 

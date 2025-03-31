@@ -1,4 +1,4 @@
-use crate::{diskcache::DiskCache, error::AppResult, rediscache::RedisCache, Catalog};
+use crate::{Catalog, diskcache::DiskCache, error::AppResult, rediscache::RedisCache};
 use bytes::Bytes;
 use std::path::PathBuf;
 

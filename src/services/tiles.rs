@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use regex::Regex;
-use salvo::http::{header::HeaderValue, HeaderMap};
+use salvo::http::{HeaderMap, header::HeaderValue};
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::borrow::Cow;

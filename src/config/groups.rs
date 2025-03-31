@@ -1,6 +1,6 @@
 use crate::auth::Group;
 use crate::get_cf_pool;
-use sqlx::{sqlite::SqlitePool, Row};
+use sqlx::{Row, sqlite::SqlitePool};
 
 pub async fn get_groups(pool: Option<&SqlitePool>) -> Result<Vec<Group>, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());

@@ -7,7 +7,7 @@ use crate::{
     models::category::Category,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Style {

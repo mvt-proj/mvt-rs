@@ -2,8 +2,8 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
 use crate::{
-    error::{AppError, AppResult},
     Catalog,
+    error::{AppError, AppResult},
 };
 use bytes::Bytes;
 use tokio::fs::{self, File};

@@ -1,6 +1,6 @@
 use crate::auth::{Group, User};
 use crate::get_cf_pool;
-use sqlx::{sqlite::SqlitePool, Row};
+use sqlx::{Row, sqlite::SqlitePool};
 use std::collections::HashMap;
 
 pub async fn get_users(pool: Option<&SqlitePool>) -> Result<Vec<User>, sqlx::Error> {

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::User,
     error::{AppError, AppResult},
-    html::main::{get_session_data, BaseTemplateData},
+    html::main::{BaseTemplateData, get_session_data},
     models::{category::Category, styles::Style},
 };
 

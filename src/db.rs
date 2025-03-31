@@ -1,5 +1,5 @@
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::ConnectOptions;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 
 use std::time::Duration;
 

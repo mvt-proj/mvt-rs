@@ -1,7 +1,7 @@
 use crate::auth::Group;
 use crate::get_cf_pool;
 use crate::models::{catalog::Layer, category::Category};
-use sqlx::{sqlite::SqlitePool, Row};
+use sqlx::{Row, sqlite::SqlitePool};
 
 pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());

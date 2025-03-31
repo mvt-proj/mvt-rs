@@ -1,7 +1,7 @@
 use accept_language::parse;
 use fluent::{FluentBundle, FluentResource};
 use fluent_syntax::ast;
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use salvo::prelude::*;
 use std::collections::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;

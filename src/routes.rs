@@ -1,4 +1,4 @@
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use rust_embed::RustEmbed;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::catcher::Catcher;

@@ -1,6 +1,6 @@
 use crate::get_cf_pool;
 use crate::models::{category::Category, styles::Style};
-use sqlx::{sqlite::SqlitePool, Row};
+use sqlx::{Row, sqlite::SqlitePool};
 
 pub async fn get_styles(pool: Option<&SqlitePool>) -> Result<Vec<Style>, sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
