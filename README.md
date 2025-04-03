@@ -113,7 +113,7 @@ Options:
   -c, --config <CONFIGDIR>             Directory where config file is placed [default: config]
   -b, --cache <CACHEDIR>               Directory where cache files are placed [default: cache]
   -i, --host <HOST>                    Bind address [default: 0.0.0.0]
-  -p, --port <PORT>                    Bind port [default: 5887]
+  -p, --port <PORT>                    Bind port [default: 5800]
   -d, --dbconn <DBCONN>                Database connection
   -m, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
   -x, --dbpoolmax <DBPOOLMAX>          Maximum database pool size [default: 5]
