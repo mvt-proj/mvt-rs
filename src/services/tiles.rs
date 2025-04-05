@@ -1,16 +1,14 @@
 use bytes::Bytes;
-use regex::Regex;
 use salvo::http::{HeaderMap, header::HeaderValue};
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::borrow::Cow;
-use std::collections::HashSet;
 use std::time::Instant;
 
+use super::utils::{convert_fields, validate_filter, validate_user_groups};
 use crate::{
-    error::{AppError, AppResult},
-    get_auth, get_cache_wrapper, get_catalog, get_db_pool,
-    html::main::get_session_data,
+    error::AppResult,
+    get_cache_wrapper, get_catalog, get_db_pool,
     models::catalog::{Layer, StateLayer},
 };
 
@@ -22,65 +20,6 @@ const DEFAULT_ZMAX_DO_NOT_SIMPLIFY: u32 = 16;
 enum Via {
     Database,
     Cache,
-}
-
-fn convert_fields(fields: Vec<String>) -> String {
-    let vec_fields: Vec<String> = if fields.len() == 1 {
-        fields[0]
-            .split(',')
-            .map(|s| format!("\"{}\"", s.trim()))
-            .collect()
-    } else {
-        fields
-            .iter()
-            .map(|field| format!("\"{}\"", field))
-            .collect::<Vec<_>>()
-    };
-    vec_fields.join(", ")
-}
-
-fn is_inside_quotes(filter: &str, pos: usize) -> bool {
-    let mut in_quotes = false;
-    for (i, c) in filter.chars().enumerate() {
-        if c == '\'' {
-            in_quotes = !in_quotes;
-        }
-        if i == pos {
-            return in_quotes;
-        }
-    }
-    false
-}
-
-fn validate_filter(filter: &str) -> AppResult<()> {
-    let dangerous_keywords = [
-        "DELETE", "UPDATE", "INSERT", "DROP", "TRUNCATE", "CREATE", "EXEC", "EXECUTE",
-    ];
-
-    let pattern = format!(r"(?i)\b(?:{})\b", dangerous_keywords.join("|"));
-    let re =
-        Regex::new(&pattern).map_err(|e| AppError::InvalidInput(format!("Regex error: {}", e)))?;
-
-    let forbidden_patterns = vec![";", "--", "/*", "*/", "OR 1=1"];
-    for pattern in forbidden_patterns {
-        if filter.contains(pattern) {
-            return Err(AppError::InvalidInput(format!(
-                "Invalid filter: contains forbidden pattern '{}'",
-                pattern
-            )));
-        }
-    }
-
-    for cap in re.find_iter(filter) {
-        if !is_inside_quotes(filter, cap.start()) {
-            return Err(AppError::InvalidInput(format!(
-                "Invalid filter: contains dangerous keyword '{}'",
-                cap.as_str()
-            )));
-        }
-    }
-
-    Ok(())
 }
 
 fn build_sql_template(sql_mode: &str) -> &'static str {
@@ -245,37 +184,6 @@ async fn get_tile(
     }
 
     Ok((tile, Via::Database))
-}
-
-async fn validate_user_groups(req: &Request, layer: &Layer, depot: &mut Depot) -> AppResult<bool> {
-    let Some(groups) = layer.groups.as_ref() else {
-        return Ok(true);
-    };
-
-    if groups.is_empty() {
-        return Ok(true);
-    }
-
-    let authorization = req
-        .headers()
-        .get("authorization")
-        .and_then(|ah| ah.to_str().ok())
-        .unwrap_or("");
-
-    let user = if !authorization.is_empty() {
-        let mut auth = get_auth().await.write().await;
-        auth.get_user_by_authorization(authorization)?.cloned()
-    } else {
-        None
-    };
-
-    let has_common_group = user.as_ref().is_some_and(|user| {
-        let user_group_ids: HashSet<_> = user.groups.iter().map(|g| &g.id).collect();
-        groups.iter().any(|g| user_group_ids.contains(&g.id))
-    });
-
-    let (is_auth, _) = get_session_data(depot).await;
-    Ok(has_common_group || is_auth)
 }
 
 #[handler]

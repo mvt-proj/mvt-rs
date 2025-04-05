@@ -49,6 +49,7 @@ fn decode_basic_auth(base64_string: &str) -> AppResult<(String, String)> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
+    pub id: String,
     username: String,
     exp: i64,
 }
@@ -285,9 +286,10 @@ impl Auth {
     pub fn login(&mut self, username: &str, psw: &str) -> AppResult<String> {
         let jwt_secret = get_jwt_secret();
         for user in self.users.clone().into_iter() {
-            if username == user.username && self.validate_psw(user, psw)? {
+            if username == user.username && self.validate_psw(user.clone(), psw)? {
                 let exp = OffsetDateTime::now_utc() + Duration::days(1);
                 let claim = JwtClaims {
+                    id: user.id,
                     username: username.to_owned(),
                     exp: exp.unix_timestamp(),
                 };
