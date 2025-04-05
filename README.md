@@ -21,7 +21,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
   - **Multi-layer by composition**: combining multiple layers into a single source.
   - **Multi-layer by category**: grouping layers by thematic categories.
 - Built-in glyph and sprite server for custom styles.
-- Layer access control via Basic Authentication (with future support for JWT).
+- Layer access control via Basic Authentication or JWT.
 - Alpha-stage API for querying and managing the layer catalog.
 - Initial i18n support.
 - Max records control at the layer level.
