@@ -284,27 +284,6 @@ impl Auth {
         Ok((current_username, password))
     }
 
-    // pub fn login(&mut self, username: &str, psw: &str) -> AppResult<String> {
-    //     let jwt_secret = get_jwt_secret();
-    //     for user in self.users.clone().into_iter() {
-    //         if username == user.username && self.validate_psw(user.clone(), psw)? {
-    //             let exp = OffsetDateTime::now_utc() + Duration::days(1);
-    //             let claim = JwtClaims {
-    //                 id: user.id,
-    //                 username: username.to_owned(),
-    //                 exp: exp.unix_timestamp(),
-    //             };
-    //             let token = jsonwebtoken::encode(
-    //                 &jsonwebtoken::Header::default(),
-    //                 &claim,
-    //                 &EncodingKey::from_secret(jwt_secret.as_bytes()),
-    //             )?;
-    //             return Ok(token);
-    //         }
-    //     }
-    //     Ok("".to_owned())
-    // }
-
     pub fn login(&mut self, email: &str, psw: &str) -> AppResult<String> {
         let jwt_secret = get_jwt_secret();
         for user in self.users.clone().into_iter() {
