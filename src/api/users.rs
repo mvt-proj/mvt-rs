@@ -21,7 +21,7 @@ struct NewUser<'a> {
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]
 struct LoginData<'a> {
-    username: &'a str,
+    email: &'a str,
     password: String,
 }
 
@@ -37,9 +37,7 @@ fn unauthorized(res: &mut Response) {
 #[handler]
 pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) {
     let mut auth = get_auth().await.write().await;
-    let token = auth
-        .login(login_data.username, &login_data.password)
-        .unwrap();
+    let token = auth.login(login_data.email, &login_data.password).unwrap();
 
     if token.is_empty() {
         unauthorized(res);
