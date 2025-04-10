@@ -49,7 +49,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('p')
                 .long("port")
                 .value_name("PORT")
-                .default_value("5887")
+                .default_value("5800")
                 .help("Bind port"),
         )
         .arg(
@@ -108,7 +108,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
     let config_dir = get_value("CONFIG", "configdir", Some("config"));
     let cache_dir = get_value("CACHE", "cachedir", Some("cache"));
     let host = get_value("IPHOST", "host", Some("0.0.0.0"));
-    let port = get_value("PORT", "port", Some("5887"));
+    let port = get_value("PORT", "port", Some("5800"));
     let db_conn = get_value("DBCONN", "dbconn", None);
     let redis_conn = get_value("REDISCONN", "redisconn", Some(""));
     let jwt_secret = get_value("JWTSECRET", "jwtsecret", None);
