@@ -41,7 +41,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('i')
                 .long("host")
                 .value_name("HOST")
-                .default_value("0.0.0.0")
                 .help("Bind address"),
         )
         .arg(
@@ -49,7 +48,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('p')
                 .long("port")
                 .value_name("PORT")
-                .default_value("5800")
                 .help("Bind port"),
         )
         .arg(
@@ -102,7 +100,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
             .cloned()
             .or_else(|| env::var(key).ok())
             .or_else(|| default.map(String::from))
-            .unwrap_or_else(|| panic!("{} is required", key))
+            .unwrap_or_else(|| panic!("Missing required config value for '{}'. Provide via CLI or env var.", key))
     };
 
     let config_dir = get_value("CONFIG", "configdir", Some("config"));
