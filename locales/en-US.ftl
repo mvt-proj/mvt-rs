@@ -68,6 +68,7 @@ edit-layer = Edit Layer
 # Common
 filter = Filter
 back = Back
+help = Help
 configuration = Configuration
 
 # Maps

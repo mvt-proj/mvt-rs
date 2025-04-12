@@ -7,14 +7,21 @@
 {% endblock %}
 
 {% block admin_content %}
-<div class="flex justify-start items-center mb-6">
+<div class="flex justify-start items-center gap-x-3 mb-6">
   <a href="/admin/styles" class="button space-x-2">
     <span class="icon__small mr-2">
       <i class="fas fa-arrow-left"></i>
     </span>
     <span>{{ base.translate["back"] }}</span>
   </a>
+  <a href="https://maplibre.org/maplibre-style-spec/" target="_blank" class="button space-x-2">
+    <span class="icon__small mr-2">
+      <i class="fas fa-question-circle"></i>
+    </span>
+    <span>{{ base.translate["help"] }}</span>
+  </a>
 </div>
+
 
 <div class="max-w-3xl w-full mx-auto px-6">
   <div class="box">

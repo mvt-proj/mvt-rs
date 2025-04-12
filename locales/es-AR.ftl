@@ -68,6 +68,7 @@ edit-layer = Editar Capa
 # Common
 filter = Filtro
 back = Volver
+help = Ayuda
 configuration = Configuración
 
 # Maps
