@@ -137,6 +137,27 @@ struct MapViewTemplate {
     style: Style,
 }
 
+#[derive(Template)]
+#[template(path = "mapview_minimal.html")]
+struct MapViewMinimalTemplate {
+    base: BaseTemplateData,
+    style: Style,
+}
+
+enum MapTemplate {
+    Minimal(MapViewMinimalTemplate),
+    Full(MapViewTemplate),
+}
+
+impl MapTemplate {
+    fn render(&self) -> String {
+        match self {
+            MapTemplate::Minimal(tpl) => tpl.render().unwrap(),
+            MapTemplate::Full(tpl) => tpl.render().unwrap(),
+        }
+    }
+}
+
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) {
     let is_auth = is_authenticated(depot).await;
@@ -316,6 +337,8 @@ pub async fn page_map_view(
     depot: &mut Depot,
 ) -> Result<(), StatusError> {
     let style_id = req.param::<String>("style_id").unwrap();
+    let is_minimal = req.query::<bool>("minimal").unwrap_or_default();
+
     let style = Style::from_id(&style_id).await.unwrap();
     let is_auth = is_authenticated(depot).await;
     let translate = depot
@@ -324,9 +347,13 @@ pub async fn page_map_view(
         .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
 
-    let template = MapViewTemplate { base, style };
+    let template = if is_minimal {
+        MapTemplate::Minimal(MapViewMinimalTemplate { base, style })
+    } else {
+        MapTemplate::Full(MapViewTemplate { base, style })
+    };
 
-    res.render(Text::Html(template.render().unwrap()));
+    res.render(Text::Html(template.render()));
     Ok(())
 }
 

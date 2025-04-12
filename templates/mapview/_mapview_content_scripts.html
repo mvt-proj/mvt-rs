@@ -1,0 +1,36 @@
+<script>
+  let map = new maplibregl.Map({
+    container: 'map',
+    style: JSON.parse('{{ style.style|safe }}')
+  });
+
+  let zoomLevelElement = document.getElementById('zoom-level');
+  zoomLevelElement.innerText = 1;
+
+  map.on('load', function () {
+    map.addControl(
+      new maplibregl.NavigationControl({
+        visualizePitch: true,
+        showZoom: true,
+        showCompass: true
+      })
+    );
+
+    map.on('zoom', function () {
+      let currentZoom = map.getZoom().toFixed(1);
+      zoomLevelElement.innerText = currentZoom;
+    });
+
+    setTimeout(() => {
+      const style = map.getStyle()
+      if (style.metadata && style.metadata.baseLayers && style.metadata.overLayers) {
+        let Opacity = new OpacityControl({
+          baseLayers: style.metadata.baseLayers,
+          overLayers: style.metadata.overLayers,
+          opacityControl: true,
+        });
+        map.addControl(Opacity, 'top-left');
+      }
+    }, 100);
+  });
+</script>

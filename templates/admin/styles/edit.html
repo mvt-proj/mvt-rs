@@ -16,78 +16,99 @@
   </a>
 </div>
 
-<div class="max-w-3xl w-full mx-auto px-6">
-  <div class="box">
-    <h1 class="title mb-6 text-center">{{ base.translate["edit-style"] }}: {{ style.name }}</h1>
+<div class="flex flex-row gap-6 h-full justify-center">
+  {%if style.is_map() %}
+    <div class="flex-1">
+  {% else %}
+    <div class="flex-1 max-w-3xl">
+  {% endif %}
+    <!-- form -->
+    <div class="w-full h-full px-6">
+      <div class="box">
+        <h1 class="title mb-6 text-center">{{ base.translate["edit-style"] }}: {{ style.name }}</h1>
 
-    <form action="/admin/styles/update" method="post">
+        <form action="/admin/styles/update" method="post">
 
-      <!-- ID (readonly) -->
-      <div class="mb-4">
-        <label class="label">ID</label>
-        <div class="mt-1">
-          <input class="input" name="id" type="text" placeholder="ID" value="{{ style.id }}" readonly>
-        </div>
+          <!-- ID (readonly) -->
+          <div class="mb-4">
+            <label class="label">ID</label>
+            <div class="mt-1">
+              <input class="input" name="id" type="text" placeholder="ID" value="{{ style.id }}" readonly>
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div class="mb-4">
+            <label class="label">{{ base.translate["category"] }}</label>
+            <div class="mt-1">
+              <select name="category" id="category" class="input">
+                {% for category in categories %}
+                  <option value="{{ category.id }}" {% if category.id == style.category.id %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Name -->
+          <div class="mb-4">
+            <label class="label">{{ base.translate["name"] }}</label>
+            <div class="mt-1">
+              <input class="input" name="name" type="text" placeholder="{{ base.translate["name"] }}" value="{{ style.name }}">
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-4">
+            <label class="label">{{ base.translate["description"] }}</label>
+            <div class="mt-1">
+              <input class="input" name="description" type="text" placeholder="{{ base.translate["description"] }}" value="{{ style.description }}">
+            </div>
+          </div>
+
+          <!-- JSON Editor for Style -->
+          <div class="mb-4">
+            <label class="label">{{ base.translate["style"] }}</label>
+            <div class="mt-1">
+              <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
+              <input type="hidden" id="jsonInput" name="style">
+            </div>
+          </div>
+
+          <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">
+            {{ base.translate["invalid-json"] }}
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex justify-center items-center gap-x-3">
+            <button
+            id="applyButton"
+            type="button"
+            class="button__outline"
+            hx-post="/admin/styles/update"
+            hx-include="form"
+            hx-target="this"
+            hx-swap="none"
+            onclick="beforeHtmxPost()"
+            >
+              {{ base.translate["apply-style"] }}
+            </button>
+            <button class="button__outline">{{ base.translate["update-style"] }}</button>
+          </div>
+        </form>
       </div>
-
-      <!-- Category -->
-      <div class="mb-4">
-        <label class="label">{{ base.translate["category"] }}</label>
-        <div class="mt-1">
-          <select name="category" id="category" class="input">
-            {% for category in categories %}
-              <option value="{{ category.id }}" {% if category.id == style.category.id %}selected{% endif %}>{{ category.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-
-      <!-- Name -->
-      <div class="mb-4">
-        <label class="label">{{ base.translate["name"] }}</label>
-        <div class="mt-1">
-          <input class="input" name="name" type="text" placeholder="{{ base.translate["name"] }}" value="{{ style.name }}">
-        </div>
-      </div>
-
-      <!-- Description -->
-      <div class="mb-4">
-        <label class="label">{{ base.translate["description"] }}</label>
-        <div class="mt-1">
-          <input class="input" name="description" type="text" placeholder="{{ base.translate["description"] }}" value="{{ style.description }}">
-        </div>
-      </div>
-
-      <!-- JSON Editor for Style -->
-      <div class="mb-4">
-        <label class="label">{{ base.translate["style"] }}</label>
-        <div class="mt-1">
-          <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
-          <input type="hidden" id="jsonInput" name="style">
-        </div>
-      </div>
-
-      <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">
-        {{ base.translate["invalid-json"] }}
-      </div>
-
-      <!-- Buttons -->
-      <div class="flex justify-center items-center gap-x-3">
-        <button
-        type="button"
-        class="button__outline"
-        hx-post="/admin/styles/update"
-        hx-include="form"
-        hx-target="this"
-        hx-swap="none"
-        onclick="beforeHtmxPost()"
-        >
-          {{ base.translate["apply-style"] }}
-        </button>
-        <button class="button__outline">{{ base.translate["update-style"] }}</button>
-      </div>
-    </form>
+    </div>
   </div>
+
+  {%if style.is_map() %}
+    <div class="flex-1">
+      <!-- mapview -->
+      <iframe
+        id="mapIframe"
+        src="/mapview/{{ style.id }}?minimal=true"
+        class="w-full h-full border border-gray-300 rounded"
+      ></iframe>
+    </div>
+  {% endif %}
 </div>
 
 <script>
@@ -137,8 +158,15 @@
       document.getElementById('jsonError').style.display = 'none';
     } catch (e) {
       document.getElementById('jsonError').style.display = 'block';
-      event.preventDefault(); // Prevent HTMX post
+      event.preventDefault();
     }
   }
+
+  document.body.addEventListener('htmx:afterRequest', function (evt) {
+    if (evt.target.id === 'applyButton') {
+      const iframe = document.getElementById('mapIframe');
+      iframe.src = iframe.src;
+    }
+  });
 </script>
 {% endblock %}

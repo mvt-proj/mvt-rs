@@ -1,11 +1,10 @@
-{% extends "layout.html" %}
+{% extends "layout_minimal.html" %}
 
 {% block head %}
   {% include "mapview/_mapview_content_head.html" %}
 {% endblock %}
 
 {% block content %}
-  <h1 class="title">{{ style.description }} </h1>
   {% include "mapview/_mapview_content_body.html" %}
 {% endblock %}
 
