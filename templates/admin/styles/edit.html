@@ -71,8 +71,19 @@
         {{ base.translate["invalid-json"] }}
       </div>
 
-      <!-- Submit Button -->
-      <div class="flex justify-center items-center">
+      <!-- Buttons -->
+      <div class="flex justify-center items-center gap-x-3">
+        <button
+        type="button"
+        class="button__outline"
+        hx-post="/admin/styles/update"
+        hx-include="form"
+        hx-target="this"
+        hx-swap="none"
+        onclick="beforeHtmxPost()"
+        >
+          {{ base.translate["apply-style"] }}
+        </button>
         <button class="button__outline">{{ base.translate["update-style"] }}</button>
       </div>
     </form>
@@ -80,6 +91,8 @@
 </div>
 
 <script>
+  let editor;
+
   document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('jsoneditor');
     const hiddenInput = document.getElementById('jsonInput');
@@ -87,7 +100,7 @@
 
     let currentStyle = `{{ style.style|safe }}`;
 
-    const editor = new JSONEditor(container, {
+    editor = new JSONEditor(container, {
       modes: ['code', 'tree', 'text', 'preview'],
       mode: 'code',
     });
@@ -105,11 +118,10 @@
       acePowered.style.display = 'none';
     }
 
-    // Form submission handling
+    // Normal form submission
     document.querySelector('form').addEventListener('submit', (event) => {
       try {
         const json = editor.get();
-        JSON.stringify(json);
         hiddenInput.value = JSON.stringify(json);
       } catch (e) {
         event.preventDefault();
@@ -117,5 +129,16 @@
       }
     });
   });
+
+  function beforeHtmxPost() {
+    try {
+      const json = editor.get();
+      document.getElementById('jsonInput').value = JSON.stringify(json);
+      document.getElementById('jsonError').style.display = 'none';
+    } catch (e) {
+      document.getElementById('jsonError').style.display = 'block';
+      event.preventDefault(); // Prevent HTMX post
+    }
+  }
 </script>
 {% endblock %}

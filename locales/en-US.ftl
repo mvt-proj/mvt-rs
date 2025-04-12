@@ -57,6 +57,7 @@ new-style = New Style
 create-style = Create Style
 update-style = Update Style
 edit-style = Edit Style
+apply-style = Aplicar
 
 add-layer = PUBLISH LAYER
 new-layer = New Layer

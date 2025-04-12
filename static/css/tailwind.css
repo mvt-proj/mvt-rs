@@ -741,6 +741,16 @@ video {
   gap: 1rem;
 }
 
+.gap-x-5 {
+  -moz-column-gap: 1.25rem;
+       column-gap: 1.25rem;
+}
+
+.gap-x-3 {
+  -moz-column-gap: 0.75rem;
+       column-gap: 0.75rem;
+}
+
 .space-x-2 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-x-reverse: 0;
   margin-right: calc(0.5rem * var(--tw-space-x-reverse));
@@ -1547,18 +1557,6 @@ video {
 .is-active {
   display: flex;
 }
-
-/* .is-info { */
-
-/*   @apply p-2 my-2 bg-blue-100 text-blue-800 border-l-4 border-blue-500 rounded-md; */
-
-/* } */
-
-/* .is-info { */
-
-/*   @apply p-2 my-2 bg-purple-100 text-purple-800 border-l-4 border-purple-500 rounded-md; */
-
-/* } */
 
 .is-info {
   margin-top: 0.5rem;

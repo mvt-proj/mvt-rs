@@ -57,14 +57,13 @@ new-style = Nuevo Estilo
 create-style = Crear Estilo
 update-style = Actualizar Estilo
 edit-style = Editar Estilo
+apply-style = Aplicar
 
 add-layer = PUBLICAR CAPA
 new-layer = Nueva Capa
 create-layer = Crear Capa
 update-layer = Actualizar Capa
 edit-layer = Editar Capa
-
-
 
 # Common
 filter = Filtro
