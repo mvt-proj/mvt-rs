@@ -122,8 +122,8 @@ struct GlyphsTemplate {
 }
 
 #[derive(Template)]
-#[template(path = "map.html")]
-struct MapTemplate<'a> {
+#[template(path = "maplayer.html")]
+struct MapLayerTemplate<'a> {
     geometry: &'a str,
     layer: Layer,
     extent: Extent,
@@ -250,7 +250,7 @@ pub async fn table_catalog(
 }
 
 #[handler]
-pub async fn page_map(
+pub async fn page_map_layer(
     req: &mut Request,
     res: &mut Response,
     depot: &mut Depot,
@@ -298,7 +298,7 @@ pub async fn page_map(
         }
     });
 
-    let template = MapTemplate {
+    let template = MapLayerTemplate {
         geometry: &geometry,
         layer: lyr,
         extent,

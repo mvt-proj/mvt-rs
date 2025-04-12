@@ -54,7 +54,7 @@
             {% if is_guest_or_non_admin %}
               {% if layer.published %}
                 <a
-                  href="/map/{{ layer.category.name }}:{{ layer.name }}"
+                  href="/maplayer/{{ layer.category.name }}:{{ layer.name }}"
                   class="button"
                   title="Map"
                   target="_blank"
@@ -89,7 +89,7 @@
 
                 {% if layer.published %}
                   <a
-                    href="/map/{{ layer.category.name }}:{{ layer.name }}"
+                    href="/maplayer/{{ layer.category.name }}:{{ layer.name }}"
                     class="button"
                     target="_blank"
                     title="Map"

@@ -81,7 +81,7 @@ pub fn app_router(session_secret: String) -> Service {
                 .push(Router::with_path("styletable").get(html::main::table_styles))
                 .push(Router::with_path("sprites").get(html::main::page_sprites))
                 .push(Router::with_path("glyphs").get(html::main::page_glyphs))
-                .push(Router::with_path("map/{layer_name}").get(html::main::page_map))
+                .push(Router::with_path("maplayer/{layer_name}").get(html::main::page_map_layer))
                 .push(Router::with_path("mapview/{style_id}").get(html::main::page_map_view))
                 .push(
                     Router::with_path("admin")
