@@ -61,6 +61,20 @@
       <div class="mb-4">
         <label class="label">{{ base.translate["style"] }}</label>
         <div class="mt-1">
+          <div class="flex gap-2 mb-2">
+            <button type="button" id="btnFullStyle" class="button">
+              <span class="icon__small mr-2">
+                <i class="fas fa-code"></i>
+              </span>
+              {{ base.translate["full-style-button"] }}
+            </button>
+            <button type="button" id="btnPartialStyle" class="button">
+              <span class="icon__small mr-2">
+                <i class="fas fa-code"></i>
+              </span>
+              {{ base.translate["partial-style-button"] }}
+            </button>
+          </div>
           <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
           <input type="hidden" id="jsonInput" name="style">
         </div>
@@ -87,6 +101,78 @@
     const editor = new JSONEditor(container, {
       modes: ['code', 'tree', 'text', 'preview'],
       mode: 'code',
+    });
+
+    const fullStyle = {
+      "version": 8,
+      "name": "New Style",
+      "center": [-64.191, -31.413],
+      "zoom": 10,
+      "bearing": 0,
+      "pitch": 0,
+      "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+      "sprite": "https://demotiles.maplibre.org/sprite",
+      "sources": {
+        "src_vector_tiles": {
+          "type": "vector",
+          "tiles": [
+            "https://myserver.com/tiles/{z}/{x}/{y}.pbf"
+          ],
+          "minzoom": 0,
+          "maxzoom": 14,
+          "attribution": "© data attribution"
+        }
+      },
+      "layers": [
+        {
+          "id": "my-layer-fill",
+          "type": "fill",
+          "source": "src_vector_tiles",
+          "source-layer": "layer_name",
+          "paint": {
+            "fill-color": "#ff6600",
+            "fill-opacity": 0.6
+          }
+        },
+        {
+          "id": "my-layer-fill-labels",
+          "type": "symbol",
+          "source": "src_vector_tiles",
+          "source-layer": "layer_name",
+          "layout": {
+            "text-field": ["get", "field"],
+            "text-font": ["Open Sans Regular"],
+            "text-size": 12
+          },
+          "paint": {
+            "text-color": "#333333",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1
+          }
+        }
+      ]
+    };
+
+    const partialStyle = {
+      "layers": [
+        {
+          "id": "my-layer-fill",
+          "type": "fill",
+          "source-layer": "layer_name",
+          "paint": {
+            "fill-color": "#00ffcc",
+            "fill-opacity": 0.5
+          }
+        }
+      ]
+    };
+
+    document.getElementById('btnFullStyle').addEventListener('click', () => {
+      editor.set(fullStyle);
+    });
+
+    document.getElementById('btnPartialStyle').addEventListener('click', () => {
+      editor.set(partialStyle);
     });
 
     document.querySelector('form').addEventListener('submit', (event) => {

@@ -58,6 +58,8 @@ create-style = Crear Estilo
 update-style = Actualizar Estilo
 edit-style = Editar Estilo
 apply-style = Aplicar
+full-style-button = Insertar ejemplo completo
+partial-style-button = Insertar ejemplo capa
 
 add-layer = PUBLICAR CAPA
 new-layer = Nueva Capa
