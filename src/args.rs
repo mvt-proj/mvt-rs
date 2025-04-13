@@ -100,7 +100,12 @@ pub async fn parse_args() -> AppResult<AppConfig> {
             .cloned()
             .or_else(|| env::var(key).ok())
             .or_else(|| default.map(String::from))
-            .unwrap_or_else(|| panic!("Missing required config value for '{}'. Provide via CLI or env var.", key))
+            .unwrap_or_else(|| {
+                panic!(
+                    "Missing required config value for '{}'. Provide via CLI or env var.",
+                    key
+                )
+            })
     };
 
     let config_dir = get_value("CONFIG", "configdir", Some("config"));
