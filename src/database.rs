@@ -128,10 +128,10 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
     let sql = format!(
         r#"
         SELECT
-          ST_XMin(ST_Extent(ST_Transform({geometry}, 4326))) AS xmin,
-          ST_YMin(ST_Extent(ST_Transform({geometry}, 4326))) AS ymin,
-          ST_XMax(ST_Extent(ST_Transform({geometry}, 4326))) AS xmax,
-          ST_YMax(ST_Extent(ST_Transform({geometry}, 4326))) AS ymax
+          COALESCE(ST_XMin(ST_Extent(ST_Transform({geometry}, 4326))), -180) AS xmin,
+          COALESCE(ST_YMin(ST_Extent(ST_Transform({geometry}, 4326))), -90) AS ymin,
+          COALESCE(ST_XMax(ST_Extent(ST_Transform({geometry}, 4326))), 180) AS xmax,
+          COALESCE(ST_YMax(ST_Extent(ST_Transform({geometry}, 4326))), 90) AS ymax
         FROM {};
         "#,
         full_table
