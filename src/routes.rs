@@ -285,15 +285,14 @@ pub fn app_router(session_secret: String) -> Service {
                         .get(tiles::get_category_layers_tile),
                 )
                 .push(Router::with_path("styles/{style_name}").get(styles::index))
-                .push(Router::with_path("map_assets/{**path}").get(
-                        StaticDir::new([
-                            "map_assets",
-                        ])
-                        .include_dot_files(false)
-                        .defaults("index.html")
-                        .auto_list(true),
-                        )
-                    )
+                .push(
+                    Router::with_path("map_assets/{**path}").get(
+                        StaticDir::new(["map_assets"])
+                            .include_dot_files(false)
+                            .defaults("index.html")
+                            .auto_list(true),
+                    ),
+                ),
         )
         .push(Router::with_path("static/{**path}").get(serve_static));
 
