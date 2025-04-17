@@ -7,7 +7,6 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rust-embed = "8.6"
 uuid = { version = "1.14.0", features = ["v4", "fast-rng"] }
 dotenvy = "0.15.0"
 clap = "4.5"

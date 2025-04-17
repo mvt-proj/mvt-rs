@@ -1,11 +1,9 @@
 use include_dir::{Dir, include_dir};
-use rust_embed::RustEmbed;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::catcher::Catcher;
 use salvo::cors::{self as cors, Cors};
 use salvo::logging::Logger;
 use salvo::prelude::*;
-use salvo::serve_static::static_embed;
 use salvo::session::CookieStore;
 use std::time::Duration;
 
@@ -16,10 +14,6 @@ use crate::{
 };
 
 const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
-
-#[derive(RustEmbed)]
-#[folder = "map_assets"]
-struct MapAssets;
 
 #[handler]
 async fn serve_static(req: &mut Request, res: &mut Response) {
@@ -291,10 +285,15 @@ pub fn app_router(session_secret: String) -> Service {
                         .get(tiles::get_category_layers_tile),
                 )
                 .push(Router::with_path("styles/{style_name}").get(styles::index))
-                .push(
-                    Router::with_path("{**path}")
-                        .get(static_embed::<MapAssets>().fallback("index.html")),
-                ),
+                .push(Router::with_path("map_assets/{**path}").get(
+                        StaticDir::new([
+                            "map_assets",
+                        ])
+                        .include_dot_files(false)
+                        .defaults("index.html")
+                        .auto_list(true),
+                        )
+                    )
         )
         .push(Router::with_path("static/{**path}").get(serve_static));
 

@@ -1787,7 +1787,6 @@ dependencies = [
  "jsonwebtoken",
  "redis",
  "regex",
- "rust-embed",
  "salvo",
  "serde",
  "serde_json",
