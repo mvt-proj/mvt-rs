@@ -28,6 +28,7 @@
           <div class="flex justify-end space-x-2">
             <button
               class="button"
+              title="{{ base.translate["copy"] }}"
               onclick="copyToClipboard('url-{{ sprite }}')"
             >
               <span class="icon">
@@ -38,7 +39,7 @@
               href="/services/map_assets/sprites/{{ sprite }}/sprite.json"
               class="button"
               target="_blank"
-              title="json"
+              title="{{ base.translate["open-json"] }}"
             >
               <span class="icon">
                 <i class="fas fa-file-code"></i>
@@ -48,7 +49,7 @@
               href="/services/map_assets/sprites/{{ sprite }}/sprite.png"
               class="button"
               target="_blank"
-              title="Image png"
+              title="{{ base.translate["open-png"] }}"
             >
               <span class="icon">
                 <i class="fas fa-file-image"></i>

@@ -43,7 +43,7 @@
         <td class="text-right">
           <div class="flex justify-end space-x-2">
             <button
-              title="Copy"
+              title="{{ translate["copy"] }}"
               class="button"
               onclick="copyToClipboard('url-{{ layer.category.name }}:{{ layer.name }}')"
             >
@@ -56,7 +56,7 @@
                 <a
                   href="/maplayer/{{ layer.category.name }}:{{ layer.name }}"
                   class="button"
-                  title="Map"
+                  title="{{ translate["map"] }}"
                   target="_blank"
                 >
                   <span class="icon">
@@ -79,7 +79,7 @@
               {% if current_user.is_admin() %}
                 <button
                   class="button"
-                  title="Info"
+                  title="{{ translate["info"] }}"
                   onclick='openModal("{{ layer.info_html() }}")'
                 >
                   <span class="icon">
@@ -92,7 +92,7 @@
                     href="/maplayer/{{ layer.category.name }}:{{ layer.name }}"
                     class="button"
                     target="_blank"
-                    title="Map"
+                    title="{{ translate["map"] }}"
                   >
                     <span class="icon">
                       <i class="fas fa-map"></i>
@@ -112,7 +112,9 @@
                   </a>
                 {% endif %}
 
-                <a href="/admin/catalog/layers/edit/{{ layer.id }}" class="button" title="Edit">
+                <a href="/admin/catalog/layers/edit/{{ layer.id }}" class="button"
+                  title="{{ translate["edit"] }}"
+                >
                   <span class="icon">
                     <i class="fas fa-pen"></i>
                   </span>
@@ -122,7 +124,7 @@
                   <a
                     href="/admin/catalog/layers/swichpublished/{{ layer.id }}"
                     class="button"
-                    title="Switch Published"
+                    title="{{ translate["switch-published"] }}"
                   >
                     <span class="icon">
                       <i class="far fa-check-square"></i>
@@ -132,7 +134,7 @@
                   <a
                     href="/admin/catalog/layers/swichpublished/{{ layer.id }}"
                     class="button"
-                    title="Switch Published"
+                    title="{{ translate["switch-published"] }}"
                   >
                     <span class="icon">
                       <i class="far fa-square"></i>
@@ -142,7 +144,7 @@
 
                 <a
                   href="/admin/catalog/layers/delete_cache/{{ layer.id }}"
-                  title="Delete Cache"
+                  title="{{ translate["delete-cache"] }}"
                   class="button"
                   onclick="return confirm('Are you sure you want to erase the cache for this layer?');"
                 >
@@ -153,7 +155,7 @@
                 <a
                   href="/admin/catalog/layers/delete/{{ layer.id }}"
                   class="button danger"
-                  title="Delete"
+                  title="{{ translate["delete"] }}"
                   onclick="return confirm('Are you sure you want to delete this layer publication?');"
                 >
                   <span class="icon">

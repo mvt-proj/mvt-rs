@@ -72,6 +72,16 @@ filter = Filtro
 back = Volver
 help = Ayuda
 configuration = Configuración
+copy = Copiar
+map = Mapa
+info = Información
+edit = Editar
+switch-published = Cambiar estado de publicación
+delete-cache = Eliminar Cache
+delete = Eliminar
+open-json = Abrir JSON
+open-png = Abrir PNG
+
 
 # Maps
 zoom-level = Nivel de Zoom

@@ -72,6 +72,15 @@ filter = Filter
 back = Back
 help = Help
 configuration = Configuration
+copy = Copy
+map = Map
+info = Info
+edit = Edit
+switch-published = Switch Published
+delete-cache = Delete Cache
+delete = Delete
+open-json = Open JSON
+open-png = Open PNG
 
 # Maps
 zoom-level = Zoom level
