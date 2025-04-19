@@ -1,11 +1,12 @@
-# mvt server Tutorial
+# MVT Server Tutorial
 
-mvt-server allows you to publish geographic layers in vector tile format on an intranet or the internet for consumption by desktop clients like QGIS, or web clients such as MapLibre, OpenLayers, or Leaflet.
+MVT Server allows you to publish geographic layers in vector tile format on an intranet or the internet for consumption by desktop clients like QGIS, or web clients such as MapLibre, OpenLayers, or Leaflet.
 
-mvt-server not only allows you to publish geographic layers in vector tile format, but also includes an administration panel that simplifies the management of publishing your layers and configuring styles.
+MVT Server not only allows you to publish geographic layers in vector tile format, but also includes an administration panel that simplifies the management of publishing your layers and configuring styles.
+
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/2436d908-e8e0-417e-97bb-957e1e0fcfaf" width="40%" />
+  <img src="https://github.com/user-attachments/assets/c7a90392-b180-419e-bc0e-20d3b56ec000" width="40%" />
 </div>
 
 ## Table of Contents
@@ -24,14 +25,14 @@ mvt-server not only allows you to publish geographic layers in vector tile forma
    - [QGIS](#qgis)
    - [Web Clients](#web-clients)
 9. [Serving Styles](#serving-styles)
-10. [Serving Sprites and Glyphs in mvt server](#serving-glyphs-and-sprites-in-mvt-server)
+10. [Serving Sprites and Glyphs in MVT Server](#serving-glyphs-and-sprites-in-mvt-server)
    - [Sprites](#serving-sprites)
    - [Glyphs](#serving-glyphs)
 ---
 
 ## Requirements
 - Operating System (Freebsd, Linux, Windows)
-- Access to a PostgreSQL server with PostGIS version 3.0.0 or higher installed, either local or remote. The **mvt server** will be able to publish geographic layers as vector tiles.
+- Access to a PostgreSQL server with PostGIS version 3.0.0 or higher installed, either local or remote. The **MVT Server** will be able to publish geographic layers as vector tiles.
 - Port `5800` available (or configurable)
 
 ## Installation / Compilation
@@ -180,21 +181,21 @@ When the server starts for the first time, the necessary components for its conf
 - Email: **admin@mail.com**
 - Password: **admin**
 
-The initial access credentials for mvt-server are: email **admin@mail.com** and password **admin**. It is of utmost importance that, upon your first access to the platform, you change this default password to a new, strong password of your choice. This will help protect your server and data from unauthorized access
+The initial access credentials for MVT Server are: email **admin@mail.com** and password **admin**. It is of utmost importance that, upon your first access to the platform, you change this default password to a new, strong password of your choice. This will help protect your server and data from unauthorized access
 
 
 Access `http://localhost:5800`
 
-To access the mvt-server administration interface, simply enter the address http://localhost:5800 (or the corresponding domain if it is hosted on a remote server) in your web browser. Once there, you can manage your geographic layers, styles, and other server configurations.
+To access the MVT Server administration interface, simply enter the address http://localhost:5800 (or the corresponding domain if it is hosted on a remote server) in your web browser. Once there, you can manage your geographic layers, styles, and other server configurations.
 
 ![imagen](https://github.com/user-attachments/assets/82a1d638-83c9-4a3d-b92a-1c1c5911d9f8)
 
 
 ![imagen](https://github.com/user-attachments/assets/2ce993cd-5bc3-42c4-be23-311bca4bbd7c)
 
-### mvt-server Administration Panel
+### MVT Server Administration Panel
 
-The mvt-server administration panel is an essential tool for managing all aspects of publishing your geographic layers as vector tiles. Through an intuitive web interface, you'll have control over:
+The MVT Server administration panel is an essential tool for managing all aspects of publishing your geographic layers as vector tiles. Through an intuitive web interface, you'll have control over:
 
 #### 1. Groups (User Roles)
 
@@ -222,11 +223,11 @@ The mvt-server administration panel is an essential tool for managing all aspect
 
 - Creation and Management: Define and manage rendering styles for your layers. Styles determine how the layers will appear on the map (colors, symbols, labels, etc.).
 - Style Publishing: Publish the created styles so they can be used by clients like QGIS.
-- Style Language: mvt-server likely supports a style language like the Maplibre Style Specification, which allows you to define complex and custom styles.
+- Style Language: MVT Server likely supports a style language like the Maplibre Style Specification, which allows you to define complex and custom styles.
 
 #### In summary
 
-The mvt-server administration panel gives you complete control over the publication of your geographic layers as vector tiles. From managing users and permissions to the detailed configuration of layers and styles, this tool allows you to create and maintain interactive and personalized maps efficiently.
+The MVT Server administration panel gives you complete control over the publication of your geographic layers as vector tiles. From managing users and permissions to the detailed configuration of layers and styles, this tool allows you to create and maintain interactive and personalized maps efficiently.
 
 ![imagen](https://github.com/user-attachments/assets/accf44c6-644f-48fd-933a-9b2f65b2dd59)
 
@@ -404,18 +405,18 @@ These examples provide a starting point for integrating vector tiles into your w
 ## Serving Styles
 
 ### Introduction
-The mvt server can also serve styles that define how vector tiles are rendered. These styles can be consumed in different ways:
+The MVT Server can also serve styles that define how vector tiles are rendered. These styles can be consumed in different ways:
 
 1. **For rendering in QGIS:** Styles are applied at the layer level, specifying how a layer should be rendered with colors, labels, symbols, and color scales.
 
 2. **For use in MapLibre:** Styles define a complete "project," including sources, layers, metadata, layer styles, sprites, glyphs, zoom levels, and map center. More details can be found in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
 
 
-## Serving Glyphs and Sprites in mvt server
+## Serving Glyphs and Sprites in MVT Server
 
 ### Introduction
 
-In mvt server, sprites and glyphs are essential for rendering vector tiles with custom icons and fonts. This section explains how to structure your assets and configure your MapLibre style to use them correctly.
+In MVT Server, sprites and glyphs are essential for rendering vector tiles with custom icons and fonts. This section explains how to structure your assets and configure your MapLibre style to use them correctly.
 
 ### Directory Structure
 
@@ -449,7 +450,7 @@ map_assets
 
 ### Serving Sprites
 
-Sprites are served dynamically by mvt server. Each sprite set is accessible via a URL like this:
+Sprites are served dynamically by MVT Server. Each sprite set is accessible via a URL like this:
 
 `http://127.0.0.1:5887/services/sprites/{sprite_name}/sprite`
 
@@ -475,9 +476,9 @@ To create your own sprite sets, you can use [Spreet](https://github.com/flother/
 
 ### Serving Glyphs
 
-#### Creating Glyphs for mvt server
+#### Creating Glyphs for MVT Server
 
-This tutorial will guide you through the process of generating glyphs for the **mvt server** using **fontnik**. Glyphs allow the map server to render text labels properly.
+This tutorial will guide you through the process of generating glyphs for the **MVT Server** using **fontnik**. Glyphs allow the map server to render text labels properly.
 
 ##### 1. Setting Up the Project
 
@@ -529,15 +530,15 @@ glyphs/
     └── 512-767.pbf
 ```
 
-##### 4. Deploying Glyphs to mvt server
+##### 4. Deploying Glyphs to MVT Server
 
-Move or copy the `EmblemaOne-Regular` directory into your **mvt server's** glyphs directory:
+Move or copy the `EmblemaOne-Regular` directory into your **MVT Server's** glyphs directory:
 
 ```sh
 $ mv glyphs/EmblemaOne-Regular /path/to/map_assets/glyphs/
 ```
 
-mvt server will now be able to serve the glyphs.
+MVT Server will now be able to serve the glyphs.
 
 ##### 5. Configuring MapLibre to Use the Glyphs
 
@@ -556,16 +557,16 @@ In the **layout** section, specify the font name where needed:
 ```
 
 ###### Important Note
-The current version of the mvt server supports only one font in the array. This is because the server ensures the font's existence beforehand through the administration panel.
+The current version of the MVT Server supports only one font in the array. This is because the server ensures the font's existence beforehand through the administration panel.
 
 The glyphs available on the server can be viewed from the Glyphs menu.
 
 ---
 
-You have now successfully created and configured glyphs for your mvt server! 🎉
+You have now successfully created and configured glyphs for your MVT Server! 🎉
 
 
 
 ### Conclusion
 
-By properly structuring your assets and configuring your MapLibre style, you can serve custom sprites and, soon, glyphs with your mvt server. This setup allows for scalable and customizable vector tile rendering.
+By properly structuring your assets and configuring your MapLibre style, you can serve custom sprites and, soon, glyphs with your MVT Server. This setup allows for scalable and customizable vector tile rendering.
