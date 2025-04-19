@@ -14,10 +14,10 @@ categories = Categorías
 metadata = Metadatos
 
 # Pages
-welcome = ¡Bienvenido a mvt server!
+welcome = ¡Bienvenido a MVT Server!
 welcome-admin = ¡Modo Administrador!
 index-subtitle = Un servidor simple, rápido y potente para la distribución de teselas vectoriales.
-mvt-you-can = Con mvt server podrá
+mvt-you-can = Con MVT Server podrá
 feature-1 = Servir capas vectoriales de alto rendimiento.
 feature-2 = Gestionar estilos de mapas con un servidor de estilos integrado.
 feature-3 = Gestionar usuarios y grupos con control de acceso flexible.

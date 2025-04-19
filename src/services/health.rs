@@ -15,7 +15,7 @@ pub struct Health {
 #[handler]
 pub async fn get_health(res: &mut Response) {
     let data = Health {
-        title: "mvt server".to_string(),
+        title: "MVT Server".to_string(),
         message: "Simple and high-speed vector tiles server developed in Rust".to_string(),
         timestamp: OffsetDateTime::now_utc(),
         version: VERSION.to_string(),

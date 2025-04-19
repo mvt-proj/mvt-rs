@@ -14,10 +14,10 @@ categories = Categories
 metadata = Metadata
 
 # Pages
-welcome = Welcome to mvt server!
+welcome = Welcome to MVT Server!
 welcome-admin = Admin Mode!
 index-subtitle = A simple, fast, and powerful server for vector tiles distribution.
-mvt-you-can = With mvt server, you can
+mvt-you-can = With MVT Server, you can
 feature-1 = Serve high-performance vector layers.
 feature-2 = Manage map styles with an integrated style server.
 feature-3 = Handle users and groups with flexible access control.
