@@ -1,12 +1,12 @@
-# mvt server: A Simple Vector Tile Server
+# MVT Server: A Simple Vector Tile Server
 
 This is a simple and high-speed vector tile server developed in Rust, using the Salvo web framework. It provides an efficient way to serve vector geospatial data over the web.
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/a7b743de-5775-4c47-b5c5-adb1378d03ef" width="40%" />
+  <img src="https://github.com/user-attachments/assets/f7726fd2-bd84-463b-8389-44d6a43fcef5" width="40%" />
 </div>
 
-**mvt server** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the layers' configuration. It will also enable the publication of styles to be used in tools like QGIS. These styles define how layers are displayed, including visualization scales, colors, labels, and other visual elements. This functionality ensures seamless integration with GIS tools, guaranteeing that vector tiles are rendered consistently and as intended across different platforms.
+**MVT Server** will allow you to publish any table or view with a geometry field as vector tiles through the definition in the layers' configuration. It will also enable the publication of styles to be used in tools like QGIS. These styles define how layers are displayed, including visualization scales, colors, labels, and other visual elements. This functionality ensures seamless integration with GIS tools, guaranteeing that vector tiles are rendered consistently and as intended across different platforms.
 
 Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local or remote. It relies on the use of the PostGIS function ST_AsMVT. More information can be found at https://postgis.net/docs/en/ST_AsMVT.html.
 
