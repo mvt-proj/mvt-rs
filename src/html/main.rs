@@ -441,7 +441,8 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
         }
     }
 
-    let sprites: Vec<String> = unique_names.into_iter().collect();
+    let mut sprites: Vec<String> = unique_names.into_iter().collect();
+    sprites.sort();
     let template = SpritesTemplate { base, sprites };
 
     res.render(Text::Html(template.render()?));
@@ -480,7 +481,8 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
             }
         }
     }
-    let glyphs: Vec<String> = unique_names.into_iter().collect();
+    let mut glyphs: Vec<String> = unique_names.into_iter().collect();
+    glyphs.sort();
     let template = GlyphsTemplate { base, glyphs };
     res.render(Text::Html(template.render()?));
     Ok(())
