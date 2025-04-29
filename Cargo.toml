@@ -12,7 +12,7 @@ dotenvy = "0.15.0"
 clap = "4.5"
 bytes = "1.10"
 argon2 = { version = "0.5", features = ["std"] }
-askama = "0.13"
+askama = "0.14"
 thiserror = "2"
 base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
@@ -25,9 +25,9 @@ serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.8", features = [ "runtime-tokio-rustls" , "postgres", "sqlite", "migrate" ] }
 
-redis = { version = "0.29", features = ["tokio-comp"] }
+redis = { version = "0.30", features = ["tokio-comp"] }
 bb8 = "0.9"
-bb8-redis = "0.21"
+bb8-redis = "0.22"
 include_dir = {version = "0.7.4", features = ["glob"] }
 regex = "1.11.1"
 html-escape = "0.2"
