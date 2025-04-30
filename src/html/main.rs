@@ -8,7 +8,7 @@ use crate::{
     auth::User,
     database::{Extent, query_extent},
     error::{AppError, AppResult},
-    get_auth, get_catalog,
+    get_auth, get_catalog, get_map_assets,
     models::{
         catalog::{Layer, StateLayer},
         styles::Style,
@@ -416,7 +416,8 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
         .cloned()
         .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
-    let dir_path = "map_assets/sprites";
+    let dir = format!("{}/sprites", get_map_assets());
+    let dir_path = dir.as_str();
 
     let entries = fs::read_dir(dir_path).await;
 
@@ -457,7 +458,8 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
         .cloned()
         .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
-    let dir_path = "map_assets/glyphs";
+    let dir = format!("{}/glyphs", get_map_assets());
+    let dir_path = dir.as_str();
 
     let entries = fs::read_dir(dir_path).await;
 

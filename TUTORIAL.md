@@ -68,14 +68,15 @@ Usage: mvt-server [OPTIONS]
 Options:
   -c, --config <CONFIGDIR>             Directory where config file is placed [default: config]
   -b, --cache <CACHEDIR>               Directory where cache files are placed [default: cache]
+  -m, --mapassets <MAPASSETS>          Directory where map_assets files are placed [default: map_assets]
   -i, --host <HOST>                    Bind address [default: 0.0.0.0]
   -p, --port <PORT>                    Bind port [default: 5800]
   -d, --dbconn <DBCONN>                Database connection
-  -m, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
+  -n, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
   -x, --dbpoolmax <DBPOOLMAX>          Maximum database pool size [default: 5]
   -r, --redisconn <REDISCONN>          Redis connection
   -j, --jwtsecret <JWTSECRET>          JWT secret key
-  -s, --sessionsecret <SESSIONSECRET>  Session secret key  
+  -s, --sessionsecret <SESSIONSECRET>  Session secret key
   -h, --help                           Print help
 ```
 
@@ -85,14 +86,15 @@ Options:
 ./mvt-server \
   --config config_folder \
   --cache cache_folder \
+  --mapassets mapassets_folder \
   --host 127.0.0.1 \
   --port 8000 \
-  --dbconn "postgres://my_user:my_password@localhost:5432/mydb" \
+  --dbconn "postgres://user:password@localhost:5432/mydb" \
   --dbpoolmin 5 \
   --dbpoolmax 20 \
   --redisconn "redis://127.0.0.1:6379" \
   --jwtsecret "supersecretjwt" \
-  --sessionsecret "supersecretsession"  
+  --sessionsecret "supersecretsession"
 ```
 
 ### Environment Variables (.env)
@@ -119,8 +121,9 @@ JWTSECRET=supersecretjwt # Used to create and validate JWT tokens
 SESSIONSECRET=supersecretsession # Secret key for session management
 
 # Directories
-CONFIG=config  # Directory path for configuration files
-CACHE=cache    # Directory path for cache storage
+CONFIG=/path_to/config_dir             # Directory path for configuration files
+CACHE=/path_to/cache_dir               # Directory path for cache storage
+MAPASSETS=/path_to/map_assets_dir      # Directory path for cache storage
 ```
 
 Remember the `.env` file has to kept secure and not shared in public repositories.

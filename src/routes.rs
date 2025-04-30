@@ -8,7 +8,7 @@ use salvo::session::CookieStore;
 use std::time::Duration;
 
 use crate::{
-    api, auth, html,
+    api, args, auth, html,
     i18n::i18n_middleware,
     services::{health, styles, tiles},
 };
@@ -26,7 +26,7 @@ async fn serve_static(req: &mut Request, res: &mut Response) {
     }
 }
 
-pub fn app_router(session_secret: String) -> Service {
+pub fn app_router(app_config: &args::AppConfig) -> Service {
     let cache_30s = Cache::new(
         MokaStore::builder()
             .time_to_live(Duration::from_secs(30))
@@ -40,7 +40,7 @@ pub fn app_router(session_secret: String) -> Service {
         .allow_headers(cors::Any)
         .into_handler();
 
-    let session_handler = SessionHandler::builder(CookieStore::new(), session_secret.as_bytes())
+    let session_handler = SessionHandler::builder(CookieStore::new(), &app_config.session_secret.as_bytes())
         .session_ttl(Some(Duration::from_secs(60 * 20)))
         .build()
         .unwrap();
@@ -287,7 +287,7 @@ pub fn app_router(session_secret: String) -> Service {
                 .push(Router::with_path("styles/{style_name}").get(styles::index))
                 .push(
                     Router::with_path("map_assets/{**path}").get(
-                        StaticDir::new(["map_assets"])
+                        StaticDir::new([&app_config.map_assets_dir])
                             .include_dot_files(false)
                             .defaults("index.html")
                             .auto_list(true),

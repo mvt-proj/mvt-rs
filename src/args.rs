@@ -6,6 +6,7 @@ use std::env;
 pub struct AppConfig {
     pub config_dir: String,
     pub cache_dir: String,
+    pub map_assets_dir: String,
     pub host: String,
     pub port: String,
     pub db_conn: String,
@@ -25,7 +26,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('c')
                 .long("config")
                 .value_name("CONFIGDIR")
-                .default_value("config")
                 .help("Directory where config file is placed"),
         )
         .arg(
@@ -33,8 +33,14 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .short('b')
                 .long("cache")
                 .value_name("CACHEDIR")
-                .default_value("cache")
                 .help("Directory where cache files are placed"),
+        )
+        .arg(
+            Arg::new("mapassetsdir")
+                .short('m')
+                .long("mapassets")
+                .value_name("MAPASSETS")
+                .help("Directory where map_assets files are placed"),
         )
         .arg(
             Arg::new("host")
@@ -80,7 +86,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         )
         .arg(
             Arg::new("dbpoolmin")
-                .short('m')
+                .short('n')
                 .long("dbpoolmin")
                 .value_name("DBPOOLMIN")
                 .help("Minimum database pool size"),
@@ -93,16 +99,30 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .help("Maximum database pool size"),
         )
         .get_matches();
+    //
+    // let get_value = |key: &str, arg_name: &str, default: Option<&str>| -> String {
+    //     matches
+    //         .get_one::<String>(arg_name)
+    //         .cloned()
+    //         .or_else(|| env::var(key).ok())
+    //         .or_else(|| default.map(String::from))
+    //         .unwrap_or_else(|| {
+    //             panic!(
+    //                 "Missing required config value for '{}'. Provide via CLI or env var.",
+    //                 key
+    //             )
+    //         })
+    // };
 
     let get_value = |key: &str, arg_name: &str, default: Option<&str>| -> String {
         matches
             .get_one::<String>(arg_name)
             .cloned()
             .or_else(|| env::var(key).ok())
-            .or_else(|| default.map(String::from))
+            .or(default.map(String::from))
             .unwrap_or_else(|| {
                 panic!(
-                    "Missing required config value for '{}'. Provide via CLI or env var.",
+                    "Missing required config value for '{}'. Provide via CLI, env var, or default.",
                     key
                 )
             })
@@ -110,6 +130,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
 
     let config_dir = get_value("CONFIG", "configdir", Some("config"));
     let cache_dir = get_value("CACHE", "cachedir", Some("cache"));
+    let map_assets_dir = get_value("MAPASSETS", "mapassetsdir", Some("map_assets"));
     let host = get_value("IPHOST", "host", Some("0.0.0.0"));
     let port = get_value("PORT", "port", Some("5800"));
     let db_conn = get_value("DBCONN", "dbconn", None);
@@ -127,6 +148,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
     Ok(AppConfig {
         config_dir,
         cache_dir,
+        map_assets_dir,
         host,
         port,
         db_conn,

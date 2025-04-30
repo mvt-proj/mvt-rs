@@ -40,6 +40,12 @@ pub fn get_cf_pool() -> &'static SqlitePool {
     SQLITE_CONF.get().unwrap()
 }
 
+static MAP_ASSETS_DIR: OnceLock<String> = OnceLock::new();
+#[inline]
+pub fn get_map_assets() -> &'static String {
+    MAP_ASSETS_DIR.get().unwrap()
+}
+
 static JWT_SECRET: OnceLock<String> = OnceLock::new();
 #[inline]
 pub fn get_jwt_secret() -> &'static String {
@@ -106,7 +112,7 @@ async fn main() -> AppResult<()> {
 
     let categories = get_cf_categories(Some(&cf_pool)).await?;
     let cache_wrapper = cachewrapper::initialize_cache(
-        Some(app_config.redis_conn),
+        Some(app_config.redis_conn.clone()),
         app_config.cache_dir.clone().into(),
         catalog.clone(),
     )
@@ -114,7 +120,8 @@ async fn main() -> AppResult<()> {
 
     POSTGRES_DB.set(db_pool).unwrap();
     SQLITE_CONF.set(cf_pool).unwrap();
-    JWT_SECRET.set(app_config.jwt_secret).unwrap();
+    MAP_ASSETS_DIR.set(app_config.map_assets_dir.clone()).unwrap();
+    JWT_SECRET.set(app_config.jwt_secret.clone()).unwrap();
     CACHE_WRAPPER.set(cache_wrapper).unwrap();
     CATALOG.set(RwLock::new(catalog)).unwrap();
     CATEGORIES.set(RwLock::new(categories)).unwrap();
@@ -124,7 +131,7 @@ async fn main() -> AppResult<()> {
         .bind()
         .await;
     Server::new(acceptor)
-        .serve(routes::app_router(app_config.session_secret))
+        .serve(routes::app_router(&app_config))
         .await;
 
     Ok(())
