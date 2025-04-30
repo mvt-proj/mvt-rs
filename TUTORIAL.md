@@ -123,7 +123,7 @@ SESSIONSECRET=supersecretsession # Secret key for session management
 # Directories
 CONFIG=/path_to/config_dir             # Directory path for configuration files
 CACHE=/path_to/cache_dir               # Directory path for cache storage
-MAPASSETS=/path_to/map_assets_dir      # Directory path for cache storage
+MAPASSETS=/path_to/map_assets_dir      # Directory path for map_assets storage
 ```
 
 Remember the `.env` file has to kept secure and not shared in public repositories.
