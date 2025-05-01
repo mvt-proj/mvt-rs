@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Build Windows Release
         uses: ./.github/workflows/deployment/release/windows
@@ -19,7 +19,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Build MacOs Release
         uses: ./.github/workflows/deployment/release/macos
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Build Linux Release
         uses: ./.github/workflows/deployment/release/linux
@@ -37,7 +37,7 @@ jobs:
   #   runs-on: macos-12
   #   steps:
   #     - name: Checkout
-  #       uses: actions/checkout@v3
+  #       uses: actions/checkout@v4.2.2
   #
   #     - name: Build FreeBSD Release
   #       uses: ./.github/workflows/deployment/release/freebsd
@@ -53,10 +53,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Download a single artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.3.0
       with:
         name: release-builds
         path: builds
-    - uses: ncipollo/release-action@v1
+    - uses: ncipollo/release-action@v1.16.0
       with:
         artifacts: "builds/*.zip"

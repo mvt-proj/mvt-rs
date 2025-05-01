@@ -5,7 +5,7 @@ description: |
 runs:
     using: "composite"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.2.2
     - name: Build in FreeBSD
       uses: vmactions/freebsd-vm@v1.2.0
       with:
@@ -24,7 +24,7 @@ runs:
           cargo clean
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.6.2
       with:
         name: release-builds
         path: builds/mvt-server-freebsd-x86_64.zip

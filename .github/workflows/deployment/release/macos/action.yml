@@ -6,10 +6,10 @@ runs:
     using: "composite"
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Build binary
-        uses: houseabsolute/actions-rust-cross@v0
+        uses: houseabsolute/actions-rust-cross@v1.0.4
         with:
           command: both
           target: x86_64-apple-darwin
@@ -24,7 +24,7 @@ runs:
           mv mvt-server-darwin-x86_64.zip builds/
 
       - name: "Upload Artifact"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: release-builds
           path: builds/mvt-server-darwin-x86_64.zip
