@@ -52,11 +52,30 @@ jobs:
       # - build-freebsd
     runs-on: ubuntu-24.04
     steps:
-    - name: Download a single artifact
+    - name: Download Windows artifact
       uses: actions/download-artifact@v4.3.0
       with:
-        name: release-builds
+        name: release-build-windows
         path: builds
+
+    - name: Download macOS artifact
+      uses: actions/download-artifact@v4.3.0
+      with:
+        name: release-build-macos
+        path: builds
+
+    - name: Download Linux artifact
+      uses: actions/download-artifact@v4.3.0
+      with:
+        name: release-build-linux
+        path: builds
+
+    # - name: Download FreeBSD artifacts
+    #   uses: actions/download-artifact@v4.3.0
+    #   with:
+    #     name: release-build-freebsd
+    #     path: builds
+
     - uses: ncipollo/release-action@v1.16.0
       with:
         artifacts: "builds/*.zip"
