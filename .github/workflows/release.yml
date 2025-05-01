@@ -55,25 +55,25 @@ jobs:
     - name: Download Windows artifact
       uses: actions/download-artifact@v4.3.0
       with:
-        name: release-build-windows
+        name: release-builds-windows
         path: builds
 
     - name: Download macOS artifact
       uses: actions/download-artifact@v4.3.0
       with:
-        name: release-build-macos
+        name: release-builds-macos
         path: builds
 
     - name: Download Linux artifact
       uses: actions/download-artifact@v4.3.0
       with:
-        name: release-build-linux
+        name: release-builds-linux
         path: builds
 
     # - name: Download FreeBSD artifacts
     #   uses: actions/download-artifact@v4.3.0
     #   with:
-    #     name: release-build-freebsd
+    #     name: release-builds-freebsd
     #     path: builds
 
     - uses: ncipollo/release-action@v1.16.0
