@@ -1,0 +1,31 @@
+name: Release - macOS-x86_64
+description: |
+  Build and release the macOS x86_64 binary.
+
+runs:
+    using: "composite"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: both
+          target: x86_64-apple-darwin
+          args: "--release"
+          strip: true
+
+      - name: Create ZIP (macOS)
+        shell: bash
+        run: |
+          zip -j mvt-server-darwin-x86_64.zip target/x86_64-apple-darwin/release/mvt-server
+          mkdir -p builds
+          mv mvt-server-darwin-x86_64.zip builds/
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-builds
+          path: builds/mvt-server-darwin-x86_64.zip
+          retention-days: 1

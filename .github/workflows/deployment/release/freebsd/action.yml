@@ -1,0 +1,31 @@
+name: Release - FreeBSD-x86_64
+description: |
+  Build and release the FreeBSD x86_64 binary.
+
+runs:
+    using: "composite"
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build in FreeBSD
+      uses: vmactions/freebsd-vm@v1.2.0
+      with:
+        release: 14.2
+        usesh: true
+        prepare: |
+          pkg install -y rust zip zlib openssl
+
+        run: |
+          cargo build --release
+          mkdir -p builds
+          zip -j mvt-server-freebsd-x86_64.zip target/release/mvt-server
+          zip -r mvt-server-freebsd-x86_64.zip static
+          mkdir -p builds
+          mv mvt-server-freebsd-x86_64.zip builds/
+          cargo clean
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-builds
+        path: builds/mvt-server-freebsd-x86_64.zip
+        retention-days: 1
