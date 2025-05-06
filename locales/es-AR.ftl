@@ -74,6 +74,7 @@ help = Ayuda
 configuration = Configuración
 copy = Copiar
 map = Mapa
+legends = Leyendas
 info = Información
 edit = Editar
 switch-published = Cambiar estado de publicación

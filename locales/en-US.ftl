@@ -74,6 +74,7 @@ help = Help
 configuration = Configuration
 copy = Copy
 map = Map
+legends = Legends
 info = Info
 edit = Edit
 switch-published = Switch Published
