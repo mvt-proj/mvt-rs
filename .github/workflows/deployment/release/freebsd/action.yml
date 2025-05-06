@@ -12,7 +12,7 @@ runs:
         release: 14.2
         usesh: true
         prepare: |
-          pkg install -y rust zip zlib openssl
+          pkg install -y rust zip openssl
 
         run: |
           cargo build --release
