@@ -120,7 +120,9 @@ async fn main() -> AppResult<()> {
 
     POSTGRES_DB.set(db_pool).unwrap();
     SQLITE_CONF.set(cf_pool).unwrap();
-    MAP_ASSETS_DIR.set(app_config.map_assets_dir.clone()).unwrap();
+    MAP_ASSETS_DIR
+        .set(app_config.map_assets_dir.clone())
+        .unwrap();
     JWT_SECRET.set(app_config.jwt_secret.clone()).unwrap();
     CACHE_WRAPPER.set(cache_wrapper).unwrap();
     CATALOG.set(RwLock::new(catalog)).unwrap();

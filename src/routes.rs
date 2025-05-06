@@ -10,7 +10,7 @@ use std::time::Duration;
 use crate::{
     api, args, auth, html,
     i18n::i18n_middleware,
-    services::{health, styles, tiles},
+    services::{health, legends, styles, tiles},
 };
 
 const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
@@ -40,10 +40,11 @@ pub fn app_router(app_config: &args::AppConfig) -> Service {
         .allow_headers(cors::Any)
         .into_handler();
 
-    let session_handler = SessionHandler::builder(CookieStore::new(), &app_config.session_secret.as_bytes())
-        .session_ttl(Some(Duration::from_secs(60 * 20)))
-        .build()
-        .unwrap();
+    let session_handler =
+        SessionHandler::builder(CookieStore::new(), &app_config.session_secret.as_bytes())
+            .session_ttl(Some(Duration::from_secs(60 * 20)))
+            .build()
+            .unwrap();
 
     let router = Router::new()
         .hoop(Logger::default())
@@ -285,6 +286,7 @@ pub fn app_router(app_config: &args::AppConfig) -> Service {
                         .get(tiles::get_category_layers_tile),
                 )
                 .push(Router::with_path("styles/{style_name}").get(styles::index))
+                .push(Router::with_path("legends/{style_name}").get(legends::index))
                 .push(
                     Router::with_path("map_assets/{**path}").get(
                         StaticDir::new([&app_config.map_assets_dir])
