@@ -1660,9 +1660,9 @@ dependencies = [
 
 [[package]]
 name = "maplibre-legend"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4727abe016ad7cc8042a59af697587e25d2a54c6d1f0a26f8caf428b6aee74ab"
+checksum = "9160d3b5ac192aeb9fe52b4250e8f9a3ab0e0ae60e3b777207b12775871aee2f"
 dependencies = [
  "serde",
  "serde_json",

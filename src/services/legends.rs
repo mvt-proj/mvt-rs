@@ -13,6 +13,7 @@ pub async fn index(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let default_height = req.query::<u32>("height").unwrap_or(40);
     let has_label = req.query::<bool>("has_label").unwrap_or_default();
     let include_raster = req.query::<bool>("include_raster").unwrap_or_default();
+    let reverse = req.query::<bool>("reverse").unwrap_or_default();
     let parts: Vec<&str> = style_name.split(':').collect();
 
     let category = parts.first().unwrap_or(&"");
@@ -26,7 +27,7 @@ pub async fn index(req: &mut Request, res: &mut Response) -> AppResult<()> {
             res.render(svg);
         }
     } else {
-        let svg = legend.render_all();
+        let svg = legend.render_all(reverse);
         res.render(svg);
     }
     Ok(())
