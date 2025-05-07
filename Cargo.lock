@@ -1602,9 +1602,9 @@ checksum = "d750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa"
 
 [[package]]
 name = "libm"
-version = "0.2.14"
+version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a25169bd5913a4b437588a7e3d127cd6e90127b60e0ffbd834a38f1599e016b8"
+checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
 
 [[package]]
 name = "libsqlite3-sys"
@@ -1660,9 +1660,9 @@ dependencies = [
 
 [[package]]
 name = "maplibre-legend"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9160d3b5ac192aeb9fe52b4250e8f9a3ab0e0ae60e3b777207b12775871aee2f"
+checksum = "72a81c82fbf5ba2649d5f15c3fa2eb81129e5a13d4b0fce7584535fb0b9825b5"
 dependencies = [
  "serde",
  "serde_json",
