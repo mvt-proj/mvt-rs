@@ -430,6 +430,11 @@ You can request:
 - Legends with or without titles
 - Legends that include or exclude raster layers
 
+Example:
+
+![combined](https://github.com/user-attachments/assets/886481e2-e064-4ab4-b1b4-18195fde9db4)
+
+
 **More documentation: coming soon**
 
 
