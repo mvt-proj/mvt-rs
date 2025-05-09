@@ -25,7 +25,8 @@ MVT Server not only allows you to publish geographic layers in vector tile forma
    - [QGIS](#qgis)
    - [Web Clients](#web-clients)
 9. [Serving Styles](#serving-styles)
-10. [Serving Sprites and Glyphs in MVT Server](#serving-glyphs-and-sprites-in-mvt-server)
+10. [Serving Legends](#serving-legends)
+11. [Serving Sprites and Glyphs in MVT Server](#serving-glyphs-and-sprites-in-mvt-server)
    - [Sprites](#serving-sprites)
    - [Glyphs](#serving-glyphs)
 ---
@@ -413,6 +414,23 @@ The MVT Server can also serve styles that define how vector tiles are rendered. 
 1. **For rendering in QGIS:** Styles are applied at the layer level, specifying how a layer should be rendered with colors, labels, symbols, and color scales.
 
 2. **For use in MapLibre:** Styles define a complete "project," including sources, layers, metadata, layer styles, sprites, glyphs, zoom levels, and map center. More details can be found in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
+
+
+## Serving Legends
+
+### Introduction
+
+This feature allows you to serve legends based on the styles defined in the previous section, using the [maplibre-legends](https://github.com/mvt-proj/maplibre-legend) library, which is part of the MVT Server ecosystem.
+
+The legend service is particularly useful for integration with data visualization software.
+
+You can request:
+- Individual legends by passing the layer ID
+- Combined legends
+- Legends with or without titles
+- Legends that include or exclude raster layers
+
+**More documentation: coming soon**
 
 
 ## Serving Glyphs and Sprites in MVT Server
