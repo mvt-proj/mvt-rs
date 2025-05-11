@@ -20,14 +20,13 @@ pub async fn index(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let name = parts.get(1).unwrap_or(&"");
     let style = Style::from_category_and_name(category, name).await?;
 
-    let legend = MapLibreLegend::new(&style.style, default_width, default_height, has_label, include_raster)?;
+    let legend = MapLibreLegend::new(&style.style, default_width, default_height, has_label, include_raster).await?;
 
     if !layer_id.is_empty() {
-        if let Some(svg) = legend.render_layer(&layer_id, Some(has_label)) {
-            res.render(svg);
-        }
+        let svg = legend.render_layer(&layer_id, Some(has_label))?;
+        res.render(svg);
     } else {
-        let svg = legend.render_all(reverse);
+        let svg = legend.render_all(reverse)?;
         res.render(svg);
     }
     Ok(())

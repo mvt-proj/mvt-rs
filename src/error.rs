@@ -4,6 +4,7 @@ use crate::html::main::ErrorTemplate;
 use askama::Template;
 use std::num::TryFromIntError;
 use thiserror::Error;
+use::maplibre_legend::LegendError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -90,6 +91,9 @@ pub enum AppError {
 
     #[error("Timeout error")]
     TimeoutError,
+
+    #[error("MapLibre legend error: {0}")]
+    Legend(#[from] LegendError),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
