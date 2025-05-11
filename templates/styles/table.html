@@ -34,6 +34,16 @@
                 <i class="fas fa-copy"></i>
               </span>
             </button>
+            <a
+              href="/services/legends/{{ style.category.name }}:{{ style.name }}?has_label=true"
+              class="button"
+              title="{{ translate["legends"] }}"
+              target="_blank"
+            >
+              <span class="icon">
+                <i class="fas fa-map-signs"></i>
+              </span>
+            </a>
             {% if style.is_map() %}
               <a
                 href="/mapview/{{ style.id }}"
@@ -45,16 +55,6 @@
                   <i class="fas fa-map"></i>
                 </span>
               </a>
-              <a
-                href="/services/legends/{{ style.category.name }}:{{ style.name }}?has_label=true"
-                class="button"
-                title="{{ translate["legends"] }}"
-                target="_blank"
-              >
-                <span class="icon">
-                  <i class="fas fa-map-signs"></i>
-                </span>
-              </a>
             {% else %}
               <a
                 class="button__outline flex items-center space-x-2 text-gray-500 cursor-not-allowed opacity-50"
@@ -64,16 +64,6 @@
               >
                 <span class="icon">
                   <i class="fas fa-map"></i>
-                </span>
-              </a>
-              <a
-                class="button__outline flex items-center space-x-2 text-gray-500 cursor-not-allowed opacity-50"
-                href="javascript:void(0)"
-                aria-disabled="true"
-                tabindex="-1"
-              >
-                <span class="icon">
-                  <i class="fas fa-map-signs"></i>
                 </span>
               </a>
             {% endif %}
