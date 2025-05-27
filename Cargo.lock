@@ -1914,9 +1914,9 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "maplibre-legend"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa514574fb33d55f7b32a22da0d701f305d8726c7ab921fa3db39dd017e27e7b"
+checksum = "6e98c2b292e53cce606de0f8d9bfd655029ebab6cb25b32680a5c90624a6de20"
 dependencies = [
  "base64 0.22.1",
  "image",
