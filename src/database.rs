@@ -54,16 +54,25 @@ pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
 
     let sql = r#"
         SELECT
-            table_name AS name,
-            column_name AS geometry
+            c.relname AS name,
+            a.attname AS geometry
         FROM
-            information_schema.columns
+            pg_attribute a
+        JOIN
+            pg_class c ON a.attrelid = c.oid
+        JOIN
+            pg_namespace n ON c.relnamespace = n.oid
+        JOIN
+            pg_type t ON a.atttypid = t.oid
         WHERE
-            table_schema = $1
-            AND data_type = 'USER-DEFINED'
-            AND udt_name = 'geometry'
+            n.nspname = $1  -- schema
+            AND t.typname = 'geometry'
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+            AND c.relkind IN ('r', 'v', 'm')  -- r = table, v = view, m = materialized view
         ORDER BY
-            table_name;
+            c.relname;
+
     "#;
 
     let data = sqlx::query_as::<_, Table>(sql)
@@ -79,13 +88,25 @@ pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>
 
     let sql = r#"
         SELECT
-            column_name AS name,
-            udt_name AS udt
+            a.attname AS name,
+            t.typname AS udt
         FROM
-            information_schema.columns
+            pg_attribute a
+        JOIN
+            pg_class c ON a.attrelid = c.oid
+        JOIN
+            pg_namespace n ON c.relnamespace = n.oid
+        JOIN
+            pg_type t ON a.atttypid = t.oid
         WHERE
-            table_schema = $1
-            AND table_name = $2;
+            n.nspname = $1
+            AND c.relname = $2
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+            AND c.relkind IN ('r', 'v', 'm')  -- r = table, v = view, m = materialized view
+        ORDER BY
+            a.attnum;
+
     "#;
 
     let data = sqlx::query_as::<_, Field>(sql)
