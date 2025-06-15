@@ -7,7 +7,7 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uuid = { version = "1.14.0", features = ["v4", "fast-rng"] }
+uuid = { version = "1.17.0", features = ["v4", "fast-rng"] }
 dotenvy = "0.15.0"
 clap = "4.5"
 bytes = "1.10"
@@ -17,7 +17,7 @@ thiserror = "2"
 base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = "9.3"
-salvo = { version = "0.78", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "serve-static", "session"] }
+salvo = { version = "0.79", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
@@ -25,7 +25,7 @@ serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.8", features = [ "runtime-tokio-rustls" , "postgres", "sqlite", "migrate" ] }
 
-redis = { version = "0.31", features = ["tokio-comp"] }
+redis = { version = "0.32", features = ["tokio-comp"] }
 bb8 = "0.9"
 bb8-redis = "0.23"
 include_dir = {version = "0.7.4", features = ["glob"] }
@@ -37,7 +37,7 @@ fluent-syntax = "0.12"
 unic-langid = "0.9"
 accept-language = "3.1"
 
-maplibre-legend = "0.4.1"
+maplibre-legend = "0.4.2"
 # maplibre-legend = { path = "../maplibre-legend"}
 
 [build-dependencies]

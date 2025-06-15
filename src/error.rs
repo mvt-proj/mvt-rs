@@ -1,10 +1,11 @@
 use salvo::prelude::*;
-// use std::io;
 use crate::html::main::ErrorTemplate;
+use ::maplibre_legend::LegendError;
 use askama::Template;
+use bb8::RunError;
+use bb8_redis::redis::RedisError;
 use std::num::TryFromIntError;
 use thiserror::Error;
-use::maplibre_legend::LegendError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -45,13 +46,13 @@ pub enum AppError {
     PasswordHashError(#[from] argon2::password_hash::errors::Error),
 
     #[error("Redis error: `{0}`")]
-    RedisError(String),
+    Redis(#[from] redis::RedisError),
 
-    #[error("Failed to create Redis connection manager")]
-    ConnectionManager(#[from] redis::RedisError),
+    #[error("Redis pool error: {0}")]
+    RedisPoolError(#[from] RunError<RedisError>),
 
-    #[error("Failed to build connection pool")]
-    Pool(#[from] bb8::RunError<redis::RedisError>),
+    #[error("Redis error: {0}")]
+    RedisError(#[from] RedisError),
 
     #[error("Conversion error")]
     Conversion(#[from] TryFromIntError),
