@@ -143,6 +143,16 @@ Options:
   --sessionsecret "supersecretsession"
 ```
 
+
+## 🙌 Support This Project
+
+If you find **MVT Server** useful, please consider supporting its development.
+Your contribution helps improve the project and keep it actively maintained.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/josejachuf)
+
+Thank you for your support! 💖
+
 ## To-Do
 
 - Metadata management
