@@ -9,7 +9,7 @@ use unic_langid::LanguageIdentifier;
 const LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/locales");
 
 pub fn get_lang(req: &salvo::Request) -> String {
-    let lang = req
+    req
         .headers()
         .get("Accept-Language")
         .and_then(|header| header.to_str().ok())
@@ -17,8 +17,7 @@ pub fn get_lang(req: &salvo::Request) -> String {
             let langs = parse(accept_language);
             langs.into_iter().next().map(|lang| lang.to_string())
         })
-        .unwrap_or_else(|| "en-US".to_string());
-    lang
+        .unwrap_or_else(|| "en-US".to_string())
 }
 
 pub struct I18n {
