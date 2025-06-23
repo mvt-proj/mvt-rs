@@ -45,9 +45,6 @@ pub enum AppError {
     #[error("Failed to hash password: `{0}`")]
     PasswordHashError(#[from] argon2::password_hash::errors::Error),
 
-    #[error("Redis error: `{0}`")]
-    Redis(#[from] redis::RedisError),
-
     #[error("Redis pool error: {0}")]
     RedisPoolError(#[from] RunError<RedisError>),
 
