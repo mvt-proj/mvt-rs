@@ -1,9 +1,9 @@
-use salvo::prelude::*;
 use crate::html::main::ErrorTemplate;
 use ::maplibre_legend::LegendError;
 use askama::Template;
 use bb8::RunError;
 use bb8_redis::redis::RedisError;
+use salvo::prelude::*;
 use std::num::TryFromIntError;
 use thiserror::Error;
 

@@ -98,10 +98,10 @@ pub fn build_where_clause(
     for filter in filters {
         let condition = match filter.operator.as_str() {
             "LIKE" => format!("{} {} ${}", filter.field, filter.operator, param_index),
-             "IN" => {
+            "IN" => {
                 let array_values = filter.value.split(',').collect::<Vec<_>>().join(",");
                 format!("{} = ANY(ARRAY[{}])", filter.field, array_values)
-            },
+            }
             _ => format!("{} {} ${}", filter.field, filter.operator, param_index),
         };
         match filter.logic {
@@ -462,7 +462,7 @@ mod tests {
         assert!(clause.ends_with(")"));
         assert!(bindings.contains(&"Foo".to_string()));
         assert!(bindings.contains(&"6,9,22".to_string()));
-            }
+    }
 
     // Test building WHERE clause with LIKE and IN conditions.
     #[test]

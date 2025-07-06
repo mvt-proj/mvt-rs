@@ -9,8 +9,7 @@ use unic_langid::LanguageIdentifier;
 const LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/locales");
 
 pub fn get_lang(req: &salvo::Request) -> String {
-    req
-        .headers()
+    req.headers()
         .get("Accept-Language")
         .and_then(|header| header.to_str().ok())
         .and_then(|accept_language| {
