@@ -39,7 +39,7 @@ impl RedisCache {
 
     pub async fn delete_layer_cache(&self, layer_name: &String) -> AppResult<()> {
         let mut conn = self.pool.get().await?;
-        let key_pattern = format!("{}:*", layer_name);
+        let key_pattern = format!("{layer_name}:*");
         let keys: Vec<String> = conn.keys(key_pattern).await?;
 
         if !keys.is_empty() {

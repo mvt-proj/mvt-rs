@@ -99,20 +99,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .help("Maximum database pool size"),
         )
         .get_matches();
-    //
-    // let get_value = |key: &str, arg_name: &str, default: Option<&str>| -> String {
-    //     matches
-    //         .get_one::<String>(arg_name)
-    //         .cloned()
-    //         .or_else(|| env::var(key).ok())
-    //         .or_else(|| default.map(String::from))
-    //         .unwrap_or_else(|| {
-    //             panic!(
-    //                 "Missing required config value for '{}'. Provide via CLI or env var.",
-    //                 key
-    //             )
-    //         })
-    // };
 
     let get_value = |key: &str, arg_name: &str, default: Option<&str>| -> String {
         matches
@@ -121,10 +107,7 @@ pub async fn parse_args() -> AppResult<AppConfig> {
             .or_else(|| env::var(key).ok())
             .or(default.map(String::from))
             .unwrap_or_else(|| {
-                panic!(
-                    "Missing required config value for '{}'. Provide via CLI, env var, or default.",
-                    key
-                )
+                panic!("Missing required config value for '{key}'. Provide via CLI, env var, or default.")
             })
     };
 

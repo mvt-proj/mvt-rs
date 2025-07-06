@@ -424,8 +424,7 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
     if let Err(_err) = entries {
         res.status_code(StatusCode::NOT_FOUND);
         return Err(AppError::NotFound(format!(
-            "The directory {} does not exist",
-            dir_path
+            "The directory {dir_path} does not exist"
         )));
     }
 
@@ -466,8 +465,7 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     if let Err(_err) = entries {
         res.status_code(StatusCode::NOT_FOUND);
         return Err(AppError::NotFound(format!(
-            "The directory {} does not exist",
-            dir_path
+            "The directory {dir_path} does not exist"
         )));
     }
 

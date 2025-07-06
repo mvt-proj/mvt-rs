@@ -85,7 +85,7 @@ async fn query_database(
         if validate_filter(&where_clause).is_err() {
             return Ok(Bytes::new());
         }
-        Some(format!(" AND {}", where_clause))
+        Some(format!(" AND {where_clause}"))
     } else {
         None
     };
@@ -111,9 +111,7 @@ async fn query_database(
     let limit_clause = layer_conf
         .max_records
         .filter(|&max| max > 0)
-        .map_or_else(String::new, |max| {
-            format!("ORDER BY RANDOM() LIMIT {}", max)
-        });
+        .map_or_else(String::new, |max| format!("ORDER BY RANDOM() LIMIT {max}"));
 
     let sql_template = build_sql_template(&sql_mode);
     let sql_query = sql_template
@@ -346,7 +344,7 @@ pub async fn get_composite_layers_tile(
         .await?;
 
         let elapsed_time = start_time.elapsed().as_millis();
-        data_source_times.push(format!("{}: {}ms", layer_name, elapsed_time));
+        data_source_times.push(format!("{layer_name}: {elapsed_time}ms"));
 
         match via {
             Via::Database => cache_misses += 1,
@@ -368,7 +366,7 @@ pub async fn get_composite_layers_tile(
 
     headers.insert(
         "X-Cache",
-        HeaderValue::from_str(&format!("HIT: {}, MISS: {}", cache_hits, cache_misses))
+        HeaderValue::from_str(&format!("HIT: {cache_hits}, MISS: {cache_misses}"))
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
 
@@ -451,7 +449,7 @@ pub async fn get_category_layers_tile(
 
     headers.insert(
         "X-Cache",
-        HeaderValue::from_str(&format!("HIT: {}, MISS: {}", cache_hits, cache_misses))
+        HeaderValue::from_str(&format!("HIT: {cache_hits}, MISS: {cache_misses}"))
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
 

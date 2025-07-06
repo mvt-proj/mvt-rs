@@ -277,7 +277,7 @@ impl Auth {
         let (current_username, password) = match decode_basic_auth(authorization_str) {
             Ok(username) => username,
             Err(err) => {
-                eprintln!("Error: {}", err);
+                eprintln!("Error: {err}");
                 return Ok((String::new(), String::new()));
             }
         };

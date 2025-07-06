@@ -30,6 +30,6 @@ pub async fn create_layer(req: &mut Request, res: &mut Response) {
             let _ = catalog.add_layer(lyr.clone()).await;
             res.render(Json(lyr))
         }
-        Err(e) => res.render(format!("{:?}", e)),
+        Err(e) => res.render(format!("{e:?}")),
     }
 }

@@ -12,10 +12,10 @@ use uuid::Uuid;
 static MIGRATOR: Migrator = sqlx::migrate!();
 
 pub async fn init_sqlite(db_path: &str) -> AppResult<SqlitePool> {
-    let db_url = format!("sqlite:{}", db_path);
+    let db_url = format!("sqlite:{db_path}");
 
     if !Path::new(db_path).exists() {
-        println!("Database file not found, initializing: {}", db_path);
+        println!("Database file not found, initializing: {db_path}");
 
         if let Some(parent) = Path::new(db_path).parent() {
             fs::create_dir_all(parent).expect("Failed to create database directory");

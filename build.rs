@@ -7,7 +7,7 @@ fn main() {
         if fs::metadata(dir).is_err() {
             // fs::create_dir_all(dir).expect(&format!("The {} directory could not be created", dir));
             fs::create_dir_all(dir)
-                .unwrap_or_else(|_| panic!("The {} directory could not be created", dir))
+                .unwrap_or_else(|_| panic!("The {dir} directory could not be created"))
         }
     }
 }

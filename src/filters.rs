@@ -128,7 +128,7 @@ pub fn build_where_clause(
             clause.push_str(&or_clause);
             clause.push(')');
         } else {
-            clause.push_str("(");
+            clause.push('(');
             clause.push_str(&or_clause);
             clause.push(')');
         }
@@ -151,7 +151,7 @@ pub fn build_where_clause(
     if clause.is_empty() {
         (String::new(), bindings)
     } else {
-        (format!(" {}", clause), bindings)
+        (format!(" {clause}"), bindings)
     }
 }
 

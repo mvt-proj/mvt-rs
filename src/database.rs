@@ -120,7 +120,7 @@ pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>
 
 pub async fn query_srid(schema: String, table: String, geometry: String) -> AppResult<Srid> {
     let pg_pool: PgPool = get_db_pool().clone();
-    let full_table = format!("{}.{}", schema, table);
+    let full_table = format!("{schema}.{table}");
     let sql = r#"
         SELECT Find_SRID($1, $2, $3) AS name
         FROM {}
@@ -144,7 +144,7 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
     let table = &layer.table_name;
     let geometry = layer.get_geom();
 
-    let full_table = format!("{}.{}", schema, table);
+    let full_table = format!("{schema}.{table}");
 
     let sql = format!(
         r#"
@@ -153,9 +153,8 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
           COALESCE(ST_YMin(ST_Extent(ST_Transform({geometry}, 4326))), -90) AS ymin,
           COALESCE(ST_XMax(ST_Extent(ST_Transform({geometry}, 4326))), 180) AS xmax,
           COALESCE(ST_YMax(ST_Extent(ST_Transform({geometry}, 4326))), 90) AS ymax
-        FROM {};
-        "#,
-        full_table
+        FROM {full_table};
+        "#
     );
 
     let data = sqlx::query_as::<_, Extent>(&sql)

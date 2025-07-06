@@ -40,7 +40,7 @@ impl I18n {
                 }
             };
 
-            let ftl_file = match LOCALES_DIR.get_file(format!("{}.ftl", locale)) {
+            let ftl_file = match LOCALES_DIR.get_file(format!("{locale}.ftl")) {
                 Some(file) => file,
                 None => {
                     if locale == "en-US" {
@@ -72,7 +72,7 @@ impl I18n {
             let mut bundle = FluentBundle::new(vec![lang_id]);
             if let Err(e) = bundle.add_resource(resource) {
                 if locale == "en-US" {
-                    panic!("Failed to add en-US resource: {:?}", e);
+                    panic!("Failed to add en-US resource: {e:?}");
                 }
                 continue;
             }

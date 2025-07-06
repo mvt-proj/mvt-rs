@@ -18,7 +18,7 @@ pub fn convert_fields(fields: Vec<String>) -> String {
     } else {
         fields
             .iter()
-            .map(|field| format!("\"{}\"", field))
+            .map(|field| format!("\"{field}\""))
             .collect::<Vec<_>>()
     };
     vec_fields.join(", ")
@@ -44,14 +44,13 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
 
     let pattern = format!(r"(?i)\b(?:{})\b", dangerous_keywords.join("|"));
     let re =
-        Regex::new(&pattern).map_err(|e| AppError::InvalidInput(format!("Regex error: {}", e)))?;
+        Regex::new(&pattern).map_err(|e| AppError::InvalidInput(format!("Regex error: {e}")))?;
 
     let forbidden_patterns = vec![";", "--", "/*", "*/", "OR 1=1"];
     for pattern in forbidden_patterns {
         if filter.contains(pattern) {
             return Err(AppError::InvalidInput(format!(
-                "Invalid filter: contains forbidden pattern '{}'",
-                pattern
+                "Invalid filter: contains forbidden pattern '{pattern}'"
             )));
         }
     }

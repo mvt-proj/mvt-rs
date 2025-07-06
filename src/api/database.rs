@@ -14,8 +14,7 @@ pub async fn schemas() -> Result<Json<Vec<Schema>>, StatusError> {
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
                 .cause(format!(
-                    "An error occurred while retrieving the data. {:?}",
-                    e
+                    "An error occurred while retrieving the data. {e:?}"
                 )))
         }
     }
@@ -32,8 +31,7 @@ pub async fn tables(req: &mut Request) -> Result<Json<Vec<Table>>, StatusError> 
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
                 .cause(format!(
-                    "An error occurred while retrieving the data. {:?}",
-                    e
+                    "An error occurred while retrieving the data. {e:?}"
                 )))
         }
     }
@@ -51,8 +49,7 @@ pub async fn fields(req: &mut Request) -> Result<Json<Vec<Field>>, StatusError> 
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
                 .cause(format!(
-                    "An error occurred while retrieving the data. {:?}",
-                    e
+                    "An error occurred while retrieving the data. {e:?}"
                 )))
         }
     }
@@ -71,8 +68,7 @@ pub async fn srid(req: &mut Request) -> Result<Json<Srid>, StatusError> {
             Err(StatusError::bad_request()
                 .brief("An error occurred while retrieving the data.")
                 .cause(format!(
-                    "An error occurred while retrieving the data. {:?}",
-                    e
+                    "An error occurred while retrieving the data. {e:?}"
                 )))
         }
     }
