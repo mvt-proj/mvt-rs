@@ -155,7 +155,7 @@ Thank you for your support! 💖
 
 ## To-Do
 
-- Metadata management
-- Improve the API
-- Create tutorial
-- Filter module
+- [ ] Metadata management
+- [ ] Improve the API
+- [ ] Create tutorial
+- [x] Filter module (Initial version implemented)
