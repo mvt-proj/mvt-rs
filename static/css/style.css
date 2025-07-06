@@ -22,8 +22,11 @@ body {
 }
 
 #map {
-  height: 70vh;
-  /* width: 100%; */
+  min-height: 80vh;
+}
+
+.map2 {
+  min-height: 95vh !important;
 }
 
 .jsoneditor-menu {

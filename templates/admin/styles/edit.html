@@ -155,6 +155,15 @@
         errorMessage.style.display = 'block';
       }
     });
+
+    let iframe = document.getElementById('mapIframe');
+
+    iframe.addEventListener('load', function() {
+      setTimeout(() => {
+        iframe.contentDocument.getElementById("map").classList.add("map2");
+      }, 200);
+    });
+
   });
 
   function beforeHtmxPost() {
