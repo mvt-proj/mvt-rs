@@ -13,6 +13,7 @@ mod database;
 mod db;
 mod diskcache;
 mod error;
+mod filters;
 mod html;
 mod i18n;
 mod models;

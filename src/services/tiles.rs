@@ -2,13 +2,13 @@ use bytes::Bytes;
 use salvo::http::{HeaderMap, header::HeaderValue};
 use salvo::prelude::*;
 use sqlx::PgPool;
-use std::borrow::Cow;
+use std::collections::HashMap;
 use std::time::Instant;
 
 use super::utils::{convert_fields, validate_filter, validate_user_groups};
 use crate::{
     error::AppResult,
-    get_cache_wrapper, get_catalog, get_db_pool,
+    filters, get_cache_wrapper, get_catalog, get_db_pool,
     models::catalog::{Layer, StateLayer},
 };
 
@@ -70,7 +70,8 @@ async fn query_database(
     x: u32,
     y: u32,
     z: u32,
-    query: String,
+    where_clause: String,
+    bindings: Vec<String>,
 ) -> AppResult<Bytes> {
     let name = layer_conf.name;
     let schema = layer_conf.schema;
@@ -80,11 +81,11 @@ async fn query_database(
     let sql_mode = layer_conf.sql_mode.unwrap_or_else(|| "CTE".to_string());
     let srid = layer_conf.srid.unwrap_or(DEFAULT_SRID);
 
-    let query_placeholder = if !query.is_empty() {
-        if validate_filter(&query).is_err() {
+    let query_placeholder = if !where_clause.is_empty() {
+        if validate_filter(&where_clause).is_err() {
             return Ok(Bytes::new());
         }
-        Some(format!(" AND {}", query))
+        Some(format!(" AND {}", where_clause))
     } else {
         None
     };
@@ -126,7 +127,7 @@ async fn query_database(
         )
         .replace("{limit_placeholder}", &limit_clause);
 
-    let query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(&sql_query)
+    let mut query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(&sql_query)
         .bind(z as i32)
         .bind(x as i32)
         .bind(y as i32)
@@ -135,6 +136,18 @@ async fn query_database(
         .bind(clip_geom)
         .bind(srid as i32)
         .bind(name);
+
+    if !where_clause.is_empty() {
+        for binding in bindings {
+            if let Ok(num) = binding.parse::<i64>() {
+                query_builder = query_builder.bind(num);
+            } else if let Ok(num) = binding.parse::<f64>() {
+                query_builder = query_builder.bind(num);
+            } else {
+                query_builder = query_builder.bind(binding);
+            }
+        }
+    }
 
     let rec = query_builder.fetch_one(&pg_pool).await?;
     let tile = rec.0.unwrap_or_default();
@@ -148,23 +161,31 @@ async fn get_tile(
     x: u32,
     y: u32,
     z: u32,
-    filter: String,
+    where_clause: String,
+    bindings: Vec<String>,
 ) -> AppResult<(Bytes, Via)> {
     let name = &layer_conf.name;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
+    let mut local_where_clause = where_clause;
 
-    let query: Cow<str> = if !filter.is_empty() {
-        Cow::Borrowed(&filter)
-    } else {
-        Cow::Owned(layer_conf.clone().filter.unwrap_or_default())
-    };
+    let query = layer_conf.clone().filter.unwrap_or_default();
 
     let cache_wrapper = get_cache_wrapper();
 
-    if filter.is_empty() {
+    if local_where_clause.is_empty() {
         if let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await {
             return Ok((tile, Via::Cache));
         }
+    }
+
+    if !query.is_empty() {
+        if validate_filter(&query).is_err() {
+            return Ok((Bytes::new(), Via::Database));
+        }
+        if !local_where_clause.is_empty() {
+            local_where_clause.push_str(" AND ");
+        }
+        local_where_clause.push_str(&query);
     }
 
     let tile: Bytes = query_database(
@@ -173,11 +194,12 @@ async fn get_tile(
         x,
         y,
         z,
-        query.to_string(),
+        local_where_clause.clone(),
+        bindings,
     )
     .await?;
 
-    if filter.is_empty() {
+    if local_where_clause.is_empty() {
         cache_wrapper
             .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
             .await?;
@@ -202,7 +224,18 @@ pub async fn get_single_layer_tile(
     let x = req.param::<u32>("x").unwrap_or(0);
     let y = req.param::<u32>("y").unwrap_or(0);
     let z = req.param::<u32>("z").unwrap_or(0);
-    let filter = req.query::<String>("filter").unwrap_or_default();
+
+    let known_params = ["layer_name", "x", "y", "z"];
+    let mut filter_params: HashMap<String, String> = HashMap::new();
+    for (key, values) in req.queries() {
+        if !known_params.contains(&key.as_str()) {
+            if let Some(value) = values.first() {
+                filter_params.insert(key.to_string(), value.to_string());
+            }
+        }
+    }
+    let filters = filters::parse_filters(&filter_params);
+    let (where_clause, bindings) = filters::build_where_clause(&filters, 9);
 
     let pg_pool: PgPool = get_db_pool().clone();
     let catalog = get_catalog().await.read().await;
@@ -228,7 +261,7 @@ pub async fn get_single_layer_tile(
     }
 
     let start_time = Instant::now();
-    let (tile, via) = get_tile(pg_pool, layer.clone(), x, y, z, filter).await?;
+    let (tile, via) = get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await?;
     let elapsed_time = start_time.elapsed();
     let elapsed_time_str = format!("{}", elapsed_time.as_millis());
 
@@ -282,7 +315,6 @@ pub async fn get_composite_layers_tile(
     let mut cache_misses = 0;
 
     for layer_name in layers_vec {
-        let filter = String::new();
         let (category, name) = layer_name.split_once(':').unwrap_or(("", ""));
         let Some(layer) =
             catalog.find_layer_by_category_and_name(category, name, StateLayer::Published)
@@ -302,9 +334,18 @@ pub async fn get_composite_layers_tile(
         }
 
         let start_time = Instant::now();
-        let (tile, via) = get_tile(pg_pool.clone(), layer.clone(), x, y, z, filter).await?;
-        let elapsed_time = start_time.elapsed().as_millis();
+        let (tile, via) = get_tile(
+            pg_pool.clone(),
+            layer.clone(),
+            x,
+            y,
+            z,
+            String::new(),
+            Vec::new(),
+        )
+        .await?;
 
+        let elapsed_time = start_time.elapsed().as_millis();
         data_source_times.push(format!("{}: {}ms", layer_name, elapsed_time));
 
         match via {
@@ -365,8 +406,6 @@ pub async fn get_category_layers_tile(
     let mut cache_misses = 0;
 
     for layer in layers_vec {
-        let filter = String::new();
-
         if !validate_user_groups(req, layer, depot).await? {
             continue;
         }
@@ -378,9 +417,18 @@ pub async fn get_category_layers_tile(
         }
 
         let start_time = Instant::now();
-        let (tile, via) = get_tile(pg_pool.clone(), layer.clone(), x, y, z, filter).await?;
-        let elapsed_time = start_time.elapsed().as_millis();
+        let (tile, via) = get_tile(
+            pg_pool.clone(),
+            layer.clone(),
+            x,
+            y,
+            z,
+            String::new(),
+            Vec::new(),
+        )
+        .await?;
 
+        let elapsed_time = start_time.elapsed().as_millis();
         data_source_times.push(format!("{}: {}ms", layer.name, elapsed_time));
 
         match via {
