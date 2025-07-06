@@ -22,6 +22,7 @@ MVT Server not only allows you to publish geographic layers in vector tile forma
 6. [Publishing Layers & Styles](#publishing-layers--styles)
 7. [Consuming Services](#consuming-services)
    - [About the Sources](#about-the-sources)
+   - [Filtering](filtering)
    - [QGIS](#qgis)
    - [Web Clients](#web-clients)
 9. [Serving Styles](#serving-styles)
@@ -327,7 +328,7 @@ http://127.0.0.1:5887/services/tiles/category/category_1/{z}/{x}/{y}.pbf
 ---
 
 - Each layer within a composite tile follows its own rules regarding visibility, publishing, caching, etc.
-- Leveraging the server's built-in caching capabilities, the composition is performed at the server level rather than in the database..
+- Leveraging the server's built-in caching capabilities, the composition is performed at the server level rather than in the database.
 
 ---
 
@@ -338,6 +339,105 @@ http://127.0.0.1:5887/services/tiles/category/category_1/{z}/{x}/{y}.pbf
 | **By category** | `/services/tiles/category/{category}/{z}/{x}/{y}.pbf` | `/services/tiles/category/hydrography/12/2345/3210.pbf` |
 
 This system offers flexibility in working with *vector tiles*, allowing both individual layer access and dynamic layer composition.
+
+---
+
+### Filtering
+
+MVT Server supports advanced filtering directly from the source URL using query parameters. These filters are translated into SQL `WHERE` clauses dynamically.
+
+This makes it possible to display different subsets of data on the map depending on the user query — all without modifying the backend or exposing database logic.
+
+---
+
+#### Filter Syntax
+
+The filter format supports three logical modes and several SQL-like operators.
+
+##### Operators
+
+| Suffix        | SQL Equivalent |
+|---------------|----------------|
+| `__eq` (default) | `=`          |
+| `__ne`         | `<>`           |
+| `__gt`         | `>`            |
+| `__gte`        | `>=`           |
+| `__lt`         | `<`            |
+| `__lte`        | `<=`           |
+| `__like`       | `LIKE`         |
+| `__in`         | `IN` (comma-separated values) |
+
+##### Logical Modes
+
+| Prefix        | Logic |
+|---------------|-------|
+| *(none)*      | `AND` |
+| `or__`        | `OR`  |
+| `not__`       | `NOT` |
+
+---
+
+#### Example URLs
+
+```text
+/services/tiles/public:states/{z}/{x}/{y}.pbf?or__name__in='FOO','BAR'&or__id__in=6,9,22,24
+/services/tiles/public:vtr2024/{z}/{x}/{y}.pbf?or__vur_foo__gte=9000&or__vur_bar__gte=11160000
+```
+
+These generate WHERE clauses like:
+
+```sql
+WHERE (name = ANY(ARRAY['FOO','BAR']) OR id = ANY(ARRAY[6,9,22,24]))
+```
+
+and
+
+```sql
+WHERE (vur_foo >= $1 OR vur_bar >= $2)
+```
+
+---
+
+#### Admin-defined `filter` (static filter)
+
+In the layer configuration panel, administrators can define a **fixed SQL filter** in the `filter` field. This filter is applied **before** any dynamic query parameters.
+
+For example, if the admin defined:
+
+```sql
+status = 'public'
+```
+
+and the user sends:
+
+```
+?or__category__eq='roads'
+```
+
+the final SQL will be:
+
+```sql
+WHERE status = 'public' AND (category = $1)
+```
+
+---
+
+#### Query Parameter Freedom
+
+In the current version, users are free to specify **any field** in the query string. There's no restriction on which columns can be queried. This makes the system very flexible, but it also means:
+
+> **You should control data exposure at the layer level**, not via filters.
+
+It might be desirable in future versions to restrict which fields are allowed in filters, but this is not currently planned or guaranteed.
+
+---
+
+#### Summary
+
+- Combine static (`filter`) and dynamic (query params) filters.
+- Express logical conditions using `and__`, `or__`, `not__`.
+- Safely binds user input to prevent SQL injection (except `IN` currently uses inline literals).
+- Compatible with QGIS, MapLibre, and web clients.
 
 ---
 
