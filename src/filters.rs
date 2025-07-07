@@ -99,7 +99,7 @@ pub fn build_where_clause(
     for filter in filters {
         let condition = match filter.operator.as_str() {
             "LIKE" => format!("{} {} ${}", filter.field, filter.operator, param_index),
-            "ILIKE" => format!("{} ILIKE ${}", filter.field, param_index),
+            "ILIKE" => format!("{} {} ${}", filter.field, filter.operator, param_index),
             "IN" => {
                 let array_values = filter.value.split(',').collect::<Vec<_>>().join(",");
                 format!("{} = ANY(ARRAY[{}])", filter.field, array_values)
