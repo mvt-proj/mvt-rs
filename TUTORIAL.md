@@ -365,6 +365,7 @@ The filter format supports three logical modes and several SQL-like operators.
 | `__lt`         | `<`            |
 | `__lte`        | `<=`           |
 | `__like`       | `LIKE`         |
+| `__ilike`       | `ILIKE`         |
 | `__in`         | `IN` (comma-separated values) |
 
 ##### Logical Modes
