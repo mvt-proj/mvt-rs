@@ -22,7 +22,7 @@ MVT Server not only allows you to publish geographic layers in vector tile forma
 6. [Publishing Layers & Styles](#publishing-layers--styles)
 7. [Consuming Services](#consuming-services)
    - [About the Sources](#about-the-sources)
-   - [Filtering](filtering)
+   - [Filtering](#filtering)
    - [QGIS](#qgis)
    - [Web Clients](#web-clients)
 9. [Serving Styles](#serving-styles)
