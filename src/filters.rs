@@ -136,14 +136,12 @@ pub fn build_where_clause(
 
     // Add NOT conditions, wrapped in parentheses and prefixed with NOT
     if !not_conditions.is_empty() {
-        let not_clause = not_conditions.join(" AND ");
-        if !clause.is_empty() {
-            clause.push_str(" AND NOT (");
-            clause.push_str(&not_clause);
-            clause.push(')');
-        } else {
+        for not_condition in not_conditions {
+            if !clause.is_empty() {
+                clause.push_str(" AND ");
+            }
             clause.push_str("NOT (");
-            clause.push_str(&not_clause);
+            clause.push_str(&not_condition);
             clause.push(')');
         }
     }
@@ -300,7 +298,6 @@ mod tests {
         assert_eq!(bindings, vec!["18".to_string(), "30".to_string()]);
     }
 
-    // Test build_where_clause with only NOT conditions.
     #[test]
     fn test_build_where_clause_only_not() {
         let filters = vec![
@@ -318,7 +315,7 @@ mod tests {
             },
         ];
         let (clause, bindings) = build_where_clause(&filters, 1);
-        assert_eq!(clause, " NOT (status = $1 AND hour > $2)");
+        assert_eq!(clause, " NOT (status = $1) AND NOT (hour > $2)");
         assert_eq!(bindings, vec!["inactive".to_string(), "18".to_string()]);
     }
 
@@ -390,25 +387,6 @@ mod tests {
             vec!["John".to_string(), "3.5".to_string(), "bad".to_string()]
         );
     }
-
-    // Test to validate and escape values.
-    // #[test]
-    // fn test_validate_and_escape_values() {
-    //     let values = vec![
-    //         "John".to_string(),
-    //         "O'Reilly".to_string(),
-    //         "3.5".to_string(),
-    //     ];
-    //     let escaped_values = validate_and_escape_values(&values);
-    //     assert_eq!(
-    //         escaped_values,
-    //         vec![
-    //             "John".to_string(),
-    //             "O''Reilly".to_string(),
-    //             "3.5".to_string()
-    //         ]
-    //     );
-    // }
 
     // Test parsing filters that include LIKE and IN conditions.
     #[test]
@@ -562,4 +540,26 @@ mod tests {
         assert!(bindings.contains(&"600".to_string()));
         assert!(bindings.contains(&"700000".to_string()));
     }
-}
+
+    #[test]
+    fn test_build_where_clause_not_conditions() {
+        let filters = vec![
+            FilterCondition {
+                field: "status".to_string(),
+                operator: "=".to_string(),
+                value: "inactive".to_string(),
+                logic: LogicalOp::Not,
+            },
+            FilterCondition {
+                field: "hour".to_string(),
+                operator: ">".to_string(),
+                value: "18".to_string(),
+                logic: LogicalOp::Not,
+            },
+        ];
+        let (clause, bindings) = build_where_clause(&filters, 1);
+        assert_eq!(clause, " NOT (status = $1) AND NOT (hour > $2)");
+        assert_eq!(bindings, vec!["inactive".to_string(), "18".to_string()]);
+    }
+
+    }
