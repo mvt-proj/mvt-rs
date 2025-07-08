@@ -57,6 +57,7 @@ pub fn parse_filters(query: &HashMap<String, String>) -> Vec<FilterCondition> {
                         "ne" => "<>",
                         "eq" => "=",
                         "like" => "LIKE",
+                        "ilike" => "ILIKE",
                         "in" => "IN",
                         _ => return None, // Unsupported operator
                     };
@@ -98,6 +99,7 @@ pub fn build_where_clause(
     for filter in filters {
         let condition = match filter.operator.as_str() {
             "LIKE" => format!("{} {} ${}", filter.field, filter.operator, param_index),
+            "ILIKE" => format!("{} {} ${}", filter.field, filter.operator, param_index),
             "IN" => {
                 let array_values = filter.value.split(',').collect::<Vec<_>>().join(",");
                 format!("{} = ANY(ARRAY[{}])", filter.field, array_values)
@@ -465,6 +467,29 @@ mod tests {
         assert_eq!(bindings, vec!["%John%".to_string(), "1,2,3".to_string()]);
     }
 
+    // Test building WHERE clause with ILIKE and IN conditions.
+    #[test]
+    fn test_build_where_clause_ilike_and_in() {
+        let filters = vec![
+            FilterCondition {
+                field: "name".to_string(),
+                operator: "ILIKE".to_string(),
+                value: "%John%".to_string(),
+                logic: LogicalOp::And,
+            },
+            FilterCondition {
+                field: "id".to_string(),
+                operator: "IN".to_string(),
+                value: "1,2,3".to_string(),
+                logic: LogicalOp::And,
+            },
+        ];
+
+        let (clause, bindings) = build_where_clause(&filters, 1);
+        assert_eq!(clause, " name ILIKE $1 AND id = ANY(ARRAY[1,2,3])");
+        assert_eq!(bindings, vec!["%John%".to_string(), "1,2,3".to_string()]);
+    }
+
     // Test building a complex WHERE clause with multiple AND, OR, and NOT conditions.
     #[test]
     fn test_build_where_clause_complex() {
@@ -561,5 +586,4 @@ mod tests {
         assert_eq!(clause, " NOT (status = $1) AND NOT (hour > $2)");
         assert_eq!(bindings, vec!["inactive".to_string(), "18".to_string()]);
     }
-
-    }
+}
