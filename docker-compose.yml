@@ -23,7 +23,7 @@ services:
       JWTSECRET: "supersecretjwt-changeme-in-production-this-must-be-at-least-64-chars-long-12345678"
       SESSIONSECRET: "supersecretsession-changeme-in-production-this-must-be-at-least-64-chars-long"
       
-      # Directorios
+      # Directorios (internos en el contenedor)
       CONFIG: "/app/config"
       CACHE: "/app/cache"
       MAPASSETS: "/app/map_assets"
@@ -31,9 +31,7 @@ services:
       # Configuración de usuario inicial
       INITIAL_USER_EMAIL: "admin@example.com"
       INITIAL_USER_PASSWORD: "admin123"
-      
-      # Debug
-      RUST_BACKTRACE: "1"
+     
     volumes:
       - ./config:/app/config
       - ./cache:/app/cache
