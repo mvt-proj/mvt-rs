@@ -1,5 +1,5 @@
 # Multi-stage build para optimizar el tamaño final
-FROM rust:1.75 as builder
+FROM rust:latest as builder
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
@@ -12,7 +12,8 @@ WORKDIR /app
 
 # Copiar archivos de dependencias
 COPY Cargo.toml Cargo.lock ./
-COPY build.rs ./
+# Copiar build.rs si existe
+COPY build.rs* ./
 
 # Crear directorio src dummy para cachear dependencias
 RUN mkdir src && echo "fn main() {}" > src/main.rs

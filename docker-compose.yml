@@ -20,8 +20,8 @@ services:
       PORT: 5880
       
       # Configuración de seguridad
-      JWTSECRET: "supersecretjwt-changeme-in-production"
-      SESSIONSECRET: "supersecretsession-changeme-in-production"
+      JWTSECRET: "supersecretjwt-changeme-in-production-this-must-be-at-least-64-chars-long-12345678"
+      SESSIONSECRET: "supersecretsession-changeme-in-production-this-must-be-at-least-64-chars-long"
       
       # Directorios
       CONFIG: "/app/config"
@@ -76,7 +76,7 @@ services:
   adminer:
     image: adminer
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       - postgres
     restart: unless-stopped
