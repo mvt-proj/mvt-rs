@@ -45,7 +45,11 @@ pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> 
         .cloned()
         .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
-
+    if user.is_none() {
+        res.render(Redirect::other("/login"));
+        res.status_code(StatusCode::FOUND);
+        return Ok(());
+    }
     let current_user = user.unwrap();
 
     let template = ListUsersTemplate {
