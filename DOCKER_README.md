@@ -1,4 +1,4 @@
-# MVT-RS Docker Setup
+# MVT-Server Docker Setup
 
 Este proyecto incluye configuración completa de Docker para ejecutar MVT-RS con PostgreSQL+PostGIS y Redis.
 
