@@ -1,0 +1,48 @@
+# Directorios de build y cache
+target/
+cache/
+config/
+map_assets/
+
+# Archivos de desarrollo
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentación
+README.md
+TUTORIAL.md
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Rust
+**/*.rs.bk
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

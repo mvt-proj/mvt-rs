@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # Aplicación MVT-RS
+  mvt-server:
+    build: .
+    ports:
+      - "5880:5880"
+    environment:
+      # Configuración de base de datos
+      DBCONN: "postgres://mvtuser:mvtpass@postgres:5432/mvtdb"
+      POOLSIZEMIN: 3
+      POOLSIZEMAX: 10
+      
+      # Configuración de Redis (opcional)
+      REDISCONN: "redis://redis:6379"
+      
+      # Configuración del servidor
+      IPHOST: "0.0.0.0"
+      PORT: 5880
+      
+      # Configuración de seguridad
+      JWTSECRET: "supersecretjwt-changeme-in-production-this-must-be-at-least-64-chars-long-12345678"
+      SESSIONSECRET: "supersecretsession-changeme-in-production-this-must-be-at-least-64-chars-long"
+      
+      # Directorios (internos en el contenedor)
+      CONFIG: "/app/config"
+      CACHE: "/app/cache"
+      MAPASSETS: "/app/map_assets"
+      
+      # Configuración de usuario inicial
+      INITIAL_USER_EMAIL: "admin@example.com"
+      INITIAL_USER_PASSWORD: "admin123"
+     
+    volumes:
+      - ./config:/app/config
+      - ./cache:/app/cache
+      - ./map_assets:/app/map_assets
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # Base de datos PostgreSQL con PostGIS
+  postgres:
+    image: postgis/postgis:15-3.4
+    environment:
+      POSTGRES_DB: mvtdb
+      POSTGRES_USER: mvtuser
+      POSTGRES_PASSWORD: mvtpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mvtuser -d mvtdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis para caché (opcional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # Adminer para administración de base de datos (opcional)
+  adminer:
+    image: adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    driver: bridge
