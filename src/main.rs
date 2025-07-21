@@ -8,6 +8,7 @@ mod api;
 mod args;
 mod auth;
 mod cachewrapper;
+mod cli;
 mod config;
 mod database;
 mod db;
@@ -97,6 +98,13 @@ async fn main() -> AppResult<()> {
         .init();
 
     let app_config = args::parse_args().await?;
+
+    let config_cli = app_config.config_cli;
+
+    if config_cli {
+        cli::prompts::start_cli(app_config).unwrap();
+        return Ok(());
+    }
 
     let db_conn = &format!("{}/mvtrs.db", app_config.config_dir);
     let cf_pool = config::db::init_sqlite(db_conn).await?;

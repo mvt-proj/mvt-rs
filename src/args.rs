@@ -15,6 +15,7 @@ pub struct AppConfig {
     pub session_secret: String,
     pub db_pool_size_min: u32,
     pub db_pool_size_max: u32,
+    pub config_cli: bool,
 }
 
 pub async fn parse_args() -> AppResult<AppConfig> {
@@ -98,7 +99,16 @@ pub async fn parse_args() -> AppResult<AppConfig> {
                 .value_name("DBPOOLMAX")
                 .help("Maximum database pool size"),
         )
+        .arg(
+            Arg::new("config_cli")
+                .long("config-cli")
+                .short('C')
+                .action(clap::ArgAction::SetTrue)
+                .help("Enter to cli where you can set config values interactively"),
+        )
         .get_matches();
+
+    let config_cli = matches.get_flag("config_cli");
 
     let get_value = |key: &str, arg_name: &str, default: Option<&str>| -> String {
         matches
@@ -107,7 +117,11 @@ pub async fn parse_args() -> AppResult<AppConfig> {
             .or_else(|| env::var(key).ok())
             .or(default.map(String::from))
             .unwrap_or_else(|| {
-                panic!("Missing required config value for '{key}'. Provide via CLI, env var, or default.")
+                if !config_cli {
+                    panic!("Missing required config value for '{key}'. Provide via CLI, env var, or default.")
+                } else {
+                    String::from("")
+                }
             })
     };
 
@@ -140,5 +154,6 @@ pub async fn parse_args() -> AppResult<AppConfig> {
         session_secret,
         db_pool_size_min,
         db_pool_size_max,
+        config_cli,
     })
 }
