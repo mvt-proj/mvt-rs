@@ -24,17 +24,17 @@ pub fn start_cli(mut appconfig: AppConfig) -> Result<(), CustomUserError> {
     }
 
     let options = vec![
-        "Config directory",
-        "Cache directory",
-        "Map assets directory",
         "Server host",
         "Server port",
-        "Database connection string",
+        "Map assets directory",
+        "Config directory",
+        "Cache directory",
         "Redis connection string",
-        "JWT secret key",
-        "Session secret key",
+        "Database connection string",
         "Database pool size (min)",
         "Database pool size (max)",
+        "JWT secret key",
+        "Session secret key",
         "Save and exit",
         "Exit without saving",
     ];
