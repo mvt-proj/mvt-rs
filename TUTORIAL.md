@@ -101,6 +101,15 @@ Options:
 
 ### Environment Variables (.env)
 
+
+#### Starting from version `0.13.2`, a CLI assistant is available to help you create your `.env` file.
+To launch it, simply run:
+
+```sh
+./mvt-server -C
+```
+
+
 **Make sure to create a `.env` file at the root of your project with the following variables:**
 
 ```sh

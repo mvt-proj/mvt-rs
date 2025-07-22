@@ -34,6 +34,13 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 
 ## Environment Variables (.env)
 
+
+### Starting from version `0.13.2`, a CLI assistant is available to help you create your `.env` file.
+To launch it, simply run:
+
+```sh
+./mvt-server -C
+```
 ### The server uses environment variables for its configuration.
 ### Make sure to create a `.env` file at the root of your project with the following variables:
 
