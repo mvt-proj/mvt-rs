@@ -37,7 +37,7 @@ pub async fn init_sqlite(db_path: &str) -> AppResult<SqlitePool> {
 
         // Obtener credenciales del usuario inicial desde variables de entorno
         let initial_email = std::env::var("INITIAL_USER_EMAIL")
-            .unwrap_or_else(|_| "admin@mail.com".to_string());
+            .unwrap_or_else(|_| "admin@example.com".to_string());
         let initial_password = std::env::var("INITIAL_USER_PASSWORD")
             .unwrap_or_else(|_| "admin".to_string());
 

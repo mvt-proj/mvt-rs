@@ -192,10 +192,10 @@ http {
 
 When the server starts for the first time, the necessary components for its configuration will be automatically generated. An initial user with the 'admin' role will be created with the following credentials:
 
-- Email: **admin@mail.com**
+- Email: **admin@example.com**
 - Password: **admin**
 
-The initial access credentials for MVT Server are: email **admin@mail.com** and password **admin**. It is of utmost importance that, upon your first access to the platform, you change this default password to a new, strong password of your choice. This will help protect your server and data from unauthorized access
+The initial access credentials for MVT Server are: email **admin@example.com** and password **admin**. It is of utmost importance that, upon your first access to the platform, you change this default password to a new, strong password of your choice. This will help protect your server and data from unauthorized access
 
 
 Access `http://localhost:5800`

@@ -11,27 +11,27 @@ services:
       DBCONN: "postgres://mvtuser:mvtpass@postgres:5432/mvtdb"
       POOLSIZEMIN: 3
       POOLSIZEMAX: 10
-      
+
       # Configuración de Redis (opcional)
       REDISCONN: "redis://redis:6379"
-      
+
       # Configuración del servidor
       IPHOST: "0.0.0.0"
       PORT: 5880
-      
+
       # Configuración de seguridad
       JWTSECRET: "supersecretjwt-changeme-in-production-this-must-be-at-least-64-chars-long-12345678"
       SESSIONSECRET: "supersecretsession-changeme-in-production-this-must-be-at-least-64-chars-long"
-      
+
       # Directorios (internos en el contenedor)
       CONFIG: "/app/config"
       CACHE: "/app/cache"
       MAPASSETS: "/app/map_assets"
-      
+
       # Configuración de usuario inicial
       INITIAL_USER_EMAIL: "admin@example.com"
-      INITIAL_USER_PASSWORD: "admin123"
-     
+      INITIAL_USER_PASSWORD: "admin"
+
     volumes:
       - ./config:/app/config
       - ./cache:/app/cache
