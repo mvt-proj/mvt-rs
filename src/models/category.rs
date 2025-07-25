@@ -25,6 +25,7 @@ impl Category {
         let mut categories = get_categories().await.write().await;
 
         categories.push(category.clone());
+        categories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 
         Ok(category)
     }
@@ -63,6 +64,8 @@ impl Category {
         if let Some(pos) = position {
             catalog.layers[pos].category = category.clone();
         }
+
+        categories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 
         Ok(category)
     }

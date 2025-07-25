@@ -24,6 +24,7 @@
       </span>
     </button>
     <button
+      id="clear-filter"
       class="button"
       hx-get="/styletable"
       hx-target="#table-style"
@@ -47,5 +48,23 @@
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("htmx:afterOnLoad", initializePage);
+
+  const filter = document.getElementById("filter");
+  filter.addEventListener("input", () => {
+    sessionStorage.setItem("filterStylesPublic", filter.value);
+  });
+
+  const buttonClearFilter = document.getElementById("clear-filter");
+  buttonClearFilter.addEventListener("click", () => {
+    sessionStorage.removeItem("filterStylesPublic");
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const savedFilter = sessionStorage.getItem("filterStylesPublic");
+    if (savedFilter) {
+      filter.value = savedFilter;
+      filter.dispatchEvent(new Event("input"));
+    }
+  });
 </script>
 {% endblock %}

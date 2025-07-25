@@ -40,6 +40,7 @@
       </span>
     </button>
     <button
+      id="clear-filter"
       class="button"
       hx-get="/catalogtable"
       hx-target="#table-catalog"
@@ -85,5 +86,23 @@
       .getElementById("modal-configuration")
       .classList.remove("is-active");
   };
+
+  const filter = document.getElementById("filter");
+  filter.addEventListener("input", () => {
+    sessionStorage.setItem("filterCatalog", filter.value);
+  });
+
+  const buttonClearFilter = document.getElementById("clear-filter");
+  buttonClearFilter.addEventListener("click", () => {
+    sessionStorage.removeItem("filterCatalog");
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const savedFilter = sessionStorage.getItem("filterCatalog");
+    if (savedFilter) {
+      filter.value = savedFilter;
+      filter.dispatchEvent(new Event("input"));
+    }
+  });
 </script>
 {% endblock %}

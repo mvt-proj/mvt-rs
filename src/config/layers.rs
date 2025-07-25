@@ -23,7 +23,10 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
         LEFT JOIN
             groups g ON ',' || l.groups || ',' LIKE '%,' || g.id || ',%'
         GROUP BY
-            l.id, c.id;
+            l.id, c.id
+        ORDER BY
+            c.name, l.name    
+        ;
         "#,
     )
     .fetch_all(pool)

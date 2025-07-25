@@ -205,7 +205,14 @@ pub struct Catalog {
 
 impl Catalog {
     pub async fn new(pool: &sqlx::SqlitePool) -> AppResult<Self> {
-        let layers = get_layers(Some(pool)).await?;
+        let mut layers = get_layers(Some(pool)).await?;
+        layers.sort_by(|a, b| {
+            a.category
+                .name
+                .to_lowercase()
+                .cmp(&b.category.name.to_lowercase())
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        });
 
         Ok(Self { layers })
     }
@@ -311,6 +318,14 @@ impl Catalog {
             Some(index) => self.layers[index] = layer,
             None => println!("layer not found"),
         }
+
+        self.layers.sort_by(|a, b| {
+            a.category
+                .name
+                .to_lowercase()
+                .cmp(&b.category.name.to_lowercase())
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        });
         Ok(())
     }
 
