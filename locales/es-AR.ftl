@@ -2,8 +2,8 @@
 home = Inicio
 catalog = Catálogo
 styles = Estilos
-sprites = Sprites
-glyphs = Glyphs
+sprites =  Iconos
+glyphs = Glifos
 tutorial = Tutorial
 login = Iniciar Sesión
 logout = Cerrar Sesión
