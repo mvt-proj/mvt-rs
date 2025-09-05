@@ -1,3 +1,10 @@
+<style>
+.layers-toggle-btn {
+  background-color: white !important;
+  border: 1px solid #666;
+}
+</style>
+
 <script>
   let map = new maplibregl.Map({
     container: 'map',
@@ -20,17 +27,24 @@
       let currentZoom = map.getZoom().toFixed(1);
       zoomLevelElement.innerText = currentZoom;
     });
-
-    setTimeout(() => {
-      const style = map.getStyle()
-      if (style.metadata && style.metadata.baseLayers && style.metadata.overLayers) {
-        let Opacity = new OpacityControl({
-          baseLayers: style.metadata.baseLayers,
-          overLayers: style.metadata.overLayers,
-          opacityControl: true,
-        });
-        map.addControl(Opacity, 'top-left');
-      }
-    }, 100);
   });
+
+  setTimeout(() => {
+    const style_name = '{{ style.name }}'
+    const style_category = '{{ style.category.name }}'
+
+    const base = window.location.protocol + "//" + window.location.host;
+    const url_legends = `${base}/services/legends/${style_category}:${style_name}`;
+
+    const style = map.getStyle()
+    if (style.metadata && style.metadata.baseLayers && style.metadata.overLayers) {
+      let layersControl = new LayersControl({
+        baseLayers: style.metadata.baseLayers,
+        overLayers: style.metadata.overLayers,
+        legendServiceUrl: url_legends,
+        opacityControl: true,
+      });
+      map.addControl(layersControl, "bottom-left");
+    }
+  }, 100);
 </script>
