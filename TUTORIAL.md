@@ -540,7 +540,11 @@ You can request:
 - Legends with or without titles
 - Legends that include or exclude raster layers
 
-Example:
+Examples:
+
+<img width="1863" height="849" alt="imagen" src="https://github.com/user-attachments/assets/0829e0bf-e16b-4c2b-bc42-2d04fc0edce5" />
+
+
 
 ![combined](https://github.com/user-attachments/assets/886481e2-e064-4ab4-b1b4-18195fde9db4)
 
