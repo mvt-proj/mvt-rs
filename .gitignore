@@ -1,4 +1,4 @@
-htmx-lsp.core
+*.core
 /certs
 /target
 /cache
