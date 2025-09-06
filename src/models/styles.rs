@@ -89,4 +89,14 @@ impl Style {
         delete_style(&self.id, None).await?;
         Ok(())
     }
+
+    pub fn sort_by_category_and_name(styles: &mut Vec<Style>) {
+        styles.sort_by(|a, b| {
+            a.category
+                .name
+                .to_lowercase()
+                .cmp(&b.category.name.to_lowercase())
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        });
+    }
 }

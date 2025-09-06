@@ -234,7 +234,7 @@ pub async fn table_catalog(
     let catalog = get_catalog().await.read().await;
     let (_is_auth, user) = get_session_data(depot).await;
 
-    let layers: Vec<Layer> = if let Some(filter) = filter {
+    let mut layers: Vec<Layer> = if let Some(filter) = filter {
         catalog
             .layers
             .iter()
@@ -259,6 +259,7 @@ pub async fn table_catalog(
         .cloned()
         .unwrap_or_default();
 
+    Layer::sort_by_category_and_name(&mut layers);
     let template = CatalogTableTemplate {
         layers: &layers,
         current_user: &user,
@@ -399,6 +400,7 @@ pub async fn table_styles(
         .cloned()
         .unwrap_or_default();
 
+    Style::sort_by_category_and_name(&mut styles);
     let template = StylesTableTemplate {
         styles: &styles,
         current_user: &user,

@@ -25,7 +25,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
         GROUP BY
             l.id, c.id
         ORDER BY
-            c.name, l.name    
+            c.name, l.name
         ;
         "#,
     )
