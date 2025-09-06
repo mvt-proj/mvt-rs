@@ -12,7 +12,16 @@
   });
 
   let zoomLevelElement = document.getElementById('zoom-level');
-  zoomLevelElement.innerText = 1;
+  let centerElement = document.getElementById('center');
+  zoomLevelElement.innerText = '';
+  centerElement.innerText = '';
+
+  const setZoomAndCenter = () => {
+    let currentZoom = map.getZoom().toFixed(1);
+    zoomLevelElement.innerText = currentZoom;
+    let currentCenter = map.getCenter();
+    centerElement.innerText = `${currentCenter.lng.toFixed(5)}, ${currentCenter.lat.toFixed(5)}`;
+  };
 
   map.on('load', function () {
     map.addControl(
@@ -24,9 +33,13 @@
     );
 
     map.on('zoom', function () {
-      let currentZoom = map.getZoom().toFixed(1);
-      zoomLevelElement.innerText = currentZoom;
+      setZoomAndCenter();
     });
+
+    map.on('move', function () {
+      setZoomAndCenter();
+    });
+    setZoomAndCenter();
   });
 
   setTimeout(() => {

@@ -85,6 +85,7 @@ open-png = Apri PNG
 
 # Maps
 zoom-level = Livello di zoom
+center = Centro
 
 # Fields
 new-password = Nuova Password

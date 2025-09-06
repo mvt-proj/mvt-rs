@@ -86,6 +86,8 @@ open-png = Abrir PNG
 
 # Maps
 zoom-level = Nivel de Zoom
+center = Centro
+
 
 # Tables
 new-password = Nueva Contraseaña

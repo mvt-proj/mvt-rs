@@ -114,6 +114,15 @@
       "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
       "sprite": "https://demotiles.maplibre.org/sprite",
       "sources": {
+        "osm": {
+          "type": "raster",
+          "tiles": [
+            "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          ],
+          "tileSize": 256,
+          "minzoom": 0,
+          "maxzoom": 19
+        },
         "src_vector_tiles": {
           "type": "vector",
           "tiles": [
@@ -121,10 +130,18 @@
           ],
           "minzoom": 0,
           "maxzoom": 14,
-          "attribution": "© data attribution"
+          "attribution": "© MVT Server"
         }
       },
       "layers": [
+        {
+          "id": "osm",
+          "type": "raster",
+          "source": "osm",
+          "layout": {
+            "visibility": "visible"
+          }
+        },
         {
           "id": "my-layer-fill",
           "type": "fill",
@@ -151,7 +168,15 @@
             "text-halo-width": 1
           }
         }
-      ]
+      ],
+      "metadata": {
+        "baseLayers": {
+          "osm": "OpenStreetMap"
+        },
+        "overLayers": {
+          "my-layer-fill": "My Layer"
+        }
+      }
     };
 
     const partialStyle = {
