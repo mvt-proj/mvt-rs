@@ -27,9 +27,9 @@ async fn serve_static(req: &mut Request, res: &mut Response) {
 }
 
 pub fn app_router(app_config: &args::AppConfig) -> Service {
-    let cache_30s = Cache::new(
+    let cache_5s = Cache::new(
         MokaStore::builder()
-            .time_to_live(Duration::from_secs(30))
+            .time_to_live(Duration::from_secs(5))
             .build(),
         RequestIssuer::default(),
     );
@@ -270,7 +270,7 @@ pub fn app_router(app_config: &args::AppConfig) -> Service {
         .push(Router::with_path("health").get(health::get_health))
         .push(
             Router::with_path("services")
-                .hoop(cache_30s)
+                .hoop(cache_5s)
                 .hoop(cors_handler)
                 .options(handler::empty())
                 .push(
