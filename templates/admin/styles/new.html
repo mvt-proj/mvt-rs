@@ -140,6 +140,10 @@
           "source": "osm",
           "layout": {
             "visibility": "visible"
+          },
+          "metadata": {
+            "alias": "OpenStreetMap",
+            "isbaselayer": true
           }
         },
         {
@@ -150,6 +154,9 @@
           "paint": {
             "fill-color": "#ff6600",
             "fill-opacity": 0.6
+          },
+          "metadata": {
+            "alias": "My Layer"
           }
         },
         {
@@ -168,15 +175,7 @@
             "text-halo-width": 1
           }
         }
-      ],
-      "metadata": {
-        "baseLayers": {
-          "osm": "OpenStreetMap"
-        },
-        "overLayers": {
-          "my-layer-fill": "My Layer"
-        }
-      }
+      ]
     };
 
     const partialStyle = {

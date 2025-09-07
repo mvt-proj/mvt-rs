@@ -1,8 +1,8 @@
 <style>
-.layers-toggle-btn {
-  background-color: white !important;
-  border: 1px solid #666;
-}
+  .layers-toggle-btn {
+    background-color: white !important;
+    border: 1px solid #666;
+  }
 </style>
 
 <script>
@@ -50,14 +50,21 @@
     const url_legends = `${base}/services/legends/${style_category}:${style_name}`;
 
     const style = map.getStyle()
-    if (style.metadata && style.metadata.baseLayers && style.metadata.overLayers) {
-      let layersControl = new LayersControl({
-        baseLayers: style.metadata.baseLayers,
-        overLayers: style.metadata.overLayers,
-        legendServiceUrl: url_legends,
-        opacityControl: true,
-      });
-      map.addControl(layersControl, "bottom-left");
-    }
+    // if (style.metadata && style.metadata.baseLayers && style.metadata.overLayers) {
+    //   let layersControl = new LayersControl({
+    //     baseLayers: style.metadata.baseLayers,
+    //     overLayers: style.metadata.overLayers,
+    //     legendServiceUrl: url_legends,
+    //     opacityControl: true,
+    //   });
+    //   map.addControl(layersControl, "bottom-left");
+    // }
+    let layersControl = new LayersControl({
+      legendServiceUrl: url_legends,
+      opacityControl: true,
+    });
+    map.addControl(layersControl, "bottom-left");
+
+
   }, 100);
 </script>
