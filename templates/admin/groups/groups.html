@@ -63,7 +63,7 @@
                       <span class="truncate">{{ base.translate["edit"] }}</span>
                     </a>
                   </li>
-
+                  {% if group.name != "admin" %}
                   <li>
                     <a
                       class="flex w-full items-center px-3 py-2 hover:bg-red-50 text-red-600 space-x-2"
@@ -75,6 +75,7 @@
                       <span class="truncate">{{ base.translate["delete"] }}</span>
                     </a>
                   </li>
+                  {% endif %}
                 </ul>
               </div>
             </div>
