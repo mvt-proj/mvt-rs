@@ -37,6 +37,7 @@ new-group = New Group
 create-group = Create Group
 update-group = Update Group
 edit-group = Edit Group
+confirm-delete-group = Are you sure you want to delete this group?
 
 list-of-users = List of Users
 add-user = ADD USER
@@ -44,6 +45,7 @@ new-user = New User
 create-user = Create User
 update-user = Update User
 edit-user = Edit User
+confirm-delete-user = Are you sure you want to delete this user?
 
 list-of-categories = List of Categories
 add-category = ADD CATEGORY
@@ -51,12 +53,14 @@ new-category = New Category
 create-category = Create Category
 update-category = Update Category
 edit-category = Edit Category
+confirm-delete-category = Are you sure you want to delete this category?
 
 add-style = ADD STYLE
 new-style = New Style
 create-style = Create Style
 update-style = Update Style
 edit-style = Edit Style
+confirm-delete-style = Are you sure you want to delete this style?
 apply-style = Apply
 full-style-button = Insert full example
 partial-style-button = Insert layer example
@@ -66,6 +70,7 @@ new-layer = New Layer
 create-layer = Create Layer
 update-layer = Update Layer
 edit-layer = Edit Layer
+confirm-delete-layer = Are you sure you want to delete this layer?
 
 # Common
 filter = Filter

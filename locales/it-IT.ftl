@@ -37,6 +37,7 @@ new-group = Nuovo Gruppo
 create-group = Crea Gruppo
 update-group = Aggiorna Gruppo
 edit-group = Modifica Gruppo
+confirm-delete-group = Sei sicuro di voler eliminare questo gruppo?
 
 list-of-users = Elenco degli Utenti
 add-user = AGGIUNGI UTENTE
@@ -44,6 +45,7 @@ new-user = Nuovo Utente
 create-user = Crea Utente
 update-user = Aggiorna Utente
 edit-user = Modifica Utente
+confirm-delete-user = Sei sicuro di voler eliminare questo utente?
 
 list-of-categories = Elenco delle Categorie
 add-category = AGGIUNGI CATEGORIA
@@ -51,12 +53,14 @@ new-category = Nuova Categoria
 create-category = Crea Categoria
 update-category = Aggiorna Categoria
 edit-category = Modifica Categoria
+confirm-delete-category = Sei sicuro di voler eliminare questa categoria?
 
 add-style = AGGIUNGI STILE
 new-style = Nuovo Stile
 create-style = Crea Stile
 update-style = Aggiorna Stile
 edit-style = Modifica Stile
+confirm-delete-style = Sei sicuro di voler eliminare questo stile?
 apply-style = Applica
 full-style-button = Inserisci esempio completo
 partial-style-button = Inserisci esempio layer
@@ -66,6 +70,7 @@ new-layer = Nuovo Layer
 create-layer = Nuovo Layer
 update-layer = Aggiorna Layer
 edit-layer = Modifica Layer
+confirm-delete-layer = Sei sicuro di voler eliminare questo layer?
 
 # Common
 filter = Filtra
