@@ -40,131 +40,179 @@
             }}:{{ layer.name }}/{z}/{x}/{y}.pbf
           </span>
         </td>
-        <td class="text-right">
-          <div class="flex justify-end space-x-2">
-            <button
-              title="{{ translate["copy"] }}"
-              class="button"
-              onclick="copyToClipboard('url-{{ layer.category.name }}:{{ layer.name }}')"
-            >
-              <span class="icon">
-                <i class="fas fa-copy"></i>
-              </span>
-            </button>
-            {% if is_guest_or_non_admin %}
-              {% if layer.published %}
-                <a
-                  href="/maplayer/{{ layer.category.name }}:{{ layer.name }}"
-                  class="button"
-                  title="{{ translate["map"] }}"
-                  target="_blank"
-                >
-                  <span class="icon">
-                    <i class="fas fa-map"></i>
-                  </span>
-                </a>
-              {% else %}
+
+        <td class="text-right relative">
+          <div class="flex justify-end">
+            <div class="relative" data-dropdown="{{ layer.id }}">
               <button
-                disabled
-                class="button"
+                type="button"
+                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                onclick='toggleDropdown("{{ layer.id }}")'
+                aria-haspopup="true"
+                aria-expanded="false"
               >
-                <span class="icon">
-                  <i class="fas fa-map"></i>
-                </span>
+                <i class="fas fa-ellipsis-h"></i>
               </button>
-              {% endif %}
-            {% endif %}
 
-            {% if let Some(current_user) = self.current_user %}
-              {% if current_user.is_admin() %}
-                <button
-                  class="button"
-                  title="{{ translate["info"] }}"
-                  onclick='openModal("{{ layer.info_html() }}")'
-                >
-                  <span class="icon">
-                    <i class="fas fa-cog"></i>
-                  </span>
-                </button>
-
-                {% if layer.published %}
-                  <a
-                    href="/maplayer/{{ layer.category.name }}:{{ layer.name }}"
-                    class="button"
-                    target="_blank"
-                    title="{{ translate["map"] }}"
-                  >
-                    <span class="icon">
-                      <i class="fas fa-map"></i>
-                    </span>
-                  </a>
-
-                {% else %}
-                  <a
-                      class="button__outline flex items-center space-x-2 text-gray-500 cursor-not-allowed opacity-50"
-                      href="javascript:void(0)"
-                      aria-disabled="true"
-                      tabindex="-1"
+              <div
+                id="dropdown-menu-{{ layer.id }}"
+                class="hidden absolute right-0 mt-2 w-56 bg-white border rounded shadow-lg text-sm z-[999]"
+                role="menu"
+                aria-label="Actions menu"
+              >
+                <ul class="py-1">
+                  <!-- Copiar -->
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center space-x-2"
+                      onclick='copyToClipboard("url-{{ layer.category.name }}:{{ layer.name }}"); closeDropdown("{{ layer.id }}")'
+                      role="menuitem"
+                      title='{{ translate["copy"] }}'
                     >
-                    <span class="icon">
-                      <i class="fas fa-map"></i>
-                    </span>
-                  </a>
-                {% endif %}
+                      <span class="w-5"><i class="fas fa-copy"></i></span>
+                      <span>{{ translate["copy"] }}</span>
+                    </button>
+                  </li>
 
-                <a href="/admin/catalog/layers/edit/{{ layer.id }}" class="button"
-                  title="{{ translate["edit"] }}"
-                >
-                  <span class="icon">
-                    <i class="fas fa-pen"></i>
-                  </span>
-                </a>
+                  <!-- Map para guest / non-admin -->
+                  {% if is_guest_or_non_admin %}
+                    <li>
+                      {% if layer.published %}
+                        <a
+                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          href='/maplayer/{{ layer.category.name }}:{{ layer.name }}'
+                          target="_blank"
+                          role="menuitem"
+                          onclick='closeDropdown("{{ layer.id }}")'
+                          title='{{ translate["map"] }}'
+                        >
+                          <span class="w-5"><i class="fas fa-map"></i></span>
+                          <span>{{ translate["map"] }}</span>
+                        </a>
+                      {% else %}
+                        <div
+                          class="block w-full text-left px-3 py-2 items-center space-x-2 text-gray-400 cursor-not-allowed"
+                          role="menuitem"
+                          aria-disabled="true"
+                          title='{{ translate["map"] }}'
+                        >
+                          <span class="w-5"><i class="fas fa-map"></i></span>
+                          <span>{{ translate["map"] }}</span>
+                        </div>
+                      {% endif %}
+                    </li>
+                  {% endif %}
 
-                {% if layer.published %}
-                  <a
-                    href="/admin/catalog/layers/swichpublished/{{ layer.id }}"
-                    class="button"
-                    title="{{ translate["switch-published"] }}"
-                  >
-                    <span class="icon">
-                      <i class="far fa-check-square"></i>
-                    </span>
-                  </a>
-                {% else %}
-                  <a
-                    href="/admin/catalog/layers/swichpublished/{{ layer.id }}"
-                    class="button"
-                    title="{{ translate["switch-published"] }}"
-                  >
-                    <span class="icon">
-                      <i class="far fa-square"></i>
-                    </span>
-                  </a>
-                {% endif %}
+                  <!-- Admin actions -->
+                  {% if let Some(current_user) = self.current_user %}
+                    {% if current_user.is_admin() %}
+                      <li>
+                        <button
+                          class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center space-x-2"
+                          title='{{ translate["info"] }}'
+                          onclick='openModal("{{ layer.info_html() }}"); closeDropdown("{{ layer.id }}")'
+                          role="menuitem"
+                        >
+                          <span class="w-5"><i class="fas fa-cog"></i></span>
+                          <span>{{ translate["info"] }}</span>
+                        </button>
+                      </li>
 
-                <a
-                  href="/admin/catalog/layers/delete_cache/{{ layer.id }}"
-                  title="{{ translate["delete-cache"] }}"
-                  class="button"
-                  onclick="return confirm('Are you sure you want to erase the cache for this layer?');"
-                >
-                  <span class="icon">
-                    <i class="fas fa-eraser"></i>
-                  </span>
-                </a>
-                <a
-                  href="/admin/catalog/layers/delete/{{ layer.id }}"
-                  class="button danger"
-                  title="{{ translate["delete"] }}"
-                  onclick="return confirm('Are you sure you want to delete this layer publication?');"
-                >
-                  <span class="icon">
-                    <i class="fas fa-trash"></i>
-                  </span>
-                </a>
+                      <!-- Map para admin -->
+                      <li>
+                        {% if layer.published %}
+                          <a
+                            class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                            href='/maplayer/{{ layer.category.name }}:{{ layer.name }}'
+                            target="_blank"
+                            role="menuitem"
+                            onclick='closeDropdown("{{ layer.id }}")'
+                            title='{{ translate["map"] }}'
+                          >
+                            <span class="w-5"><i class="fas fa-map"></i></span>
+                            <span>{{ translate["map"] }}</span>
+                          </a>
+                        {% else %}
+                          <div
+                            class="block w-full text-left px-3 py-2 items-center space-x-2 text-gray-400 cursor-not-allowed"
+                            role="menuitem"
+                            aria-disabled="true"
+                            title='{{ translate["map"] }}'
+                          >
+                            <span class="w-5"><i class="fas fa-map"></i></span>
+                            <span>{{ translate["map"] }}</span>
+                          </div>
+                        {% endif %}
+                      </li>
+
+                      <!-- Edit -->
+                      <li>
+                        <a
+                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          href='/admin/catalog/layers/edit/{{ layer.id }}'
+                          role="menuitem"
+                          onclick='closeDropdown("{{ layer.id }}")'
+                          title='{{ translate["edit"] }}'
+                        >
+                          <span class="w-5"><i class="fas fa-pen"></i></span>
+                          <span>{{ translate["edit"] }}</span>
+                        </a>
+                      </li>
+
+                      <!-- Switch published -->
+                      <li>
+                        <a
+                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          href='/admin/catalog/layers/swichpublished/{{ layer.id }}'
+                          role="menuitem"
+                          onclick='closeDropdown("{{ layer.id }}")'
+                          title='{{ translate["switch-published"] }}'
+                        >
+                          <span class="w-5">
+                            {% if layer.published %}
+                              <i class="far fa-check-square"></i>
+                            {% else %}
+                              <i class="far fa-square"></i>
+                            {% endif %}
+                          </span>
+                          <span>{{ translate["switch-published"] }}</span>
+                        </a>
+                      </li>
+
+                      <!-- Delete cache -->
+                      <li>
+                        <a
+                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          href='/admin/catalog/layers/delete_cache/{{ layer.id }}'
+                          role="menuitem"
+                          onclick='if(!confirm("Are you sure you want to erase the cache for this layer?")) return false; closeDropdown("{{ layer.id }}")'
+                          title='{{ translate["delete-cache"] }}'
+                        >
+                          <span class="w-5"><i class="fas fa-eraser"></i></span>
+                          <span>{{ translate["delete-cache"] }}</span>
+                        </a>
+                      </li>
+
+                      <!-- Delete publication -->
+                      <li>
+                        <a
+                          class="block px-3 py-2 hover:bg-red-50 text-red-600 items-center space-x-2"
+                          href='/admin/catalog/layers/delete/{{ layer.id }}'
+                          role="menuitem"
+                          onclick='if(!confirm("Are you sure you want to delete this layer publication?")) return false; closeDropdown("{{ layer.id }}")'
+                          title='{{ translate["delete"] }}'
+                        >
+                          <span class="w-5"><i class="fas fa-trash"></i></span>
+                          <span>{{ translate["delete"] }}</span>
+                        </a>
+                      </li>
+                    {% endif %}
+                  {% endif %}
+                </ul>
               </div>
-            {% endif %}
-          {% endif %}
+            </div>
+          </div>
         </td>
       </tr>
       {% endfor %}

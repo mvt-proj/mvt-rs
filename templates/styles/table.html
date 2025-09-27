@@ -23,73 +23,105 @@
             }}:{{ style.name }}
           </span>
         </td>
-        <td class="text-right">
-          <div class="flex justify-end space-x-2">
-            <button
-              title="{{ translate["copy"] }}"
-              class="button"
-              onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}')"
-            >
-              <span class="icon">
-                <i class="fas fa-copy"></i>
-              </span>
-            </button>
-            <a
-              href="/services/legends/{{ style.category.name }}:{{ style.name }}?has_label=true"
-              class="button"
-              title="{{ translate["legends"] }}"
-              target="_blank"
-            >
-              <span class="icon">
-                <i class="fas fa-map-signs"></i>
-              </span>
-            </a>
-            {% if style.is_map() %}
-              <a
-                href="/mapview/{{ style.id }}"
-                class="button"
-                title="{{ translate["map"] }}"
-                target="_blank"
+
+        <td class="text-right relative">
+          <div class="flex justify-end">
+            <div class="relative" data-dropdown="{{ style.id }}">
+              <button
+                type="button"
+                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                onclick="toggleDropdown('{{ style.id }}')"
+                aria-haspopup="true"
+                aria-expanded="false"
               >
-                <span class="icon">
-                  <i class="fas fa-map"></i>
-                </span>
-              </a>
-            {% else %}
-              <a
-                class="button__outline flex items-center space-x-2 text-gray-500 cursor-not-allowed opacity-50"
-                href="javascript:void(0)"
-                aria-disabled="true"
-                tabindex="-1"
+                <i class="fas fa-ellipsis-h"></i>
+              </button>
+
+              <div
+                id="dropdown-menu-{{ style.id }}"
+                class="hidden absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg text-sm z-[999]"
+                role="menu"
+                aria-label="Actions menu"
               >
-                <span class="icon">
-                  <i class="fas fa-map"></i>
-                </span>
-              </a>
-            {% endif %}
-          {% if let Some(current_user) = self.current_user %}
-            {% if current_user.is_admin() %}
-              <a href="/admin/styles/edit/{{ style.id }}" class="button"
-                title="{{ translate["edit"] }}"
-              >
-                <span class="icon">
-                <i class="fas fa-pen"></i>
-                </span>
-              </a>
-              <a
-                href="/admin/styles/delete/{{ style.id }}"
-                class="button danger"
-                title="{{ translate["delete"] }}"
-                onclick="return confirm('Are you sure you want to delete this style?');"
-              >
-                <span class="icon">
-                <i class="fas fa-trash"></i>
-                </span>
-              </a>
-            {% endif %}
-          {% endif %}
+                <ul class="py-1">
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center space-x-2"
+                      onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}'); closeDropdown('{{ style.id }}')"
+                      role="menuitem"
+                    >
+                      <span class="w-5"><i class="fas fa-copy"></i></span>
+                      <span>{{ translate["copy"] }}</span>
+                    </button>
+                  </li>
+
+                  <li>
+                    <a
+                      class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                      href="/services/legends/{{ style.category.name }}:{{ style.name }}?has_label=true"
+                      target="_blank"
+                      role="menuitem"
+                      onclick="closeDropdown('{{ style.id }}')"
+                    >
+                      <span class="w-5"><i class="fas fa-map-signs"></i></span>
+                      <span>{{ translate["legends"] }}</span>
+                    </a>
+                  </li>
+
+                  <li>
+                    {% if style.is_map() %}
+                    <a
+                      class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                      href="/mapview/{{ style.id }}"
+                      target="_blank"
+                      role="menuitem"
+                      onclick="closeDropdown('{{ style.id }}')"
+                    >
+                      <span class="w-5"><i class="fas fa-map"></i></span>
+                      <span>{{ translate["map"] }}</span>
+                    </a>
+                    {% else %}
+                    <div class="block w-full text-left px-3 py-2 items-center space-x-2 text-gray-400 cursor-not-allowed">
+                      <span class="w-5"><i class="fas fa-map"></i></span>
+                      <span>{{ translate["map"] }}</span>
+                    </div>
+                    {% endif %}
+                  </li>
+
+                  {% if let Some(current_user) = self.current_user %}
+                    {% if current_user.is_admin() %}
+                  <li>
+                    <a
+                      class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                      href="/admin/styles/edit/{{ style.id }}"
+                      role="menuitem"
+                      onclick="closeDropdown('{{ style.id }}')"
+                    >
+                      <span class="w-5"><i class="fas fa-pen"></i></span>
+                      <span>{{ translate["edit"] }}</span>
+                    </a>
+                  </li>
+
+                  <li>
+                    <a
+                      class="block px-3 py-2 hover:bg-red-50 text-red-600 items-center space-x-2"
+                      href="/admin/styles/delete/{{ style.id }}"
+                      onclick="return confirm('Are you sure you want to delete this style?');"
+                      role="menuitem"
+                    >
+                      <span class="w-5"><i class="fas fa-trash"></i></span>
+                      <span>{{ translate["delete"] }}</span>
+                    </a>
+                  </li>
+                    {% endif %}
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
           </div>
         </td>
+
       </tr>
       {% endfor %}
     </tbody>

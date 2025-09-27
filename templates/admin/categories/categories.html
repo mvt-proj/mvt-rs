@@ -30,23 +30,54 @@
           <span class="font-semibold">{{ category.name }}</span>
         </td>
         <td>{{ category.description }}</td>
-        <td class="text-right">
+
+        <td class="text-right relative">
           {% if current_user.is_admin() %}
-          <div class="flex justify-end space-x-2">
-            <a href="/admin/categories/edit/{{ category.id }}" class="button">
-              <span class="icon">
-                <i class="fas fa-pen"></i>
-              </span>
-            </a>
-            <a
-              href="/admin/categories/delete/{{ category.id }}"
-              class="button danger"
-              onclick="return confirm('Are you sure you want to delete this category?');"
-            >
-              <span class="icon">
-                <i class="fas fa-trash"></i>
-              </span>
-            </a>
+          <div class="flex justify-end">
+            <div class="relative" data-dropdown="{{ category.id }}">
+              <button
+                type="button"
+                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                onclick="toggleDropdown('{{ category.id }}')"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <i class="fas fa-ellipsis-h"></i>
+              </button>
+
+              <div
+                id="dropdown-menu-{{ category.id }}"
+                class="hidden absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg text-sm z-[999]"
+                role="menu"
+                aria-label="Category actions"
+              >
+                <ul class="py-1">
+                  <li>
+                    <a
+                      class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                      href="/admin/categories/edit/{{ category.id }}"
+                      role="menuitem"
+                      onclick="closeDropdown('{{ category.id }}')"
+                    >
+                      <span class="w-5"><i class="fas fa-pen"></i></span>
+                      <span>{{ base.translate["edit"] }}</span>
+                    </a>
+                  </li>
+
+                  <li>
+                    <a
+                      class="block px-3 py-2 hover:bg-red-50 text-red-600 items-center space-x-2"
+                      href="/admin/categories/delete/{{ category.id }}"
+                      role="menuitem"
+                      onclick="if(!confirm('Are you sure you want to delete this category?')) return false; closeDropdown('{{ category.id }}')"
+                    >
+                      <span class="w-5"><i class="fas fa-trash"></i></span>
+                      <span>{{ base.translate["delete"] }}</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
           {% endif %}
         </td>
