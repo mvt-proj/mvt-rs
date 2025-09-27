@@ -25,8 +25,8 @@ feature-4 = <strong>Próximamente:</strong> Soporte a metadatos compatible con <
 
 catalog-of-layers = Catálogo de capas publicadas
 list-of-styles = Listado de Estilos
-list-of-sprites = Listado de Sprites
-list-of-glyps = Listado de Glyps
+list-of-sprites = Listado de Iconos
+list-of-glyps = Listado de Glifos
 
 # Admin
 change-password = Cambiar Contraseña
