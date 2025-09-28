@@ -24,39 +24,106 @@
             <span class="server"></span>/services/map_assets/sprites/{{ sprite }}/sprite
           </span>
         </td>
-        <td class="text-right">
-          <div class="flex justify-end space-x-2">
-            <button
-              class="button"
-              title="{{ base.translate["copy"] }}"
-              onclick="copyToClipboard('url-{{ sprite }}')"
-            >
-              <span class="icon">
-                <i class="fas fa-copy"></i>
-              </span>
+
+        <td class="text-right relative">
+          <div class="flex justify-end">
+            <div class="relative" data-dropdown="{{ sprite }}">
+              <button
+                type="button"
+                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                onclick='toggleDropdown("{{ sprite }}")'
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <i class="fas fa-ellipsis-h"></i>
+              </button>
+
+              <div
+                id="dropdown-menu-{{ sprite }}"
+                class="hidden absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg text-sm z-[999]"
+                role="menu"
+                aria-label="Sprite actions"
+              >
+                <ul class="py-1">
+                  <li>
+                    <button
+                      class="flex w-full items-center px-3 py-2 hover:bg-gray-50 space-x-2"
+                      onclick='copyToClipboard("url-{{ sprite }}"); closeDropdown("{{ sprite }}")'
+                      role="menuitem"
+                      title='{{ base.translate["copy"] }}'
+                    >
+              <span class="w-5"><i class="fas fa-copy"></i></span>
+              <span class="truncate">{{ base.translate["copy"] }}</span>
             </button>
+          </li>
+
+          <li>
             <a
+              class="flex w-full items-center px-3 py-2 hover:bg-gray-50 space-x-2"
               href="/services/map_assets/sprites/{{ sprite }}/sprite.json"
-              class="button"
               target="_blank"
-              title="{{ base.translate["open-json"] }}"
+              role="menuitem"
+              onclick='closeDropdown("{{ sprite }}")'
+              title='{{ base.translate["open-json"] }}'
             >
-              <span class="icon">
-                <i class="fas fa-file-code"></i>
-              </span>
+              <span class="w-5"><i class="fas fa-file-code"></i></span>
+              <span class="truncate">{{ base.translate["open-json"] }}</span>
             </a>
+          </li>
+
+          <li>
             <a
+              class="flex w-full items-center px-3 py-2 hover:bg-gray-50 space-x-2"
               href="/services/map_assets/sprites/{{ sprite }}/sprite.png"
-              class="button"
               target="_blank"
-              title="{{ base.translate["open-png"] }}"
+              role="menuitem"
+              onclick='closeDropdown("{{ sprite }}")'
+              title='{{ base.translate["open-png"] }}'
             >
-              <span class="icon">
-                <i class="fas fa-file-image"></i>
-              </span>
+              <span class="w-5"><i class="fas fa-file-image"></i></span>
+              <span class="truncate">{{ base.translate["open-png"] }}</span>
             </a>
-          </div>
-        </td>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</td>
+
+
+        <!-- <td class="text-right"> -->
+        <!--   <div class="flex justify-end space-x-2"> -->
+        <!--     <button -->
+        <!--       class="button" -->
+        <!--       title="{{ base.translate["copy"] }}" -->
+        <!--       onclick="copyToClipboard('url-{{ sprite }}')" -->
+        <!--     > -->
+        <!--       <span class="icon"> -->
+        <!--         <i class="fas fa-copy"></i> -->
+        <!--       </span> -->
+        <!--     </button> -->
+        <!--     <a -->
+        <!--       href="/services/map_assets/sprites/{{ sprite }}/sprite.json" -->
+        <!--       class="button" -->
+        <!--       target="_blank" -->
+        <!--       title="{{ base.translate["open-json"] }}" -->
+        <!--     > -->
+        <!--       <span class="icon"> -->
+        <!--         <i class="fas fa-file-code"></i> -->
+        <!--       </span> -->
+        <!--     </a> -->
+        <!--     <a -->
+        <!--       href="/services/map_assets/sprites/{{ sprite }}/sprite.png" -->
+        <!--       class="button" -->
+        <!--       target="_blank" -->
+        <!--       title="{{ base.translate["open-png"] }}" -->
+        <!--     > -->
+        <!--       <span class="icon"> -->
+        <!--         <i class="fas fa-file-image"></i> -->
+        <!--       </span> -->
+        <!--     </a> -->
+        <!--   </div> -->
+        <!-- </td> -->
       </tr>
       {% endfor %}
     </tbody>
