@@ -47,24 +47,37 @@ function openDropdown(id) {
   menu.classList.remove('hidden');
 
   menu.style.position = 'fixed';
-  menu.style.width = `${menu.offsetWidth}px`;
   menu.style.maxHeight = '70vh';
 
   const btnRect = btn.getBoundingClientRect();
+  const menuWidth = menu.offsetWidth;
   const menuHeight = menu.offsetHeight;
+
+  const gapY = -5;
+  const gapX = 30;
+
+  const preferredLeft = btnRect.left + (btnRect.width / 2) - (menuWidth / 2);
+  const minLeft = gapX;
+  const maxLeft = window.innerWidth - menuWidth - gapX;
+  const left = Math.min(Math.max(preferredLeft, minLeft), maxLeft);
+
   const spaceBelow = window.innerHeight - btnRect.bottom;
   const spaceAbove = btnRect.top;
-  const gap = 2;
 
-  if (spaceBelow < menuHeight + gap && spaceAbove > menuHeight + gap) {
-    menu.style.top = `${btnRect.top - menuHeight - gap}px`;
-    menu.style.right = `${right}px`;
+  let top;
+  if (spaceBelow < menuHeight + gapY && spaceAbove > menuHeight + gapY) {
+    top = btnRect.top - menuHeight - gapY - 16;
   } else {
-    menu.style.top = `${btnRect.bottom + gap}px`;
-    menu.style.right = `${right}px`;
+    top = btnRect.bottom + gapY;
   }
 
+  menu.style.left = `${Math.round(left)}px`;
+  menu.style.top = `${Math.round(top)}px`;
+
+  menu.style.right = '';
   menu.style.zIndex = '2000';
+  menu.style.width = `${menuWidth}px`;
+
   OPEN_DROPDOWN_ID = id;
 }
 
@@ -95,7 +108,6 @@ function closeAllDropdowns() {
   OPEN_DROPDOWN_ID = null;
 }
 
-// cerrar al hacer click fuera de cualquier data-dropdown
 document.addEventListener('click', (e) => {
   if (!e.target.closest('[data-dropdown]')) closeAllDropdowns();
 });
