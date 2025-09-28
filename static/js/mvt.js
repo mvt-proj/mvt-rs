@@ -55,7 +55,6 @@ function openDropdown(id) {
   const spaceBelow = window.innerHeight - btnRect.bottom;
   const spaceAbove = btnRect.top;
   const gap = 2;
-  const right = Math.max(8, window.innerWidth - btnRect.right);
 
   if (spaceBelow < menuHeight + gap && spaceAbove > menuHeight + gap) {
     menu.style.top = `${btnRect.top - menuHeight - gap}px`;
