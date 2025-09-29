@@ -22,6 +22,15 @@ impl fmt::Display for FilterCondition {
     }
 }
 
+fn strip_single_quotes(s: &str) -> String {
+    let trimmed = s.trim();
+    if trimmed.starts_with('\'') && trimmed.ends_with('\'') && trimmed.len() >= 2 {
+        trimmed[1..trimmed.len()-1].replace("''", "'")
+    } else {
+        trimmed.to_string()
+    }
+}
+
 /// Parses filters from query parameters.
 ///
 /// - If the key starts with "or__", it is marked as an OR condition.
@@ -66,10 +75,16 @@ pub fn parse_filters(query: &HashMap<String, String>) -> Vec<FilterCondition> {
                 _ => return None, // Malformed parameter
             };
 
+            let v = if operator == "=" {
+                strip_single_quotes(value)
+            } else {
+                value.to_string()
+            };
+
             Some(FilterCondition {
                 field,
                 operator,
-                value: value.to_string(),
+                value: v,
                 logic,
             })
         })
