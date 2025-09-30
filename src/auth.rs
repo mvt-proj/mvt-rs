@@ -47,7 +47,7 @@ fn decode_basic_auth(base64_string: &str) -> AppResult<(String, String)> {
     Ok((auth_parts[0].to_string(), auth_parts[1].to_string()))
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JwtClaims {
     pub id: String,
     username: String,

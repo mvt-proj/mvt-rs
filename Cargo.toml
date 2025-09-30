@@ -16,7 +16,8 @@ askama = "0.14"
 thiserror = "2"
 base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
-jsonwebtoken = "9.3"
+jsonwebtoken = { version = "10.0", features = ["rust_crypto"] }
+
 salvo = { version = "0.84", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
