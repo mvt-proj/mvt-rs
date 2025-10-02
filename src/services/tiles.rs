@@ -352,8 +352,10 @@ pub async fn get_composite_layers_tile(
         )
         .await?;
 
-        let elapsed_time = start_time.elapsed().as_millis();
-        data_source_times.push(format!("{layer_name}: {elapsed_time}ms"));
+        let elapsed_time = start_time.elapsed();
+        let elapsed_secs = elapsed_time.as_secs_f64();
+        record_latency(elapsed_secs);
+        data_source_times.push(format!("{}: {}ms", layer.name, elapsed_time.as_millis()));
 
         match via {
             Via::Database => cache_misses += 1,
@@ -435,8 +437,10 @@ pub async fn get_category_layers_tile(
         )
         .await?;
 
-        let elapsed_time = start_time.elapsed().as_millis();
-        data_source_times.push(format!("{}: {}ms", layer.name, elapsed_time));
+        let elapsed_time = start_time.elapsed();
+        let elapsed_secs = elapsed_time.as_secs_f64();
+        record_latency(elapsed_secs);
+        data_source_times.push(format!("{}: {}ms", layer.name, elapsed_time.as_millis()));
 
         match via {
             Via::Database => cache_misses += 1,
