@@ -71,6 +71,7 @@ new-layer = Nuovo Layer
 create-layer = Nuovo Layer
 update-layer = Aggiorna Layer
 edit-layer = Modifica Layer
+confirm-delete-cache = Sei sicuro di voler eliminare la cache per questo layer?
 confirm-delete-layer = Sei sicuro di voler eliminare questo layer?
 
 # Common

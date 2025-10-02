@@ -71,6 +71,7 @@ new-layer = Nueva Capa
 create-layer = Crear Capa
 update-layer = Actualizar Capa
 edit-layer = Editar Capa
+confirm-delete-cache = ¿Está seguro que quiere eliminar el caché de esta capa?
 confirm-delete-layer = ¿Está seguro que quiere eliminar esta capa?
 
 # Common
