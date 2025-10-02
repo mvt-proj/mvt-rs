@@ -10,6 +10,7 @@ use crate::{
     error::AppResult,
     filters, get_cache_wrapper, get_catalog, get_db_pool,
     models::catalog::{Layer, StateLayer},
+    monitor::{REQUESTS_TOTAL, CACHE_HITS, CACHE_MISSES, record_latency},
 };
 
 const DEFAULT_BUFFER: u32 = 256;
@@ -170,8 +171,11 @@ async fn get_tile(
 
     let cache_wrapper = get_cache_wrapper();
 
+    REQUESTS_TOTAL.inc();
+
     if local_where_clause.is_empty() {
         if let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await {
+            CACHE_HITS.inc();
             return Ok((tile, Via::Cache));
         }
     }
@@ -202,6 +206,7 @@ async fn get_tile(
             .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
             .await?;
     }
+    CACHE_MISSES.inc();
 
     Ok((tile, Via::Database))
 }
@@ -261,6 +266,10 @@ pub async fn get_single_layer_tile(
     let start_time = Instant::now();
     let (tile, via) = get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await?;
     let elapsed_time = start_time.elapsed();
+
+    let elapsed_secs = elapsed_time.as_secs_f64();
+    record_latency(elapsed_secs);
+
     let elapsed_time_str = format!("{}", elapsed_time.as_millis());
 
     res.headers_mut().insert(

@@ -10,6 +10,7 @@ use std::time::Duration;
 use crate::{
     api, args, auth, html,
     i18n::i18n_middleware,
+    monitor,
     services::{health, legends, styles, tiles},
 };
 
@@ -216,6 +217,12 @@ pub fn app_router(app_config: &args::AppConfig) -> Service {
                                     Router::with_path("fields").get(html::admin::database::fields),
                                 )
                                 .push(Router::with_path("srid").get(html::admin::database::srid)),
+                        )
+                        .push(
+                            Router::with_path("monitor")
+                                // .push(Router::with_path("metrics").get(monitor::metrics))
+                                .push(Router::with_path("dashboard").get(monitor::dashboard))
+                                .push(Router::with_path("ssemetrics").get(monitor::sse_metrics)),
                         ),
                 ),
         )
@@ -227,6 +234,7 @@ pub fn app_router(app_config: &args::AppConfig) -> Service {
                         .post(api::users::login)
                         .options(handler::empty()),
                 )
+                .push(Router::with_path("monitor/metrics").get(monitor::metrics))
                 .push(Router::with_path("catalog/layer").get(api::catalog::list))
                 .push(
                     Router::with_path("admin")

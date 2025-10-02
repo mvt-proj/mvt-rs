@@ -12,6 +12,7 @@ groups = Groups
 users = Users
 categories = Categories
 metadata = Metadata
+metrics = Metrics
 
 # Pages
 welcome = Welcome to MVT Server!

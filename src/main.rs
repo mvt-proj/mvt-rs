@@ -18,6 +18,7 @@ mod filters;
 mod html;
 mod i18n;
 mod models;
+mod monitor;
 mod rediscache;
 mod routes;
 mod services;
@@ -27,6 +28,7 @@ use cachewrapper::CacheWrapper;
 use db::make_db_pool;
 use error::AppResult;
 use models::{catalog::Catalog, category::Category};
+use monitor::spawn_updater;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -96,6 +98,8 @@ async fn main() -> AppResult<()> {
         .with_env_filter("warn")
         // .with_env_filter("info")
         .init();
+
+    spawn_updater();
 
     let app_config = args::parse_args().await?;
 

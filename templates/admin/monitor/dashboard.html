@@ -1,0 +1,141 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block head %}
+  <title>MVT Server — Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#60a5fa}
+    .wrap{max-width:1100px;margin:24px auto;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:16px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    h1{margin:0 0 8px 0;font-size:18px}
+    .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+    canvas{width:100% !important;height:200px !important}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .kv{background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;font-size:13px}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+{% endblock %}
+
+{% block admin_content %}
+  <div class="wrap">
+    <div class="card" style="grid-column: span 2;">
+      <h1>MVT Server — Dashboard</h1>
+      <div class="meta">/admin/monitor/metrics available for Prometheus.</div>
+      <div class="row" id="top-kv">
+        <div class="kv">CPU: <span id="cpu">-</span>%</div>
+        <div class="kv">Memory: <span id="mem">-</span> GiB</div>
+        <div class="kv">RPS (delta/s): <span id="rps">-</span></div>
+        <div class="kv">Cache Hits/s: <span id="cache-hits">-</span></div>
+        <div class="kv">Cache Misses/s: <span id="cache-misses">-</span></div>
+        <div class="kv">Last lat (ms): <span id="last-lat">-</span></div>
+        <div class="kv">Average lat (ms): <span id="avg-lat">-</span></div>
+      </div>
+    </div>
+
+    <div class="card"><h1>CPU %</h1><canvas id="cpuChart"></canvas></div>
+    <div class="card"><h1>Memory (GB)</h1><canvas id="memChart"></canvas></div>
+    <div class="card"><h1>RPS (requests/sec)</h1><canvas id="rpsChart"></canvas></div>
+    <div class="card"><h1>Latency (ms)</h1><canvas id="latChart"></canvas></div>
+    <div class="card"><h1>Cache Hits/s</h1><canvas id="cacheHitChart"></canvas></div>
+    <div class="card"><h1>Cache Misses/s</h1><canvas id="cacheMissChart"></canvas></div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // helpers
+  const maxPoints = 60;
+  function makeChart(ctx, label, color, yLabel) {
+    return new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: color, tension: 0.2, pointRadius: 0 }]},
+      options: {
+        animation: false,
+        responsive: true,
+        scales: { y: { title: { display: !!yLabel, text: yLabel }, beginAtZero: true } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  const cpuChart = makeChart(document.getElementById('cpuChart').getContext('2d'),'CPU %','#60a5fa','%');
+  const memChart = makeChart(document.getElementById('memChart').getContext('2d'),'Memoria (GB)','rgba(96,165,250,0.9)','GiB');
+  const rpsChart = makeChart(document.getElementById('rpsChart').getContext('2d'),'RPS','rgba(136,57,160,0.95)','req/s');
+  const latChart = makeChart(document.getElementById('latChart').getContext('2d'),'Latency (ms)','rgba(250,180,60,0.95)','ms');
+  const cacheHitChart = makeChart(document.getElementById('cacheHitChart').getContext('2d'),'Cache Hits/s','rgba(96,220,150,0.95)','hits/s');
+  const cacheMissChart = makeChart(document.getElementById('cacheMissChart').getContext('2d'),'Cache Misses/s','rgba(220,96,96,0.95)','misses/s');
+
+  let lastRequestsTotal = null;
+  let lastCacheHits = null;
+  let lastCacheMisses = null;
+
+  function pushPoint(chart, value) {
+    const t = new Date().toLocaleTimeString();
+    chart.data.labels.push(t);
+    chart.data.datasets[0].data.push(Number((value).toFixed(3)));
+    if (chart.data.labels.length > maxPoints) {
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
+    }
+    chart.update('none');
+  }
+
+  // SSE connection
+  const evt = new EventSource('/admin/monitor/ssemetrics');
+  evt.onmessage = (e) => {
+    try {
+      const obj = JSON.parse(e.data);
+      const cpu = Number(obj.cpu_percent) || 0;
+      const mem_gb = Number(obj.memory_gb) || 0;
+      const reqs = Number(obj.requests_total) || 0;
+      const cache_hits_total = Number(obj.cache_hits_total) || 0;
+      const cache_misses_total = Number(obj.cache_misses_total) || 0;
+      const last_lat = Number(obj.last_latency) || 0;
+      const avg_lat = Number(obj.avg_latency) || 0;
+
+      document.getElementById('cpu').textContent = cpu.toFixed(2);
+      document.getElementById('mem').textContent = mem_gb.toFixed(3);
+      document.getElementById('last-lat').textContent = (last_lat*1000).toFixed(3);
+      document.getElementById('avg-lat').textContent = (avg_lat*1000).toFixed(3);
+
+      let rps = 0;
+      if (lastRequestsTotal !== null) {
+        rps = reqs - lastRequestsTotal;
+        if (rps < 0) rps = 0;
+      }
+      lastRequestsTotal = reqs;
+      document.getElementById('rps').textContent = rps.toFixed(2);
+
+      let hitsDelta = 0;
+      if (lastCacheHits !== null) {
+        hitsDelta = cache_hits_total - lastCacheHits;
+        if (hitsDelta < 0) hitsDelta = 0;
+      }
+      lastCacheHits = cache_hits_total;
+      document.getElementById('cache-hits').textContent = hitsDelta.toFixed(2);
+
+      let missesDelta = 0;
+      if (lastCacheMisses !== null) {
+        missesDelta = cache_misses_total - lastCacheMisses;
+        if (missesDelta < 0) missesDelta = 0;
+      }
+      lastCacheMisses = cache_misses_total;
+      document.getElementById('cache-misses').textContent = missesDelta.toFixed(2);
+
+      pushPoint(cpuChart, cpu);
+      pushPoint(memChart, mem_gb);
+      pushPoint(rpsChart, rps);
+      pushPoint(latChart, (last_lat*1000));
+      pushPoint(cacheHitChart, hitsDelta);
+      pushPoint(cacheMissChart, missesDelta);
+
+    } catch (err) {
+      console.error('SSE parse error', err);
+    }
+  };
+
+  evt.onerror = (e) => {
+    console.warn('SSE error, retrying ...', e);
+  };
+</script>
+{% endblock %}
