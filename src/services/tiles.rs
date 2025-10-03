@@ -166,9 +166,9 @@ async fn get_tile(
     let name = &layer_conf.name;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
     let mut local_where_clause = where_clause;
+    let original_local_where_clause_is_empty = local_where_clause.is_empty();
 
     let query = layer_conf.clone().filter.unwrap_or_default();
-
     let cache_wrapper = get_cache_wrapper();
 
     REQUESTS_TOTAL.inc();
@@ -201,7 +201,7 @@ async fn get_tile(
     )
     .await?;
 
-    if local_where_clause.is_empty() {
+    if original_local_where_clause_is_empty && !tile.is_empty() {
         cache_wrapper
             .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
             .await?;
