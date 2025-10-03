@@ -137,6 +137,26 @@ pub fn update_avg_latency() {
     }
 }
 
+// pub fn spawn_updater() {
+//     tokio::spawn(async {
+//         let pid_num = std::process::id() as usize;
+//         let pid = Pid::from(pid_num);
+//
+//         let mut sys = System::new_all();
+//         let mut intv = interval(Duration::from_secs(10));
+//         loop {
+//             intv.tick().await;
+//             sys.refresh_processes(ProcessesToUpdate::All, true);
+//             if let Some(p) = sys.process(pid) {
+//                 let mem_bytes = p.memory() * 1024; // KB → bytes
+//                 PROCESS_MEM.set(mem_bytes as f64);
+//                 PROCESS_CPU.set(p.cpu_usage() as f64);
+//             }
+//             update_avg_latency();
+//         }
+//     });
+// }
+
 pub fn spawn_updater() {
     tokio::spawn(async {
         let pid_num = std::process::id() as usize;
@@ -144,11 +164,16 @@ pub fn spawn_updater() {
 
         let mut sys = System::new_all();
         let mut intv = interval(Duration::from_secs(10));
+
+        sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
+
         loop {
             intv.tick().await;
-            sys.refresh_processes(ProcessesToUpdate::All, true);
+
+            sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
+
             if let Some(p) = sys.process(pid) {
-                let mem_bytes = p.memory() * 1024; // KB → bytes
+                let mem_bytes = p.memory();
                 PROCESS_MEM.set(mem_bytes as f64);
                 PROCESS_CPU.set(p.cpu_usage() as f64);
             }
@@ -213,7 +238,7 @@ pub async fn sse_metrics(res: &mut Response) {
     let stream = IntervalStream::new(tick).map(move |_| {
         let cpu = PROCESS_CPU.get();
         let mem_bytes = PROCESS_MEM.get();
-        let mem_gib = mem_bytes / (1024.0 * 1024.0 * 1024.0);
+        let mem_gb = mem_bytes / 1_000_000_000.0;
         let reqs = REQUESTS_TOTAL.get();
         let hits = CACHE_HITS.get();
         let misses = CACHE_MISSES.get();
@@ -222,7 +247,7 @@ pub async fn sse_metrics(res: &mut Response) {
 
         let json = match serde_json::to_string(&json!({
             "cpu_percent": cpu,
-            "memory_gb": mem_gib,
+            "memory_gb": mem_gb,
             "requests_total": reqs,
             "cache_hits_total": hits,
             "cache_misses_total": misses,

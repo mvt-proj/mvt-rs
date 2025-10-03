@@ -23,7 +23,7 @@
       <div class="meta">/admin/monitor/metrics available for Prometheus.</div>
       <div class="row" id="top-kv">
         <div class="kv">CPU: <span id="cpu">-</span>%</div>
-        <div class="kv">Memory: <span id="mem">-</span> GiB</div>
+        <div class="kv">Memory: <span id="mem">-</span> GB</div>
         <div class="kv">RPS (delta/s): <span id="rps">-</span></div>
         <div class="kv">Cache Hits: <span id="cache-hits-total">-</span></div>
         <div class="kv">Cache Misses: <span id="cache-misses-total">-</span></div>
@@ -59,7 +59,7 @@
   }
 
   const cpuChart = makeChart(document.getElementById('cpuChart').getContext('2d'),'CPU %','#60a5fa','%');
-  const memChart = makeChart(document.getElementById('memChart').getContext('2d'),'Memoria (GB)','rgba(96,165,250,0.9)','GB');
+  const memChart = makeChart(document.getElementById('memChart').getContext('2d'),'Memory (GB)','rgba(96,165,250,0.9)','GB');
   const rpsChart = makeChart(document.getElementById('rpsChart').getContext('2d'),'RPS','rgba(136,57,160,0.95)','req/s');
   const latChart = makeChart(document.getElementById('latChart').getContext('2d'),'Latency (ms)','rgba(250,180,60,0.95)','ms');
   const cacheHitChart = makeChart(document.getElementById('cacheHitChart').getContext('2d'),'Cache Hits/s','rgba(96,220,150,0.95)','hits/s');
@@ -112,9 +112,7 @@
         if (hitsDelta < 0) hitsDelta = 0;
       }
       lastCacheHits = cache_hits_total;
-      // document.getElementById('cache-hits').textContent = hitsDelta.toFixed(2);
       document.getElementById('cache-hits-total').textContent = cache_hits_total.toFixed(0);
-
 
       let missesDelta = 0;
       if (lastCacheMisses !== null) {
@@ -122,7 +120,6 @@
         if (missesDelta < 0) missesDelta = 0;
       }
       lastCacheMisses = cache_misses_total;
-      // document.getElementById('cache-misses').textContent = missesDelta.toFixed(2);
       document.getElementById('cache-misses-total').textContent = cache_misses_total.toFixed(0);
 
       pushPoint(cpuChart, cpu);
