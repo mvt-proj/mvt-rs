@@ -26,6 +26,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 - Initial i18n support.
 - Max records control at the layer level.
 - Alpha-stage API for querying and managing the layer catalog.
+- Monitoring and Metrics
 
 
 ## Tutorial
