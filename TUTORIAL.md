@@ -30,6 +30,7 @@ MVT Server not only allows you to publish geographic layers in vector tile forma
 11. [Serving Sprites and Glyphs in MVT Server](#serving-glyphs-and-sprites-in-mvt-server)
    - [Sprites](#serving-sprites)
    - [Glyphs](#serving-glyphs)
+12. [Monitoring and Metrics](monitoring-and-metrics)
 ---
 
 ## Requirements
@@ -707,6 +708,37 @@ You have now successfully created and configured glyphs for your MVT Server! ðŸŽ
 
 
 
-### Conclusion
+## Monitoring and Metrics
 
-By properly structuring your assets and configuring your MapLibre style, you can serve custom sprites and, soon, glyphs with your MVT Server. This setup allows for scalable and customizable vector tile rendering.
+MVT-RS includes a built-in monitoring dashboard with real-time metrics visualization. The server exposes both a web dashboard and Prometheus-compatible metrics endpoint.
+
+### Accessing the Dashboard
+
+Navigate to `/admin/monitor/dashboard` to view real-time server metrics including:
+
+- **CPU Usage**: Process CPU utilization percentage (supports FreeBSD jails via getrusage fallback)
+- **Memory**: Resident memory usage in GB
+- **RPS (Requests Per Second)**: Real-time request throughput
+- **Latency**: Last request and average response times in milliseconds
+- **Cache Performance**: Cache hits and misses per second
+
+<img width="934" height="860" alt="imagen" src="https://github.com/user-attachments/assets/661de924-e343-417c-88f2-344be51bbe34" />
+
+
+The dashboard updates every 5 seconds via Server-Sent Events (SSE) and displays historical data in interactive charts.
+
+### Prometheus Metrics
+
+All metrics are available in Prometheus format at `/api/monitor/metrics`:
+
+mvt_server_process_cpu_percent
+mvt_server_process_memory_bytes
+mvt_server_requests_total
+mvt_server_cache_hits_total
+mvt_server_cache_misses_total
+mvt_server_request_latency_seconds
+mvt_server_request_latency_avg_seconds
+
+These can be scraped by Prometheus or any compatible monitoring system for long-term storage and alerting.
+
+**Note**: In restricted environments like FreeBSD jails, CPU metrics automatically fall back to `getrusage()` when `sysinfo` is unavailable.
