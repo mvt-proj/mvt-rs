@@ -30,7 +30,7 @@ MVT Server not only allows you to publish geographic layers in vector tile forma
 11. [Serving Sprites and Glyphs in MVT Server](#serving-glyphs-and-sprites-in-mvt-server)
    - [Sprites](#serving-sprites)
    - [Glyphs](#serving-glyphs)
-12. [Monitoring and Metrics](monitoring-and-metrics)
+12. [Monitoring and Metrics](#monitoring-and-metrics)
 ---
 
 ## Requirements
