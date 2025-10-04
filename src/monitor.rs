@@ -21,7 +21,7 @@ struct DashboardTemplate {
 }
 
 pub static REGISTRY: LazyLock<Registry> =
-    LazyLock::new(|| Registry::new_custom(Some("vectiles".into()), None)
+    LazyLock::new(|| Registry::new_custom(Some("mvt_server".into()), None)
         .unwrap_or_else(|e| {
             tracing::error!("failed to create registry: {e}");
             Registry::new()
