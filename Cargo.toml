@@ -48,6 +48,7 @@ tokio-stream = { version = "0.1", features = ["net"] }
 prometheus = "0.14"
 sysinfo = { version = "0.37", features = [] }
 futures = "0.3"
+libc = "0.2"
 
 [build-dependencies]
 

@@ -12,6 +12,7 @@ use sysinfo::{Pid, ProcessesToUpdate, System};
 use tokio::time::{Duration, interval};
 use tokio_stream::{StreamExt, wrappers::IntervalStream};
 use crate::html::main::{BaseTemplateData, is_authenticated};
+use std::time::Instant;
 
 #[derive(Template)]
 #[template(path = "admin/monitor/dashboard.html")]
@@ -137,25 +138,25 @@ pub fn update_avg_latency() {
     }
 }
 
-// pub fn spawn_updater() {
-//     tokio::spawn(async {
-//         let pid_num = std::process::id() as usize;
-//         let pid = Pid::from(pid_num);
-//
-//         let mut sys = System::new_all();
-//         let mut intv = interval(Duration::from_secs(10));
-//         loop {
-//             intv.tick().await;
-//             sys.refresh_processes(ProcessesToUpdate::All, true);
-//             if let Some(p) = sys.process(pid) {
-//                 let mem_bytes = p.memory() * 1024; // KB → bytes
-//                 PROCESS_MEM.set(mem_bytes as f64);
-//                 PROCESS_CPU.set(p.cpu_usage() as f64);
-//             }
-//             update_avg_latency();
-//         }
-//     });
-// }
+#[cfg(unix)]
+fn get_cpu_time() -> Option<(f64, f64)> {
+    unsafe {
+        let mut usage: libc::rusage = std::mem::zeroed();
+        if libc::getrusage(libc::RUSAGE_SELF, &mut usage) == 0 {
+            let user = usage.ru_utime.tv_sec as f64 + usage.ru_utime.tv_usec as f64 / 1_000_000.0;
+            let system = usage.ru_stime.tv_sec as f64 + usage.ru_stime.tv_usec as f64 / 1_000_000.0;
+            Some((user, system))
+        } else {
+            None
+        }
+    }
+}
+
+#[cfg(windows)]
+fn get_cpu_time() -> Option<(f64, f64)> {
+    // Windows no soporta getrusage, retornar None para que use sysinfo
+    None
+}
 
 pub fn spawn_updater() {
     tokio::spawn(async {
@@ -164,6 +165,10 @@ pub fn spawn_updater() {
 
         let mut sys = System::new_all();
         let mut intv = interval(Duration::from_secs(10));
+
+        let mut last_cpu_time: Option<(f64, f64)> = None;
+        let mut last_wall_time = Instant::now();
+        let mut warned_once = false;
 
         sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
 
@@ -175,8 +180,50 @@ pub fn spawn_updater() {
             if let Some(p) = sys.process(pid) {
                 let mem_bytes = p.memory();
                 PROCESS_MEM.set(mem_bytes as f64);
-                PROCESS_CPU.set(p.cpu_usage() as f64);
+
+                let cpu_from_sysinfo = p.cpu_usage() as f64;
+
+                if cpu_from_sysinfo > 0.01 {
+                    PROCESS_CPU.set(cpu_from_sysinfo);
+                } else {
+                    #[cfg(unix)]
+                    {
+                        if let Some((user, system)) = get_cpu_time() {
+                            if let Some((last_user, last_system)) = last_cpu_time {
+                                let now = Instant::now();
+                                let wall_elapsed = now.duration_since(last_wall_time).as_secs_f64();
+
+                                if wall_elapsed > 0.0 {
+                                    let user_delta = user - last_user;
+                                    let system_delta = system - last_system;
+                                    let cpu_delta = user_delta + system_delta;
+
+                                    let cpu_percent = (cpu_delta / wall_elapsed) * 100.0;
+
+                                    PROCESS_CPU.set(cpu_percent.clamp(0.0, 100.0));
+                                }
+
+                                last_wall_time = now;
+                            }
+                            last_cpu_time = Some((user, system));
+                        } else if !warned_once {
+                            tracing::warn!("CPU metrics unavailable (jail/container restriction)");
+                            warned_once = true;
+                            PROCESS_CPU.set(0.0);
+                        }
+                    }
+
+                    #[cfg(windows)]
+                    {
+                        if !warned_once {
+                            tracing::warn!("CPU metrics from sysinfo returned 0 - this may be normal on Windows");
+                            warned_once = true;
+                        }
+                        PROCESS_CPU.set(0.0);
+                    }
+                }
             }
+
             update_avg_latency();
         }
     });
