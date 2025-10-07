@@ -19,7 +19,7 @@ MVT Server not only allows you to publish geographic layers in vector tile forma
 5. [Configuration](#configuration)
    - [Environment Variables](#environment-variables)
    - [Command Arguments](#command-arguments)
-6. [Publishing Layers & Styles](#publishing-layers--styles)
+6. [Serving a data layer](#serving-a-data-layer)
 7. [Consuming Services](#consuming-services)
    - [About the Sources](#about-the-sources)
    - [Filtering](#filtering)
