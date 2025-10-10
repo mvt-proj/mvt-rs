@@ -731,6 +731,7 @@ The dashboard updates every 5 seconds via Server-Sent Events (SSE) and displays 
 
 All metrics are available in Prometheus format at `/api/monitor/metrics`:
 
+```
 mvt_server_process_cpu_percent
 mvt_server_process_memory_bytes
 mvt_server_requests_total
@@ -738,6 +739,8 @@ mvt_server_cache_hits_total
 mvt_server_cache_misses_total
 mvt_server_request_latency_seconds
 mvt_server_request_latency_avg_seconds
+```
+
 
 These can be scraped by Prometheus or any compatible monitoring system for long-term storage and alerting.
 
