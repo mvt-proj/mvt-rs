@@ -49,6 +49,7 @@ prometheus = "0.14"
 sysinfo = { version = "0.37", features = [] }
 futures = "0.3"
 libc = "0.2"
+mime_guess = "2.0.5"
 
 [build-dependencies]
 

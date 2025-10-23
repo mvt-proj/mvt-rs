@@ -6,6 +6,8 @@ use salvo::logging::Logger;
 use salvo::prelude::*;
 use salvo::session::CookieStore;
 use std::time::Duration;
+use mime_guess::from_path;
+
 
 use crate::{
     api, args, auth, html,
@@ -21,6 +23,16 @@ async fn serve_static(req: &mut Request, res: &mut Response) {
     let path = req.uri().path().trim_start_matches("/static/");
 
     if let Some(file) = STATIC_DIR.get_file(path) {
+        let content_type = from_path(path).first_or_octet_stream().to_string();
+
+        if let Ok(header_value) = content_type.parse() {
+            res.headers_mut().insert("Content-Type", header_value);
+        } else {
+            if let Ok(fallback_value) = "application/octet-stream".parse() {
+                res.headers_mut().insert("Content-Type", fallback_value);
+            }
+        }
+
         let _ = res.write_body(file.contents());
     } else {
         res.status_code(StatusCode::NOT_FOUND);
