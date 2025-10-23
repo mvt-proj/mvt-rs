@@ -1,4 +1,5 @@
 use include_dir::{Dir, include_dir};
+use mime_guess::from_path;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::catcher::Catcher;
 use salvo::cors::{self as cors, Cors};
@@ -6,8 +7,6 @@ use salvo::logging::Logger;
 use salvo::prelude::*;
 use salvo::session::CookieStore;
 use std::time::Duration;
-use mime_guess::from_path;
-
 
 use crate::{
     api, args, auth, html,

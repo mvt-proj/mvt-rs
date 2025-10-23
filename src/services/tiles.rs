@@ -10,7 +10,7 @@ use crate::{
     error::AppResult,
     filters, get_cache_wrapper, get_catalog, get_db_pool,
     models::catalog::{Layer, StateLayer},
-    monitor::{REQUESTS_TOTAL, CACHE_HITS, CACHE_MISSES, record_latency},
+    monitor::{CACHE_HITS, CACHE_MISSES, REQUESTS_TOTAL, record_latency},
 };
 
 const DEFAULT_BUFFER: u32 = 256;

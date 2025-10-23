@@ -25,7 +25,7 @@ impl fmt::Display for FilterCondition {
 fn strip_single_quotes(s: &str) -> String {
     let trimmed = s.trim();
     if trimmed.starts_with('\'') && trimmed.ends_with('\'') && trimmed.len() >= 2 {
-        trimmed[1..trimmed.len()-1].replace("''", "'")
+        trimmed[1..trimmed.len() - 1].replace("''", "'")
     } else {
         trimmed.to_string()
     }

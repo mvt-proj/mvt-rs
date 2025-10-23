@@ -1,2 +1,2 @@
-pub mod prompts;
 pub mod config;
+pub mod prompts;

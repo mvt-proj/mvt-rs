@@ -1,18 +1,18 @@
 use askama::Template;
-use std::collections::HashMap;
 use salvo::prelude::*;
 use serde_json::json;
+use std::collections::HashMap;
 use std::io;
 
 use prometheus::{Counter, Encoder, Gauge, Opts, Registry, TextEncoder};
 use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use crate::html::main::{BaseTemplateData, is_authenticated};
+use std::time::Instant;
 use sysinfo::{Pid, ProcessesToUpdate, System};
 use tokio::time::{Duration, interval};
 use tokio_stream::{StreamExt, wrappers::IntervalStream};
-use crate::html::main::{BaseTemplateData, is_authenticated};
-use std::time::Instant;
 
 #[derive(Template)]
 #[template(path = "admin/monitor/dashboard.html")]
@@ -20,18 +20,19 @@ struct DashboardTemplate {
     base: BaseTemplateData,
 }
 
-pub static REGISTRY: LazyLock<Registry> =
-    LazyLock::new(|| Registry::new_custom(Some("mvt_server".into()), None)
-        .unwrap_or_else(|e| {
-            tracing::error!("failed to create registry: {e}");
-            Registry::new()
-        }));
+pub static REGISTRY: LazyLock<Registry> = LazyLock::new(|| {
+    Registry::new_custom(Some("mvt_server".into()), None).unwrap_or_else(|e| {
+        tracing::error!("failed to create registry: {e}");
+        Registry::new()
+    })
+});
 
 pub static PROCESS_CPU: LazyLock<Gauge> = LazyLock::new(|| {
     let g = Gauge::with_opts(Opts::new(
         "process_cpu_percent",
         "CPU usage percent of this process",
-    )).unwrap_or_else(|e| {
+    ))
+    .unwrap_or_else(|e| {
         tracing::error!("failed to create PROCESS_CPU gauge: {e}");
         Gauge::new("dummy_cpu", "dummy").unwrap()
     });
@@ -45,7 +46,8 @@ pub static PROCESS_MEM: LazyLock<Gauge> = LazyLock::new(|| {
     let g = Gauge::with_opts(Opts::new(
         "process_memory_bytes",
         "Resident memory (bytes) of this process",
-    )).unwrap_or_else(|e| {
+    ))
+    .unwrap_or_else(|e| {
         tracing::error!("failed to create PROCESS_MEM gauge: {e}");
         Gauge::new("dummy_mem", "dummy").unwrap()
     });
@@ -68,8 +70,8 @@ pub static REQUESTS_TOTAL: LazyLock<Counter> = LazyLock::new(|| {
 });
 
 pub static CACHE_HITS: LazyLock<Counter> = LazyLock::new(|| {
-    let c = Counter::with_opts(Opts::new("cache_hits_total", "Total cache hits"))
-        .unwrap_or_else(|e| {
+    let c =
+        Counter::with_opts(Opts::new("cache_hits_total", "Total cache hits")).unwrap_or_else(|e| {
             tracing::error!("failed to create CACHE_HITS counter: {e}");
             Counter::new("dummy_hits", "dummy").unwrap()
         });
@@ -95,7 +97,8 @@ pub static LAST_LATENCY: LazyLock<Gauge> = LazyLock::new(|| {
     let g = Gauge::with_opts(Opts::new(
         "request_latency_seconds",
         "Last request latency in seconds",
-    )).unwrap_or_else(|e| {
+    ))
+    .unwrap_or_else(|e| {
         tracing::error!("failed to create LAST_LATENCY gauge: {e}");
         Gauge::new("dummy_last_latency", "dummy").unwrap()
     });
@@ -109,7 +112,8 @@ pub static AVG_LATENCY: LazyLock<Gauge> = LazyLock::new(|| {
     let g = Gauge::with_opts(Opts::new(
         "request_latency_avg_seconds",
         "Average request latency in seconds",
-    )).unwrap_or_else(|e| {
+    ))
+    .unwrap_or_else(|e| {
         tracing::error!("failed to create AVG_LATENCY gauge: {e}");
         Gauge::new("dummy_avg_latency", "dummy").unwrap()
     });
@@ -216,7 +220,9 @@ pub fn spawn_updater() {
                     #[cfg(windows)]
                     {
                         if !warned_once {
-                            tracing::warn!("CPU metrics from sysinfo returned 0 - this may be normal on Windows");
+                            tracing::warn!(
+                                "CPU metrics from sysinfo returned 0 - this may be normal on Windows"
+                            );
                             warned_once = true;
                         }
                         PROCESS_CPU.set(0.0);
