@@ -197,7 +197,7 @@ impl Layer {
         self.groups_as_vec_string().contains(&"admin".to_string())
     }
 
-    pub fn sort_by_category_and_name(layers: &mut Vec<Layer>) {
+    pub fn sort_by_category_and_name(layers: &mut [Layer]) {
         layers.sort_by(|a, b| {
             a.category
                 .name

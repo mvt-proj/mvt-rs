@@ -99,15 +99,16 @@ pub type AppResult<T> = Result<T, AppError>;
 #[async_trait]
 impl Writer for AppError {
     async fn write(mut self, _req: &mut Request, _depot: &mut Depot, res: &mut Response) {
-        if let Some(status) = res.status_code {
-            if status.as_u16() >= 400 && status.as_u16() <= 600 {
-                let template = ErrorTemplate {
-                    status: status.as_u16(),
-                    message: self.to_string(),
-                };
+        if let Some(status) = res.status_code
+            && status.as_u16() >= 400
+            && status.as_u16() <= 600
+        {
+            let template = ErrorTemplate {
+                status: status.as_u16(),
+                message: self.to_string(),
+            };
 
-                res.render(Text::Html(template.render().unwrap()));
-            }
+            res.render(Text::Html(template.render().unwrap()));
         }
     }
 }

@@ -93,11 +93,11 @@ impl I18n {
 
         for key in message_keys {
             let mut errors = vec![];
-            if let Some(message) = bundle.get_message(key) {
-                if let Some(pattern) = message.value() {
-                    let translated = bundle.format_pattern(pattern, None, &mut errors);
-                    translations.insert(key.to_string(), translated.to_string());
-                }
+            if let Some(message) = bundle.get_message(key)
+                && let Some(pattern) = message.value()
+            {
+                let translated = bundle.format_pattern(pattern, None, &mut errors);
+                translations.insert(key.to_string(), translated.to_string());
             }
         }
 

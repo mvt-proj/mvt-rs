@@ -90,7 +90,7 @@ impl Style {
         Ok(())
     }
 
-    pub fn sort_by_category_and_name(styles: &mut Vec<Style>) {
+    pub fn sort_by_category_and_name(styles: &mut [Style]) {
         styles.sort_by(|a, b| {
             a.category
                 .name

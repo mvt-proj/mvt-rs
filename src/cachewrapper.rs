@@ -121,12 +121,12 @@ pub async fn initialize_cache(
     disk_cache_dir: PathBuf,
     catalog: Catalog,
 ) -> AppResult<CacheWrapper> {
-    if let Some(redis_conn) = redis_conn {
-        if !redis_conn.is_empty() {
-            let redis_cache = RedisCache::new(redis_conn).await?;
-            redis_cache.delete_cache(catalog.clone()).await?;
-            return Ok(CacheWrapper::new_redis(redis_cache));
-        }
+    if let Some(redis_conn) = redis_conn
+        && !redis_conn.is_empty()
+    {
+        let redis_cache = RedisCache::new(redis_conn).await?;
+        redis_cache.delete_cache(catalog.clone()).await?;
+        return Ok(CacheWrapper::new_redis(redis_cache));
     }
 
     let disk_cache = DiskCache::new(disk_cache_dir);

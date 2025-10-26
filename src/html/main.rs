@@ -35,20 +35,37 @@ pub async fn is_authenticated(depot: &mut Depot) -> bool {
     false
 }
 
+// pub async fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
+//     let is_auth = is_authenticated(depot).await;
+//     let mut user: Option<User> = None;
+//
+//     if is_auth {
+//         if let Some(session) = depot.session_mut() {
+//             if let Some(userid) = session.get::<String>("userid") {
+//                 let auth = get_auth().await.read().await;
+//                 if let Some(usr) = auth.get_user_by_id(&userid) {
+//                     user = Some(usr.clone());
+//                 }
+//             }
+//         }
+//     }
+//     (is_auth, user)
+// }
+
 pub async fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
     let is_auth = is_authenticated(depot).await;
     let mut user: Option<User> = None;
 
-    if is_auth {
-        if let Some(session) = depot.session_mut() {
-            if let Some(userid) = session.get::<String>("userid") {
-                let auth = get_auth().await.read().await;
-                if let Some(usr) = auth.get_user_by_id(&userid) {
-                    user = Some(usr.clone());
-                }
-            }
+    if is_auth
+        && let Some(session) = depot.session_mut()
+        && let Some(userid) = session.get::<String>("userid")
+    {
+        let auth = get_auth().await.read().await;
+        if let Some(usr) = auth.get_user_by_id(&userid) {
+            user = Some(usr.clone());
         }
     }
+
     (is_auth, user)
 }
 
@@ -436,10 +453,10 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
 
-        if entry.file_type().await?.is_dir() {
-            if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
-                unique_names.insert(dir_name.to_string());
-            }
+        if entry.file_type().await?.is_dir()
+            && let Some(dir_name) = path.file_name().and_then(|n| n.to_str())
+        {
+            unique_names.insert(dir_name.to_string());
         }
     }
 
@@ -477,10 +494,10 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
 
-        if entry.file_type().await?.is_dir() {
-            if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
-                unique_names.insert(dir_name.to_string());
-            }
+        if entry.file_type().await?.is_dir()
+            && let Some(dir_name) = path.file_name().and_then(|n| n.to_str())
+        {
+            unique_names.insert(dir_name.to_string());
         }
     }
     let mut glyphs: Vec<String> = unique_names.into_iter().collect();
@@ -492,17 +509,18 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 
 #[handler]
 pub async fn handle_errors(res: &mut Response, ctrl: &mut FlowCtrl) -> AppResult<()> {
-    if let Some(status) = res.status_code {
-        if status.as_u16() >= 400 && status.as_u16() <= 600 {
-            let template = ErrorTemplate {
-                status: status.as_u16(),
-                message: status.canonical_reason().unwrap().to_string(),
-            };
+    if let Some(status) = res.status_code
+        && status.as_u16() >= 400
+        && status.as_u16() <= 600
+    {
+        let template = ErrorTemplate {
+            status: status.as_u16(),
+            message: status.canonical_reason().unwrap().to_string(),
+        };
 
-            res.render(Text::Html(template.render()?));
-            ctrl.skip_rest();
-            return Ok(());
-        }
+        res.render(Text::Html(template.render()?));
+        ctrl.skip_rest();
+        return Ok(());
     }
 
     Ok(())

@@ -349,15 +349,15 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
 
 #[handler]
 pub async fn require_user_admin(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    if let Some(session) = depot.session_mut() {
-        if let Some(userid) = session.get::<String>("userid") {
-            let auth = get_auth().await.read().await;
-            if let Some(user) = auth.get_user_by_id(&userid) {
-                if !user.is_admin() {
-                    res.render(Redirect::other("/admin"));
-                    return Ok(());
-                }
-            }
+    if let Some(session) = depot.session_mut()
+        && let Some(userid) = session.get::<String>("userid")
+    {
+        let auth = get_auth().await.read().await;
+        if let Some(user) = auth.get_user_by_id(&userid)
+            && !user.is_admin()
+        {
+            res.render(Redirect::other("/admin"));
+            return Ok(());
         }
     }
 

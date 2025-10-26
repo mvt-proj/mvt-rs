@@ -26,10 +26,8 @@ async fn serve_static(req: &mut Request, res: &mut Response) {
 
         if let Ok(header_value) = content_type.parse() {
             res.headers_mut().insert("Content-Type", header_value);
-        } else {
-            if let Ok(fallback_value) = "application/octet-stream".parse() {
-                res.headers_mut().insert("Content-Type", fallback_value);
-            }
+        } else if let Ok(fallback_value) = "application/octet-stream".parse() {
+            res.headers_mut().insert("Content-Type", fallback_value);
         }
 
         let _ = res.write_body(file.contents());

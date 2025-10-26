@@ -76,10 +76,10 @@ impl DiskCache {
     }
 
     pub async fn write_tile_to_file(&self, tilepath: &PathBuf, tile: &[u8]) -> AppResult<()> {
-        if let Some(parent) = tilepath.parent() {
-            if fs::metadata(parent).await.is_err() {
-                fs::create_dir_all(parent).await?;
-            }
+        if let Some(parent) = tilepath.parent()
+            && fs::metadata(parent).await.is_err()
+        {
+            fs::create_dir_all(parent).await?;
         }
 
         let mut file = File::create(tilepath).await?;

@@ -173,11 +173,11 @@ async fn get_tile(
 
     REQUESTS_TOTAL.inc();
 
-    if local_where_clause.is_empty() {
-        if let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await {
-            CACHE_HITS.inc();
-            return Ok((tile, Via::Cache));
-        }
+    if local_where_clause.is_empty()
+        && let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await
+    {
+        CACHE_HITS.inc();
+        return Ok((tile, Via::Cache));
     }
 
     if !query.is_empty() {
@@ -231,10 +231,10 @@ pub async fn get_single_layer_tile(
     let known_params = ["layer_name", "x", "y", "z"];
     let mut filter_params: HashMap<String, String> = HashMap::new();
     for (key, values) in req.queries() {
-        if !known_params.contains(&key.as_str()) {
-            if let Some(value) = values.first() {
-                filter_params.insert(key.to_string(), value.to_string());
-            }
+        if !known_params.contains(&key.as_str())
+            && let Some(value) = values.first()
+        {
+            filter_params.insert(key.to_string(), value.to_string());
         }
     }
     let filters = filters::parse_filters(&filter_params);
