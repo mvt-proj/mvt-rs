@@ -56,6 +56,17 @@ pub fn app_router(app_config: &args::AppConfig) -> Service {
             .build()
             .unwrap();
 
+    let protected_pages = Router::new()
+        .hoop(auth::session_auth_handler)
+        .push(Router::with_path("catalog").get(html::main::page_catalog))
+        .push(Router::with_path("catalogtable").get(html::main::table_catalog))
+        .push(Router::with_path("styles").get(html::main::page_styles))
+        .push(Router::with_path("styletable").get(html::main::table_styles))
+        .push(Router::with_path("sprites").get(html::main::page_sprites))
+        .push(Router::with_path("glyphs").get(html::main::page_glyphs))
+        .push(Router::with_path("maplayer/{layer_name}").get(html::main::page_map_layer))
+        .push(Router::with_path("mapview/{style_id}").get(html::main::page_map_view));
+
     let router = Router::new()
         .hoop(Logger::default())
         .hoop(session_handler)
@@ -80,14 +91,15 @@ pub fn app_router(app_config: &args::AppConfig) -> Service {
                         .hoop(auth::session_auth_handler)
                         .post(auth::change_password),
                 )
-                .push(Router::with_path("catalog").get(html::main::page_catalog))
-                .push(Router::with_path("catalogtable").get(html::main::table_catalog))
-                .push(Router::with_path("styles").get(html::main::page_styles))
-                .push(Router::with_path("styletable").get(html::main::table_styles))
-                .push(Router::with_path("sprites").get(html::main::page_sprites))
-                .push(Router::with_path("glyphs").get(html::main::page_glyphs))
-                .push(Router::with_path("maplayer/{layer_name}").get(html::main::page_map_layer))
-                .push(Router::with_path("mapview/{style_id}").get(html::main::page_map_view))
+                // .push(Router::with_path("catalog").get(html::main::page_catalog))
+                // .push(Router::with_path("catalogtable").get(html::main::table_catalog))
+                // .push(Router::with_path("styles").get(html::main::page_styles))
+                // .push(Router::with_path("styletable").get(html::main::table_styles))
+                // .push(Router::with_path("sprites").get(html::main::page_sprites))
+                // .push(Router::with_path("glyphs").get(html::main::page_glyphs))
+                // .push(Router::with_path("maplayer/{layer_name}").get(html::main::page_map_layer))
+                // .push(Router::with_path("mapview/{style_id}").get(html::main::page_map_view))
+                .push(protected_pages)
                 .push(
                     Router::with_path("admin")
                         .hoop(auth::session_auth_handler)
