@@ -163,7 +163,9 @@ async fn get_tile(
     where_clause: String,
     bindings: Vec<String>,
 ) -> AppResult<(Bytes, Via)> {
-    let name = &layer_conf.name;
+    // let name = &layer_conf.name;
+    let name_owned = format!("{}_{}", layer_conf.category.name, layer_conf.name,);
+    let name = &name_owned;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
     let mut local_where_clause = where_clause;
     let original_local_where_clause_is_empty = local_where_clause.is_empty();
