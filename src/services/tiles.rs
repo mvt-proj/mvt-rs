@@ -181,6 +181,7 @@ async fn get_tile(
         CACHE_HITS.inc();
         return Ok((tile, Via::Cache));
     }
+    CACHE_MISSES.inc();
 
     if !query.is_empty() {
         if validate_filter(&query).is_err() {
@@ -203,12 +204,11 @@ async fn get_tile(
     )
     .await?;
 
-    if original_local_where_clause_is_empty && !tile.is_empty() {
+    if original_local_where_clause_is_empty {
         cache_wrapper
             .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
             .await?;
     }
-    CACHE_MISSES.inc();
 
     Ok((tile, Via::Database))
 }
