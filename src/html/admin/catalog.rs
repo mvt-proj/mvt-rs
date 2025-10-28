@@ -262,7 +262,8 @@ pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> Ap
     let layer_name = {
         let catalog = get_catalog().await.read().await;
         if let Some(layer) = catalog.find_layer_by_id(&layer_id, StateLayer::Any) {
-            layer.name.clone()
+            // layer.name.clone()
+            format!("{}_{}", layer.category.name, layer.name)
         } else {
             res.status_code(StatusCode::BAD_REQUEST);
             return Err(AppError::CacheNotFount(layer_id.to_string()));
