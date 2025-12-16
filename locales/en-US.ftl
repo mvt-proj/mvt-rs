@@ -134,3 +134,5 @@ allowed-groups = Allowed Groups
 info-empty-allowed-groups = If it's empty, all groups are allowed
 yes = Yes
 no = No
+up = Up
+down = Down

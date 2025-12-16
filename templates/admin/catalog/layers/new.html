@@ -121,6 +121,9 @@
         </div>
       </div>
 
+      <button type="button" onclick="moveUp()">⬆️ {{ base.translate["up"] }}</button>
+      <button type="button" onclick="moveDown()">⬇️ {{ base.translate["down"] }}</button>
+
       <!-- geom -->
       <div class="mb-4">
         <label class="label" for="geom">{{ base.translate["geom"] }}</label>
@@ -427,6 +430,8 @@
 </div>
 {% endblock %} {% block scripts %}
 <script>
+
+
   document.addEventListener("htmx:afterSwap", function (event) {
     var target = event.detail.target;
 

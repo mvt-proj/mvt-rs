@@ -27,6 +27,26 @@ function copyToClipboard(id) {
     });
 }
 
+function moveUp() {
+    const select = document.getElementById("fields");
+    for (let i = 1; i < select.options.length; i++) {
+      const opt = select.options[i];
+      if (opt.selected && !select.options[i - 1].selected) {
+        select.insertBefore(opt, select.options[i - 1]);
+      }
+    }
+  }
+
+  function moveDown() {
+    const select = document.getElementById("fields");
+    for (let i = select.options.length - 2; i >= 0; i--) {
+      const opt = select.options[i];
+      if (opt.selected && !select.options[i + 1].selected) {
+        select.insertBefore(select.options[i + 1], opt);
+      }
+    }
+  }
+
 let OPEN_DROPDOWN_ID = null;
 
 function toggleDropdown(id) {

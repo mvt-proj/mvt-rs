@@ -134,3 +134,5 @@ allowed-groups = Gruppi Autorizzati
 info-empty-allowed-groups = Se vuoto, tutti i gruppi sono autorizzati
 yes = Sì
 no = No
+up = Su
+down = Giù

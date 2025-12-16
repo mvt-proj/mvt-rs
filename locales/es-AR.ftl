@@ -136,3 +136,5 @@ allowed-groups = Grupos Permitidos
 info-empty-allowed-groups = Si está vacío, todos los grupos están permitidos
 yes = Sí
 no = No
+up = Subir
+down = Bajar

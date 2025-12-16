@@ -1,11 +1,13 @@
 {% block admin_content %}
+  {% for fname in fields_selected %}
+    {% if fname != "geom" %}
+      <option value="{{ fname }}" selected>{{ fname }}</option>
+    {% endif %}
+  {% endfor %}
+
   {% for field in fields %}
-    {% if field.name != "geom" %}
-      {% if fields_selected.contains(field.name) %}
-        <option value="{{field.name}}" selected>{{field.name}}</option>
-      {% else %}
-        <option value="{{field.name}}">{{field.name}}</option>
-      {% endif %}
+    {% if field.name != "geom" && !fields_selected.contains(field.name) %}
+      <option value="{{ field.name }}">{{ field.name }}</option>
     {% endif %}
   {% endfor %}
 {% endblock %}
