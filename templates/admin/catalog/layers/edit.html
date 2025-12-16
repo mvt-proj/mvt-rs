@@ -324,7 +324,11 @@
           return response.json();
         })
         .then(data => {
-          document.querySelector('[name="srid"]').value = data;
+          // document.querySelector('[name="srid"]').value = data;
+          const sridInput = document.querySelector('[name="srid"]');
+          if (!sridInput.value || sridInput.value === "0") {
+            sridInput.value = data;
+          }
         })
         .catch(error => {
           console.error('Error:', error);
