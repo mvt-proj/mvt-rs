@@ -100,7 +100,6 @@
                 hx-target="#fields"
                 hx-trigger="change, load delay:3s"
                 hx-include="[name='schema']"
-                hx-vals='{"fields_selected": "{{ layer.fields.join(",") }}"}'
                 required
               >
               </select>
@@ -307,6 +306,27 @@
 
 {% block scripts %}
 <script>
+
+  const savedFields = "{{ layer.fields.join(",") }}";
+
+  document.body.addEventListener('htmx:configRequest', function(evt) {
+    // Verificamos que el disparo venga del selector de tabla
+    if (evt.detail.elt.id === 'table') {
+
+      // Si el evento que disparó esto NO es un cambio manual (es decir, es la carga inicial 'load')
+      // Entonces enviamos los campos guardados para que se marquen.
+      if (!evt.detail.triggeringEvent || evt.detail.triggeringEvent.type !== 'change') {
+        evt.detail.parameters['fields_selected'] = savedFields;
+      }
+      else {
+        // SI ES un cambio manual ('change'):
+        // 1. No enviamos 'fields_selected' (para que la nueva tabla venga limpia)
+        // 2. Limpiamos visualmente el select #fields inmediatamente
+        document.getElementById('fields').innerHTML = '';
+      }
+    }
+  });
+
   document.addEventListener('htmx:afterSwap', function(event) {
     var target = event.detail.target;
 
