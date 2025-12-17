@@ -18,7 +18,7 @@ base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = { version = "10.0", features = ["rust_crypto"] }
 
-salvo = { version = "0.84", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
+salvo = { version = "0.85", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
@@ -29,9 +29,9 @@ sqlx = { version = "0.8", features = [ "runtime-tokio-rustls" , "postgres", "sql
 inquire = { version = "0.9.1"}
 crossterm = "0.29"
 
-redis = { version = "0.32", features = ["tokio-comp"] }
+redis = { version = "1.0.1", features = ["tokio-comp"] }
 bb8 = "0.9"
-bb8-redis = "0.24"
+bb8-redis = "0.26"
 include_dir = {version = "0.7.4", features = ["glob"] }
 regex = "1.11.1"
 html-escape = "0.2"
