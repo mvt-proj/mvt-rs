@@ -121,8 +121,14 @@
         </div>
       </div>
 
-      <button type="button" onclick="moveUp()">⬆️ {{ base.translate["up"] }}</button>
-      <button type="button" onclick="moveDown()">⬇️ {{ base.translate["down"] }}</button>
+      <div class="flex justify-center space-x-2 mt-4">
+        <button type="button" onclick="moveUp()">
+          ⬆️ {{ base.translate["up"] }}
+        </button>
+        <button type="button" onclick="moveDown()">
+          ⬇️ {{ base.translate["down"] }}
+        </button>
+      </div>
 
       <!-- geom -->
       <div class="mb-4">
