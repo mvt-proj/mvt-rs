@@ -12,13 +12,13 @@ dotenvy = "0.15.0"
 clap = "4.5"
 bytes = "1.10"
 argon2 = { version = "0.5", features = ["std"] }
-askama = "0.14"
+askama = "0.15"
 thiserror = "2"
 base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = { version = "10.0", features = ["rust_crypto"] }
 
-salvo = { version = "0.85", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
+salvo = { version = "0.86", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
@@ -41,7 +41,7 @@ fluent-syntax = "0.12"
 unic-langid = "0.9"
 accept-language = "3.1"
 
-maplibre-legend = "0.4.3"
+maplibre-legend = "0.4.4"
 # maplibre-legend = { path = "../maplibre-legend"}
 
 tokio-stream = { version = "0.1", features = ["net"] }
