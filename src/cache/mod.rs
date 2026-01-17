@@ -1,3 +1,3 @@
-mod redis;
-mod disk;
 pub mod cachewrapper;
+mod disk;
+mod redis;

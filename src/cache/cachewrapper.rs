@@ -1,6 +1,6 @@
-use crate::{Catalog, error::AppResult};
 use super::disk::DiskCache;
 use super::redis::RedisCache;
+use crate::{Catalog, error::AppResult};
 use bytes::Bytes;
 use std::path::PathBuf;
 
@@ -73,7 +73,14 @@ impl CacheWrapper {
         }
     }
 
-    pub async fn get_tile(&self, name: &str, z: u32, x: u32, y: u32, max_cache_age: u64) -> Option<Bytes> {
+    pub async fn get_tile(
+        &self,
+        name: &str,
+        z: u32,
+        x: u32,
+        y: u32,
+        max_cache_age: u64,
+    ) -> Option<Bytes> {
         match &self.mode {
             CacheMode::Redis(redis_cache) => {
                 let key = format!("{name}:{z}:{x}:{y}");
@@ -91,7 +98,15 @@ impl CacheWrapper {
         }
     }
 
-    pub async fn write_tile(&self, name: &str, z: u32, x: u32, y: u32, tile: &[u8], max_cache_age: u64) -> AppResult<()> {
+    pub async fn write_tile(
+        &self,
+        name: &str,
+        z: u32,
+        x: u32,
+        y: u32,
+        tile: &[u8],
+        max_cache_age: u64,
+    ) -> AppResult<()> {
         match &self.mode {
             CacheMode::Redis(redis_cache) => {
                 let key = format!("{name}:{z}:{x}:{y}");
