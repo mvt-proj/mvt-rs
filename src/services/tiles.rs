@@ -176,7 +176,7 @@ async fn get_tile(
     REQUESTS_TOTAL.inc();
 
     if local_where_clause.is_empty()
-        && let Ok(tile) = cache_wrapper.get_cache(name, x, y, z, max_cache_age).await
+        && let Some(tile) = cache_wrapper.get_tile(name, z, x, y, max_cache_age).await
     {
         CACHE_HITS.inc();
         return Ok((tile, Via::Cache));
@@ -206,7 +206,7 @@ async fn get_tile(
 
     if original_local_where_clause_is_empty {
         cache_wrapper
-            .write_tile_to_cache(name, x, y, z, &tile, max_cache_age)
+            .write_tile(name, z, x, y, &tile, max_cache_age)
             .await?;
     }
 

@@ -1,4 +1,6 @@
-use crate::{Catalog, diskcache::DiskCache, error::AppResult, rediscache::RedisCache};
+use crate::{Catalog, error::AppResult};
+use super::disk::DiskCache;
+use super::redis::RedisCache;
 use bytes::Bytes;
 use std::path::PathBuf;
 
@@ -24,6 +26,24 @@ impl CacheWrapper {
         CacheWrapper {
             mode: CacheMode::Disk(disk_cache),
         }
+    }
+
+    pub async fn initialize_cache(
+        redis_conn: Option<String>,
+        disk_cache_dir: PathBuf,
+        catalog: Catalog,
+    ) -> AppResult<CacheWrapper> {
+        if let Some(redis_conn) = redis_conn
+            && !redis_conn.is_empty()
+        {
+            let redis_cache = RedisCache::new(redis_conn).await?;
+            redis_cache.delete_cache(catalog.clone()).await?;
+            return Ok(CacheWrapper::new_redis(redis_cache));
+        }
+
+        let disk_cache = DiskCache::new(disk_cache_dir);
+        disk_cache.delete_cache_dir(catalog).await;
+        Ok(CacheWrapper::new_disk(disk_cache))
     }
 
     pub fn cache_dir(&self) -> PathBuf {
@@ -53,41 +73,25 @@ impl CacheWrapper {
         }
     }
 
-    pub async fn get_cache(
-        &self,
-        layer_name: &String,
-        x: u32,
-        y: u32,
-        z: u32,
-        max_cache_age: u64,
-    ) -> AppResult<Bytes> {
+    pub async fn get_tile(&self, name: &str, z: u32, x: u32, y: u32, max_cache_age: u64) -> Option<Bytes> {
         match &self.mode {
             CacheMode::Redis(redis_cache) => {
-                let key = format!("{layer_name}:{z}:{x}:{y}");
-                redis_cache.get_cache(key).await
+                let key = format!("{name}:{z}:{x}:{y}");
+                redis_cache.get_cache(key).await.ok()
             }
             CacheMode::Disk(disk_cache) => {
                 let tilefolder = disk_cache
                     .cache_dir
-                    .join(layer_name)
+                    .join(name)
                     .join(z.to_string())
                     .join(x.to_string());
                 let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
-                // let path = PathBuf::from(tilepath);
-                disk_cache.get_cache(tilepath, max_cache_age).await
+                disk_cache.get_cache(tilepath, max_cache_age).await.ok()
             }
         }
     }
 
-    pub async fn write_tile_to_cache(
-        &self,
-        name: &String,
-        x: u32,
-        y: u32,
-        z: u32,
-        tile: &Bytes,
-        max_cache_age: u64,
-    ) -> AppResult<()> {
+    pub async fn write_tile(&self, name: &str, z: u32, x: u32, y: u32, tile: &[u8], max_cache_age: u64) -> AppResult<()> {
         match &self.mode {
             CacheMode::Redis(redis_cache) => {
                 let key = format!("{name}:{z}:{x}:{y}");
@@ -102,7 +106,6 @@ impl CacheWrapper {
                     .join(z.to_string())
                     .join(x.to_string());
                 let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
-                // let path = PathBuf::from(tilepath);
                 disk_cache.write_tile_to_file(&tilepath, tile).await
             }
         }
@@ -114,22 +117,4 @@ impl CacheWrapper {
             CacheMode::Disk(_) => Ok(false),
         }
     }
-}
-
-pub async fn initialize_cache(
-    redis_conn: Option<String>,
-    disk_cache_dir: PathBuf,
-    catalog: Catalog,
-) -> AppResult<CacheWrapper> {
-    if let Some(redis_conn) = redis_conn
-        && !redis_conn.is_empty()
-    {
-        let redis_cache = RedisCache::new(redis_conn).await?;
-        redis_cache.delete_cache(catalog.clone()).await?;
-        return Ok(CacheWrapper::new_redis(redis_cache));
-    }
-
-    let disk_cache = DiskCache::new(disk_cache_dir);
-    disk_cache.delete_cache_dir(catalog.clone()).await;
-    Ok(CacheWrapper::new_disk(disk_cache))
 }

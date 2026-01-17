@@ -7,24 +7,22 @@ use tokio::sync::{OnceCell, RwLock};
 mod api;
 mod args;
 mod auth;
-mod cachewrapper;
+mod cache;
 mod cli;
 mod config;
 mod database;
 mod db;
-mod diskcache;
 mod error;
 mod filters;
 mod html;
 mod i18n;
 mod models;
 mod monitor;
-mod rediscache;
 mod routes;
 mod services;
 
 use auth::Auth;
-use cachewrapper::CacheWrapper;
+use cache::cachewrapper::CacheWrapper;
 use db::make_db_pool;
 use error::AppResult;
 use models::{catalog::Catalog, category::Category};
@@ -124,7 +122,7 @@ async fn main() -> AppResult<()> {
     .await?;
 
     let categories = get_cf_categories(Some(&cf_pool)).await?;
-    let cache_wrapper = cachewrapper::initialize_cache(
+    let cache_wrapper = CacheWrapper::initialize_cache(
         Some(app_config.redis_conn.clone()),
         app_config.cache_dir.clone().into(),
         catalog.clone(),
