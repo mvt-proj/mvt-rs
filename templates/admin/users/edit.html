@@ -54,6 +54,30 @@
         </div>
       </div>
       <div class="mb-4">
+        <label class="label">{{ base.translate["first-name"] }}</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            name="first_name"
+            type="text"
+            placeholder="{{ base.translate["first-name"] }}"
+            value="{{ user.first_name.as_deref().unwrap_or("") }}"
+          />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="label">{{ base.translate["last-name"] }}</label>
+        <div class="mt-1">
+          <input
+            class="input"
+            name="last_name"
+            type="text"
+            placeholder="{{ base.translate["last-name"] }}"
+            value="{{ user.last_name.as_deref().unwrap_or("") }}"
+          />
+        </div>
+      </div>
+      <div class="mb-4">
         <label class="label">{{ base.translate["password"] }}</label>
         <div class="mt-1">
           <input

@@ -7,14 +7,16 @@ pub async fn get_users(pool: Option<&SqlitePool>) -> Result<Vec<User>, sqlx::Err
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
     let rows = sqlx::query(
-        "SELECT 
-            u.id as user_id, 
-            u.username, 
-            u.email, 
-            u.password, 
-            g.id as group_id, 
-            g.name as group_name, 
-            g.description as group_description 
+        "SELECT
+            u.id as user_id,
+            u.username,
+            u.email,
+            u.password,
+            u.first_name,
+            u.last_name,
+            g.id as group_id,
+            g.name as group_name,
+            g.description as group_description
          FROM Users u
          LEFT JOIN Groups g ON ',' || u.groups || ',' LIKE '%,' || g.id || ',%'",
     )
@@ -28,6 +30,10 @@ pub async fn get_users(pool: Option<&SqlitePool>) -> Result<Vec<User>, sqlx::Err
         let username: String = row.get("username");
         let email: String = row.get("email");
         let password: String = row.get("password");
+
+        let first_name: Option<String> = row.get("first_name");
+        let last_name: Option<String> = row.get("last_name");
+
         let group_id: Option<String> = row.get("group_id");
         let group_name: Option<String> = row.get("group_name");
         let group_description: Option<String> = row.get("group_description");
@@ -37,6 +43,8 @@ pub async fn get_users(pool: Option<&SqlitePool>) -> Result<Vec<User>, sqlx::Err
             username,
             email,
             password,
+            first_name,
+            last_name,
             groups: Vec::new(),
         });
 
@@ -63,12 +71,14 @@ pub async fn create_user(user: &User, pool: Option<&SqlitePool>) -> Result<(), s
         .collect::<Vec<String>>()
         .join(",");
 
-    sqlx::query("INSERT INTO Users (id, username, email, password, groups) VALUES (?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO Users (id, username, email, password, groups, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?, ?)")
         .bind(&user.id)
         .bind(&user.username)
         .bind(&user.email)
         .bind(&user.password)
         .bind(group_ids_str)
+        .bind(&user.first_name) // Si es None, insertará NULL
+        .bind(&user.last_name)  // Si es None, insertará NULL
         .execute(pool)
         .await?;
 
@@ -89,12 +99,14 @@ pub async fn update_user(
         .collect::<Vec<String>>()
         .join(",");
 
-    sqlx::query("UPDATE Users SET username = ?, email = ?, password = ?, groups = ? WHERE id = ?")
+    sqlx::query("UPDATE Users SET username = ?, email = ?, password = ?, groups = ?, first_name = ?, last_name = ? WHERE id = ?")
         .bind(&user.username)
         .bind(&user.email)
         .bind(&user.password)
         .bind(group_ids_str)
-        .bind(id)
+        .bind(&user.first_name)
+        .bind(&user.last_name)
+        .bind(id) // Importante: el ID va al final porque es el WHERE
         .execute(pool)
         .await?;
 

@@ -1,6 +1,3 @@
-// use std::error::Error;
-// use std::fmt;
-
 use std::collections::HashMap;
 
 use askama::Template;
@@ -31,6 +28,8 @@ struct NewUser<'a> {
     id: Option<String>,
     username: &'a str,
     email: String,
+    first_name: Option<String>,
+    last_name: Option<String>,
     password: String,
     groups: Vec<String>,
 }
@@ -83,6 +82,8 @@ pub async fn create_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         email: new_user.email,
         password: encrypt_psw.unwrap(),
         groups: selected_groups,
+        first_name: new_user.first_name.filter(|s| !s.is_empty()),
+        last_name: new_user.last_name.filter(|s| !s.is_empty()),
     };
 
     if let Err(err) = create_cf_user(&user, None).await {
@@ -128,6 +129,8 @@ pub async fn update_user<'a>(res: &mut Response, new_user: NewUser<'a>) -> AppRe
         id: new_user.id.unwrap(),
         username: new_user.username.to_string(),
         email: new_user.email,
+        first_name: new_user.first_name.filter(|s| !s.is_empty()),
+        last_name: new_user.last_name.filter(|s| !s.is_empty()),
         password: encrypt_psw.unwrap(),
         groups: selected_groups,
     };

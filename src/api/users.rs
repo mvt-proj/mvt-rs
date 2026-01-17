@@ -14,6 +14,8 @@ use crate::{
 struct NewUser<'a> {
     username: &'a str,
     email: String,
+    first_name: Option<String>,
+    last_name: Option<String>,
     password: String,
     groups: Vec<Option<Group>>,
 }
@@ -58,10 +60,13 @@ pub async fn index(res: &mut Response) {
 pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
     let mut auth = get_auth().await.write().await;
     let encrypt_psw = auth.get_encrypt_psw(data.password.to_string()).unwrap();
+
     let user = User {
         id: Uuid::new_v4().to_string(),
         username: data.username.to_string(),
         email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
         password: encrypt_psw,
         groups: Vec::new(),
     };
