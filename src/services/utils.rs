@@ -88,31 +88,6 @@ pub async fn validate_user_groups(
     let mut has_common_group = false;
     let mut auth = get_auth().await.write().await;
 
-    // if authorization.starts_with("Bearer ") {
-    //     let token = authorization.trim_start_matches("Bearer ").trim();
-    //     let jwt_secret = get_jwt_secret();
-    //     let token_data = jsonwebtoken::decode::<JwtClaims>(
-    //         token,
-    //         &jsonwebtoken::DecodingKey::from_secret(jwt_secret.as_bytes()),
-    //         &jsonwebtoken::Validation::default(),
-    //     );
-    //
-    //     if let Ok(data) = token_data {
-    //         if let Some(user) = auth.get_user_by_id(&data.claims.id) {
-    //             let user_group_ids: std::collections::HashSet<_> =
-    //                 user.groups.iter().map(|g| &g.id).collect();
-    //             has_common_group = groups.iter().any(|g| user_group_ids.contains(&g.id));
-    //         }
-    //     }
-    // } else if !authorization.is_empty() {
-    //     let user = auth.get_user_by_authorization(authorization)?.cloned();
-    //     if let Some(user) = user {
-    //         let user_group_ids: std::collections::HashSet<_> =
-    //             user.groups.iter().map(|g| &g.id).collect();
-    //         has_common_group = groups.iter().any(|g| user_group_ids.contains(&g.id));
-    //     }
-    // }
-
     if authorization.starts_with("Bearer ") {
         let token = authorization.trim_start_matches("Bearer ").trim();
         let jwt_secret = get_jwt_secret();
