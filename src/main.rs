@@ -10,7 +10,6 @@ mod auth;
 mod cache;
 mod cli;
 mod config;
-mod database;
 mod db;
 mod error;
 mod filters;

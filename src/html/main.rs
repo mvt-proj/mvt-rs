@@ -6,7 +6,7 @@ use tokio::fs;
 
 use crate::{
     auth::User,
-    database::{Extent, query_extent},
+    db::metadata::{Extent, query_extent},
     error::{AppError, AppResult},
     get_auth, get_catalog, get_map_assets,
     models::{

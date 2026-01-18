@@ -1,6 +1,6 @@
 use salvo::prelude::*;
 
-use crate::database::{
+use crate::db::metadata::{
     Field, Schema, Srid, Table, query_fields, query_schemas, query_srid, query_tables,
 };
 
