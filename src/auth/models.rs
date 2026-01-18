@@ -1,58 +1,27 @@
-use base64::{Engine as _, engine::general_purpose};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+    Argon2, PasswordHash, PasswordVerifier,
+};
+use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
-use salvo::session::Session;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use time::{Duration, OffsetDateTime};
+use tracing:: warn;
 
-use jsonwebtoken::{self, EncodingKey};
-use salvo::jwt_auth::{ConstDecoder, HeaderFinder};
-
-use crate::config::groups::{create_group, delete_group, update_group};
+use crate::config::groups::{create_group, delete_group, get_groups, update_group};
 use crate::config::users::{create_user, delete_user, get_users, update_user};
-use crate::{
-    config::groups::get_groups,
-    error::{AppError, AppResult},
-    get_auth, get_jwt_secret,
-};
-use argon2::{
-    Argon2, PasswordHash, PasswordVerifier,
-    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
-};
+use crate::error::{AppError, AppResult};
+use crate::{get_auth, get_jwt_secret};
 
-fn decode_basic_auth(base64_string: &str) -> AppResult<(String, String)> {
-    let parts: Vec<&str> = base64_string.splitn(2, ' ').collect();
-
-    if parts.len() != 2 || parts[0] != "Basic" {
-        return Err(AppError::BasicAuthError(
-            "Invalid Basic Authentication format".to_string(),
-        ));
-    }
-
-    let decoded_bytes = general_purpose::STANDARD
-        .decode(parts[1])
-        .map_err(|_| AppError::BasicAuthError("Failed to decode Base64".to_string()))?;
-
-    let decoded_str = String::from_utf8(decoded_bytes)
-        .map_err(|_| AppError::BasicAuthError("Failed to convert to UTF-8".to_string()))?;
-
-    let auth_parts: Vec<&str> = decoded_str.splitn(2, ':').collect();
-
-    if auth_parts.len() != 2 {
-        return Err(AppError::BasicAuthError(
-            "Invalid username:password format".to_string(),
-        ));
-    }
-
-    Ok((auth_parts[0].to_string(), auth_parts[1].to_string()))
-}
+use super::utils::decode_basic_auth;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JwtClaims {
     pub id: String,
-    username: String,
-    email: String,
-    exp: i64,
+    pub username: String,
+    pub email: String,
+    pub exp: i64,
 }
 
 #[derive(Debug, Serialize)]
@@ -123,7 +92,7 @@ impl Group {
                 auth.groups.remove(pos);
             }
             None => {
-                println!("Group not found");
+                warn!(group_id = %self.id, "Group not found during deletion");
             }
         }
 
@@ -138,7 +107,6 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    // #[serde(skip_serializing)]
     pub password: String,
     pub groups: Vec<Group>,
 }
@@ -186,7 +154,7 @@ pub struct ChangePassword<'a> {
 pub struct Auth {
     pub groups: Vec<Group>,
     pub users: Vec<User>,
-    config_dir: String,
+    pub config_dir: String,
 }
 
 impl Auth {
@@ -220,10 +188,18 @@ impl Auth {
 
     pub fn validate_user(&mut self, username: &str, psw: &str) -> bool {
         for user in self.users.clone().into_iter() {
-            if username == user.username && self.validate_psw(user, psw).unwrap() {
-                return true;
+            if username == user.username {
+                // Manejar el error de validación de password correctamente
+                match self.validate_psw(user, psw) {
+                    Ok(true) => return true,
+                    Ok(false) | Err(_) => {
+                        warn!(username = %username, "Invalid password attempt");
+                        return false;
+                    }
+                }
             }
         }
+        warn!(username = %username, "User not found");
         false
     }
 
@@ -247,7 +223,7 @@ impl Auth {
         let position = self.users.iter().position(|usr| usr.id == user.id);
         match position {
             Some(index) => self.users[index] = user,
-            None => println!("user not found"),
+            None => warn!(user_id = %user.id, "User not found during update"),
         }
         Ok(())
     }
@@ -272,14 +248,14 @@ impl Auth {
             .position(|usr| usr.username == target_name)
     }
 
-    fn get_current_username_and_password(
+    pub fn get_current_username_and_password(
         &self,
         authorization_str: &str,
     ) -> AppResult<(String, String)> {
         let (current_username, password) = match decode_basic_auth(authorization_str) {
             Ok(username) => username,
             Err(err) => {
-                eprintln!("Error: {err}");
+                warn!(error = %err, "Failed to decode basic auth");
                 return Ok((String::new(), String::new()));
             }
         };
@@ -320,140 +296,4 @@ impl Auth {
             .cloned()
             .ok_or(AppError::UserNotFound)
     }
-}
-
-#[handler]
-pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
-    match depot.jwt_auth_state() {
-        JwtAuthState::Authorized => {
-
-            // let token = depot.jwt_auth_token().unwrap();
-            // println!("TOKEN: {}", token);
-        }
-        JwtAuthState::Unauthorized => {
-            let state = AuthorizeState {
-                message: "Unauthorized".to_string(),
-                status_code: 401,
-            };
-            res.status_code(StatusCode::from_u16(401).unwrap());
-            res.render(Json(&state));
-        }
-        JwtAuthState::Forbidden => {
-            let state = AuthorizeState {
-                message: "Forbidden".to_string(),
-                status_code: 403,
-            };
-            res.status_code(StatusCode::from_u16(403).unwrap());
-            res.render(Json(&state));
-        }
-    }
-}
-
-#[handler]
-pub async fn require_user_admin(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    if let Some(session) = depot.session_mut()
-        && let Some(userid) = session.get::<String>("userid")
-    {
-        let auth = get_auth().await.read().await;
-        if let Some(user) = auth.get_user_by_id(&userid)
-            && !user.is_admin()
-        {
-            res.render(Redirect::other("/admin"));
-            return Ok(());
-        }
-    }
-
-    Ok(())
-}
-
-pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
-    let jwt_secret = get_jwt_secret();
-
-    JwtAuth::new(ConstDecoder::from_secret(jwt_secret.as_bytes()))
-        .finders(vec![Box::new(HeaderFinder::new())])
-        .force_passed(true)
-}
-
-#[handler]
-pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -> AppResult<()> {
-    let auth = get_auth().await.read().await;
-
-    let user = auth.get_user_by_email_and_password(data.email, data.password);
-
-    if let Err(err) = user {
-        res.status_code(StatusCode::UNAUTHORIZED);
-        return Err(err);
-    }
-
-    let user = user?;
-
-    let mut session = Session::new();
-    session.insert("userid", user.id.clone()).unwrap();
-    depot.set_session(session);
-
-    res.headers_mut()
-        .insert("content-type", "text/html".parse()?);
-    res.render(Redirect::other("/admin"));
-    Ok(())
-}
-
-#[handler]
-pub async fn logout(depot: &mut Depot, res: &mut Response) -> AppResult<()> {
-    if let Some(session) = depot.session_mut() {
-        session.remove("userid");
-        // session.destroy();
-    }
-    res.render(Redirect::other("/"));
-    Ok(())
-}
-
-#[handler]
-pub async fn session_auth_handler(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    if let Some(session) = depot.session_mut() {
-        if let Some(_userid) = session.get::<String>("userid") {
-        } else {
-            res.render(Redirect::other("/login"));
-            return Ok(());
-        }
-    }
-
-    Ok(())
-}
-
-#[handler]
-pub async fn change_password<'a>(
-    depot: &mut Depot,
-    res: &mut Response,
-    data: ChangePassword<'a>,
-) -> AppResult<()> {
-    let user_id = depot
-        .session_mut()
-        .and_then(|session| session.get::<String>("userid"))
-        .ok_or(AppError::SessionNotFound);
-
-    if let Err(err) = user_id {
-        res.status_code(StatusCode::CONFLICT);
-        return Err(err);
-    }
-
-    let user_id = user_id?;
-    let mut auth = get_auth().await.write().await;
-
-    let user = auth
-        .get_user_by_id(&user_id)
-        .ok_or(AppError::UserNotFoundError(user_id.clone()));
-
-    if let Err(err) = user {
-        res.status_code(StatusCode::NOT_FOUND);
-        return Err(err);
-    }
-
-    let mut user = user?.clone();
-    let new_password = auth.get_encrypt_psw(data.password.to_string())?;
-    user.password = new_password;
-    auth.update_user(user).await?;
-
-    res.render(Redirect::other("/"));
-
-    Ok(())
 }
