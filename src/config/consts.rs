@@ -1,0 +1,4 @@
+pub const DEFAULT_BUFFER: u32 = 256;
+pub const DEFAULT_EXTENT: u32 = 4096;
+pub const DEFAULT_SRID: u32 = 4326;
+pub const DEFAULT_ZMAX_DO_NOT_SIMPLIFY: u32 = 16;

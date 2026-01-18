@@ -12,7 +12,7 @@ use crate::{
     api, args, auth, html,
     i18n::i18n_middleware,
     monitor,
-    services::{health, legends, styles, tiles},
+    services::{health, legends, styles, tiles::handlers as tiles},
 };
 
 const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
