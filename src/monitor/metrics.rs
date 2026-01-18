@@ -10,44 +10,45 @@ pub static REGISTRY: LazyLock<Registry> = LazyLock::new(|| {
 });
 
 // Definición de métricas
-pub static PROCESS_CPU: LazyLock<Gauge> = LazyLock::new(|| {
-    register_gauge("process_cpu_percent", "CPU usage percent of this process")
-});
+pub static PROCESS_CPU: LazyLock<Gauge> =
+    LazyLock::new(|| register_gauge("process_cpu_percent", "CPU usage percent of this process"));
 
-pub static PROCESS_MEM: LazyLock<Gauge> = LazyLock::new(|| {
-    register_gauge("process_memory_bytes", "Memory usage in bytes")
-});
+pub static PROCESS_MEM: LazyLock<Gauge> =
+    LazyLock::new(|| register_gauge("process_memory_bytes", "Memory usage in bytes"));
 
-pub static REQUESTS_TOTAL: LazyLock<Counter> = LazyLock::new(|| {
-    register_counter("requests_total", "Total number of HTTP requests")
-});
+pub static REQUESTS_TOTAL: LazyLock<Counter> =
+    LazyLock::new(|| register_counter("requests_total", "Total number of HTTP requests"));
 
-pub static CACHE_HITS: LazyLock<Counter> = LazyLock::new(|| {
-    register_counter("cache_hits_total", "Total cache hits")
-});
+pub static CACHE_HITS: LazyLock<Counter> =
+    LazyLock::new(|| register_counter("cache_hits_total", "Total cache hits"));
 
-pub static CACHE_MISSES: LazyLock<Counter> = LazyLock::new(|| {
-    register_counter("cache_misses_total", "Total cache misses")
-});
+pub static CACHE_MISSES: LazyLock<Counter> =
+    LazyLock::new(|| register_counter("cache_misses_total", "Total cache misses"));
 
 pub static LAST_LATENCY: LazyLock<Gauge> = LazyLock::new(|| {
-    register_gauge("last_request_latency_seconds", "Latency of the last request")
+    register_gauge(
+        "last_request_latency_seconds",
+        "Latency of the last request",
+    )
 });
 
-pub static AVG_LATENCY: LazyLock<Gauge> = LazyLock::new(|| {
-    register_gauge("avg_request_latency_seconds", "Average request latency")
-});
+pub static AVG_LATENCY: LazyLock<Gauge> =
+    LazyLock::new(|| register_gauge("avg_request_latency_seconds", "Average request latency"));
 
 // Helpers privados para reducir boilerplate
 fn register_gauge(name: &str, help: &str) -> Gauge {
     let g = Gauge::with_opts(Opts::new(name, help)).unwrap();
-    REGISTRY.register(Box::new(g.clone())).expect("metric registration failed");
+    REGISTRY
+        .register(Box::new(g.clone()))
+        .expect("metric registration failed");
     g
 }
 
 fn register_counter(name: &str, help: &str) -> Counter {
     let c = Counter::with_opts(Opts::new(name, help)).unwrap();
-    REGISTRY.register(Box::new(c.clone())).expect("metric registration failed");
+    REGISTRY
+        .register(Box::new(c.clone()))
+        .expect("metric registration failed");
     c
 }
 

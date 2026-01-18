@@ -1,6 +1,6 @@
 use crate::monitor::metrics::{PROCESS_CPU, PROCESS_MEM};
 use sysinfo::{Pid, ProcessesToUpdate, System};
-use tokio::time::{interval, Duration, Instant};
+use tokio::time::{Duration, Instant, interval};
 
 #[cfg(unix)]
 fn get_cpu_time() -> Option<(f64, f64)> {
@@ -72,7 +72,7 @@ pub async fn start_system_monitor() {
 
                     #[cfg(windows)]
                     {
-                         PROCESS_CPU.set(0.0);
+                        PROCESS_CPU.set(0.0);
                     }
                 }
             }

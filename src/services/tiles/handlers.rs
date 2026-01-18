@@ -40,9 +40,7 @@ pub async fn get_single_layer_tile(
     }
     let filters = filters::parse_query_params(&filter_params);
     let mut builder = filters::SqlQueryBuilder::new(9);
-    // Construyes la query pasando los filtros ya parseados
     let (where_clause, bindings) = builder.build(&filters);
-    // let (where_clause, bindings) = filters::build_where_clause(&filters, 9);
 
     let pg_pool: PgPool = get_db_pool().clone();
     let catalog = get_catalog().await.read().await;

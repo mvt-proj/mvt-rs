@@ -8,7 +8,7 @@ use crate::{
     error::AppResult,
     get_cache_wrapper,
     models::catalog::Layer,
-    monitor::{record_request, record_cache_hit, record_cache_miss},
+    monitor::{record_cache_hit, record_cache_miss, record_request},
 };
 
 pub enum Via {

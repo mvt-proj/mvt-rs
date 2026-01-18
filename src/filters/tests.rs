@@ -298,7 +298,15 @@ fn test_build_where_clause_like_and_in() {
 
     assert_eq!(clause, "name LIKE $1 AND id IN ($2::int, $3::int, $4::int)");
 
-    assert_eq!(bindings, vec!["%John%".to_string(), "1".to_string(), "2".to_string(), "3".to_string()]);
+    assert_eq!(
+        bindings,
+        vec![
+            "%John%".to_string(),
+            "1".to_string(),
+            "2".to_string(),
+            "3".to_string()
+        ]
+    );
 }
 
 #[test]
@@ -320,8 +328,19 @@ fn test_build_where_clause_ilike_and_in() {
 
     let (clause, bindings) = build_where_clause(&filters, 1);
 
-    assert_eq!(clause, "name ILIKE $1 AND id IN ($2::int, $3::int, $4::int)");
-    assert_eq!(bindings, vec!["%John%".to_string(), "1".to_string(), "2".to_string(), "3".to_string()]);
+    assert_eq!(
+        clause,
+        "name ILIKE $1 AND id IN ($2::int, $3::int, $4::int)"
+    );
+    assert_eq!(
+        bindings,
+        vec![
+            "%John%".to_string(),
+            "1".to_string(),
+            "2".to_string(),
+            "3".to_string()
+        ]
+    );
 }
 
 #[test]

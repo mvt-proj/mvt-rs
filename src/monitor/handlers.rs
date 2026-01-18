@@ -1,16 +1,17 @@
-use std::io;
 use askama::Template;
-use salvo::prelude::*;
-use std::collections::HashMap;
-use serde_json::json;
-use tokio::time::{interval, Duration};
-use tokio_stream::wrappers::IntervalStream;
-use tokio_stream::StreamExt;
 use prometheus::{Encoder, TextEncoder};
+use salvo::prelude::*;
+use serde_json::json;
+use std::collections::HashMap;
+use std::io;
+use tokio::time::{Duration, interval};
+use tokio_stream::StreamExt;
+use tokio_stream::wrappers::IntervalStream;
 
 use crate::html::main::{BaseTemplateData, is_authenticated}; // Ajusta imports según tu proyecto
 use crate::monitor::metrics::{
-    AVG_LATENCY, CACHE_HITS, CACHE_MISSES, LAST_LATENCY, PROCESS_CPU, PROCESS_MEM, REGISTRY, REQUESTS_TOTAL,
+    AVG_LATENCY, CACHE_HITS, CACHE_MISSES, LAST_LATENCY, PROCESS_CPU, PROCESS_MEM, REGISTRY,
+    REQUESTS_TOTAL,
 };
 
 #[derive(Template)]
