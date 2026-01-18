@@ -25,7 +25,7 @@ use cache::cachewrapper::CacheWrapper;
 use db::make_db_pool;
 use error::AppResult;
 use models::{catalog::Catalog, category::Category};
-use monitor::spawn_updater;
+use monitor::start_system_monitor;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -96,7 +96,7 @@ async fn main() -> AppResult<()> {
         // .with_env_filter("info")
         .init();
 
-    spawn_updater();
+    start_system_monitor().await;
 
     let app_config = args::parse_args().await?;
 

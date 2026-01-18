@@ -8,7 +8,7 @@ use crate::{
     error::AppResult,
     get_cache_wrapper,
     models::catalog::Layer,
-    monitor::{CACHE_HITS, CACHE_MISSES, REQUESTS_TOTAL},
+    monitor::{record_request, record_cache_hit, record_cache_miss},
 };
 
 pub enum Via {
@@ -166,15 +166,15 @@ pub async fn get_tile(
     let query = layer_conf.clone().filter.unwrap_or_default();
     let cache_wrapper = get_cache_wrapper();
 
-    REQUESTS_TOTAL.inc();
+    record_request();
 
     if local_where_clause.is_empty()
         && let Some(tile) = cache_wrapper.get_tile(name, z, x, y, max_cache_age).await
     {
-        CACHE_HITS.inc();
+        record_cache_hit();
         return Ok((tile, Via::Cache));
     }
-    CACHE_MISSES.inc();
+    record_cache_miss();
 
     if !query.is_empty() {
         if validate_filter(&query).is_err() {
