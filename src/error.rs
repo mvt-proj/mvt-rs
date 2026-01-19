@@ -24,6 +24,9 @@ pub enum AppError {
     #[error("Error executing SQL: `{0}`")]
     SQLError(#[from] sqlx::Error),
 
+    #[error("SQL Injection detected: {0}")]
+    SqlInjectionError(String),
+
     #[error("Migrate error: `{0}`")]
     MigrateError(#[from] sqlx::migrate::MigrateError),
 

@@ -1,8 +1,8 @@
 use bytes::Bytes;
 use sqlx::PgPool;
+// use tracing::{error, warn};
 
 use crate::services::utils::{convert_fields, validate_filter};
-
 use crate::{
     config::consts::*,
     error::AppResult,
@@ -75,10 +75,9 @@ pub async fn query_database(
     let sql_mode = layer_conf.sql_mode.unwrap_or_else(|| "CTE".to_string());
     let srid = layer_conf.srid.unwrap_or(DEFAULT_SRID);
 
+    // MEJORA: Propagar el error en lugar de ignorarlo
     let query_placeholder = if !where_clause.is_empty() {
-        if validate_filter(&where_clause).is_err() {
-            return Ok(Bytes::new());
-        }
+        validate_filter(&where_clause)?; // ✅ Propaga el error
         Some(format!(" AND {where_clause}"))
     } else {
         None
@@ -156,7 +155,6 @@ pub async fn get_tile(
     where_clause: String,
     bindings: Vec<String>,
 ) -> AppResult<(Bytes, Via)> {
-    // let name = &layer_conf.name;
     let name_owned = format!("{}_{}", layer_conf.category.name, layer_conf.name);
     let name = &name_owned;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
@@ -176,10 +174,9 @@ pub async fn get_tile(
     }
     record_cache_miss();
 
+    // MEJORA: Propagar el error en lugar de ignorarlo
     if !query.is_empty() {
-        if validate_filter(&query).is_err() {
-            return Ok((Bytes::new(), Via::Database));
-        }
+        validate_filter(&query)?; // ✅ Propaga el error
         if !local_where_clause.is_empty() {
             local_where_clause.push_str(" AND ");
         }

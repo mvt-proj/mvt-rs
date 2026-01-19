@@ -1,9 +1,10 @@
 use bytes::Bytes;
-use salvo::http::{HeaderMap, header::HeaderValue};
+use salvo::http::{HeaderMap, StatusCode, header::HeaderValue};
 use salvo::prelude::*;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::time::Instant;
+use tracing::warn;
 
 use super::builder::{Via, get_tile};
 use crate::services::utils::validate_user_groups;
@@ -48,27 +49,52 @@ pub async fn get_single_layer_tile(
     let Some(layer) =
         catalog.find_layer_by_category_and_name(category, name, StateLayer::Published)
     else {
-        tracing::warn!("the layer {}:{} is not found", category, name);
+        warn!(category = %category, name = %name, "Layer not found");
+        res.status_code(StatusCode::NOT_FOUND);
         res.body(salvo::http::ResBody::Once(Bytes::new()));
         return Ok(());
     };
 
     if !validate_user_groups(req, layer, depot).await? {
+        warn!(category = %category, name = %name, "User not authorized for layer");
+        res.status_code(StatusCode::FORBIDDEN);
         res.body(salvo::http::ResBody::Once(Bytes::new()));
         return Ok(());
-    }
+    };
 
     let zmin = layer.zmin.unwrap_or(0);
     let zmax = layer.zmax.unwrap_or(22);
     if z < zmin || z > zmax {
+        warn!(
+            category = %category,
+            name = %name,
+            z = %z,
+            zmin = %zmin,
+            zmax = %zmax,
+            "Zoom level out of range"
+        );
+        res.status_code(StatusCode::BAD_REQUEST);
         res.body(salvo::http::ResBody::Once(Bytes::new()));
         return Ok(());
     }
 
     let start_time = Instant::now();
-    let (tile, via) = get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await?;
-    let elapsed_time = start_time.elapsed();
 
+    // MEJORA: Ahora get_tile puede retornar un error de validación
+    let (tile, via) = match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await {
+        Ok(result) => result,
+        Err(e) => {
+            // El error ya fue loggeado en validate_filter
+            res.status_code(StatusCode::BAD_REQUEST);
+            res.render(Json(serde_json::json!({
+                "error": "Invalid filter",
+                "message": e.to_string()
+            })));
+            return Ok(());
+        }
+    };
+
+    let elapsed_time = start_time.elapsed();
     let elapsed_secs = elapsed_time.as_secs_f64();
     record_latency(elapsed_secs);
 
@@ -128,11 +154,12 @@ pub async fn get_composite_layers_tile(
         let Some(layer) =
             catalog.find_layer_by_category_and_name(category, name, StateLayer::Published)
         else {
-            tracing::warn!("the layer {}:{} is not found", category, name);
+            warn!(category = %category, name = %name, "Layer not found in composite request");
             continue;
         };
 
         if !validate_user_groups(req, layer, depot).await? {
+            warn!(category = %category, name = %name, "User not authorized for layer in composite request");
             continue;
         }
 
@@ -143,7 +170,9 @@ pub async fn get_composite_layers_tile(
         }
 
         let start_time = Instant::now();
-        let (tile, via) = get_tile(
+
+        // MEJORA: Manejar errores de validación
+        let (tile, via) = match get_tile(
             pg_pool.clone(),
             layer.clone(),
             x,
@@ -152,7 +181,18 @@ pub async fn get_composite_layers_tile(
             String::new(),
             Vec::new(),
         )
-        .await?;
+        .await {
+            Ok(result) => result,
+            Err(e) => {
+                warn!(
+                    category = %category,
+                    name = %name,
+                    error = %e,
+                    "Failed to get tile in composite request"
+                );
+                continue;
+            }
+        };
 
         let elapsed_time = start_time.elapsed();
         let elapsed_secs = elapsed_time.as_secs_f64();
@@ -228,7 +268,9 @@ pub async fn get_category_layers_tile(
         }
 
         let start_time = Instant::now();
-        let (tile, via) = get_tile(
+
+        // MEJORA: Manejar errores de validación
+        let (tile, via) = match get_tile(
             pg_pool.clone(),
             layer.clone(),
             x,
@@ -237,7 +279,18 @@ pub async fn get_category_layers_tile(
             String::new(),
             Vec::new(),
         )
-        .await?;
+        .await {
+            Ok(result) => result,
+            Err(e) => {
+                warn!(
+                    category = %category,
+                    layer = %layer.name,
+                    error = %e,
+                    "Failed to get tile in category request"
+                );
+                continue;
+            }
+        };
 
         let elapsed_time = start_time.elapsed();
         let elapsed_secs = elapsed_time.as_secs_f64();
