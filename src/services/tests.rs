@@ -18,7 +18,9 @@ mod tests {
     #[test]
     fn test_validate_filter_valid_complex() {
         assert!(validate_filter("status = 'active' AND price > 100").is_ok());
-        assert!(validate_filter("(status = 'active' OR status = 'pending') AND price > 100").is_ok());
+        assert!(
+            validate_filter("(status = 'active' OR status = 'pending') AND price > 100").is_ok()
+        );
     }
 
     #[test]

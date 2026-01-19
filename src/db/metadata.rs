@@ -1,6 +1,6 @@
+use crate::{error::AppResult, get_db_pool, models::catalog::Layer};
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
-use crate::{error::AppResult, get_db_pool, models::catalog::Layer};
 
 #[derive(FromRow, Serialize, Debug)]
 pub struct Schema {
@@ -129,7 +129,7 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
 
     if let Ok(Some(ext)) = estimate {
         if ext.xmax != 0.0 || ext.xmin != 0.0 {
-             return Ok(ext);
+            return Ok(ext);
         }
     }
 

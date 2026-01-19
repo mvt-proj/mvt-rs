@@ -2,7 +2,7 @@
 mod tests {
     use super::super::models::{Auth, Group, User};
     use super::super::utils::decode_basic_auth;
-    use base64::{engine::general_purpose, Engine as _};
+    use base64::{Engine as _, engine::general_purpose};
 
     fn create_test_auth() -> Auth {
         Auth {
@@ -23,7 +23,13 @@ mod tests {
         }
     }
 
-    fn create_test_user(auth: &Auth, username: &str, email: &str, password: &str, groups: Vec<Group>) -> User {
+    fn create_test_user(
+        auth: &Auth,
+        username: &str,
+        email: &str,
+        password: &str,
+        groups: Vec<Group>,
+    ) -> User {
         let encrypted_password = auth.get_encrypt_psw(password.to_string()).unwrap();
         User {
             id: uuid::Uuid::new_v4().to_string(),
@@ -299,7 +305,8 @@ mod tests {
         let mut auth_with_user = auth.clone();
         auth_with_user.users.push(user);
 
-        let result = auth_with_user.get_user_by_email_and_password("test@test.com", "wrongpassword");
+        let result =
+            auth_with_user.get_user_by_email_and_password("test@test.com", "wrongpassword");
         assert!(result.is_err());
     }
 

@@ -1,13 +1,13 @@
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2, PasswordHash, PasswordVerifier,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use time::{Duration, OffsetDateTime};
-use tracing:: warn;
+use tracing::warn;
 
 use crate::config::groups::{create_group, delete_group, get_groups, update_group};
 use crate::config::users::{create_user, delete_user, get_users, update_user};

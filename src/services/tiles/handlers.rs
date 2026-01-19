@@ -81,7 +81,8 @@ pub async fn get_single_layer_tile(
     let start_time = Instant::now();
 
     // MEJORA: Ahora get_tile puede retornar un error de validación
-    let (tile, via) = match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await {
+    let (tile, via) = match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await
+    {
         Ok(result) => result,
         Err(e) => {
             // El error ya fue loggeado en validate_filter
@@ -181,7 +182,8 @@ pub async fn get_composite_layers_tile(
             String::new(),
             Vec::new(),
         )
-        .await {
+        .await
+        {
             Ok(result) => result,
             Err(e) => {
                 warn!(
@@ -279,7 +281,8 @@ pub async fn get_category_layers_tile(
             String::new(),
             Vec::new(),
         )
-        .await {
+        .await
+        {
             Ok(result) => result,
             Err(e) => {
                 warn!(

@@ -37,9 +37,26 @@ fn regex_string_tautology_candidates() -> &'static Regex {
 }
 
 const DANGEROUS_KEYWORDS: &[&str] = &[
-    "DROP", "DELETE", "INSERT", "UPDATE", "ALTER", "TRUNCATE", "GRANT", "REVOKE",
-    "UNION", "EXEC", "EXECUTE", "DECLARE", "CAST", "Char", "NCHAR", "VARCHAR",
-    "NVARCHAR", "SUSER_SNAME", "SESSION_USER", "xp_cmdshell"
+    "DROP",
+    "DELETE",
+    "INSERT",
+    "UPDATE",
+    "ALTER",
+    "TRUNCATE",
+    "GRANT",
+    "REVOKE",
+    "UNION",
+    "EXEC",
+    "EXECUTE",
+    "DECLARE",
+    "CAST",
+    "Char",
+    "NCHAR",
+    "VARCHAR",
+    "NVARCHAR",
+    "SUSER_SNAME",
+    "SESSION_USER",
+    "xp_cmdshell",
 ];
 
 pub fn convert_fields(fields: Vec<String>) -> String {
@@ -85,7 +102,10 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
 
     for cap in regex_numeric_comparison().captures_iter(filter) {
         if cap[1] == cap[2] {
-            warn!(filter, "SQL Injection attempt detected: Tautology ({}={})", &cap[1], &cap[2]);
+            warn!(
+                filter,
+                "SQL Injection attempt detected: Tautology ({}={})", &cap[1], &cap[2]
+            );
             return Err(AppError::SqlInjectionError("Tautology detected".into()));
         }
     }
@@ -97,7 +117,9 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
 
     if regex_sys_proc().is_match(filter) {
         warn!(filter, "SQL Injection attempt detected: System Procedure");
-        return Err(AppError::SqlInjectionError("System procedure detected".into()));
+        return Err(AppError::SqlInjectionError(
+            "System procedure detected".into(),
+        ));
     }
 
     if regex_comment().is_match(filter) {
@@ -108,7 +130,9 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
     for cap in regex_string_tautology_candidates().captures_iter(filter) {
         if cap[1] == cap[2] {
             warn!(filter, "SQL Injection attempt detected: String Tautology");
-            return Err(AppError::SqlInjectionError("String tautology detected".into()));
+            return Err(AppError::SqlInjectionError(
+                "String tautology detected".into(),
+            ));
         }
     }
 
@@ -123,14 +147,14 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
         let c = chars[i];
 
         if c == '\'' && !in_double_quote {
-            if i + 1 < chars.len() && chars[i+1] == '\'' {
+            if i + 1 < chars.len() && chars[i + 1] == '\'' {
                 i += 1;
             } else {
                 in_single_quote = !in_single_quote;
             }
         } else if c == '"' && !in_single_quote {
-            if i + 1 < chars.len() && chars[i+1] == '"' {
-                 i += 1;
+            if i + 1 < chars.len() && chars[i + 1] == '"' {
+                i += 1;
             } else {
                 in_double_quote = !in_double_quote;
             }
@@ -145,30 +169,40 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
     }
 
     if in_single_quote || in_double_quote {
-         return Err(AppError::SqlInjectionError("Unbalanced quotes".into()));
+        return Err(AppError::SqlInjectionError("Unbalanced quotes".into()));
     }
 
     let upper_buffer = buffer.to_uppercase();
 
     for keyword in DANGEROUS_KEYWORDS {
         if let Some(idx) = upper_buffer.find(keyword) {
-            let before = if idx == 0 { ' ' } else { upper_buffer.chars().nth(idx - 1).unwrap() };
+            let before = if idx == 0 {
+                ' '
+            } else {
+                upper_buffer.chars().nth(idx - 1).unwrap()
+            };
             let after_idx = idx + keyword.len();
-            let after = if after_idx >= upper_buffer.len() { ' ' } else { upper_buffer.chars().nth(after_idx).unwrap() };
+            let after = if after_idx >= upper_buffer.len() {
+                ' '
+            } else {
+                upper_buffer.chars().nth(after_idx).unwrap()
+            };
 
             let is_word_start = !before.is_alphanumeric() && before != '_';
             let is_word_end = !after.is_alphanumeric() && after != '_';
 
             if is_word_start && is_word_end {
                 warn!(filter, keyword, "Dangerous keyword detected");
-                return Err(AppError::SqlInjectionError(format!("Dangerous keyword detected: {}", keyword)));
+                return Err(AppError::SqlInjectionError(format!(
+                    "Dangerous keyword detected: {}",
+                    keyword
+                )));
             }
         }
     }
 
     Ok(())
 }
-
 
 pub async fn validate_user_groups(
     req: &Request,
