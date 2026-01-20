@@ -116,7 +116,7 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
             ST_XMin(box) as xmin, ST_YMin(box) as ymin,
             ST_XMax(box) as xmax, ST_YMax(box) as ymax
         FROM (
-            SELECT ST_EstimatedExtent($1, $2, $3) as box
+            SELECT ST_Transform(ST_SetSRID(ST_EstimatedExtent($1, $2, $3), $4), 4326) as box
         ) as sub
     "#;
 
@@ -128,9 +128,9 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
         .await;
 
     if let Ok(Some(ext)) = estimate
-        && (ext.xmax != 0.0 || ext.xmin != 0.0)
-    {
-        return Ok(ext);
+        && (ext.xmax != 0.0 || ext.xmin != 0.0) {
+            return Ok(ext);
+
     }
 
     let geom_col = escape_identifier(&layer.get_geom());
