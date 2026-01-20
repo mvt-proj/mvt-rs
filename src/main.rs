@@ -1,6 +1,7 @@
 use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
 use sqlx::{PgPool, SqlitePool};
+use std::sync::Arc;
 use std::sync::OnceLock;
 use tokio::sync::{OnceCell, RwLock};
 
@@ -139,11 +140,13 @@ async fn main() -> AppResult<()> {
     CATEGORIES.set(RwLock::new(categories)).unwrap();
     AUTH.set(RwLock::new(auth)).unwrap();
 
+    let i18n_service = Arc::new(i18n::I18n::new());
+
     let acceptor = TcpListener::new(format!("{}:{}", app_config.host, app_config.port))
         .bind()
         .await;
     Server::new(acceptor)
-        .serve(routes::app_router(&app_config))
+        .serve(routes::app_router(&app_config, i18n_service))
         .await;
 
     Ok(())

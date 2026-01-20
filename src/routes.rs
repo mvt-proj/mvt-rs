@@ -6,11 +6,12 @@ use salvo::cors::{self as cors, Cors};
 use salvo::logging::Logger;
 use salvo::prelude::*;
 use salvo::session::CookieStore;
-use std::time::Duration;
+use std::sync::Arc;
+use std::time::Duration; // <--- Necesario
 
 use crate::{
     api, args, auth, html,
-    i18n::i18n_middleware,
+    i18n::{I18n, i18n_middleware},
     monitor,
     services::{health, legends, styles, tiles::handlers as tiles},
 };
@@ -294,13 +295,14 @@ fn build_public_routes() -> Router {
 // MAIN ROUTER
 // ============================================================================
 
-pub fn app_router(app_config: &args::AppConfig) -> Service {
+pub fn app_router(app_config: &args::AppConfig, i18n_service: Arc<I18n>) -> Service {
     let cache_5s = build_cache_middleware(5);
     let cors_handler = build_cors_handler();
     let session_handler = build_session_handler(app_config);
 
     let router = Router::new()
         .hoop(Logger::default())
+        .hoop(affix_state::inject(i18n_service))
         .hoop(session_handler)
         .push(build_public_routes())
         .push(build_api_routes(cors_handler.clone()))

@@ -1,64 +1,64 @@
 use accept_language::parse;
-use fluent::{FluentBundle, FluentResource};
+use fluent_bundle::FluentResource;
+use fluent_bundle::bundle::FluentBundle;
 use fluent_syntax::ast;
 use include_dir::{Dir, include_dir};
+use intl_memoizer::concurrent::IntlLangMemoizer;
 use salvo::prelude::*;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use tracing::error;
 use unic_langid::LanguageIdentifier;
 
 const LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/locales");
+const DEFAULT_LANG: &str = "en-US";
 
-pub fn get_lang(req: &salvo::Request) -> String {
-    req.headers()
-        .get("Accept-Language")
-        .and_then(|header| header.to_str().ok())
-        .and_then(|accept_language| {
-            let langs = parse(accept_language);
-            langs.into_iter().next().map(|lang| lang.to_string())
-        })
-        .unwrap_or_else(|| "en-US".to_string())
-}
+type SafeBundle = FluentBundle<FluentResource, IntlLangMemoizer>;
 
+#[derive(Clone)]
 pub struct I18n {
-    bundles: HashMap<String, (FluentBundle<FluentResource>, HashSet<String>)>,
+    bundles: Arc<HashMap<String, (SafeBundle, HashSet<String>)>>,
+    fallback_lang: String,
 }
 
 impl I18n {
-    pub fn new(locales: &[&str]) -> Self {
+    pub fn new() -> Self {
         let mut bundles = HashMap::new();
-        let mut locales_to_load = vec!["en-US"];
-        locales_to_load.extend(locales.iter().filter(|&&l| l != "en-US"));
 
-        for &locale in locales_to_load.iter() {
-            let lang_id: LanguageIdentifier = match locale.parse() {
+        for file in LOCALES_DIR.files() {
+            let filename = file
+                .path()
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("");
+
+            if !filename.ends_with(".ftl") {
+                continue;
+            }
+
+            let locale_str = filename.replace(".ftl", "");
+
+            let lang_id: LanguageIdentifier = match locale_str.parse() {
                 Ok(id) => id,
-                Err(_) => {
-                    if locale == "en-US" {
-                        panic!("Invalid en-US locale identifier");
-                    }
+                Err(e) => {
+                    error!("I18n Error: Invalid locale '{locale_str}': {e}");
                     continue;
                 }
             };
 
-            let ftl_file = match LOCALES_DIR.get_file(format!("{locale}.ftl")) {
-                Some(file) => file,
+            let ftl_content = match file.contents_utf8() {
+                Some(c) => c,
                 None => {
-                    if locale == "en-US" {
-                        panic!("en-US.ftl not found in embedded locales");
-                    }
+                    error!("I18n Error: File {filename} is not valid UTF-8.");
                     continue;
                 }
             };
-
-            let ftl_content = ftl_file.contents_utf8().expect("Invalid UTF-8 FTL content");
 
             let resource = match FluentResource::try_new(ftl_content.to_string()) {
                 Ok(res) => res,
-                Err(_) => {
-                    if locale == "en-US" {
-                        panic!("Invalid en-US Fluent file");
-                    }
-                    continue;
+                Err((res, _)) => {
+                    error!("I18n Warning: Syntax errors found in {filename}");
+                    res
                 }
             };
 
@@ -69,35 +69,77 @@ impl I18n {
                 }
             }
 
-            let mut bundle = FluentBundle::new(vec![lang_id]);
+            let mut bundle = FluentBundle::new_concurrent(vec![lang_id]);
+            bundle.set_use_isolating(false);
+
             if let Err(e) = bundle.add_resource(resource) {
-                if locale == "en-US" {
-                    panic!("Failed to add en-US resource: {e:?}");
-                }
+                error!("I18n Error: Failed to add resource {locale_str}: {e:?}");
                 continue;
             }
 
-            bundles.insert(locale.to_string(), (bundle, message_keys));
+            bundles.insert(locale_str, (bundle, message_keys));
         }
 
-        Self { bundles }
+        if !bundles.contains_key(DEFAULT_LANG) {
+            error!(
+                "I18n CRITICAL: Fallback language '{}' was not loaded.",
+                DEFAULT_LANG
+            );
+        }
+
+        Self {
+            bundles: Arc::new(bundles),
+            fallback_lang: DEFAULT_LANG.to_string(),
+        }
+    }
+
+    pub fn resolve_lang(&self, req: &salvo::Request) -> String {
+        let requested_langs = req
+            .headers()
+            .get("Accept-Language")
+            .and_then(|h| h.to_str().ok())
+            .map(|header| parse(header))
+            .unwrap_or_default();
+
+        for pref in &requested_langs {
+            if self.bundles.contains_key(pref) {
+                #[cfg(debug_assertions)]
+                println!("    -> Match Exacto encontrado: {}", pref);
+                return pref.clone();
+            }
+
+            let req_base = pref.split('-').next().unwrap_or(pref);
+            for available_key in self.bundles.keys() {
+                let available_base = available_key.split('-').next().unwrap_or(available_key);
+                if req_base.eq_ignore_ascii_case(available_base) {
+                    return available_key.clone();
+                }
+            }
+        }
+        self.fallback_lang.clone()
     }
 
     pub fn get_all_translations(&self, lang: &str) -> HashMap<String, String> {
-        let (bundle, message_keys) = self
-            .bundles
-            .get(lang)
-            .unwrap_or_else(|| self.bundles.get("en-US").unwrap());
+        let target_lang = if self.bundles.contains_key(lang) {
+            lang
+        } else {
+            &self.fallback_lang
+        };
+
+        let Some((bundle, message_keys)) = self.bundles.get(target_lang) else {
+            return HashMap::new();
+        };
 
         let mut translations = HashMap::new();
+        let mut errors = vec![];
 
         for key in message_keys {
-            let mut errors = vec![];
-            if let Some(message) = bundle.get_message(key)
-                && let Some(pattern) = message.value()
-            {
-                let translated = bundle.format_pattern(pattern, None, &mut errors);
-                translations.insert(key.to_string(), translated.to_string());
+            if let Some(message) = bundle.get_message(key) {
+                if let Some(pattern) = message.value() {
+                    let translated = bundle.format_pattern(pattern, None, &mut errors);
+                    translations.insert(key.to_string(), translated.to_string());
+                }
+                errors.clear();
             }
         }
 
@@ -112,11 +154,16 @@ pub async fn i18n_middleware(
     res: &mut Response,
     ctrl: &mut FlowCtrl,
 ) {
-    let translate = {
-        let lang = get_lang(req);
-        let i18n = I18n::new(&[&lang]);
-        i18n.get_all_translations(&lang)
-    };
-    depot.insert("translate".to_string(), translate);
+    if let Ok(i18n) = depot.obtain::<Arc<I18n>>() {
+        let lang = i18n.resolve_lang(req);
+        let translations = i18n.get_all_translations(&lang);
+
+        depot.insert("translate", translations);
+        depot.insert("lang", lang);
+    } else {
+        #[cfg(debug_assertions)]
+        eprintln!("I18n Middleware: No se encontró la instancia de I18n en el Depot.");
+    }
+
     ctrl.call_next(req, depot, res).await;
 }

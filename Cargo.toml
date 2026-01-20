@@ -18,7 +18,7 @@ base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = { version = "10.0", features = ["rust_crypto"] }
 
-salvo = { version = "0.88", features = ["cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
+salvo = { version = "0.88", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
@@ -38,6 +38,8 @@ html-escape = "0.2"
 
 fluent = "0.17"
 fluent-syntax = "0.12"
+fluent-bundle = "0.16.0"
+intl-memoizer = "0.5.3"
 unic-langid = "0.9"
 accept-language = "3.1"
 
