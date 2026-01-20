@@ -3,11 +3,12 @@ use mime_guess::from_path;
 use salvo::cache::{Cache, MokaStore, RequestIssuer};
 use salvo::catcher::Catcher;
 use salvo::cors::{self as cors, Cors};
+use salvo::http::header::CONTENT_DISPOSITION;
 use salvo::logging::Logger;
 use salvo::prelude::*;
-use salvo::session::CookieStore;
+use salvo::session::{CookieStore, SessionHandler};
 use std::sync::Arc;
-use std::time::Duration; // <--- Necesario
+use std::time::Duration;
 
 use crate::{
     api, args, auth, html,
@@ -50,12 +51,14 @@ fn build_cors_handler() -> impl Handler + Clone {
         .allow_origin(cors::Any)
         .allow_methods(cors::Any)
         .allow_headers(cors::Any)
+        .expose_headers(vec![CONTENT_DISPOSITION])
+        .allow_credentials(false)
         .into_handler()
 }
 
 fn build_session_handler(app_config: &args::AppConfig) -> SessionHandler<CookieStore> {
     SessionHandler::builder(CookieStore::new(), app_config.session_secret.as_bytes())
-        .session_ttl(Some(Duration::from_secs(60 * 20))) // 20 minutos
+        .session_ttl(Some(Duration::from_secs(60 * 20)))
         .build()
         .expect("Failed to build session handler")
 }
@@ -220,14 +223,9 @@ fn build_api_catalog_routes() -> Router {
         .post(api::catalog::create_layer)
 }
 
-fn build_api_routes(cors_handler: impl Handler + Clone) -> Router {
+fn build_api_routes() -> Router {
     Router::with_path("api")
-        .hoop(cors_handler.clone())
-        .push(
-            Router::with_path("users/login")
-                .post(api::users::login)
-                .options(handler::empty()),
-        )
+        .push(Router::with_path("users/login").post(api::users::login))
         .push(Router::with_path("monitor/metrics").get(monitor::handlers::metrics))
         .push(Router::with_path("catalog/layer").get(api::catalog::list))
         .push(
@@ -235,12 +233,7 @@ fn build_api_routes(cors_handler: impl Handler + Clone) -> Router {
                 .hoop(auth::jwt_auth_handler())
                 .push(build_api_users_routes())
                 .push(build_api_database_routes())
-                .push(build_api_catalog_routes())
-                .push(
-                    Router::with_path("{**rest}")
-                        .hoop(cors_handler)
-                        .options(handler::empty()),
-                ),
+                .push(build_api_catalog_routes()),
         )
 }
 
@@ -260,15 +253,9 @@ fn build_tiles_routes() -> Router {
         )
 }
 
-fn build_services_routes(
-    app_config: &args::AppConfig,
-    cache: impl Handler,
-    cors_handler: impl Handler,
-) -> Router {
+fn build_services_routes(app_config: &args::AppConfig, cache: impl Handler) -> Router {
     Router::with_path("services")
         .hoop(cache)
-        .hoop(cors_handler)
-        .options(handler::empty())
         .push(build_tiles_routes())
         .push(Router::with_path("styles/{style_name}").get(styles::index))
         .push(Router::with_path("legends/{style_name}").get(legends::index))
@@ -301,14 +288,17 @@ pub fn app_router(app_config: &args::AppConfig, i18n_service: Arc<I18n>) -> Serv
     let session_handler = build_session_handler(app_config);
 
     let router = Router::new()
+        .options(handler::empty()) // Catch-all OPTIONS para preflight
         .hoop(Logger::default())
         .hoop(affix_state::inject(i18n_service))
         .hoop(session_handler)
         .push(build_public_routes())
-        .push(build_api_routes(cors_handler.clone()))
+        .push(build_api_routes())
         .push(Router::with_path("health").get(health::get_health))
-        .push(build_services_routes(app_config, cache_5s, cors_handler))
+        .push(build_services_routes(app_config, cache_5s))
         .push(Router::with_path("static/{**path}").get(serve_static));
 
-    Service::new(router).catcher(Catcher::default().hoop(html::main::handle_errors))
+    Service::new(router)
+        .hoop(cors_handler) // CORS global
+        .catcher(Catcher::default().hoop(html::main::handle_errors))
 }
