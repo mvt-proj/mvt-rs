@@ -103,8 +103,6 @@ impl I18n {
 
         for pref in &requested_langs {
             if self.bundles.contains_key(pref) {
-                #[cfg(debug_assertions)]
-                println!("    -> Match Exacto encontrado: {}", pref);
                 return pref.clone();
             }
 
@@ -161,9 +159,7 @@ pub async fn i18n_middleware(
         depot.insert("translate", translations);
         depot.insert("lang", lang);
     } else {
-        #[cfg(debug_assertions)]
-        eprintln!("I18n Middleware: No se encontró la instancia de I18n en el Depot.");
-    }
+        error!("I18n Middleware: I18n instance not found in Depot.");    }
 
     ctrl.call_next(req, depot, res).await;
 }
