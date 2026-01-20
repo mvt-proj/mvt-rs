@@ -75,9 +75,8 @@ pub async fn query_database(
     let sql_mode = layer_conf.sql_mode.unwrap_or_else(|| "CTE".to_string());
     let srid = layer_conf.srid.unwrap_or(DEFAULT_SRID);
 
-    // MEJORA: Propagar el error en lugar de ignorarlo
     let query_placeholder = if !where_clause.is_empty() {
-        validate_filter(&where_clause)?; // ✅ Propaga el error
+        validate_filter(&where_clause)?;
         Some(format!(" AND {where_clause}"))
     } else {
         None
@@ -174,9 +173,8 @@ pub async fn get_tile(
     }
     record_cache_miss();
 
-    // MEJORA: Propagar el error en lugar de ignorarlo
     if !query.is_empty() {
-        validate_filter(&query)?; // ✅ Propaga el error
+        validate_filter(&query)?;
         if !local_where_clause.is_empty() {
             local_where_clause.push_str(" AND ");
         }

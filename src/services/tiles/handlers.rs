@@ -80,12 +80,10 @@ pub async fn get_single_layer_tile(
 
     let start_time = Instant::now();
 
-    // MEJORA: Ahora get_tile puede retornar un error de validación
     let (tile, via) = match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await
     {
         Ok(result) => result,
         Err(e) => {
-            // El error ya fue loggeado en validate_filter
             res.status_code(StatusCode::BAD_REQUEST);
             res.render(Json(serde_json::json!({
                 "error": "Invalid filter",
@@ -172,7 +170,6 @@ pub async fn get_composite_layers_tile(
 
         let start_time = Instant::now();
 
-        // MEJORA: Manejar errores de validación
         let (tile, via) = match get_tile(
             pg_pool.clone(),
             layer.clone(),
@@ -271,7 +268,6 @@ pub async fn get_category_layers_tile(
 
         let start_time = Instant::now();
 
-        // MEJORA: Manejar errores de validación
         let (tile, via) = match get_tile(
             pg_pool.clone(),
             layer.clone(),
