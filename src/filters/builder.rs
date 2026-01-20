@@ -75,7 +75,7 @@ impl SqlQueryBuilder {
 
                 let is_numeric = values
                     .first()
-                    .map_or(false, |v| v.chars().all(|c| c.is_numeric()));
+                    .is_some_and(|v| v.chars().all(|c| c.is_numeric()));
 
                 let mut placeholders = Vec::new();
                 for v in values {

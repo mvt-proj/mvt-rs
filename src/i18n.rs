@@ -98,7 +98,7 @@ impl I18n {
             .headers()
             .get("Accept-Language")
             .and_then(|h| h.to_str().ok())
-            .map(|header| parse(header))
+            .map(parse)
             .unwrap_or_default();
 
         for pref in &requested_langs {

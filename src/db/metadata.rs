@@ -123,14 +123,14 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
     let estimate = sqlx::query_as::<_, Extent>(sql_estimate)
         .bind(&layer.schema)
         .bind(&layer.table_name)
-        .bind(&layer.get_geom())
+        .bind(layer.get_geom())
         .fetch_optional(&pg_pool)
         .await;
 
-    if let Ok(Some(ext)) = estimate {
-        if ext.xmax != 0.0 || ext.xmin != 0.0 {
-            return Ok(ext);
-        }
+    if let Ok(Some(ext)) = estimate
+        && (ext.xmax != 0.0 || ext.xmin != 0.0)
+    {
+        return Ok(ext);
     }
 
     let geom_col = escape_identifier(&layer.get_geom());
