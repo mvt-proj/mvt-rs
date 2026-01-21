@@ -27,6 +27,9 @@ pub enum AppError {
     #[error("SQL Injection detected: {0}")]
     SqlInjectionError(String),
 
+    #[error("Database Error: {0}")]
+    DatabaseError(String),
+
     #[error("Migrate error: `{0}`")]
     MigrateError(#[from] sqlx::migrate::MigrateError),
 
@@ -95,6 +98,9 @@ pub enum AppError {
 
     #[error("MapLibre legend error: {0}")]
     Legend(#[from] LegendError),
+
+    #[error("Web error: {0}")]
+    WebError(#[from] salvo::prelude::StatusError),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
