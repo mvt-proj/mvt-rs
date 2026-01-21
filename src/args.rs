@@ -72,3 +72,57 @@ pub async fn parse_args() -> AppResult<AppConfig> {
 
     Ok(config)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+
+    #[test]
+    fn test_cli_overrides_env() {
+        unsafe {
+            env::set_var("PORT", "9000");
+        }
+
+        let args = vec![
+            "mvt-server",
+            "--port",
+            "7000",
+            "--dbconn",
+            "db",
+            "--jwtsecret",
+            "js",
+            "--sessionsecret",
+            "ss",
+        ];
+
+        let config = AppConfig::parse_from(args);
+        assert_eq!(config.port, "7000");
+
+        unsafe {
+            env::remove_var("PORT");
+        }
+    }
+
+    #[test]
+    fn test_env_var_loading() {
+        unsafe {
+            env::set_var("DBCONN", "env_db_connection");
+            env::set_var("JWTSECRET", "env_secret");
+            env::set_var("SESSIONSECRET", "env_session");
+        }
+
+        let args = vec!["mvt-server"];
+        let config = AppConfig::parse_from(args);
+
+        assert_eq!(config.db_conn, "env_db_connection");
+        assert_eq!(config.jwt_secret, "env_secret");
+        assert_eq!(config.session_secret, "env_session");
+
+        unsafe {
+            env::remove_var("DBCONN");
+            env::remove_var("JWTSECRET");
+            env::remove_var("SESSIONSECRET");
+        }
+    }
+}
