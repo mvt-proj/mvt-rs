@@ -1,9 +1,12 @@
 use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
+use salvo::server::ServerHandle;
 use sqlx::{PgPool, SqlitePool};
-use std::sync::Arc;
-use std::sync::OnceLock;
+use std::path::Path;
+use std::sync::{Arc, OnceLock};
+use tokio::signal;
 use tokio::sync::{OnceCell, RwLock};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
 mod args;
@@ -88,16 +91,56 @@ async fn initialize_catalog(pool: &SqlitePool) -> AppResult<Catalog> {
     Ok(catalog)
 }
 
+async fn listen_shutdown_signal(handle: ServerHandle) {
+    // Wait Shutdown Signal
+    let ctrl_c = async {
+        // Handle Ctrl+C signal
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        // Handle SIGTERM on Unix systems
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(windows)]
+    let terminate = async {
+        // Handle Ctrl+C on Windows (alternative implementation)
+        signal::windows::ctrl_c()
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    // Wait for either signal to be received
+    tokio::select! {
+        _ = ctrl_c => println!("ctrl_c signal received"),
+        _ = terminate => println!("terminate signal received"),
+    };
+
+    // Graceful Shutdown Server
+    handle.stop_graceful(None);
+}
+
 #[tokio::main]
 async fn main() -> AppResult<()> {
-    tracing_subscriber::fmt()
-        // .json()
-        .with_env_filter("error")
-        .with_env_filter("warn")
-        // .with_env_filter("info")
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "mvt_server=info,warn".into()),
+        )
         .init();
 
-    start_system_monitor().await;
+    tokio::spawn(async {
+        start_system_monitor().await;
+    });
 
     let app_config = args::parse_args().await?;
 
@@ -108,7 +151,8 @@ async fn main() -> AppResult<()> {
         return Ok(());
     }
 
-    let db_conn = &format!("{}/mvtrs.db", app_config.config_dir);
+    let config_path = Path::new(&app_config.config_dir).join("mvtrs.db");
+    let db_conn = config_path.to_str().expect("Invalid configuration path");
     let cf_pool = config::db::init_sqlite(db_conn).await?;
 
     let auth = initialize_auth(&app_config.config_dir, &cf_pool).await?;
@@ -145,7 +189,12 @@ async fn main() -> AppResult<()> {
     let acceptor = TcpListener::new(format!("{}:{}", app_config.host, app_config.port))
         .bind()
         .await;
-    Server::new(acceptor)
+    let server = Server::new(acceptor);
+    let handle = server.handle();
+
+    tokio::spawn(listen_shutdown_signal(handle));
+
+    server
         .serve(routes::app_router(&app_config, i18n_service))
         .await;
 

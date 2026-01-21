@@ -151,6 +151,34 @@ Options:
   --sessionsecret "supersecretsession"
 ```
 
+## Logging
+
+You can control the logging verbosity using the `RUST_LOG` environment variable. This allows you to filter logs dynamically without recompiling the project.
+
+**Common Examples:**
+
+Run with full debug information (Global):
+```sh
+RUST_LOG=debug cargo run
+```
+
+Show debug logs for the server application only, but keep dependencies on error level:
+```sh
+RUST_LOG=error,mvt_server=debug cargo run
+```
+
+**Advanced Filtering:**
+
+Useful for development to see route details but reduce database (SQLx) noise:
+```sh
+RUST_LOG=info,sqlx=warn,mvt_server::routes=debug cargo run
+```
+
+Production recommendation (Info and Warnings only):
+Show debug logs for the server application only, but keep dependencies on error level:
+```sh
+RUST_LOG=info ./mvt-server
+```
 
 ## 🙌 Support This Project
 
