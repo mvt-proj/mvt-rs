@@ -128,9 +128,9 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
         .await;
 
     if let Ok(Some(ext)) = estimate
-        && (ext.xmax != 0.0 || ext.xmin != 0.0) {
-            return Ok(ext);
-
+        && (ext.xmax != 0.0 || ext.xmin != 0.0)
+    {
+        return Ok(ext);
     }
 
     let geom_col = escape_identifier(&layer.get_geom());

@@ -9,7 +9,7 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 [dependencies]
 uuid = { version = "1.18.0", features = ["v4", "fast-rng"] }
 dotenvy = "0.15.0"
-clap = "4.5"
+clap = { version = "4.5", features = ["derive", "env"] }
 bytes = "1.10"
 argon2 = { version = "0.5", features = ["std"] }
 askama = "0.15"

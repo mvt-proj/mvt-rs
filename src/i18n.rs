@@ -159,7 +159,8 @@ pub async fn i18n_middleware(
         depot.insert("translate", translations);
         depot.insert("lang", lang);
     } else {
-        error!("I18n Middleware: I18n instance not found in Depot.");    }
+        error!("I18n Middleware: I18n instance not found in Depot.");
+    }
 
     ctrl.call_next(req, depot, res).await;
 }
