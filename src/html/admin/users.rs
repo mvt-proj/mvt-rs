@@ -11,7 +11,7 @@ use crate::{
     config::users::create_user as create_cf_user,
     error::{AppError, AppResult},
     get_auth,
-    html::main::{BaseTemplateData, get_session_data},
+    html::utils::{BaseTemplateData, get_session_data},
 };
 
 #[derive(Template)]

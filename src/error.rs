@@ -1,4 +1,4 @@
-use crate::html::main::ErrorTemplate;
+use crate::html::errors::ErrorTemplate;
 use ::maplibre_legend::LegendError;
 use askama::Template;
 use bb8::RunError;

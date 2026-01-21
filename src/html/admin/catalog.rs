@@ -9,7 +9,7 @@ use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
     get_auth, get_cache_wrapper, get_catalog,
-    html::main::{BaseTemplateData, get_session_data},
+    html::utils::{BaseTemplateData, get_session_data},
     models::{
         catalog::{Layer, StateLayer},
         category::Category,

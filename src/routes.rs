@@ -78,7 +78,7 @@ fn build_cache_middleware(ttl_secs: u64) -> Cache<MokaStore<String>, RequestIssu
 
 fn build_auth_routes() -> Router {
     Router::new()
-        .push(Router::with_path("login").get(html::main::login))
+        .push(Router::with_path("login").get(html::pages::login))
         .push(
             Router::with_path("logout")
                 .hoop(auth::session_auth_handler)
@@ -88,7 +88,7 @@ fn build_auth_routes() -> Router {
         .push(
             Router::with_path("changepassword")
                 .hoop(auth::session_auth_handler)
-                .get(html::main::change_password),
+                .get(html::pages::change_password),
         )
         .push(
             Router::with_path("auth/changepassword")
@@ -100,14 +100,14 @@ fn build_auth_routes() -> Router {
 fn build_protected_pages() -> Router {
     Router::new()
         .hoop(auth::session_auth_handler)
-        .push(Router::with_path("catalog").get(html::main::page_catalog))
-        .push(Router::with_path("catalogtable").get(html::main::table_catalog))
-        .push(Router::with_path("styles").get(html::main::page_styles))
-        .push(Router::with_path("styletable").get(html::main::table_styles))
-        .push(Router::with_path("sprites").get(html::main::page_sprites))
-        .push(Router::with_path("glyphs").get(html::main::page_glyphs))
-        .push(Router::with_path("maplayer/{layer_name}").get(html::main::page_map_layer))
-        .push(Router::with_path("mapview/{style_id}").get(html::main::page_map_view))
+        .push(Router::with_path("catalog").get(html::catalog::page_catalog))
+        .push(Router::with_path("catalogtable").get(html::catalog::table_catalog))
+        .push(Router::with_path("styles").get(html::styles::page_styles))
+        .push(Router::with_path("styletable").get(html::styles::table_styles))
+        .push(Router::with_path("sprites").get(html::assets::page_sprites))
+        .push(Router::with_path("glyphs").get(html::assets::page_glyphs))
+        .push(Router::with_path("maplayer/{layer_name}").get(html::maps::page_map_layer))
+        .push(Router::with_path("mapview/{style_id}").get(html::maps::page_map_view))
 }
 
 fn build_admin_users_routes() -> Router {
@@ -272,7 +272,7 @@ fn build_services_routes(app_config: &args::AppConfig, cache: impl Handler) -> R
 fn build_public_routes() -> Router {
     Router::new()
         .hoop(i18n_middleware)
-        .get(html::main::index)
+        .get(html::pages::index)
         .push(build_auth_routes())
         .push(build_protected_pages())
         .push(build_admin_routes())
@@ -300,5 +300,5 @@ pub fn app_router(app_config: &args::AppConfig, i18n_service: Arc<I18n>) -> Serv
 
     Service::new(router)
         .hoop(cors_handler) // CORS global
-        .catcher(Catcher::default().hoop(html::main::handle_errors))
+        .catcher(Catcher::default().hoop(html::errors::handle_errors))
 }

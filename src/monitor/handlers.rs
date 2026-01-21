@@ -8,7 +8,7 @@ use tokio::time::{Duration, interval};
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::IntervalStream;
 
-use crate::html::main::{BaseTemplateData, is_authenticated}; // Ajusta imports según tu proyecto
+use crate::html::utils::{BaseTemplateData, is_authenticated};
 use crate::monitor::metrics::{
     AVG_LATENCY, CACHE_HITS, CACHE_MISSES, LAST_LATENCY, PROCESS_CPU, PROCESS_MEM, REGISTRY,
     REQUESTS_TOTAL,

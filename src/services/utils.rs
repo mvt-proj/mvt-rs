@@ -7,7 +7,7 @@ use crate::{
     auth::JwtClaims,
     error::{AppError, AppResult},
     get_auth, get_jwt_secret,
-    html::main::get_session_data,
+    html::utils::get_session_data,
     models::catalog::Layer,
 };
 
