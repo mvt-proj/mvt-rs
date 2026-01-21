@@ -8,7 +8,7 @@ use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
     get_auth,
-    html::utils::{BaseTemplateData, get_session_data},
+    html::utils::{BaseTemplateData, get_session_data, is_authenticated},
 };
 
 #[derive(Template)]
@@ -16,6 +16,19 @@ use crate::{
 struct ListGroupsTemplate<'a> {
     groups: &'a Vec<Group>,
     current_user: &'a User,
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/groups/new.html")]
+struct NewGroupTemplate {
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/groups/edit.html")]
+struct EditGroupTemplate {
+    group: Group,
     base: BaseTemplateData,
 }
 
@@ -54,10 +67,44 @@ pub async fn list_groups(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 }
 
 #[handler]
-pub async fn create_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> AppResult<()> {
+pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+    let template = NewGroupTemplate { base };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn edit_group(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let group = Group::from_id(&id).await?;
+    let template = EditGroupTemplate {
+        group: group.clone(),
+        base,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn create_group<'a>(res: &mut Response, group_form: NewGroup<'a>) -> AppResult<()> {
     let group = Group::new(
-        new_group.name.to_string(),
-        new_group.description.to_string(),
+        group_form.name.to_string(),
+        group_form.description.to_string(),
     )
     .await;
 
@@ -75,8 +122,8 @@ pub async fn create_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> Ap
 }
 
 #[handler]
-pub async fn edit_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> AppResult<()> {
-    let group = Group::from_id(&new_group.id.unwrap()).await;
+pub async fn update_group<'a>(res: &mut Response, group_form: NewGroup<'a>) -> AppResult<()> {
+    let group = Group::from_id(&group_form.id.unwrap()).await;
 
     if let Err(err) = group {
         res.status_code(StatusCode::NOT_FOUND);
@@ -87,8 +134,8 @@ pub async fn edit_group<'a>(res: &mut Response, new_group: NewGroup<'a>) -> AppR
 
     if let Err(err) = group
         .update_group(
-            new_group.name.to_string(),
-            new_group.description.to_string(),
+            group_form.name.to_string(),
+            group_form.description.to_string(),
         )
         .await
     {

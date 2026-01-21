@@ -8,8 +8,8 @@ use uuid::Uuid;
 use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
-    get_auth, get_cache_wrapper, get_catalog,
-    html::utils::{BaseTemplateData, get_session_data},
+    get_auth, get_cache_wrapper, get_catalog, get_categories,
+    html::utils::{BaseTemplateData, get_session_data, is_authenticated},
     models::{
         catalog::{Layer, StateLayer},
         category::Category,
@@ -20,6 +20,23 @@ use crate::{
 #[template(path = "admin/catalog/catalog.html")]
 struct CatalogTemplate<'a> {
     current_user: &'a User,
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/catalog/layers/new.html")]
+struct NewLayerTemplate {
+    categories: Vec<Category>,
+    groups: Vec<Group>,
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/catalog/layers/edit.html")]
+struct EditLayerTemplate {
+    layer: Layer,
+    categories: Vec<Category>,
+    groups: Vec<Group>,
     base: BaseTemplateData,
 }
 
@@ -79,11 +96,62 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()
 }
 
 #[handler]
-pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
+pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let categories = get_categories().await.read().await;
+    let auth = get_auth().await.read().await;
+    let groups = auth.groups.clone();
+    let is_auth = is_authenticated(depot).await;
+
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+
+    let template = NewLayerTemplate {
+        categories: (categories).to_vec(),
+        groups,
+        base,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+
+    let categories = get_categories().await.read().await;
+    let layer_id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("layer_id".to_string()))?;
+    let catalog = get_catalog().await.read().await;
+    let auth = get_auth().await.read().await;
+    let groups = auth.groups.clone();
+    let layer = catalog
+        .find_layer_by_id(&layer_id, StateLayer::Any)
+        .unwrap();
+    let template = EditLayerTemplate {
+        layer: layer.clone(),
+        categories: (categories).to_vec(),
+        groups,
+        base,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn create_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> AppResult<()> {
     let uuid = Uuid::new_v4();
     let hex_string = uuid.simple().to_string();
 
-    let category = Category::from_id(&new_layer.category).await;
+    let category = Category::from_id(&layer_form.category).await;
 
     if let Err(err) = category {
         res.status_code(StatusCode::NOT_FOUND);
@@ -93,7 +161,7 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     let category = category?;
     let auth = get_auth().await.read().await;
 
-    let selected_groups: Vec<Group> = new_layer
+    let selected_groups: Vec<Group> = layer_form
         .groups
         .as_ref()
         .map(|groups| {
@@ -107,29 +175,29 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     let layer = Layer {
         id: hex_string,
         category,
-        geometry: new_layer.geometry.to_string(),
-        name: new_layer.name,
-        alias: new_layer.alias,
-        description: new_layer.description,
-        schema: new_layer.schema,
-        table_name: new_layer.table,
-        fields: new_layer.fields,
-        filter: new_layer.filter,
-        srid: new_layer.srid,
-        geom: new_layer.geom,
-        sql_mode: new_layer.sql_mode,
-        buffer: new_layer.buffer,
-        extent: new_layer.extent,
-        zmin: new_layer.zmin,
-        zmax: new_layer.zmax,
-        zmax_do_not_simplify: new_layer.zmax_do_not_simplify,
-        buffer_do_not_simplify: new_layer.buffer_do_not_simplify,
-        extent_do_not_simplify: new_layer.extent_do_not_simplify,
-        clip_geom: new_layer.clip_geom,
-        delete_cache_on_start: new_layer.delete_cache_on_start,
-        max_cache_age: new_layer.max_cache_age,
-        max_records: new_layer.max_records,
-        published: new_layer.published,
+        geometry: layer_form.geometry.to_string(),
+        name: layer_form.name,
+        alias: layer_form.alias,
+        description: layer_form.description,
+        schema: layer_form.schema,
+        table_name: layer_form.table,
+        fields: layer_form.fields,
+        filter: layer_form.filter,
+        srid: layer_form.srid,
+        geom: layer_form.geom,
+        sql_mode: layer_form.sql_mode,
+        buffer: layer_form.buffer,
+        extent: layer_form.extent,
+        zmin: layer_form.zmin,
+        zmax: layer_form.zmax,
+        zmax_do_not_simplify: layer_form.zmax_do_not_simplify,
+        buffer_do_not_simplify: layer_form.buffer_do_not_simplify,
+        extent_do_not_simplify: layer_form.extent_do_not_simplify,
+        clip_geom: layer_form.clip_geom,
+        delete_cache_on_start: layer_form.delete_cache_on_start,
+        max_cache_age: layer_form.max_cache_age,
+        max_records: layer_form.max_records,
+        published: layer_form.published,
         url: None,
         groups: Some(selected_groups),
     };
@@ -149,8 +217,8 @@ pub async fn create_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
 }
 
 #[handler]
-pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> AppResult<()> {
-    let category = Category::from_id(&new_layer.category).await;
+pub async fn update_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> AppResult<()> {
+    let category = Category::from_id(&layer_form.category).await;
 
     if let Err(err) = category {
         res.status_code(StatusCode::NOT_FOUND);
@@ -160,7 +228,7 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
     let category = category?;
     let auth = get_auth().await.read().await;
 
-    let selected_groups: Vec<Group> = new_layer
+    let selected_groups: Vec<Group> = layer_form
         .groups
         .as_ref()
         .map(|groups| {
@@ -172,31 +240,31 @@ pub async fn update_layer<'a>(res: &mut Response, new_layer: NewLayer<'a>) -> Ap
         .unwrap_or_default();
 
     let layer = Layer {
-        id: new_layer.id,
+        id: layer_form.id,
         category,
-        geometry: new_layer.geometry.to_string(),
-        name: new_layer.name,
-        alias: new_layer.alias,
-        description: new_layer.description,
-        schema: new_layer.schema,
-        table_name: new_layer.table,
-        fields: new_layer.fields,
-        filter: new_layer.filter,
-        srid: new_layer.srid,
-        geom: new_layer.geom,
-        sql_mode: new_layer.sql_mode,
-        buffer: new_layer.buffer,
-        extent: new_layer.extent,
-        zmin: new_layer.zmin,
-        zmax: new_layer.zmax,
-        zmax_do_not_simplify: new_layer.zmax_do_not_simplify,
-        buffer_do_not_simplify: new_layer.buffer_do_not_simplify,
-        extent_do_not_simplify: new_layer.extent_do_not_simplify,
-        clip_geom: new_layer.clip_geom,
-        delete_cache_on_start: new_layer.delete_cache_on_start,
-        max_cache_age: new_layer.max_cache_age,
-        max_records: new_layer.max_records,
-        published: new_layer.published,
+        geometry: layer_form.geometry.to_string(),
+        name: layer_form.name,
+        alias: layer_form.alias,
+        description: layer_form.description,
+        schema: layer_form.schema,
+        table_name: layer_form.table,
+        fields: layer_form.fields,
+        filter: layer_form.filter,
+        srid: layer_form.srid,
+        geom: layer_form.geom,
+        sql_mode: layer_form.sql_mode,
+        buffer: layer_form.buffer,
+        extent: layer_form.extent,
+        zmin: layer_form.zmin,
+        zmax: layer_form.zmax,
+        zmax_do_not_simplify: layer_form.zmax_do_not_simplify,
+        buffer_do_not_simplify: layer_form.buffer_do_not_simplify,
+        extent_do_not_simplify: layer_form.extent_do_not_simplify,
+        clip_geom: layer_form.clip_geom,
+        delete_cache_on_start: layer_form.delete_cache_on_start,
+        max_cache_age: layer_form.max_cache_age,
+        max_records: layer_form.max_records,
+        published: layer_form.published,
         url: None,
         groups: Some(selected_groups),
     };

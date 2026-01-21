@@ -8,7 +8,7 @@ use crate::{
     auth::User,
     error::{AppError, AppResult},
     get_categories,
-    html::utils::{BaseTemplateData, get_session_data},
+    html::utils::{BaseTemplateData, get_session_data, is_authenticated},
     models::category::Category,
 };
 
@@ -17,6 +17,19 @@ use crate::{
 struct ListCategoriesTemplate<'a> {
     categories: &'a Vec<Category>,
     current_user: &'a User,
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/categories/new.html")]
+struct NewCategoryTemplate {
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/categories/edit.html")]
+struct EditCategoryTemplate {
+    category: Category,
     base: BaseTemplateData,
 }
 
@@ -55,13 +68,52 @@ pub async fn list_categories(res: &mut Response, depot: &mut Depot) -> AppResult
 }
 
 #[handler]
+pub async fn new_category(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+
+    let template = NewCategoryTemplate { base };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn edit_category(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let category = Category::from_id(&id).await?;
+    let template = EditCategoryTemplate {
+        category: category.clone(),
+        base,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
 pub async fn create_category<'a>(
     res: &mut Response,
-    new_category: NewCategory<'a>,
+    category_form: NewCategory<'a>,
 ) -> AppResult<()> {
     let category = Category::new(
-        new_category.name.to_string(),
-        new_category.description.to_string(),
+        category_form.name.to_string(),
+        category_form.description.to_string(),
     )
     .await;
 
@@ -79,8 +131,11 @@ pub async fn create_category<'a>(
 }
 
 #[handler]
-pub async fn edit_category<'a>(res: &mut Response, new_category: NewCategory<'a>) -> AppResult<()> {
-    let category = Category::from_id(new_category.id.as_ref().unwrap()).await;
+pub async fn update_category<'a>(
+    res: &mut Response,
+    category_form: NewCategory<'a>,
+) -> AppResult<()> {
+    let category = Category::from_id(category_form.id.as_ref().unwrap()).await;
 
     if let Err(err) = category {
         res.status_code(StatusCode::NOT_FOUND);
@@ -89,8 +144,8 @@ pub async fn edit_category<'a>(res: &mut Response, new_category: NewCategory<'a>
 
     let updated_category = category?
         .update_category(
-            new_category.name.to_string(),
-            new_category.description.to_string(),
+            category_form.name.to_string(),
+            category_form.description.to_string(),
         )
         .await;
 

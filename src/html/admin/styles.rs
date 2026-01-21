@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::User,
     error::{AppError, AppResult},
-    html::utils::{BaseTemplateData, get_session_data},
+    get_categories,
+    html::utils::{BaseTemplateData, get_session_data, is_authenticated},
     models::{category::Category, styles::Style},
 };
 
@@ -15,6 +16,21 @@ use crate::{
 #[template(path = "admin/styles/styles.html")]
 struct ListStylesTemplate<'a> {
     current_user: &'a User,
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/styles/new.html")]
+struct NewStyleTemplate {
+    categories: Vec<Category>,
+    base: BaseTemplateData,
+}
+
+#[derive(Template)]
+#[template(path = "admin/styles/edit.html")]
+struct EditStyleTemplate {
+    style: Style,
+    categories: Vec<Category>,
     base: BaseTemplateData,
 }
 
@@ -51,8 +67,48 @@ pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 }
 
 #[handler]
-pub async fn create_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppResult<()> {
-    let category = Category::from_id(&new_style.category).await;
+pub async fn new_style(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+
+    let categories = get_categories().await.read().await;
+    let template = NewStyleTemplate {
+        categories: (categories).to_vec(),
+        base,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn edit_style(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let is_auth = is_authenticated(depot).await;
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    let base = BaseTemplateData { is_auth, translate };
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let style = Style::from_id(&id).await?;
+    let categories = get_categories().await.read().await;
+    let template = EditStyleTemplate {
+        style: style.clone(),
+        categories: (categories).to_vec(),
+        base,
+    };
+    res.render(Text::Html(template.render()?));
+    Ok(())
+}
+
+#[handler]
+pub async fn create_style<'a>(res: &mut Response, style_form: NewStyle<'a>) -> AppResult<()> {
+    let category = Category::from_id(&style_form.category).await;
 
     if let Err(err) = category {
         res.status_code(StatusCode::BAD_REQUEST);
@@ -60,10 +116,10 @@ pub async fn create_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> Ap
     }
 
     let result = Style::new(
-        new_style.name.to_string(),
+        style_form.name.to_string(),
         category.unwrap(),
-        new_style.description.to_string(),
-        new_style.style.to_string(),
+        style_form.description.to_string(),
+        style_form.style.to_string(),
     )
     .await;
 
@@ -79,15 +135,15 @@ pub async fn create_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> Ap
 }
 
 #[handler]
-pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppResult<()> {
-    let style = Style::from_id(&new_style.id.unwrap()).await;
+pub async fn update_style<'a>(res: &mut Response, style_form: NewStyle<'a>) -> AppResult<()> {
+    let style = Style::from_id(&style_form.id.unwrap()).await;
 
     if let Err(err) = style {
         res.status_code(StatusCode::NOT_FOUND);
         return Err(err);
     }
 
-    let category = Category::from_id(&new_style.category).await;
+    let category = Category::from_id(&style_form.category).await;
 
     if let Err(err) = category {
         res.status_code(StatusCode::BAD_REQUEST);
@@ -97,10 +153,10 @@ pub async fn edit_style<'a>(res: &mut Response, new_style: NewStyle<'a>) -> AppR
     let result = style
         .unwrap()
         .update_style(
-            new_style.name.to_string(),
+            style_form.name.to_string(),
             category.unwrap(),
-            new_style.description.to_string(),
-            new_style.style.to_string(),
+            style_form.description.to_string(),
+            style_form.style.to_string(),
         )
         .await;
 
