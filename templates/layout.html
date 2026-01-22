@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico" />
     <script src="/static/js/htmx.min.js"></script>
 
+    <link rel="stylesheet" href="/static/css/tailwind.css" />
     <link rel="stylesheet" href="/static/css/fa.all.min.css" />
     <link rel="stylesheet" href="/static/css/style.css" />
     {% block head %}{% endblock %}
@@ -42,7 +43,7 @@
       </nav>
     </header>
 
-    <main class="p-4 grow">{% block content %}{% endblock %}</main>
+    <main class="p-4 flex-grow">{% block content %}{% endblock %}</main>
 
     <footer class="p-4 bg-zinc-800 text-white text-center">
       <p>&copy; 2025 MVT Server</p>

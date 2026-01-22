@@ -1,9 +1,7 @@
-@import "tailwindcss";
-
+@tailwind base;
+@tailwind components;
 @tailwind utilities;
-@source "../templates/**/*.html";
 
-/* Como usas una estructura de carpetas específica para mvt-server */
 .navbar {
   @apply p-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 justify-between items-center;
   @apply bg-zinc-800 text-white shadow-lg;
@@ -203,7 +201,7 @@
 }
 
 .modal {
-  @apply fixed inset-0 z-50 items-center justify-center hidden h-screen w-screen bg-black/50;
+  @apply fixed inset-0 z-50 items-center justify-center hidden h-screen w-screen bg-black bg-opacity-50;
 }
 
 .modal-card {
