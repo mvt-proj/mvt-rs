@@ -138,8 +138,8 @@ fn build_admin_styles_routes() -> Router {
         .get(html::admin::styles::list_styles)
         .push(Router::with_path("new").get(html::admin::styles::new_style))
         .push(Router::with_path("create").post(html::admin::styles::create_style))
-        .push(Router::with_path("edit/{id}").get(html::admin::styles::update_style))
-        .push(Router::with_path("update").post(html::admin::styles::edit_style))
+        .push(Router::with_path("edit/{id}").get(html::admin::styles::edit_style))
+        .push(Router::with_path("update").post(html::admin::styles::update_style))
         .push(Router::with_path("delete/{id}").get(html::admin::styles::delete_style))
 }
 
