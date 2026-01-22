@@ -7,7 +7,6 @@
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico" />
     <script src="/static/js/htmx.min.js"></script>
 
-    <link rel="stylesheet" href="/static/css/tailwind.css" />
     <link rel="stylesheet" href="/static/css/fa.all.min.css" />
     <link rel="stylesheet" href="/static/css/style.css" />
     {% block head %}{% endblock %}
@@ -16,7 +15,7 @@
   <body
     class="bg-gray-200 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col"
   >
-    <main class="p-4 flex-grow">{% block content %}{% endblock %}</main>
+    <main class="p-4 grow">{% block content %}{% endblock %}</main>
 
     <script src="/static/js/mvt.js"></script>
     {% block scripts %}{% endblock %}
