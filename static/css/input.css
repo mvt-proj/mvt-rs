@@ -1,5 +1,6 @@
-@tailwind base;
-@tailwind components;
+@import "tailwindcss";
+
+@source "../templates/**/*.{html,js}";
 @tailwind utilities;
 
 .navbar {
@@ -201,7 +202,7 @@
 }
 
 .modal {
-  @apply fixed inset-0 z-50 items-center justify-center hidden h-screen w-screen bg-black bg-opacity-50;
+  @apply fixed inset-0 z-50 items-center justify-center hidden h-screen w-screen bg-black/50;
 }
 
 .modal-card {
