@@ -1,6 +1,5 @@
 use crate::html::errors::ErrorTemplate;
 use ::maplibre_legend::LegendError;
-use askama::Template;
 use bb8::RunError;
 use bb8_redis::redis::RedisError;
 use salvo::prelude::*;
@@ -105,19 +104,45 @@ pub enum AppError {
 
 pub type AppResult<T> = Result<T, AppError>;
 
+impl AppError {
+    pub fn status_code(&self) -> StatusCode {
+        match self {
+            Self::UnauthorizedAccess => StatusCode::UNAUTHORIZED,
+            Self::UserNotFound | Self::UserNotFoundError(_) | Self::NotFound(_) | Self::CacheNotFount(_) => StatusCode::NOT_FOUND,
+            Self::InvalidInput(_) | Self::SqlInjectionError(_) | Self::RequestParamError(_) => StatusCode::BAD_REQUEST,
+            Self::TimeoutError => StatusCode::REQUEST_TIMEOUT,
+            Self::ServiceUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
 #[async_trait]
 impl Writer for AppError {
-    async fn write(mut self, _req: &mut Request, _depot: &mut Depot, res: &mut Response) {
-        if let Some(status) = res.status_code
-            && status.as_u16() >= 400
-            && status.as_u16() <= 600
-        {
+    async fn write(mut self, req: &mut Request, _depot: &mut Depot, res: &mut Response) {
+        let status = self.status_code();
+        let error_message = self.to_string();
+
+        let prefers_html = req.headers()
+            .get("accept")
+            .and_then(|v| v.to_str().ok())
+            .map(|v| v.contains("text/html"))
+            .unwrap_or(false);
+
+        res.status_code(status);
+
+        if prefers_html {
             let template = ErrorTemplate {
                 status: status.as_u16(),
-                message: self.to_string(),
+                message: error_message,
             };
-
-            res.render(Text::Html(template.render().unwrap()));
+            res.render(Text::Html(template.render_or_fallback()));
+        } else {
+            res.render(Json(serde_json::json!({
+                "status": status.as_u16(),
+                "error": error_message,
+                "type": format!("{:?}", self)
+            })));
         }
     }
 }
