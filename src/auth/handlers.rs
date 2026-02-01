@@ -59,10 +59,10 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
 }
 
 #[handler]
-pub async fn login<'a>(res: &mut Response, depot: &mut Depot, data: Login<'a>) -> AppResult<()> {
+pub async fn login(res: &mut Response, depot: &mut Depot, data: Login) -> AppResult<()> {
     let auth = get_auth().await.read().await;
 
-    let user = auth.get_user_by_email_and_password(data.email, data.password);
+    let user = auth.get_user_by_email_and_password(&data.email, &data.password);
 
     if let Err(err) = user {
         res.status_code(StatusCode::UNAUTHORIZED);
@@ -105,10 +105,10 @@ pub async fn session_auth_handler(res: &mut Response, depot: &mut Depot) -> AppR
 }
 
 #[handler]
-pub async fn change_password<'a>(
+pub async fn change_password(
     depot: &mut Depot,
     res: &mut Response,
-    data: ChangePassword<'a>,
+    data: ChangePassword,
 ) -> AppResult<()> {
     let user_id = depot
         .session_mut()

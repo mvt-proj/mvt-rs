@@ -139,15 +139,15 @@ pub struct DataToken {
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]
-pub struct Login<'a> {
-    pub email: &'a str,
-    pub password: &'a str,
+pub struct Login {
+    pub email: String,
+    pub password: String,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
 #[salvo(extract(default_source(from = "body")))]
-pub struct ChangePassword<'a> {
-    pub password: &'a str,
+pub struct ChangePassword {
+    pub password: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
