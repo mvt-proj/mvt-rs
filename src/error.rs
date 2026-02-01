@@ -108,8 +108,13 @@ impl AppError {
     pub fn status_code(&self) -> StatusCode {
         match self {
             Self::UnauthorizedAccess => StatusCode::UNAUTHORIZED,
-            Self::UserNotFound | Self::UserNotFoundError(_) | Self::NotFound(_) | Self::CacheNotFount(_) => StatusCode::NOT_FOUND,
-            Self::InvalidInput(_) | Self::SqlInjectionError(_) | Self::RequestParamError(_) => StatusCode::BAD_REQUEST,
+            Self::UserNotFound
+            | Self::UserNotFoundError(_)
+            | Self::NotFound(_)
+            | Self::CacheNotFount(_) => StatusCode::NOT_FOUND,
+            Self::InvalidInput(_) | Self::SqlInjectionError(_) | Self::RequestParamError(_) => {
+                StatusCode::BAD_REQUEST
+            }
             Self::TimeoutError => StatusCode::REQUEST_TIMEOUT,
             Self::ServiceUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
@@ -123,7 +128,8 @@ impl Writer for AppError {
         let status = self.status_code();
         let error_message = self.to_string();
 
-        let prefers_html = req.headers()
+        let prefers_html = req
+            .headers()
             .get("accept")
             .and_then(|v| v.to_str().ok())
             .map(|v| v.contains("text/html"))

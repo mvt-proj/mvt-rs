@@ -19,17 +19,17 @@ impl ErrorTemplate {
 
 #[handler]
 pub async fn handle_errors(res: &mut Response, ctrl: &mut FlowCtrl) {
-    if let Some(status) = res.status_code {
-        if status.is_client_error() || status.is_server_error() {
-            let template = ErrorTemplate {
-                status: status.as_u16(),
-                message: status.canonical_reason().unwrap_or("Error").to_string(),
-            };
+    if let Some(status) = res.status_code
+        && (status.is_client_error() || status.is_server_error())
+    {
+        let template = ErrorTemplate {
+            status: status.as_u16(),
+            message: status.canonical_reason().unwrap_or("Error").to_string(),
+        };
 
-            if let Ok(html) = template.render() {
-                res.render(Text::Html(html));
-                ctrl.skip_rest();
-            }
+        if let Ok(html) = template.render() {
+            res.render(Text::Html(html));
+            ctrl.skip_rest();
         }
     }
 }
