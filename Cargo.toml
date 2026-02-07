@@ -7,16 +7,16 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uuid = { version = "1.18.0", features = ["v4", "fast-rng"] }
-dotenvy = "0.15.0"
+uuid = { version = "1.20", features = ["v4", "fast-rng"] }
+dotenvy = "0.15"
 clap = { version = "4.5", features = ["derive", "env"] }
-bytes = "1.10"
+bytes = "1.11"
 argon2 = { version = "0.5", features = ["std"] }
 askama = "0.15"
 thiserror = "2"
 base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
-jsonwebtoken = { version = "10.0", features = ["rust_crypto"] }
+jsonwebtoken = { version = "10.3", features = ["rust_crypto"] }
 
 salvo = { version = "0.89", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros", "signal"] }
@@ -26,14 +26,14 @@ serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.8", features = [ "runtime-tokio-rustls" , "postgres", "sqlite", "migrate" ] }
 
-inquire = { version = "0.9.1"}
+inquire = { version = "0.9.3"}
 crossterm = "0.29"
 
-redis = { version = "1.0.1", features = ["tokio-comp"] }
+redis = { version = "1.0.3", features = ["tokio-comp"] }
 bb8 = "0.9"
 bb8-redis = "0.26"
 include_dir = {version = "0.7.4", features = ["glob"] }
-regex = "1.11.1"
+regex = "1.12"
 html-escape = "0.2"
 
 fluent = "0.17"
