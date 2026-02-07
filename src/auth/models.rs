@@ -294,6 +294,6 @@ impl Auth {
                         .unwrap_or(false)
             })
             .cloned()
-            .ok_or(AppError::UserNotFound)
+            .ok_or(AppError::InvalidCredentials)
     }
 }

@@ -62,21 +62,12 @@ pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
 pub async fn login(res: &mut Response, depot: &mut Depot, data: Login) -> AppResult<()> {
     let auth = get_auth().await.read().await;
 
-    let user = auth.get_user_by_email_and_password(&data.email, &data.password);
-
-    if let Err(err) = user {
-        res.status_code(StatusCode::UNAUTHORIZED);
-        return Err(err);
-    }
-
-    let user = user?;
+    let user = auth.get_user_by_email_and_password(&data.email, &data.password)?;
 
     let mut session = Session::new();
     session.insert("userid", user.id.clone()).unwrap();
     depot.set_session(session);
 
-    res.headers_mut()
-        .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin"));
     Ok(())
 }

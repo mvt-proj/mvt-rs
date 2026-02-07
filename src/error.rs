@@ -80,6 +80,9 @@ pub enum AppError {
     #[error("Unauthorized access")]
     UnauthorizedAccess,
 
+    #[error("Invalid email or password")]
+    InvalidCredentials,
+
     #[error("Invalid input: {0}")]
     InvalidInput(String),
 
@@ -107,7 +110,8 @@ pub type AppResult<T> = Result<T, AppError>;
 impl AppError {
     pub fn status_code(&self) -> StatusCode {
         match self {
-            Self::UnauthorizedAccess => StatusCode::UNAUTHORIZED,
+            // Self::UnauthorizedAccess => StatusCode::UNAUTHORIZED,
+            Self::UnauthorizedAccess | Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::UserNotFound
             | Self::UserNotFoundError(_)
             | Self::NotFound(_)
