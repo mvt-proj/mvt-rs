@@ -334,7 +334,7 @@ pub async fn delete_layer_cache<'a>(res: &mut Response, req: &mut Request) -> Ap
             format!("{}_{}", layer.category.name, layer.name)
         } else {
             res.status_code(StatusCode::BAD_REQUEST);
-            return Err(AppError::CacheNotFount(layer_id.to_string()));
+            return Err(AppError::CacheNotFound(layer_id.to_string()));
         }
     };
 

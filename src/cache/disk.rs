@@ -72,7 +72,7 @@ impl DiskCache {
             }
         }
 
-        Err(AppError::CacheNotFount("aa".to_string()))
+        Err(AppError::CacheNotFound("Tile not found in cache or expired".to_string()))
     }
 
     pub async fn write_tile_to_file(&self, tilepath: &PathBuf, tile: &[u8]) -> AppResult<()> {

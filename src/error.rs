@@ -42,7 +42,7 @@ pub enum AppError {
     UserNotFoundError(String),
 
     #[error("Cache not found: {0}")]
-    CacheNotFount(String),
+    CacheNotFound(String),
 
     #[error("JWT encoding error: {0}")]
     JwtEncodeError(#[from] jsonwebtoken::errors::Error),
@@ -115,7 +115,7 @@ impl AppError {
             Self::UserNotFound
             | Self::UserNotFoundError(_)
             | Self::NotFound(_)
-            | Self::CacheNotFount(_) => StatusCode::NOT_FOUND,
+            | Self::CacheNotFound(_) => StatusCode::NOT_FOUND,
             Self::InvalidInput(_) | Self::SqlInjectionError(_) | Self::RequestParamError(_) => {
                 StatusCode::BAD_REQUEST
             }
