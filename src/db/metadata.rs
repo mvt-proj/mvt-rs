@@ -50,22 +50,27 @@ pub async fn query_schemas() -> AppResult<Vec<Schema>> {
 
 pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
     let pg_pool: PgPool = get_db_pool().clone();
+
     let sql = r#"
         SELECT
-            t.table_name as name,
+            c.relname as name,
             COALESCE(gc.f_geometry_column, '') as geometry
-        FROM information_schema.tables t
+        FROM pg_class c
+        JOIN pg_namespace n
+            ON n.oid = c.relnamespace
         LEFT JOIN geometry_columns gc
-            ON t.table_name = gc.f_table_name
-            AND t.table_schema = gc.f_table_schema
-        WHERE t.table_schema = $1
-          AND t.table_type = 'BASE TABLE'
-        ORDER BY t.table_name;
+            ON c.relname = gc.f_table_name
+            AND n.nspname = gc.f_table_schema
+        WHERE n.nspname = $1
+          AND c.relkind IN ('r', 'p', 'v', 'm')
+        ORDER BY c.relname;
     "#;
+
     let data = sqlx::query_as::<_, Table>(sql)
         .bind(schema)
         .fetch_all(&pg_pool)
         .await?;
+
     Ok(data)
 }
 
