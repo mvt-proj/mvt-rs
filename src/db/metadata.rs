@@ -76,11 +76,20 @@ pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
 
 pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>> {
     let pg_pool: PgPool = get_db_pool().clone();
+
     let sql = r#"
-        SELECT column_name name, udt_name udt
-        FROM information_schema.columns
-        WHERE table_schema = $1 AND table_name = $2
-        ORDER BY ordinal_position;
+        SELECT
+            a.attname AS name,
+            t.typname AS udt
+        FROM pg_attribute a
+        JOIN pg_class c      ON a.attrelid = c.oid
+        JOIN pg_namespace n  ON c.relnamespace = n.oid
+        JOIN pg_type t       ON a.atttypid = t.oid
+        WHERE n.nspname = $1
+          AND c.relname = $2
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+        ORDER BY a.attnum;
     "#;
 
     let data = sqlx::query_as::<_, Field>(sql)
