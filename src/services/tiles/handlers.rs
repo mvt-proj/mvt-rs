@@ -1,7 +1,6 @@
 use bytes::Bytes;
 use salvo::http::{HeaderMap, StatusCode, header::HeaderValue};
 use salvo::prelude::*;
-use sqlx::PgPool;
 use std::collections::HashMap;
 use std::time::Instant;
 use tracing::warn;
@@ -9,7 +8,11 @@ use tracing::warn;
 use super::builder::{Via, get_tile};
 use crate::services::utils::validate_user_groups;
 use crate::{
-    error::AppResult, filters, get_catalog, get_db_pool, models::catalog::StateLayer,
+    // auth,
+    // cache::cachewrapper::CacheWrapper,
+    // config,
+    error::{AppResult, AppError},
+    filters, get_catalog, get_db_registry, models::catalog::StateLayer,
     monitor::record_latency,
 };
 
@@ -43,7 +46,6 @@ pub async fn get_single_layer_tile(
     let mut builder = filters::SqlQueryBuilder::new(9);
     let (where_clause, bindings) = builder.build(&filters);
 
-    let pg_pool: PgPool = get_db_pool().clone();
     let catalog = get_catalog().await.read().await;
 
     let Some(layer) =
@@ -54,6 +56,11 @@ pub async fn get_single_layer_tile(
         res.body(salvo::http::ResBody::Once(Bytes::new()));
         return Ok(());
     };
+
+    let pg_pool = get_db_registry().get_pool(&layer.database_id).cloned().ok_or_else(|| {
+        warn!(db = %layer.database_id, "Database pool not found");
+        AppError::DatabaseError("Pool not found".to_string())
+    })?;
 
     if !validate_user_groups(req, layer, depot).await? {
         warn!(category = %category, name = %name, "User not authorized for layer");
@@ -140,7 +147,6 @@ pub async fn get_composite_layers_tile(
         .filter(|s| !s.is_empty())
         .collect();
 
-    let pg_pool: PgPool = get_db_pool().clone();
     let catalog = get_catalog().await.read().await;
 
     let mut output_data = Vec::new();
@@ -155,6 +161,14 @@ pub async fn get_composite_layers_tile(
         else {
             warn!(category = %category, name = %name, "Layer not found in composite request");
             continue;
+        };
+
+        let pg_pool = match get_db_registry().get_pool(&layer.database_id) {
+            Some(pool) => pool.clone(),
+            None => {
+                warn!(db = %layer.database_id, "Database pool not found");
+                continue;
+            }
         };
 
         if !validate_user_groups(req, layer, depot).await? {
@@ -246,7 +260,6 @@ pub async fn get_category_layers_tile(
     let y = req.param::<u32>("y").unwrap_or(0);
     let z = req.param::<u32>("z").unwrap_or(0);
 
-    let pg_pool: PgPool = get_db_pool().clone();
     let catalog = get_catalog().await.read().await;
 
     let layers_vec = catalog.find_layers_by_category(&category, StateLayer::Published);
@@ -256,6 +269,14 @@ pub async fn get_category_layers_tile(
     let mut cache_misses = 0;
 
     for layer in layers_vec {
+        let pg_pool = match get_db_registry().get_pool(&layer.database_id) {
+            Some(pool) => pool.clone(),
+            None => {
+                warn!(db = %layer.database_id, "Database pool not found");
+                continue;
+            }
+        };
+
         if !validate_user_groups(req, layer, depot).await? {
             continue;
         }

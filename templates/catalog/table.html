@@ -4,6 +4,7 @@
       <tr>
         <th scope="col"></th>
         <th scope="col">{{ translate["category"] }}</th>
+        <th scope="col">{% if translate["database"] != "" %}{{ translate["database"] }}{% else %}Database{% endif %}</th>
         <th scope="col">{{ translate["layer-name"] }}</th>
         <th scope="col">{{ translate["alias"] }}</th>
 
@@ -29,6 +30,7 @@
           </span>
         </td>
         <td>{{ layer.category.name }}</td>
+        <td>{{ layer.database_id }}</td>
         <td>{{ layer.name }}</td>
         <td>{{ layer.alias }}</td>
         {% if !is_guest_or_non_admin %}

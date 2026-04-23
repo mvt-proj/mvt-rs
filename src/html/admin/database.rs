@@ -41,8 +41,18 @@ struct SRIDTemplate<'a> {
 pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let schema_selected = req.query::<String>("schema_selected").unwrap_or_default();
     let table_selected = req.query::<String>("table_selected").unwrap_or_default();
-    let rv = query_schemas().await?;
-
+    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    
+    // Log para debug
+    tracing::debug!("Loading schemas for DB: {}, selected: {}", db_id, schema_selected);
+    
+    let rv = query_schemas(&db_id).await?;
+    
+    // Debug: ver qué esquemas se cargaron y si alguno coincide
+    for s in &rv {
+        tracing::debug!("Schema available: {}", s.name);
+    }
+    
     let template = SchemaTemplate {
         schemas: &rv,
         schema_selected,
@@ -55,12 +65,13 @@ pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn tables(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
     let schema = req
         .query::<String>("schema")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
     let table_selected = req.query::<String>("table_selected").unwrap_or_default();
 
-    let rv = query_tables(schema).await?;
+    let rv = query_tables(&db_id, schema).await?;
     let template = TableTemplate {
         tables: &rv,
         table_selected,
@@ -72,6 +83,7 @@ pub async fn tables(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn fields(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
     let schema = req
         .query::<String>("schema")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
@@ -92,7 +104,7 @@ pub async fn fields(req: &mut Request, res: &mut Response) -> AppResult<()> {
         })
         .unwrap_or_default();
 
-    let rv = query_fields(schema, table).await?;
+    let rv = query_fields(&db_id, schema, table).await?;
 
     let template = FieldTemplate {
         fields: &rv,
@@ -105,6 +117,7 @@ pub async fn fields(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn srid(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
     let schema = req
         .query::<String>("schema")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
@@ -114,7 +127,7 @@ pub async fn srid(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let geometry = req
         .query::<String>("geometry")
         .ok_or(AppError::RequestParamError("geometry".to_string()))?;
-    let rv = query_srid(schema, table, geometry).await?;
+    let rv = query_srid(&db_id, schema, table, geometry).await?;
 
     let template = SRIDTemplate { srid: &rv };
     let html_render = template.render()?;

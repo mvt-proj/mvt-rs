@@ -1,6 +1,7 @@
-use crate::{error::AppResult, get_db_pool, models::catalog::Layer};
+use crate::{error::{AppResult, AppError}, get_db_registry, models::catalog::Layer};
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
+
 
 #[derive(FromRow, Serialize, Debug)]
 pub struct Schema {
@@ -36,8 +37,8 @@ fn escape_identifier(ident: &str) -> String {
     format!("\"{}\"", ident.replace('"', "\"\""))
 }
 
-pub async fn query_schemas() -> AppResult<Vec<Schema>> {
-    let pg_pool: PgPool = get_db_pool().clone();
+pub async fn query_schemas(database_id: &str) -> AppResult<Vec<Schema>> {
+    let pg_pool: PgPool = get_db_registry().get_pool(database_id).ok_or(AppError::DatabaseError("DB not found".to_string()))?.clone();
     let sql = r#"
             SELECT schema_name name
             FROM information_schema.schemata
@@ -48,8 +49,8 @@ pub async fn query_schemas() -> AppResult<Vec<Schema>> {
     Ok(data)
 }
 
-pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
-    let pg_pool: PgPool = get_db_pool().clone();
+pub async fn query_tables(database_id: &str, schema: String) -> AppResult<Vec<Table>> {
+    let pg_pool: PgPool = get_db_registry().get_pool(database_id).ok_or(AppError::DatabaseError("DB not found".to_string()))?.clone();
 
     let sql = r#"
         SELECT
@@ -74,8 +75,8 @@ pub async fn query_tables(schema: String) -> AppResult<Vec<Table>> {
     Ok(data)
 }
 
-pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>> {
-    let pg_pool: PgPool = get_db_pool().clone();
+pub async fn query_fields(database_id: &str, schema: String, table: String) -> AppResult<Vec<Field>> {
+    let pg_pool: PgPool = get_db_registry().get_pool(database_id).ok_or(AppError::DatabaseError("DB not found".to_string()))?.clone();
 
     let sql = r#"
         SELECT
@@ -101,8 +102,8 @@ pub async fn query_fields(schema: String, table: String) -> AppResult<Vec<Field>
     Ok(data)
 }
 
-pub async fn query_srid(schema: String, table: String, geometry: String) -> AppResult<Srid> {
-    let pg_pool: PgPool = get_db_pool().clone();
+pub async fn query_srid(database_id: &str, schema: String, table: String, geometry: String) -> AppResult<Srid> {
+    let pg_pool: PgPool = get_db_registry().get_pool(database_id).ok_or(AppError::DatabaseError("DB not found".to_string()))?.clone();
 
     let sql = r#"
         SELECT srid as name
@@ -112,7 +113,7 @@ pub async fn query_srid(schema: String, table: String, geometry: String) -> AppR
           AND f_geometry_column = $3
     "#;
 
-    let data = sqlx::query_as::<_, Srid>(sql)
+    let data: Option<Srid> = sqlx::query_as::<_, Srid>(sql)
         .bind(schema)
         .bind(table)
         .bind(geometry)
@@ -123,7 +124,7 @@ pub async fn query_srid(schema: String, table: String, geometry: String) -> AppR
 }
 
 pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
-    let pg_pool: PgPool = get_db_pool().clone();
+    let pg_pool: PgPool = get_db_registry().get_pool(&layer.database_id).ok_or(AppError::DatabaseError("DB not found".to_string()))?.clone();
 
     let sql_estimate = r#"
         SELECT

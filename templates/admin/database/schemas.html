@@ -2,18 +2,18 @@
   <select name="schema" id="schema"
     hx-get="/admin/database/tables"
     hx-target="#table"
-    hx-trigger="load, change"
-    hx-vals='{"table_selected": "{{ table_selected }}"}'
+    hx-trigger="change"
+    hx-include="#database_id, #schema"
     class="input"
     required
   >
     <option value=""></option>
     {% for schema in schemas %}
-      {% if schema.name == schema_selected %}
-        <option value="{{schema.name}}" selected>{{schema.name}}</option>
-      {% else %}
-        <option value="{{schema.name}}">{{schema.name}}</option>
-      {% endif %}
+      <option value="{{schema.name}}" {% if schema.name == schema_selected %}selected{% endif %}>{{schema.name}}</option>
     {% endfor %}
   </select>
+  <script>
+    // Forzar la carga inicial de tablas al cargar el selector de esquemas
+    htmx.ajax('GET', '/admin/database/tables?database_id=' + document.getElementById('database_id').value + '&schema=' + document.getElementById('schema').value, {target: '#table'});
+  </script>
 {% endblock %}

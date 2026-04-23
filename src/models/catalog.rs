@@ -22,6 +22,7 @@ pub struct Layer {
     pub name: String,
     pub alias: String,
     pub description: String,
+    pub database_id: String,
     pub schema: String,
     pub table_name: String,
     pub fields: Vec<String>,
@@ -113,6 +114,7 @@ impl Layer {
         let mut rv = format!("<strong>ID:</strong> {}<br>", self.id);
         rv += &format!("<strong>Name:</strong> {}<br>", self.name);
         rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
+        rv += &format!("<strong>Database:</strong> {}<br>", self.database_id);
         rv += &format!(
             "<strong>Description:</strong> {}<br>",
             encode_safe(&self.description.clone())

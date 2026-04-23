@@ -1,7 +1,7 @@
 use config::categories::get_categories as get_cf_categories;
 use salvo::prelude::*;
 use salvo::server::ServerHandle;
-use sqlx::{PgPool, SqlitePool};
+use sqlx::SqlitePool;
 use std::path::Path;
 use std::sync::{Arc, OnceLock};
 use tokio::signal;
@@ -26,18 +26,19 @@ mod services;
 
 use auth::Auth;
 use cache::cachewrapper::CacheWrapper;
-use db::make_db_pool;
-use error::AppResult;
+use crate::db::connection::DbRegistry;
+use crate::error::AppResult;
 use models::{catalog::Catalog, category::Category};
 use monitor::start_system_monitor;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-static POSTGRES_DB: OnceLock<PgPool> = OnceLock::new();
+static DB_REGISTRY: OnceLock<DbRegistry> = OnceLock::new();
 #[inline]
-pub fn get_db_pool() -> &'static PgPool {
-    POSTGRES_DB.get().unwrap()
+pub fn get_db_registry() -> &'static DbRegistry {
+    DB_REGISTRY.get().unwrap()
 }
+
 
 static SQLITE_CONF: OnceLock<SqlitePool> = OnceLock::new();
 #[inline]
@@ -158,12 +159,7 @@ async fn main() -> AppResult<()> {
     let auth = initialize_auth(&app_config.config_dir, &cf_pool).await?;
     let catalog = initialize_catalog(&cf_pool).await?;
 
-    let db_pool = make_db_pool(
-        &app_config.db_conn,
-        app_config.db_pool_size_min,
-        app_config.db_pool_size_max,
-    )
-    .await?;
+    let db_registry = DbRegistry::new().await?;
 
     let categories = get_cf_categories(Some(&cf_pool)).await?;
     let cache_wrapper = CacheWrapper::initialize_cache(
@@ -173,7 +169,7 @@ async fn main() -> AppResult<()> {
     )
     .await?;
 
-    POSTGRES_DB.set(db_pool).unwrap();
+    DB_REGISTRY.set(db_registry).unwrap();
     SQLITE_CONF.set(cf_pool).unwrap();
     MAP_ASSETS_DIR
         .set(app_config.map_assets_dir.clone())

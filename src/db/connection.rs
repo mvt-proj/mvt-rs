@@ -1,15 +1,58 @@
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgPool};
 use sqlx::ConnectOptions;
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
-
+use std::collections::HashMap;
 use std::time::Duration;
+use crate::error::{AppResult, AppError};
 
-use crate::error::AppResult;
+#[derive(Debug)]
+pub struct DbRegistry {
+    pools: HashMap<String, PgPool>,
+}
+
+impl DbRegistry {
+    pub async fn new() -> AppResult<Self> {
+        let mut pools = HashMap::new();
+
+        for (key, value) in std::env::vars() {
+            if key.starts_with("DBCONN") {
+                let name = if key == "DBCONN" || key == "DBCONN_DEFAULT" {
+                    "default".to_string()
+                } else {
+                    key.replace("DBCONN_", "").to_lowercase()
+                };
+
+                let pool = make_db_pool(&value, 1, 10).await?;
+                pools.insert(name, pool);
+            }
+        }
+
+        if pools.is_empty() {
+            return Err(AppError::DatabaseError("No database connections configured.".to_string()));
+        }
+
+        Ok(Self { pools })
+    }
+
+    pub fn get_pool(&self, name: &str) -> Option<&PgPool> {
+        self.pools.get(name)
+    }
+
+    pub fn get_default_pool(&self) -> &PgPool {
+        self.pools.get("default").expect("Default pool must exist")
+    }
+
+    pub fn list_databases(&self) -> Vec<String> {
+        let mut keys: Vec<String> = self.pools.keys().cloned().collect();
+        keys.sort();
+        keys
+    }
+}
 
 pub async fn make_db_pool(
     db_conn: &str,
     min_connections: u32,
     max_connections: u32,
-) -> AppResult<sqlx::Pool<sqlx::Postgres>> {
+) -> AppResult<PgPool> {
     let mut opts: PgConnectOptions = db_conn.parse()?;
 
     opts = opts

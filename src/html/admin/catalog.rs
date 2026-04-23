@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
-    get_auth, get_cache_wrapper, get_catalog, get_categories,
+    get_auth, get_cache_wrapper, get_catalog, get_categories, get_db_registry,
     html::utils::{BaseTemplateData, get_session_data, is_authenticated},
     models::{
         catalog::{Layer, StateLayer},
@@ -28,6 +28,7 @@ struct CatalogTemplate<'a> {
 struct NewLayerTemplate {
     categories: Vec<Category>,
     groups: Vec<Group>,
+    databases: Vec<String>,
     base: BaseTemplateData,
 }
 
@@ -37,6 +38,7 @@ struct EditLayerTemplate {
     layer: Layer,
     categories: Vec<Category>,
     groups: Vec<Group>,
+    databases: Vec<String>,
     base: BaseTemplateData,
 }
 
@@ -45,6 +47,7 @@ struct EditLayerTemplate {
 struct NewLayer<'a> {
     id: String,
     category: String,
+    database_id: String,
     geometry: &'a str,
     name: String,
     alias: String,
@@ -100,6 +103,7 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let categories = get_categories().await.read().await;
     let auth = get_auth().await.read().await;
     let groups = auth.groups.clone();
+    let databases = get_db_registry().list_databases();
     let is_auth = is_authenticated(depot).await;
 
     let translate = depot
@@ -111,6 +115,7 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let template = NewLayerTemplate {
         categories: (categories).to_vec(),
         groups,
+        databases,
         base,
     };
     res.render(Text::Html(template.render()?));
@@ -136,10 +141,12 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot
     let layer = catalog
         .find_layer_by_id(&layer_id, StateLayer::Any)
         .unwrap();
+    let databases = get_db_registry().list_databases();
     let template = EditLayerTemplate {
         layer: layer.clone(),
         categories: (categories).to_vec(),
         groups,
+        databases,
         base,
     };
     res.render(Text::Html(template.render()?));
@@ -175,6 +182,7 @@ pub async fn create_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> A
     let layer = Layer {
         id: hex_string,
         category,
+        database_id: layer_form.database_id,
         geometry: layer_form.geometry.to_string(),
         name: layer_form.name,
         alias: layer_form.alias,
@@ -242,6 +250,7 @@ pub async fn update_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> A
     let layer = Layer {
         id: layer_form.id,
         category,
+        database_id: layer_form.database_id,
         geometry: layer_form.geometry.to_string(),
         name: layer_form.name,
         alias: layer_form.alias,

@@ -113,6 +113,7 @@ points = Puntos
 lines = Líneas
 polygons = Polígonos
 alias = Alias
+database = Base de Datos
 schema = Esquema
 table = Tabla
 fields = Campos

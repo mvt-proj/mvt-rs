@@ -111,6 +111,7 @@ points = Punti
 lines = Linee
 polygons = Poligoni
 alias = Alias
+database = Database
 schema = Schema
 table = Tabella
 fields = Campi

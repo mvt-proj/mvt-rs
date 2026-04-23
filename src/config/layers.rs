@@ -64,6 +64,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
         let max_cache_age: Option<i64> = row.get("max_cache_age");
         let max_records: Option<i64> = row.get("max_records");
         let published: bool = row.get("published");
+        let database_id: String = row.get("database_id");
         let url: Option<String> = row.get("url");
 
         let group_ids: Option<String> = row.get("group_ids");
@@ -122,6 +123,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
             max_cache_age: max_cache_age.map(|v| v as u64),
             max_records: max_records.map(|v| v as u64),
             published,
+            database_id,
             url,
             groups: Some(groups),
         });
@@ -140,9 +142,9 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
             id, category, geometry, name, alias, description, schema, table_name, fields, filter, srid, geom,
             sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify,
             buffer_do_not_simplify, extent_do_not_simplify, clip_geom,
-            delete_cache_on_start, max_cache_age, max_records, published, url, groups
+            delete_cache_on_start, max_cache_age, max_records, published, database_id, url, groups
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )",
     )
     .bind(&layer.id)
@@ -170,6 +172,7 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(layer.max_cache_age.map(|v| v as i64))
     .bind(layer.max_records.map(|v| v as i64))
     .bind(layer.published)
+    .bind(&layer.database_id)
     .bind(&layer.url)
     .bind(
         layer
@@ -212,7 +215,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
             filter = ?, srid = ?, geom = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?,
             zmax = ?, zmax_do_not_simplify = ?, buffer_do_not_simplify = ?,
             extent_do_not_simplify = ?, clip_geom = ?, delete_cache_on_start = ?,
-            max_cache_age = ?, max_records = ?, published = ?, url = ?, groups = ? WHERE id = ?",
+            max_cache_age = ?, max_records = ?, published = ?, database_id = ?, url = ?, groups = ? WHERE id = ?",
     )
     .bind(&layer.category.id)
     .bind(&layer.geometry)
@@ -238,6 +241,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(layer.max_cache_age.map(|v| v as i64))
     .bind(layer.max_records.map(|v| v as i64))
     .bind(layer.published)
+    .bind(&layer.database_id)
     .bind(&layer.url)
     .bind(group_ids)
     .bind(&layer.id)

@@ -75,18 +75,39 @@
         </div>
       </div>
 
+      <!-- database_id -->
+      <div class="mb-4">
+        <label class="label" for="database_id">{% if base.translate["database"] != "" %}{{ base.translate["database"] }}{% else %}Database{% endif %}</label>
+        <div class="mt-1">
+          <div class="select">
+            <select name="database_id" id="database_id" class="input"
+              hx-get="/admin/database/schemas"
+              hx-target="#schema-select-container"
+              hx-trigger="change"
+              hx-swap="innerHTML"
+              onchange="clearDependentFields()">
+              {% for db in databases %}
+              <option value="{{ db }}">{{ db }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
         <!-- schema -->
         <div class="mb-4">
           <label class="label" for="schema">{{ base.translate["schema"] }}</label>
-          <div class="mt-1">
+          <div class="mt-1" id="schema-select-container">
             <div class="select"
               hx-get="/admin/database/schemas"
               hx-swap="innerHTML"
-              hx-trigger="load"
+              hx-trigger="load, change from:#database_id"
+              hx-include="#database_id"
               hx-vals='{"schema_selected": "{{ layer.schema }}", "table_selected": "{{ layer.table_name }}"}'
             >
             </div>
           </div>
+
         </div>
 
         <!-- table -->
@@ -99,7 +120,7 @@
                 hx-get="/admin/database/fields"
                 hx-target="#fields"
                 hx-trigger="change, load delay:3s"
-                hx-include="[name='schema']"
+                hx-include="#database_id, [name='schema']"
                 required
               >
               </select>
@@ -313,22 +334,46 @@
 
 {% block scripts %}
 <script>
+  function clearDependentFields() {
+      document.getElementById('table').innerHTML = '';
+      document.getElementById('fields').innerHTML = '';
+      document.querySelector('[name="srid"]').value = '4326';
+  }
+
+  document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'schema-select-container') {
+      const schemaSelect = document.querySelector('[name="schema"]');
+      if (schemaSelect) {
+        schemaSelect.value = "{{ layer.schema }}";
+        // Disparar change para que htmx cargue las tablas con el esquema seleccionado
+        schemaSelect.dispatchEvent(new Event('change'));
+      }
+    }
+
+    if (event.detail.target.id === 'table') {
+      const tableSelect = document.getElementById('table');
+      if (tableSelect) {
+        tableSelect.value = "{{ layer.table_name }}";
+        if (tableSelect.value) {
+          tableSelect.dispatchEvent(new Event('change'));
+        }
+      }
+    }
+  });
+
+  document.getElementById('database_id').value = "{{ layer.database_id }}";
 
   const savedFields = "{{ layer.fields.join(",") }}";
+  let isInitialLoad = true;
 
   document.body.addEventListener('htmx:configRequest', function(evt) {
-    // Verificamos que el disparo venga del selector de tabla
     if (evt.detail.elt.id === 'table') {
 
-      // Si el evento que disparó esto NO es un cambio manual (es decir, es la carga inicial 'load')
-      // Entonces enviamos los campos guardados para que se marquen.
-      if (!evt.detail.triggeringEvent || evt.detail.triggeringEvent.type !== 'change') {
+      if (!evt.detail.triggeringEvent || evt.detail.triggeringEvent.type !== 'change' || isInitialLoad) {
         evt.detail.parameters['fields_selected'] = savedFields;
+        isInitialLoad = false; // a partir de ahora los change son manuales
       }
       else {
-        // SI ES un cambio manual ('change'):
-        // 1. No enviamos 'fields_selected' (para que la nueva tabla venga limpia)
-        // 2. Limpiamos visualmente el select #fields inmediatamente
         document.getElementById('fields').innerHTML = '';
       }
     }
@@ -338,10 +383,14 @@
     var target = event.detail.target;
 
     if (target.id === 'fields') {
+      var dbId = document.querySelector('[name="database_id"]').value;
       var schemaValue = document.querySelector('[name="schema"]').value;
       var tableValue = document.querySelector('[name="table"]').value;
       var geomValue = document.querySelector('[name="geom"]').value;
-      var url = '/admin/database/srid?schema=' + encodeURIComponent(schemaValue) + '&table=' + encodeURIComponent(tableValue) + '&geometry=' + encodeURIComponent(geomValue);
+      var url = '/admin/database/srid?database_id=' + encodeURIComponent(dbId) +
+                '&schema=' + encodeURIComponent(schemaValue) +
+                '&table=' + encodeURIComponent(tableValue) +
+                '&geometry=' + encodeURIComponent(geomValue);
 
       fetch(url)
         .then(response => {
@@ -351,7 +400,6 @@
           return response.json();
         })
         .then(data => {
-          // document.querySelector('[name="srid"]').value = data;
           const sridInput = document.querySelector('[name="srid"]');
           if (!sridInput.value || sridInput.value === "0") {
             sridInput.value = data;
