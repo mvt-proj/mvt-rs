@@ -12,6 +12,7 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 
 ## Key Features
 
+- Support for multiple PostgreSQL databases simultaneously.
 - Layer server, maps server (through Maplibre Style) and legends server.
 - On-the-fly vector tile generation using PostgreSQL/PostGIS.
 - Web-based administration for managing users, groups, layers, styles, categories, and more.
