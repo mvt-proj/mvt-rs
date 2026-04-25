@@ -50,16 +50,18 @@ pub async fn query_schemas(database_id: &str) -> AppResult<Vec<Schema>> {
 }
 
 pub async fn query_tables(database_id: &str, schema: String) -> AppResult<Vec<Table>> {
-    let pg_pool: PgPool = get_db_registry().get_pool(database_id).ok_or(AppError::DatabaseError("DB not found".to_string()))?.clone();
+    let pg_pool: PgPool = get_db_registry().get_pool(database_id)
+        .ok_or(AppError::DatabaseError("DB not found".to_string()))?
+        .clone();
 
     let sql = r#"
         SELECT
             c.relname as name,
-            COALESCE(gc.f_geometry_column, '') as geometry
+            gc.f_geometry_column as geometry
         FROM pg_class c
         JOIN pg_namespace n
             ON n.oid = c.relnamespace
-        LEFT JOIN geometry_columns gc
+        JOIN geometry_columns gc
             ON c.relname = gc.f_table_name
             AND n.nspname = gc.f_table_schema
         WHERE n.nspname = $1
