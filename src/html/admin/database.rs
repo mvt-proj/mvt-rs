@@ -39,9 +39,15 @@ struct SRIDTemplate<'a> {
 #[handler]
 pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let schema_selected = req.query::<String>("schema_selected").unwrap_or_default();
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
 
-    tracing::debug!("Loading schemas for DB: {}, selected: {}", db_id, schema_selected);
+    tracing::debug!(
+        "Loading schemas for DB: {}, selected: {}",
+        db_id,
+        schema_selected
+    );
 
     let rv = query_schemas(&db_id).await?;
 
@@ -60,7 +66,9 @@ pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn tables(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
     let schema = req
         .query::<String>("schema")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
@@ -78,7 +86,9 @@ pub async fn tables(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn fields(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
     let schema = req
         .query::<String>("schema")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;
@@ -112,7 +122,9 @@ pub async fn fields(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
 #[handler]
 pub async fn srid(req: &mut Request, res: &mut Response) -> AppResult<()> {
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
     let schema = req
         .query::<String>("schema")
         .ok_or(AppError::RequestParamError("schema".to_string()))?;

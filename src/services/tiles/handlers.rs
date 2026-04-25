@@ -11,8 +11,11 @@ use crate::{
     // auth,
     // cache::cachewrapper::CacheWrapper,
     // config,
-    error::{AppResult, AppError},
-    filters, get_catalog, get_db_registry, models::catalog::StateLayer,
+    error::{AppError, AppResult},
+    filters,
+    get_catalog,
+    get_db_registry,
+    models::catalog::StateLayer,
     monitor::record_latency,
 };
 
@@ -57,10 +60,13 @@ pub async fn get_single_layer_tile(
         return Ok(());
     };
 
-    let pg_pool = get_db_registry().get_pool(&layer.database_id).cloned().ok_or_else(|| {
-        warn!(db = %layer.database_id, "Database pool not found");
-        AppError::DatabaseError("Pool not found".to_string())
-    })?;
+    let pg_pool = get_db_registry()
+        .get_pool(&layer.database_id)
+        .cloned()
+        .ok_or_else(|| {
+            warn!(db = %layer.database_id, "Database pool not found");
+            AppError::DatabaseError("Pool not found".to_string())
+        })?;
 
     if !validate_user_groups(req, layer, depot).await? {
         warn!(category = %category, name = %name, "User not authorized for layer");

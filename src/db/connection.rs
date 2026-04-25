@@ -1,8 +1,8 @@
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgPool};
+use crate::error::{AppError, AppResult};
 use sqlx::ConnectOptions;
+use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
 use std::collections::HashMap;
 use std::time::Duration;
-use crate::error::{AppResult, AppError};
 
 #[derive(Debug)]
 pub struct DbRegistry {
@@ -27,7 +27,9 @@ impl DbRegistry {
         }
 
         if pools.is_empty() {
-            return Err(AppError::DatabaseError("No database connections configured.".to_string()));
+            return Err(AppError::DatabaseError(
+                "No database connections configured.".to_string(),
+            ));
         }
 
         Ok(Self { pools })
@@ -42,7 +44,9 @@ impl DbRegistry {
     }
 
     pub fn list_databases(&self) -> Vec<(String, String)> {
-        let mut keys: Vec<(String, String)> = self.pools.keys()
+        let mut keys: Vec<(String, String)> = self
+            .pools
+            .keys()
             .map(|s| {
                 let label = {
                     let mut c = s.chars();

@@ -6,7 +6,9 @@ use crate::db::metadata::{
 
 #[handler]
 pub async fn schemas(req: &mut Request) -> Result<Json<Vec<Schema>>, StatusError> {
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
     let rv = query_schemas(&db_id).await;
     match rv {
         Ok(data) => Ok(Json(data)),
@@ -23,7 +25,9 @@ pub async fn schemas(req: &mut Request) -> Result<Json<Vec<Schema>>, StatusError
 
 #[handler]
 pub async fn tables(req: &mut Request) -> Result<Json<Vec<Table>>, StatusError> {
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
     let schema = req.query::<String>("schema").unwrap_or_default();
     let rv = query_tables(&db_id, schema).await;
 
@@ -42,7 +46,9 @@ pub async fn tables(req: &mut Request) -> Result<Json<Vec<Table>>, StatusError> 
 
 #[handler]
 pub async fn fields(req: &mut Request) -> Result<Json<Vec<Field>>, StatusError> {
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
     let schema = req.query::<String>("schema").unwrap_or_default();
     let table = req.query::<String>("table").unwrap_or_default();
     let rv = query_fields(&db_id, schema, table).await;
@@ -61,7 +67,9 @@ pub async fn fields(req: &mut Request) -> Result<Json<Vec<Field>>, StatusError> 
 
 #[handler]
 pub async fn srid(req: &mut Request) -> Result<Json<Srid>, StatusError> {
-    let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
     let schema = req.query::<String>("schema").unwrap_or_default();
     let table = req.query::<String>("table").unwrap_or_default();
     let geometry = req.query::<String>("geometry").unwrap_or_default();

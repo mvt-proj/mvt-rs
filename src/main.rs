@@ -24,10 +24,10 @@ mod monitor;
 mod routes;
 mod services;
 
-use auth::Auth;
-use cache::cachewrapper::CacheWrapper;
 use crate::db::connection::DbRegistry;
 use crate::error::AppResult;
+use auth::Auth;
+use cache::cachewrapper::CacheWrapper;
 use models::{catalog::Catalog, category::Category};
 use monitor::start_system_monitor;
 
@@ -38,7 +38,6 @@ static DB_REGISTRY: OnceLock<DbRegistry> = OnceLock::new();
 pub fn get_db_registry() -> &'static DbRegistry {
     DB_REGISTRY.get().unwrap()
 }
-
 
 static SQLITE_CONF: OnceLock<SqlitePool> = OnceLock::new();
 #[inline]
