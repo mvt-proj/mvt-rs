@@ -33,6 +33,12 @@ Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local 
 
 [Show tutorial](TUTORIAL.md)
 
+## Multiple Database Support
+The server supports connecting to multiple PostgreSQL databases simultaneously.
+- **Default Connection:** Use `DBCONN` or `DBCONN_DEFAULT` in your `.env` file.
+- **Additional Connections:** Define additional connections by prefixing them with `DBCONN_` (e.g., `DBCONN_FOO=postgres://...`).
+- **Layer Configuration:** When creating or editing a layer in the admin interface, you can select which database pool the layer should use from the "Database" dropdown.
+
 ## Environment Variables (.env)
 
 

@@ -140,6 +140,14 @@ MAPASSETS=/path_to/map_assets_dir      # Directory path for map_assets storage
 
 Remember the `.env` file has to kept secure and not shared in public repositories.
 
+### Multiple Database Support
+
+The server supports connecting to multiple PostgreSQL databases simultaneously.
+
+- **Default Connection:** Use `DBCONN` or `DBCONN_DEFAULT` in your `.env` file.
+- **Additional Connections:** Define additional connections by prefixing them with `DBCONN_` (e.g., `DBCONN_FOO=postgres://...`).
+- **Layer Configuration:** When creating or editing a layer in the admin interface, you can select which database pool the layer should use from the "Database" dropdown.
+
 
 ### Server with Nginx
 Example reverse proxy configuration (`/etc/nginx/sites-available/application.conf`):
