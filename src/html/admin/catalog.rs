@@ -28,7 +28,7 @@ struct CatalogTemplate<'a> {
 struct NewLayerTemplate {
     categories: Vec<Category>,
     groups: Vec<Group>,
-    databases: Vec<String>,
+    databases: Vec<(String, String)>,
     base: BaseTemplateData,
 }
 
@@ -38,7 +38,7 @@ struct EditLayerTemplate {
     layer: Layer,
     categories: Vec<Category>,
     groups: Vec<Group>,
-    databases: Vec<String>,
+    databases: Vec<(String, String)>,
     base: BaseTemplateData,
 }
 

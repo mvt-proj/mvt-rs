@@ -41,9 +41,20 @@ impl DbRegistry {
         self.pools.get("default").expect("Default pool must exist")
     }
 
-    pub fn list_databases(&self) -> Vec<String> {
-        let mut keys: Vec<String> = self.pools.keys().cloned().collect();
-        keys.sort();
+    pub fn list_databases(&self) -> Vec<(String, String)> {
+        let mut keys: Vec<(String, String)> = self.pools.keys()
+            .map(|s| {
+                let label = {
+                    let mut c = s.chars();
+                    match c.next() {
+                        None => String::new(),
+                        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                    }
+                };
+                (s.clone(), label)
+            })
+            .collect();
+        keys.sort_by(|a, b| a.0.cmp(&b.0));
         keys
     }
 }

@@ -42,17 +42,15 @@ pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let schema_selected = req.query::<String>("schema_selected").unwrap_or_default();
     let table_selected = req.query::<String>("table_selected").unwrap_or_default();
     let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
-    
-    // Log para debug
+
     tracing::debug!("Loading schemas for DB: {}, selected: {}", db_id, schema_selected);
-    
+
     let rv = query_schemas(&db_id).await?;
-    
-    // Debug: ver qué esquemas se cargaron y si alguno coincide
+
     for s in &rv {
         tracing::debug!("Schema available: {}", s.name);
     }
-    
+
     let template = SchemaTemplate {
         schemas: &rv,
         schema_selected,

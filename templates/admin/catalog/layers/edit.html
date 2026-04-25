@@ -86,8 +86,8 @@
               hx-trigger="change"
               hx-swap="innerHTML"
               onchange="clearDependentFields()">
-              {% for db in databases %}
-              <option value="{{ db }}">{{ db }}</option>
+              {% for (db_id, db_label) in databases %}
+              <option value="{{ db_id }}">{{ db_label }}</option>
               {% endfor %}
             </select>
           </div>

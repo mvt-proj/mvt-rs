@@ -30,7 +30,7 @@
           </span>
         </td>
         <td>{{ layer.category.name }}</td>
-        <td>{{ layer.database_id }}</td>
+        <td>{{ layer.database_id_capitalized() }}</td>
         <td>{{ layer.name }}</td>
         <td>{{ layer.alias }}</td>
         {% if !is_guest_or_non_admin %}

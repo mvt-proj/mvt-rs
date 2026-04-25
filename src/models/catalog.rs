@@ -110,6 +110,14 @@ impl Layer {
         self.max_records.unwrap_or(0)
     }
 
+    pub fn database_id_capitalized(&self) -> String {
+        let mut c = self.database_id.chars();
+        match c.next() {
+            None => String::new(),
+            Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+        }
+    }
+
     pub fn info_html(&self) -> String {
         let mut rv = format!("<strong>ID:</strong> {}<br>", self.id);
         rv += &format!("<strong>Name:</strong> {}<br>", self.name);
