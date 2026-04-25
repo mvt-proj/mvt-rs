@@ -14,7 +14,6 @@ use crate::{
 struct SchemaTemplate<'a> {
     schemas: &'a Vec<Schema>,
     schema_selected: String,
-    table_selected: String,
 }
 
 #[derive(Template)]
@@ -40,7 +39,6 @@ struct SRIDTemplate<'a> {
 #[handler]
 pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let schema_selected = req.query::<String>("schema_selected").unwrap_or_default();
-    let table_selected = req.query::<String>("table_selected").unwrap_or_default();
     let db_id = req.query::<String>("database_id").unwrap_or_else(|| "default".to_string());
 
     tracing::debug!("Loading schemas for DB: {}, selected: {}", db_id, schema_selected);
@@ -54,7 +52,6 @@ pub async fn schemas(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let template = SchemaTemplate {
         schemas: &rv,
         schema_selected,
-        table_selected,
     };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));
