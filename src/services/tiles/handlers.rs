@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use salvo::http::{HeaderMap, StatusCode, header::HeaderValue};
+use salvo::http::{StatusCode, header::HeaderValue};
 use salvo::prelude::*;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -8,9 +8,6 @@ use tracing::warn;
 use super::builder::{Via, get_tile};
 use crate::services::utils::validate_user_groups;
 use crate::{
-    // auth,
-    // cache::cachewrapper::CacheWrapper,
-    // config,
     error::{AppError, AppResult},
     filters,
     get_catalog,
@@ -155,94 +152,58 @@ pub async fn get_composite_layers_tile(
 
     let catalog = get_catalog().await.read().await;
 
-    let mut output_data = Vec::new();
-    let mut data_source_times = Vec::new();
-    let mut cache_hits = 0;
-    let mut cache_misses = 0;
-
+    let mut layer_configs = Vec::new();
     for layer_name in layers_vec {
         let (category, name) = layer_name.split_once(':').unwrap_or(("", ""));
-        let Some(layer) =
-            catalog.find_layer_by_category_and_name(category, name, StateLayer::Published)
-        else {
-            warn!(category = %category, name = %name, "Layer not found in composite request");
-            continue;
-        };
+        if let Some(layer) = catalog.find_layer_by_category_and_name(category, name, StateLayer::Published) {
+            if validate_user_groups(req, layer, depot).await? {
+                let zmin = layer.zmin.unwrap_or(0);
+                let zmax = layer.zmax.unwrap_or(22);
+                if z >= zmin && z <= zmax {
+                    layer_configs.push(layer.clone());
+                }
+            }
+        }
+    }
 
+    let mut futures = Vec::new();
+    for layer in layer_configs {
         let pg_pool = match get_db_registry().get_pool(&layer.database_id) {
             Some(pool) => pool.clone(),
-            None => {
-                warn!(db = %layer.database_id, "Database pool not found");
-                continue;
-            }
+            None => continue,
         };
-
-        if !validate_user_groups(req, layer, depot).await? {
-            warn!(category = %category, name = %name, "User not authorized for layer in composite request");
-            continue;
-        }
-
-        let zmin = layer.zmin.unwrap_or(0);
-        let zmax = layer.zmax.unwrap_or(22);
-        if z < zmin || z > zmax {
-            continue;
-        }
-
-        let start_time = Instant::now();
-
-        let (tile, via) = match get_tile(
-            pg_pool.clone(),
-            layer.clone(),
+        futures.push(get_tile(
+            pg_pool,
+            layer,
             x,
             y,
             z,
             String::new(),
             Vec::new(),
-        )
-        .await
-        {
-            Ok(result) => result,
-            Err(e) => {
-                warn!(
-                    category = %category,
-                    name = %name,
-                    error = %e,
-                    "Failed to get tile in composite request"
-                );
-                continue;
+        ));
+    }
+
+    let results = futures::future::join_all(futures).await;
+
+    let mut output_data = Vec::new();
+    let mut cache_hits = 0;
+    let mut cache_misses = 0;
+
+    for result in results {
+        if let Ok((tile, via)) = result {
+            match via {
+                Via::Database => cache_misses += 1,
+                Via::Cache => cache_hits += 1,
             }
-        };
-
-        let elapsed_time = start_time.elapsed();
-        let elapsed_secs = elapsed_time.as_secs_f64();
-        record_latency(elapsed_secs);
-        data_source_times.push(format!("{}: {}ms", layer.name, elapsed_time.as_millis()));
-
-        match via {
-            Via::Database => cache_misses += 1,
-            Via::Cache => cache_hits += 1,
+            output_data.push(tile);
         }
-
-        output_data.push(tile);
     }
 
-    let mut headers = HeaderMap::new();
-
-    if !data_source_times.is_empty() {
-        let times_str = data_source_times.join(", ");
-        headers.insert(
-            "X-Data-Source-Time",
-            HeaderValue::from_str(&times_str).unwrap_or_else(|_| HeaderValue::from_static("0")),
-        );
-    }
-
-    headers.insert(
+    res.headers_mut().insert(
         "X-Cache",
         HeaderValue::from_str(&format!("HIT: {cache_hits}, MISS: {cache_misses}"))
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
-
-    res.headers_mut().extend(headers);
 
     let final_output = Bytes::from(output_data.concat());
     res.body(salvo::http::ResBody::Once(final_output));
@@ -269,85 +230,56 @@ pub async fn get_category_layers_tile(
     let catalog = get_catalog().await.read().await;
 
     let layers_vec = catalog.find_layers_by_category(&category, StateLayer::Published);
-    let mut output_data = Vec::new();
-    let mut data_source_times = Vec::new();
-    let mut cache_hits = 0;
-    let mut cache_misses = 0;
 
+    let mut layer_configs = Vec::new();
     for layer in layers_vec {
+        if validate_user_groups(req, layer, depot).await? {
+            let zmin = layer.zmin.unwrap_or(0);
+            let zmax = layer.zmax.unwrap_or(22);
+            if z >= zmin && z <= zmax {
+                layer_configs.push(layer.clone());
+            }
+        }
+    }
+
+    let mut futures = Vec::new();
+    for layer in layer_configs {
         let pg_pool = match get_db_registry().get_pool(&layer.database_id) {
             Some(pool) => pool.clone(),
-            None => {
-                warn!(db = %layer.database_id, "Database pool not found");
-                continue;
-            }
+            None => continue,
         };
-
-        if !validate_user_groups(req, layer, depot).await? {
-            continue;
-        }
-
-        let zmin = layer.zmin.unwrap_or(0);
-        let zmax = layer.zmax.unwrap_or(22);
-        if z < zmin || z > zmax {
-            continue;
-        }
-
-        let start_time = Instant::now();
-
-        let (tile, via) = match get_tile(
-            pg_pool.clone(),
-            layer.clone(),
+        futures.push(get_tile(
+            pg_pool,
+            layer,
             x,
             y,
             z,
             String::new(),
             Vec::new(),
-        )
-        .await
-        {
-            Ok(result) => result,
-            Err(e) => {
-                warn!(
-                    category = %category,
-                    layer = %layer.name,
-                    error = %e,
-                    "Failed to get tile in category request"
-                );
-                continue;
+        ));
+    }
+
+    let results = futures::future::join_all(futures).await;
+
+    let mut output_data = Vec::new();
+    let mut cache_hits = 0;
+    let mut cache_misses = 0;
+
+    for result in results {
+        if let Ok((tile, via)) = result {
+            match via {
+                Via::Database => cache_misses += 1,
+                Via::Cache => cache_hits += 1,
             }
-        };
-
-        let elapsed_time = start_time.elapsed();
-        let elapsed_secs = elapsed_time.as_secs_f64();
-        record_latency(elapsed_secs);
-        data_source_times.push(format!("{}: {}ms", layer.name, elapsed_time.as_millis()));
-
-        match via {
-            Via::Database => cache_misses += 1,
-            Via::Cache => cache_hits += 1,
+            output_data.push(tile);
         }
-
-        output_data.push(tile);
     }
 
-    let mut headers = HeaderMap::new();
-
-    if !data_source_times.is_empty() {
-        let times_str = data_source_times.join(", ");
-        headers.insert(
-            "X-Data-Source-Time",
-            HeaderValue::from_str(&times_str).unwrap_or_else(|_| HeaderValue::from_static("0")),
-        );
-    }
-
-    headers.insert(
+    res.headers_mut().insert(
         "X-Cache",
         HeaderValue::from_str(&format!("HIT: {cache_hits}, MISS: {cache_misses}"))
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
-
-    res.headers_mut().extend(headers);
 
     let final_output = Bytes::from(output_data.concat());
     res.body(salvo::http::ResBody::Once(final_output));
