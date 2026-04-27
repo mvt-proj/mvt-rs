@@ -10,6 +10,9 @@ This is a simple and high-speed vector tile server developed in Rust, using the 
 
 Requires a PostgreSQL server with PostGIS version 3.0.0 or higher, either local or remote. It relies on the use of the PostGIS function ST_AsMVT. More information can be found at https://postgis.net/docs/en/ST_AsMVT.html.
 
+MVT Server focuses exclusively on the generation and delivery of Vector Tiles from PostGIS to maximize performance, simplicity, and ease of use.
+For raster data (orthophotos, satellite imagery, DEMs, etc.), it is recommended to serve Cloud Optimized GeoTIFF (COG) files directly using Nginx or any other static file server, taking advantage of native HTTP Range Requests. This hybrid architecture is the approach currently recommended by the geospatial community, as it clearly separates responsibilities and allows each component to be scaled independently.
+
 ## Key Features
 
 - Support for multiple PostgreSQL databases simultaneously.
