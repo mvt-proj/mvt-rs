@@ -9,7 +9,7 @@ Following FreeBSD `hier(7)` conventions:
 | Location | Purpose |
 | :--- | :--- |
 | `/usr/local/bin/mvt-server` | The binary executable |
-| `/usr/local/etc/mvt-server/` | Configuration files (`.toml`, `.json`, `.env`, `mvtrs.db`) |
+| `/usr/local/etc/mvt-server/` | Configuration files (`.toml`, `.json`, `.env`, `mvtrs.db`, `config.yaml`) |
 | `/usr/local/etc/rc.d/mvtserver` | The service script |
 | `/var/cache/mvt-server/` | Tile cache storage |
 | `/usr/local/etc/mvt-server/assets/` | Static map assets |
