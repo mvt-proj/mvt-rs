@@ -8,31 +8,36 @@ use std::time::Duration;
 pub struct DbRegistry {
     pools: HashMap<String, PgPool>,
 }
-
 impl DbRegistry {
-    pub async fn new() -> AppResult<Self> {
-        let mut pools = HashMap::new();
+    pub async fn new(
+        pools: &std::collections::HashMap<String, String>,
+        min_connections: u32,
+        max_connections: u32,
+    ) -> AppResult<Self> {
+        let mut db_pools = std::collections::HashMap::new();
 
+        // 1. Load from YAML
+        for (name, conn_str) in pools {
+            let pool = make_db_pool(conn_str, min_connections, max_connections).await?;
+            db_pools.insert(name.clone(), pool);
+        }
+
+        // 2. Load from Environment variables
         for (key, value) in std::env::vars() {
-            if key.starts_with("DBCONN") {
-                let name = if key == "DBCONN" || key == "DBCONN_DEFAULT" {
-                    "default".to_string()
-                } else {
-                    key.replace("DBCONN_", "").to_lowercase()
-                };
-
-                let pool = make_db_pool(&value, 1, 10).await?;
-                pools.insert(name, pool);
+            if key.starts_with("DBCONN_") {
+                let name = key.replace("DBCONN_", "").to_lowercase();
+                if !db_pools.contains_key(&name) {
+                    let pool = make_db_pool(&value, min_connections, max_connections).await?;
+                    db_pools.insert(name, pool);
+                }
             }
         }
 
-        if pools.is_empty() {
-            return Err(AppError::DatabaseError(
-                "No database connections configured.".to_string(),
-            ));
+        if db_pools.is_empty() {
+            return Err(AppError::DatabaseError("No database connections configured.".to_string()));
         }
 
-        Ok(Self { pools })
+        Ok(Self { pools: db_pools })
     }
 
     pub fn get_pool(&self, name: &str) -> Option<&PgPool> {

@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::{
-    api, args, auth, html,
+    api, auth, config::settings::Settings, html,
     i18n::{I18n, i18n_middleware},
     monitor,
     services::{health, legends, styles, tiles::handlers as tiles},
@@ -56,8 +56,8 @@ fn build_cors_handler() -> impl Handler + Clone {
         .into_handler()
 }
 
-fn build_session_handler(app_config: &args::AppConfig) -> SessionHandler<CookieStore> {
-    SessionHandler::builder(CookieStore::new(), app_config.session_secret.as_bytes())
+fn build_session_handler(settings: &Settings) -> SessionHandler<CookieStore> {
+    SessionHandler::builder(CookieStore::new(), settings.security.session_secret.as_bytes())
         .session_ttl(Some(Duration::from_secs(60 * 20)))
         .build()
         .expect("Failed to build session handler")
@@ -253,7 +253,7 @@ fn build_tiles_routes() -> Router {
         )
 }
 
-fn build_services_routes(app_config: &args::AppConfig, cache: impl Handler) -> Router {
+fn build_services_routes(settings: &Settings, cache: impl Handler) -> Router {
     Router::with_path("services")
         .hoop(cache)
         .push(build_tiles_routes())
@@ -261,7 +261,7 @@ fn build_services_routes(app_config: &args::AppConfig, cache: impl Handler) -> R
         .push(Router::with_path("legends/{style_name}").get(legends::index))
         .push(
             Router::with_path("map_assets/{**path}").get(
-                StaticDir::new([&app_config.map_assets_dir])
+                StaticDir::new([&settings.paths.assets])
                     .include_dot_files(false)
                     .defaults("index.html")
                     .auto_list(true),
@@ -282,10 +282,10 @@ fn build_public_routes() -> Router {
 // MAIN ROUTER
 // ============================================================================
 
-pub fn app_router(app_config: &args::AppConfig, i18n_service: Arc<I18n>) -> Service {
+pub fn app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
     let cache_5s = build_cache_middleware(5);
     let cors_handler = build_cors_handler();
-    let session_handler = build_session_handler(app_config);
+    let session_handler = build_session_handler(settings);
 
     let router = Router::new()
         .options(handler::empty()) // Catch-all OPTIONS para preflight
@@ -295,7 +295,7 @@ pub fn app_router(app_config: &args::AppConfig, i18n_service: Arc<I18n>) -> Serv
         .push(build_public_routes())
         .push(build_api_routes())
         .push(Router::with_path("health").get(health::get_health))
-        .push(build_services_routes(app_config, cache_5s))
+        .push(build_services_routes(settings, cache_5s))
         .push(Router::with_path("static/{**path}").get(serve_static));
 
     Service::new(router)

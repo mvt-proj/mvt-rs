@@ -35,6 +35,7 @@ bb8-redis = "0.26"
 include_dir = {version = "0.7.4", features = ["glob"] }
 regex = "1.12"
 html-escape = "0.2"
+config = "0.15"
 
 fluent = "0.17"
 fluent-syntax = "0.12"

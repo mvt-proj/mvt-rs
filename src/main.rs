@@ -1,4 +1,4 @@
-use config::categories::get_categories as get_cf_categories;
+use config::{categories::get_categories as get_cf_categories, settings::Settings};
 use salvo::prelude::*;
 use salvo::server::ServerHandle;
 use sqlx::SqlitePool;
@@ -142,33 +142,28 @@ async fn main() -> AppResult<()> {
         start_system_monitor().await;
     });
 
-    let app_config = args::parse_args().await?;
+    // Use settings from YAML
+    let settings = Settings::new("config/config.yaml")
+        .map_err(|e| crate::error::AppError::ConfigurationError(e.to_string()))?;
 
-    if app_config.db_conn.is_empty() || app_config.jwt_secret.is_empty() || app_config.session_secret.is_empty() {
-        eprintln!("Error: Missing required configuration (DBCONN, JWTSECRET, or SESSIONSECRET). Ensure they are set in the .env file or provided via command line arguments.");
-        std::process::exit(1);
-    }
-
-    let config_cli = app_config.config_cli;
-
-    if config_cli {
-        cli::prompts::start_cli(app_config).unwrap();
-        return Ok(());
-    }
-
-    let config_path = Path::new(&app_config.config_dir).join("mvtrs.db");
+    let config_path = Path::new(&settings.paths.config).join(&settings.database.sqlite_path);
     let db_conn = config_path.to_str().expect("Invalid configuration path");
     let cf_pool = config::db::init_sqlite(db_conn).await?;
 
-    let auth = initialize_auth(&app_config.config_dir, &cf_pool).await?;
+    let auth = initialize_auth(&settings.paths.config, &cf_pool).await?;
     let catalog = initialize_catalog(&cf_pool).await?;
 
-    let db_registry = DbRegistry::new().await?;
+    let db_registry = DbRegistry::new(
+        &settings.postgres_databases,
+        settings.database.pool_min,
+        settings.database.pool_max,
+    )
+    .await?;
 
     let categories = get_cf_categories(Some(&cf_pool)).await?;
     let cache_wrapper = CacheWrapper::initialize_cache(
-        Some(app_config.redis_conn.clone()),
-        app_config.cache_dir.clone().into(),
+        settings.database.redis_url.clone(),
+        settings.paths.cache.clone().into(),
         catalog.clone(),
     )
     .await?;
@@ -176,9 +171,9 @@ async fn main() -> AppResult<()> {
     DB_REGISTRY.set(db_registry).unwrap();
     SQLITE_CONF.set(cf_pool).unwrap();
     MAP_ASSETS_DIR
-        .set(app_config.map_assets_dir.clone())
+        .set(settings.paths.assets.clone())
         .unwrap();
-    JWT_SECRET.set(app_config.jwt_secret.clone()).unwrap();
+    JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
     CACHE_WRAPPER.set(cache_wrapper).unwrap();
     CATALOG.set(RwLock::new(catalog)).unwrap();
     CATEGORIES.set(RwLock::new(categories)).unwrap();
@@ -186,7 +181,7 @@ async fn main() -> AppResult<()> {
 
     let i18n_service = Arc::new(i18n::I18n::new());
 
-    let acceptor = TcpListener::new(format!("{}:{}", app_config.host, app_config.port))
+    let acceptor = TcpListener::new(format!("{}:{}", settings.server.host, settings.server.port))
         .bind()
         .await;
     let server = Server::new(acceptor);
@@ -194,8 +189,9 @@ async fn main() -> AppResult<()> {
 
     tokio::spawn(listen_shutdown_signal(handle));
 
+    // Note: routes need to be updated to use Settings instead of AppConfig
     server
-        .serve(routes::app_router(&app_config, i18n_service))
+        .serve(routes::app_router(&settings, i18n_service))
         .await;
 
     Ok(())
