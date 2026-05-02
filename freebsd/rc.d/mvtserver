@@ -8,31 +8,25 @@
 name="mvtserver"
 rcvar="mvtserver_enable"
 
-command="/usr/local/bin/mvt-server"
-command_chdir="/usr/local/etc/mvt-server"
+command="/usr/sbin/daemon"
 procname="/usr/local/bin/mvt-server"
 pidfile="/var/run/mvtserver.pid"
 
-# Export variables from .env to the environment
-if [ -f "/usr/local/etc/mvt-server/.env" ]; then
-    export $(grep -v '^#' /usr/local/etc/mvt-server/.env | xargs)
+config_dir="/usr/local/etc/mvt-server"
+cache_dir="/var/cache/mvt-server"
+assets_dir="/usr/local/etc/mvt-server/assets"
+
+if [ -f "${config_dir}/.env" ]; then
+    export $(grep -v '^#' "${config_dir}/.env" | xargs)
 fi
 
-# Load configuration from /etc/rc.conf
 load_rc_config $name
 
-# Default values
 : ${mvtserver_enable:="NO"}
-: ${mvtserver_config:="/usr/local/etc/mvt-server"}
-: ${mvtserver_cache:="/var/cache/mvt-server"}
-: ${mvtserver_assets:="/usr/local/etc/mvt-server/assets"}
 : ${mvtserver_flags:=""}
 
-# Build arguments
-command_args="--config ${mvtserver_config} --cache ${mvtserver_cache} --mapassets ${mvtserver_assets} ${mvtserver_flags} >> /var/log/mvt-server.log 2>&1 &"
+command_args="-f -p ${pidfile} /bin/sh -c 'cd ${config_dir} && /usr/local/bin/mvt-server --config ${config_dir} --cache ${cache_dir} --mapassets ${assets_dir} ${mvtserver_flags} >> /var/log/mvt-server.log 2>&1'"
 
-# Required directories
-required_dirs="${mvtserver_config} ${mvtserver_cache} ${mvtserver_assets}"
+required_dirs="${config_dir} ${cache_dir} ${assets_dir}"
 
 run_rc_command "$1"
-

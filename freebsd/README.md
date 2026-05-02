@@ -4,12 +4,12 @@ This guide provides instructions for deploying MVT Server as a system service on
 
 ## Directory Structure
 
-Following FreeBSD `hier(7)` conventions, we recommend the following structure:
+Following FreeBSD `hier(7)` conventions:
 
 | Location | Purpose |
 | :--- | :--- |
 | `/usr/local/bin/mvt-server` | The binary executable |
-| `/usr/local/etc/mvt-server/` | Configuration files (`.toml`, `.json`, `.env`) |
+| `/usr/local/etc/mvt-server/` | Configuration files (`.toml`, `.json`, `.env`, `mvtrs.db`) |
 | `/usr/local/etc/rc.d/mvtserver` | The service script |
 | `/var/cache/mvt-server/` | Tile cache storage |
 | `/usr/local/etc/mvt-server/assets/` | Static map assets |
@@ -38,15 +38,13 @@ Following FreeBSD `hier(7)` conventions, we recommend the following structure:
    ```
 
 4. **Configuration**:
-   - Place your `config/` directory contents in `/usr/local/etc/mvt-server/`.
+   - Place your configuration files and `mvtrs.db` in `/usr/local/etc/mvt-server/`.
    - Create your `.env` file in `/usr/local/etc/mvt-server/.env`.
 
 5. **Enable Service**:
    Add the following to `/etc/rc.conf`:
    ```sh
    mvtserver_enable="YES"
-   # Optional: customize flags
-   # mvtserver_flags="--host 127.0.0.1 --port 5880"
    ```
 
 6. **Start Service**:
