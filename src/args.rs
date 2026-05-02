@@ -29,16 +29,16 @@ pub struct AppConfig {
     #[arg(short = 'p', long = "port", env = "PORT", default_value = "5800")]
     pub port: String,
 
-    #[arg(short = 'd', long = "dbconn", env = "DBCONN")]
+    #[arg(short = 'd', long = "dbconn", env = "DBCONN", default_value = "")]
     pub db_conn: String,
 
     #[arg(short = 'r', long = "redisconn", env = "REDISCONN", default_value = "")]
     pub redis_conn: String,
 
-    #[arg(short = 'j', long = "jwtsecret", env = "JWTSECRET")]
+    #[arg(short = 'j', long = "jwtsecret", env = "JWTSECRET", default_value = "")]
     pub jwt_secret: String,
 
-    #[arg(short = 's', long = "sessionsecret", env = "SESSIONSECRET")]
+    #[arg(short = 's', long = "sessionsecret", env = "SESSIONSECRET", default_value = "")]
     pub session_secret: String,
 
     #[arg(

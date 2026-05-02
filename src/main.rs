@@ -144,6 +144,11 @@ async fn main() -> AppResult<()> {
 
     let app_config = args::parse_args().await?;
 
+    if app_config.db_conn.is_empty() || app_config.jwt_secret.is_empty() || app_config.session_secret.is_empty() {
+        eprintln!("Error: Missing required configuration (DBCONN, JWTSECRET, or SESSIONSECRET). Ensure they are set in the .env file or provided via command line arguments.");
+        std::process::exit(1);
+    }
+
     let config_cli = app_config.config_cli;
 
     if config_cli {
