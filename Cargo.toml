@@ -10,13 +10,13 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 uuid = { version = "1.23", features = ["v4", "fast-rng"] }
 bytes = "1.11"
 argon2 = { version = "0.5", features = ["std"] }
-askama = "0.15"
+askama = "0.16"
 thiserror = "2"
 base64 = "0.22"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = { version = "10.3", features = ["rust_crypto"] }
 
-salvo = { version = "0.92", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
+salvo = { version = "0.93", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session"] }
 tokio = { version = "1", features = ["macros", "signal"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
