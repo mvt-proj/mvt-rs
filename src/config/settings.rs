@@ -39,19 +39,24 @@ pub struct Settings {
 
 impl Settings {
     pub fn new(config_path: &str) -> Result<Self, config::ConfigError> {
+        let path = std::path::Path::new(config_path);
+        
+        eprintln!("DEBUG: Loading config from: {:?}", path.canonicalize());
+
         let s = config::Config::builder()
-            .add_source(config::File::with_name(config_path).required(false))
-            .add_source(config::Environment::with_prefix("MVT"))
+            .add_source(config::File::from(path).format(config::FileFormat::Yaml).required(true))
+            .add_source(config::Environment::with_prefix("MVT").separator("__"))
             .add_source(config::Environment::default())
             .build()
             .map_err(|e| {
-                eprintln!("Error loading configuration: {}", e);
+                eprintln!("CRITICAL: Failed to load config file: {}", e);
                 e
             })?;
 
         s.try_deserialize().map_err(|e| {
-            eprintln!("Error deserializing configuration: {}. Ensure all required fields (database, security, paths) are set in YAML or environment variables.", e);
+            eprintln!("CRITICAL: Failed to parse YAML: {}. Check structure.", e);
             e
         })
     }
 }
+

@@ -63,89 +63,49 @@ You can move it to another location if needed, but remember that the environment
 
 ## Running the Application
 
-### Arguments
+### Configuration
 
-```
-Usage: mvt-server [OPTIONS]
+Starting with version `0.18.0`, MVT Server uses a centralized `config.yaml` file for configuration.
 
-Options:
-  -c, --config <CONFIGDIR>             Directory where config file is placed [default: config]
-  -b, --cache <CACHEDIR>               Directory where cache files are placed [default: cache]
-  -m, --mapassets <MAPASSETS>          Directory where map_assets files are placed [default: map_assets]
-  -i, --host <HOST>                    Bind address [default: 0.0.0.0]
-  -p, --port <PORT>                    Bind port [default: 5800]
-  -d, --dbconn <DBCONN>                Database connection
-  -n, --dbpoolmin <DBPOOLMIN>          Minimum database pool size [default: 2]
-  -x, --dbpoolmax <DBPOOLMAX>          Maximum database pool size [default: 5]
-  -r, --redisconn <REDISCONN>          Redis connection
-  -j, --jwtsecret <JWTSECRET>          JWT secret key
-  -s, --sessionsecret <SESSIONSECRET>  Session secret key
-  -h, --help                           Print help
-```
+### Migrating to version 0.18.0
 
-### Example
+To migrate from your existing `.env` setup:
 
-```
-./mvt-server \
-  --config config_folder \
-  --cache cache_folder \
-  --mapassets mapassets_folder \
-  --host 127.0.0.1 \
-  --port 8000 \
-  --dbconn "postgres://user:password@localhost:5432/mydb" \
-  --dbpoolmin 5 \
-  --dbpoolmax 20 \
-  --redisconn "redis://127.0.0.1:6379" \
-  --jwtsecret "supersecretjwt" \
-  --sessionsecret "supersecretsession"
-```
+1. Create a `config.yaml` file in your configuration directory.
+2. Use the following structure, adapting values from your old `.env`:
 
-### Environment Variables (.env)
+```yaml
+server:
+  host: "0.0.0.0"
+  port: 5887
 
+database:
+  sqlite_path: "mvtrs.db"
+  pool_min: 5
+  pool_max: 20
+  redis_url: "redis://10.1.1.90:6379" # Optional
 
-#### Starting from version `0.13.2`, a CLI assistant is available to help you create your `.env` file.
-To launch it, simply run:
+postgres_databases:
+  default: "postgres://..."
+  jujuy: "postgres://..."
 
-```sh
-./mvt-server -C
+security:
+  jwt_secret: "your-jwt-secret"
+  session_secret: "your-session-secret"
+
+paths:
+  config: "/usr/local/etc/mvt-server"
+  cache: "/var/cache/mvt-server"
+  assets: "/usr/local/etc/mvt-server/assets"
 ```
 
+3. Once configured, you can archive your `.env` file.
 
-**Make sure to create a `.env` file at the root of your project with the following variables:**
-
-```sh
-# Database connection URL (PostgreSQL)
-DBCONN=postgres://user:pass@host:port/db
-
-# Connection pool size
-POOLSIZEMIN=3   # Minimum size of the connection pool
-POOLSIZEMAX=5   # Maximum size of the connection pool
-
-# Server settings
-IPHOST=0.0.0.0  # The IP address where the server will listen
-PORT=5800       # The port on which the server will run
-
-# Redis connection (optional, overrides disk cache if provided)
-REDISCONN=redis://127.0.0.1:6379
-
-# Security settings
-JWTSECRET=supersecretjwt # Used to create and validate JWT tokens
-SESSIONSECRET=supersecretsession # Secret key for session management
-
-# Directories
-CONFIG=/path_to/config_dir             # Directory path for configuration files
-CACHE=/path_to/cache_dir               # Directory path for cache storage
-MAPASSETS=/path_to/map_assets_dir      # Directory path for map_assets storage
-```
-
-Remember the `.env` file has to kept secure and not shared in public repositories.
-
-### Multiple Database Support
-The server supports connecting to multiple PostgreSQL databases simultaneously.
-
-- **Default Connection:** Use `DBCONN` or `DBCONN_DEFAULT` in your `.env` file.
-- **Additional Connections:** Define additional connections by prefixing them with `DBCONN_` (e.g., `DBCONN_FOO=postgres://...`).
-- **Layer Configuration:** When creating or editing a layer in the admin interface (*Catalog* > *Add Layer* / *Edit Layer*), select the desired database pool from the **Database** dropdown menu.
+### Loading Configuration
+The server loads configuration in this order:
+1. **Command line argument**: `--config /path/to/config.yaml`
+2. **Environment variable**: `MVT_CONFIG_PATH=/path/to/config.yaml`
+3. **Default path**: `config/config.yaml` (in current working directory)
 
 
 ### Server with Nginx

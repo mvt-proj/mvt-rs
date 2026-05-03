@@ -9,10 +9,8 @@ use tokio::sync::{OnceCell, RwLock};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
-mod args;
 mod auth;
 mod cache;
-mod cli;
 mod config;
 mod db;
 mod error;
@@ -142,8 +140,18 @@ async fn main() -> AppResult<()> {
         start_system_monitor().await;
     });
 
-    // Use settings from YAML
-    let settings = Settings::new("config/config.yaml")
+    // Configuration path priority:
+    // 1. Command line argument (--config)
+    // 2. Environment variable (MVT_CONFIG_PATH)
+    // 3. Default (config/config.yaml)
+    let args: Vec<String> = std::env::args().collect();
+    let config_path = if let Some(pos) = args.iter().position(|r| r == "--config") {
+        args.get(pos + 1).cloned().unwrap_or_else(|| "config/config.yaml".to_string())
+    } else {
+        std::env::var("MVT_CONFIG_PATH").unwrap_or_else(|_| "config/config.yaml".to_string())
+    };
+        
+    let settings = Settings::new(&config_path)
         .map_err(|e| crate::error::AppError::ConfigurationError(e.to_string()))?;
 
     let config_path = Path::new(&settings.paths.config).join(&settings.database.sqlite_path);

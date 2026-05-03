@@ -28,7 +28,7 @@ load_rc_config $name
 : ${mvtserver_flags:=""}
 
 # Build arguments with daemon
-command_args="-f -p ${pidfile} /bin/sh -c 'cd ${config_dir} && /usr/local/bin/mvt-server --config ${config_file} --cache ${cache_dir} --mapassets ${assets_dir} ${mvtserver_flags} >> /var/log/mvt-server.log 2>&1'"
+command_args="-f -p ${pidfile} /usr/local/bin/mvt-server --config ${config_file} ${mvtserver_flags} >> /var/log/mvt-server.log 2>&1"
 
 required_dirs="${config_dir} ${cache_dir} ${assets_dir}"
 
