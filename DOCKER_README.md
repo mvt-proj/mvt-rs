@@ -84,21 +84,44 @@ docker-compose exec postgres psql -U mvtuser -d mvtdb
 
 ## Configuración
 
-### Variables de entorno importantes
+Starting with version `0.18.0`, MVT Server uses a centralized `config.yaml` file instead of environment variables. 
 
-Las siguientes variables están configuradas en `docker-compose.yml`:
+Ensure you have a `config/config.yaml` file mounted or present in the container:
 
 ```yaml
-environment:
-  # Base de datos
-  DBCONN: "postgres://mvtuser:mvtpass@postgres:5432/mvtdb"
-  
-  # Redis (opcional)
-  REDISCONN: "redis://redis:6379"
-  
-  # Seguridad (¡CAMBIAR EN PRODUCCIÓN!)
-  JWTSECRET: "supersecretjwt-changeme-in-production"
-  SESSIONSECRET: "supersecretsession-changeme-in-production"
+server:
+  host: "0.0.0.0"
+  port: 5887
+
+database:
+  sqlite_path: "/app/config/mvtrs.db"
+  redis_url: "redis://redis:6379"
+  pool_min: 5
+  pool_max: 20
+
+postgres_databases:
+  default: "postgres://mvtuser:mvtpass@postgres:5432/mvtdb"
+
+security:
+  jwt_secret: "supersecretjwt-changeme-in-production"
+  session_secret: "supersecretsession-changeme-in-production"
+
+paths:
+  config: "/app/config"
+  cache: "/app/cache"
+  assets: "/app/map_assets"
+```
+
+Update your `docker-compose.yml` to mount this file:
+
+```yaml
+services:
+  mvt-server:
+    build: .
+    volumes:
+      - ./config:/app/config
+      - ./cache:/app/cache
+      - ./map_assets:/app/map_assets
 ```
 
 ### Personalización

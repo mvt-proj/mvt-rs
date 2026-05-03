@@ -65,16 +65,10 @@ RUN chown -R mvtuser:mvtuser /app
 USER mvtuser
 
 # Exponer puerto
-EXPOSE 5880
+EXPOSE 5887
 
 # Variables de entorno por defecto
-ENV IPHOST=0.0.0.0
-ENV PORT=5880
-ENV CONFIG=/app/config
-ENV CACHE=/app/cache
-ENV MAPASSETS=/app/map_assets
-ENV POOLSIZEMIN=3
-ENV POOLSIZEMAX=5
+ENV MVT_CONFIG_PATH=/app/config/config.yaml
 
 # Comando para ejecutar la aplicación
 CMD ["./mvt-server"]
