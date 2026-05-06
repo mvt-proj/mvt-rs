@@ -34,7 +34,7 @@ MVT Server not only allows you to publish geographic layers in vector tile forma
 ---
 
 ## Requirements
-- Operating System (Freebsd, Linux, Windows)
+- Operating System (Freebsd, MacOS, Linux, Windows)
 - Access to a PostgreSQL server with PostGIS version 3.0.0 or higher installed, either local or remote. The **MVT Server** will be able to publish geographic layers as vector tiles.
 - Port `5800` available (or configurable)
 
