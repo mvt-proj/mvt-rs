@@ -68,7 +68,13 @@ USER mvtuser
 EXPOSE 5887
 
 # Variables de entorno por defecto
-ENV MVT_CONFIG_PATH=/app/config/config.yaml
+ENV MVT_SERVER__HOST=0.0.0.0
+ENV MVT_SERVER__PORT=5887
+ENV MVT_PATHS__CONFIG=/app/config
+ENV MVT_PATHS__CACHE=/app/cache
+ENV MVT_PATHS__ASSETS=/app/map_assets
+ENV MVT_DATABASE__POOL_MIN=5
+ENV MVT_DATABASE__POOL_MAX=20
 
 # Comando para ejecutar la aplicación
 CMD ["./mvt-server"]
