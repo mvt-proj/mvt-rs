@@ -16,21 +16,10 @@ impl DbRegistry {
     ) -> AppResult<Self> {
         let mut db_pools = std::collections::HashMap::new();
 
-        // 1. Load from YAML
+        // 1. Load from Settings (YAML/Config)
         for (name, conn_str) in pools {
             let pool = make_db_pool(conn_str, min_connections, max_connections).await?;
             db_pools.insert(name.clone(), pool);
-        }
-
-        // 2. Load from Environment variables
-        for (key, value) in std::env::vars() {
-            if key.starts_with("DBCONN_") {
-                let name = key.replace("DBCONN_", "").to_lowercase();
-                if !db_pools.contains_key(&name) {
-                    let pool = make_db_pool(&value, min_connections, max_connections).await?;
-                    db_pools.insert(name, pool);
-                }
-            }
         }
 
         if db_pools.is_empty() {

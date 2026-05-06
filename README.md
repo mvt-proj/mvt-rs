@@ -27,10 +27,14 @@ This is a simple and high-speed vector tile server developed in Rust, using the 
 
 Check out the **[MVT Server Tutorial](TUTORIAL.md)** for a complete step-by-step guide on:
 - Requirements & Installation
-- Configuration (Environment Variables & Arguments)
+- Configuration (YAML, Env vars, Arguments)
 - Managing Layers & Administration UI
 - Consuming Tiles in QGIS, MapLibre, OpenLayers, and Leaflet
 - Advanced usage (Styles, Legends, Sprites, Glyphs)
+
+## Configuration
+
+MVT Server uses a hierarchical configuration system. Please see the [Tutorial](TUTORIAL.md) for detailed instructions on the new `config.yaml` structure and how to configure the server.
 
 ## Installation (Quick Start)
 

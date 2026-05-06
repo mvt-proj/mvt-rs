@@ -61,18 +61,16 @@ The binary will be generated in the **/target/release/** directory.
 
 You can move it to another location if needed, but remember that the environment variables must be set either in the shell or in the .env file. Alternatively, you can start the server by passing the required arguments.
 
-## Running the Application
+## Configuration
 
-### Configuration
-
-Starting with version `0.18.0`, MVT Server uses a centralized `config.yaml` file for configuration.
+Starting with version `0.18.0`, MVT Server uses a centralized `config.yaml` file. The `.env` file is no longer supported.
 
 ### Migrating to version 0.18.0
 
-To migrate from your existing `.env` setup:
+To migrate from your existing setup:
 
 1. Create a `config.yaml` file in your configuration directory.
-2. Use the following structure, adapting values from your old `.env`:
+2. Use the following structure, adapting values from your old setup:
 
 ```yaml
 server:
@@ -80,29 +78,28 @@ server:
   port: 5887
 
 database:
-  sqlite_path: "mvtrs.db"
+  sqlite_path: "config/mvtrs.db"
   pool_min: 5
   pool_max: 20
-  redis_url: "redis://10.1.1.90:6379" # Optional
+  redis_url: "redis://..." # Optional
 
+# Format: "postgres://user:password@host:port/database"
 postgres_databases:
-  default: "postgres://..."
-  jujuy: "postgres://..."
+  default: "postgres://user:password@host:5432/database"
+  foo: "postgres://user:password@host:5432/database_foo"
 
 security:
   jwt_secret: "your-jwt-secret"
   session_secret: "your-session-secret"
 
 paths:
-  config: "/usr/local/etc/mvt-server"
-  cache: "/var/cache/mvt-server"
-  assets: "/usr/local/etc/mvt-server/assets"
+  config: "config"
+  cache: "cache"
+  assets: "map_assets"
 ```
 
-3. Once configured, you can archive your `.env` file.
-
 ### Loading Configuration
-The server loads configuration in this order:
+The server loads configuration in this order of priority (highest to lowest):
 1. **Command line argument**: `--config /path/to/config.yaml`
 2. **Environment variable**: `MVT_CONFIG_PATH=/path/to/config.yaml`
 3. **Default path**: `config/config.yaml` (in current working directory)

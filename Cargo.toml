@@ -48,6 +48,7 @@ sysinfo = { version = "0.38", features = [] }
 futures = "0.3"
 libc = "0.2"
 mime_guess = "2.0.5"
+clap = { version = "4.6", features = ["derive"] }
 
 [build-dependencies]
 
