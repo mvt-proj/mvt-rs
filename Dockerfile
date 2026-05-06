@@ -1,5 +1,5 @@
 # Multi-stage build para optimizar el tamaño final
-FROM rust:latest as builder
+FROM rust:1.95 as builder
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
@@ -27,6 +27,8 @@ COPY migrations ./migrations
 COPY templates ./templates
 COPY static ./static
 COPY locales ./locales
+
+RUN rm -f target/release/mvt-server target/release/deps/mvt_server* target/release/deps/mvt-server*
 
 # Compilar aplicación
 RUN touch src/main.rs && cargo build --release
