@@ -76,19 +76,18 @@ struct NewLayer<'a> {
 }
 
 #[handler]
-pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn catalog_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (is_auth, user) = get_session_data(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
         .cloned()
         .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
-    if user.is_none() {
+    let Some(current_user) = user else {
         res.render(Redirect::other("/login"));
         res.status_code(StatusCode::FOUND);
         return Ok(());
-    }
-    let current_user = user.unwrap();
+    };
     let template = CatalogTemplate {
         current_user: &current_user,
         base,
@@ -99,7 +98,7 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()
 }
 
 #[handler]
-pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn new_layer_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let categories = get_categories().await.read().await;
     let auth = get_auth().await.read().await;
     let groups = auth.groups.clone();
@@ -123,7 +122,7 @@ pub async fn new_layer(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 }
 
 #[handler]
-pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn edit_layer_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -140,7 +139,7 @@ pub async fn edit_layer(req: &mut Request, res: &mut Response, depot: &mut Depot
     let groups = auth.groups.clone();
     let layer = catalog
         .find_layer_by_id(&layer_id, StateLayer::Any)
-        .unwrap();
+        .ok_or(AppError::NotFound(format!("Layer {layer_id} not found")))?;
     let databases = get_db_registry().list_databases();
     let template = EditLayerTemplate {
         layer: layer.clone(),

@@ -3782,6 +3782,7 @@ dependencies = [
  "salvo-cors",
  "salvo-jwt-auth",
  "salvo-proxy",
+ "salvo-rate-limiter",
  "salvo-serve-static",
  "salvo-session",
  "salvo_core",
@@ -3847,6 +3848,20 @@ dependencies = [
  "percent-encoding",
  "reqwest 0.13.3",
  "salvo_core",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "salvo-rate-limiter"
+version = "0.93.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c3dc44253583b1c656df288045aaeb3449ab16fb00c7a27206f784e2f44d751"
+dependencies = [
+ "moka",
+ "salvo_core",
+ "serde",
+ "time",
  "tokio",
  "tracing",
 ]

@@ -19,7 +19,7 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
                 message: "Unauthorized".to_string(),
                 status_code: 401,
             };
-            res.status_code(StatusCode::from_u16(401).unwrap());
+            res.status_code(StatusCode::UNAUTHORIZED);
             res.render(Json(&state));
         }
         JwtAuthState::Forbidden => {
@@ -27,7 +27,7 @@ pub async fn validate_token(depot: &mut Depot, res: &mut Response) {
                 message: "Forbidden".to_string(),
                 status_code: 403,
             };
-            res.status_code(StatusCode::from_u16(403).unwrap());
+            res.status_code(StatusCode::FORBIDDEN);
             res.render(Json(&state));
         }
     }
@@ -65,7 +65,9 @@ pub async fn login(res: &mut Response, depot: &mut Depot, data: Login) -> AppRes
     let user = auth.get_user_by_email_and_password(&data.email, &data.password)?;
 
     let mut session = Session::new();
-    session.insert("userid", user.id.clone()).unwrap();
+    session
+        .insert("userid", user.id.clone())
+        .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     depot.set_session(session);
 
     res.render(Redirect::other("/admin"));

@@ -36,10 +36,10 @@ enum MapTemplate {
 }
 
 impl MapTemplate {
-    fn render(&self) -> String {
+    fn render(&self) -> Result<String, askama::Error> {
         match self {
-            MapTemplate::Minimal(tpl) => tpl.render().unwrap(),
-            MapTemplate::Full(tpl) => tpl.render().unwrap(),
+            MapTemplate::Minimal(tpl) => tpl.render(),
+            MapTemplate::Full(tpl) => tpl.render(),
         }
     }
 }
@@ -50,7 +50,9 @@ pub async fn page_map_layer(
     res: &mut Response,
     depot: &mut Depot,
 ) -> Result<(), StatusError> {
-    let layer_name = req.param::<String>("layer_name").unwrap();
+    let layer_name = req
+        .param::<String>("layer_name")
+        .ok_or_else(|| StatusError::bad_request().brief("Missing layer_name parameter"))?;
     let parts: Vec<&str> = layer_name.split(':').collect();
     let category = parts.first().unwrap_or(&"").to_string();
     let name = parts.get(1).unwrap_or(&"").to_string();
@@ -100,7 +102,11 @@ pub async fn page_map_layer(
         base,
     };
 
-    res.render(Text::Html(template.render().unwrap()));
+    res.render(Text::Html(
+        template
+            .render()
+            .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?,
+    ));
     Ok(())
 }
 
@@ -110,10 +116,14 @@ pub async fn page_map_view(
     res: &mut Response,
     depot: &mut Depot,
 ) -> Result<(), StatusError> {
-    let style_id = req.param::<String>("style_id").unwrap();
+    let style_id = req
+        .param::<String>("style_id")
+        .ok_or_else(|| StatusError::bad_request().brief("Missing style_id parameter"))?;
     let is_minimal = req.query::<bool>("minimal").unwrap_or_default();
 
-    let style = Style::from_id(&style_id).await.unwrap();
+    let style = Style::from_id(&style_id)
+        .await
+        .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?;
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -127,6 +137,10 @@ pub async fn page_map_view(
         MapTemplate::Full(MapViewTemplate { base, style })
     };
 
-    res.render(Text::Html(template.render()));
+    res.render(Text::Html(
+        template
+            .render()
+            .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?,
+    ));
     Ok(())
 }

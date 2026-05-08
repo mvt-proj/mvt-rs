@@ -6,6 +6,7 @@ use salvo::cors::{self as cors, Cors};
 use salvo::http::header::CONTENT_DISPOSITION;
 use salvo::logging::Logger;
 use salvo::prelude::*;
+use salvo::rate_limiter::{BasicQuota, FixedGuard, MokaStore as RateMokaStore, RateLimiter, RemoteIpIssuer};
 use salvo::session::{CookieStore, SessionHandler};
 use std::sync::Arc;
 use std::time::Duration;
@@ -72,6 +73,15 @@ fn build_cache_middleware(ttl_secs: u64) -> Cache<MokaStore<String>, RequestIssu
     )
 }
 
+fn build_login_rate_limiter() -> impl Handler {
+    RateLimiter::new(
+        FixedGuard::new(),
+        RateMokaStore::new(),
+        RemoteIpIssuer,
+        BasicQuota::per_minute(10),
+    )
+}
+
 // ============================================================================
 // ROUTE BUILDERS
 // ============================================================================
@@ -84,7 +94,11 @@ fn build_auth_routes() -> Router {
                 .hoop(auth::session_auth_handler)
                 .get(auth::logout),
         )
-        .push(Router::with_path("auth/login").post(auth::login))
+        .push(
+            Router::with_path("auth/login")
+                .hoop(build_login_rate_limiter())
+                .post(auth::login),
+        )
         .push(
             Router::with_path("changepassword")
                 .hoop(auth::session_auth_handler)
@@ -114,9 +128,9 @@ fn build_admin_users_routes() -> Router {
     Router::with_path("users")
         .hoop(auth::require_user_admin)
         .get(html::admin::users::list_users)
-        .push(Router::with_path("new").get(html::admin::users::new_user))
+        .push(Router::with_path("new").get(html::admin::users::new_user_page))
         .push(Router::with_path("create").post(html::admin::users::create_user))
-        .push(Router::with_path("edit/{id}").get(html::admin::users::edit_user))
+        .push(Router::with_path("edit/{id}").get(html::admin::users::edit_user_page))
         .push(Router::with_path("update").post(html::admin::users::update_user))
         .push(Router::with_path("delete/{id}").get(html::admin::users::delete_user))
 }
@@ -125,9 +139,9 @@ fn build_admin_categories_routes() -> Router {
     Router::with_path("categories")
         .hoop(auth::require_user_admin)
         .get(html::admin::categories::list_categories)
-        .push(Router::with_path("new").get(html::admin::categories::new_category))
+        .push(Router::with_path("new").get(html::admin::categories::new_category_page))
         .push(Router::with_path("create").post(html::admin::categories::create_category))
-        .push(Router::with_path("edit/{id}").get(html::admin::categories::edit_category))
+        .push(Router::with_path("edit/{id}").get(html::admin::categories::edit_category_page))
         .push(Router::with_path("update").post(html::admin::categories::update_category))
         .push(Router::with_path("delete/{id}").get(html::admin::categories::delete_category))
 }
@@ -136,9 +150,9 @@ fn build_admin_styles_routes() -> Router {
     Router::with_path("styles")
         .hoop(auth::require_user_admin)
         .get(html::admin::styles::list_styles)
-        .push(Router::with_path("new").get(html::admin::styles::new_style))
+        .push(Router::with_path("new").get(html::admin::styles::new_style_page))
         .push(Router::with_path("create").post(html::admin::styles::create_style))
-        .push(Router::with_path("edit/{id}").get(html::admin::styles::edit_style))
+        .push(Router::with_path("edit/{id}").get(html::admin::styles::edit_style_page))
         .push(Router::with_path("update").post(html::admin::styles::update_style))
         .push(Router::with_path("delete/{id}").get(html::admin::styles::delete_style))
 }
@@ -147,20 +161,20 @@ fn build_admin_groups_routes() -> Router {
     Router::with_path("groups")
         .hoop(auth::require_user_admin)
         .get(html::admin::groups::list_groups)
-        .push(Router::with_path("new").get(html::admin::groups::new_group))
+        .push(Router::with_path("new").get(html::admin::groups::new_group_page))
         .push(Router::with_path("create").post(html::admin::groups::create_group))
-        .push(Router::with_path("edit/{id}").get(html::admin::groups::update_group))
-        .push(Router::with_path("update").post(html::admin::groups::edit_group))
+        .push(Router::with_path("edit/{id}").get(html::admin::groups::edit_group_page))
+        .push(Router::with_path("update").post(html::admin::groups::update_group))
         .push(Router::with_path("delete/{id}").get(html::admin::groups::delete_group))
 }
 
 fn build_admin_catalog_routes() -> Router {
     Router::with_path("catalog")
         .hoop(auth::require_user_admin)
-        .get(html::admin::catalog::page_catalog)
-        .push(Router::with_path("layers/new").get(html::admin::catalog::new_layer))
+        .get(html::admin::catalog::catalog_page)
+        .push(Router::with_path("layers/new").get(html::admin::catalog::new_layer_page))
         .push(Router::with_path("layers/create").post(html::admin::catalog::create_layer))
-        .push(Router::with_path("layers/edit/{id}").get(html::admin::catalog::edit_layer))
+        .push(Router::with_path("layers/edit/{id}").get(html::admin::catalog::edit_layer_page))
         .push(Router::with_path("layers/delete/{id}").get(html::admin::catalog::delete_layer))
         .push(Router::with_path("layers/update").post(html::admin::catalog::update_layer))
         .push(
@@ -225,7 +239,11 @@ fn build_api_catalog_routes() -> Router {
 
 fn build_api_routes() -> Router {
     Router::with_path("api")
-        .push(Router::with_path("users/login").post(api::users::login))
+        .push(
+            Router::with_path("users/login")
+                .hoop(build_login_rate_limiter())
+                .post(api::users::login),
+        )
         .push(Router::with_path("monitor/metrics").get(monitor::handlers::metrics))
         .push(Router::with_path("catalog/layer").get(api::catalog::list))
         .push(

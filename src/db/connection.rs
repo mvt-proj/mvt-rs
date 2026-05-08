@@ -33,8 +33,12 @@ impl DbRegistry {
         self.pools.get(name)
     }
 
-    pub fn get_default_pool(&self) -> &PgPool {
-        self.pools.get("default").expect("Default pool must exist")
+    pub fn get_default_pool(&self) -> AppResult<&PgPool> {
+        self.pools.get("default").ok_or_else(|| {
+            AppError::ConfigurationError(
+                "No 'default' database pool configured. Add a 'default' entry under postgres_databases.".to_string(),
+            )
+        })
     }
 
     pub fn list_databases(&self) -> Vec<(String, String)> {

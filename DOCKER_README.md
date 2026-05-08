@@ -23,7 +23,7 @@ mvt-rs/
 ## Servicios incluidos
 
 ### 1. mvt-server
-- **Puerto**: 5880
+- **Puerto interno**: 5887 (mapeado externamente a 5880 en docker-compose.yml)
 - **Descripción**: Aplicación principal MVT-RS
 - **Dependencias**: PostgreSQL, Redis
 
@@ -203,9 +203,9 @@ Los datos se mantienen en volúmenes Docker:
 # Verificar puertos en uso
 netstat -tlnp | grep :5880
 
-# Cambiar puerto en docker-compose.yml
+# Cambiar el puerto externo en docker-compose.yml (el interno siempre es 5887)
 ports:
-  - "5881:5880"  # Cambiar 5880 por otro puerto
+  - "5881:5887"  # Cambiar 5880 por otro puerto externo
 ```
 
 ### 2. Problemas de permisos

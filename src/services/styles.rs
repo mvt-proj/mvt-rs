@@ -11,5 +11,5 @@ pub async fn index(req: &mut Request, _res: &mut Response) -> AppResult<Json<ser
     let name = parts.get(1).unwrap_or(&"");
     let style = Style::from_category_and_name(category, name).await?;
 
-    Ok(Json(serde_json::from_str(style.style.as_str()).unwrap()))
+    Ok(Json(serde_json::from_str(style.style.as_str())?))
 }

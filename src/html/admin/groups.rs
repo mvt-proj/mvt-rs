@@ -49,12 +49,11 @@ pub async fn list_groups(res: &mut Response, depot: &mut Depot) -> AppResult<()>
         .cloned()
         .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
-    if user.is_none() {
+    let Some(current_user) = user else {
         res.render(Redirect::other("/login"));
         res.status_code(StatusCode::FOUND);
         return Ok(());
-    }
-    let current_user = user.unwrap();
+    };
     let auth = get_auth().await.read().await;
 
     let template = ListGroupsTemplate {
@@ -67,7 +66,7 @@ pub async fn list_groups(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 }
 
 #[handler]
-pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn new_group_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -80,7 +79,7 @@ pub async fn new_group(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 }
 
 #[handler]
-pub async fn edit_group(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn edit_group_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -123,7 +122,10 @@ pub async fn create_group<'a>(res: &mut Response, group_form: NewGroup<'a>) -> A
 
 #[handler]
 pub async fn update_group<'a>(res: &mut Response, group_form: NewGroup<'a>) -> AppResult<()> {
-    let group = Group::from_id(&group_form.id.unwrap()).await;
+    let group_id = group_form
+        .id
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let group = Group::from_id(&group_id).await;
 
     if let Err(err) = group {
         res.status_code(StatusCode::NOT_FOUND);

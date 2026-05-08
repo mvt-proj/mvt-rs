@@ -79,7 +79,7 @@ pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> 
 }
 
 #[handler]
-pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn new_user_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -97,7 +97,7 @@ pub async fn new_user(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 }
 
 #[handler]
-pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn edit_user_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -127,12 +127,13 @@ pub async fn edit_user(req: &mut Request, res: &mut Response, depot: &mut Depot)
 #[handler]
 pub async fn create_user<'a>(res: &mut Response, user_form: NewUser<'a>) -> AppResult<()> {
     let mut auth = get_auth().await.write().await;
-    let encrypt_psw = auth.get_encrypt_psw(user_form.password.to_string());
-
-    if let Err(err) = encrypt_psw {
-        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-        return Err(AppError::PasswordHashError(err));
-    }
+    let encrypt_psw = match auth.get_encrypt_psw(user_form.password.to_string()) {
+        Ok(p) => p,
+        Err(err) => {
+            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+            return Err(AppError::PasswordHashError(err));
+        }
+    };
 
     let selected_groups: Vec<Group> = user_form
         .groups
@@ -144,7 +145,7 @@ pub async fn create_user<'a>(res: &mut Response, user_form: NewUser<'a>) -> AppR
         id: Uuid::new_v4().to_string(),
         username: user_form.username.to_string(),
         email: user_form.email,
-        password: encrypt_psw.unwrap(),
+        password: encrypt_psw,
         groups: selected_groups,
         first_name: user_form.first_name.filter(|s| !s.is_empty()),
         last_name: user_form.last_name.filter(|s| !s.is_empty()),
@@ -166,8 +167,13 @@ pub async fn create_user<'a>(res: &mut Response, user_form: NewUser<'a>) -> AppR
 pub async fn update_user<'a>(res: &mut Response, user_form: NewUser<'a>) -> AppResult<()> {
     let mut auth = get_auth().await.write().await;
 
+    let user_id = user_form
+        .id
+        .clone()
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+
     let encrypt_psw = if user_form.password.is_empty() {
-        match auth.get_user_by_id(user_form.id.clone().unwrap().as_str()) {
+        match auth.get_user_by_id(user_id.as_str()) {
             Some(user) => Ok(user.password.clone()),
             None => {
                 res.status_code(StatusCode::NOT_FOUND);
@@ -178,10 +184,13 @@ pub async fn update_user<'a>(res: &mut Response, user_form: NewUser<'a>) -> AppR
         auth.get_encrypt_psw(user_form.password.to_string())
     };
 
-    if let Err(err) = encrypt_psw {
-        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-        return Err(AppError::PasswordHashError(err));
-    }
+    let encrypt_psw = match encrypt_psw {
+        Ok(p) => p,
+        Err(err) => {
+            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+            return Err(AppError::PasswordHashError(err));
+        }
+    };
 
     let selected_groups: Vec<Group> = user_form
         .groups
@@ -190,12 +199,12 @@ pub async fn update_user<'a>(res: &mut Response, user_form: NewUser<'a>) -> AppR
         .collect();
 
     let user = User {
-        id: user_form.id.unwrap(),
+        id: user_id,
         username: user_form.username.to_string(),
         email: user_form.email,
         first_name: user_form.first_name.filter(|s| !s.is_empty()),
         last_name: user_form.last_name.filter(|s| !s.is_empty()),
-        password: encrypt_psw.unwrap(),
+        password: encrypt_psw,
         groups: selected_groups,
     };
 

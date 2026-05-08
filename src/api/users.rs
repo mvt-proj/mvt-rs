@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{AuthorizeState, DataToken, Group, User},
+    error::{AppError, AppResult},
     get_auth,
 };
 
@@ -37,9 +38,9 @@ fn unauthorized(res: &mut Response) {
 }
 
 #[handler]
-pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) {
+pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) -> AppResult<()> {
     let mut auth = get_auth().await.write().await;
-    let token = auth.login(login_data.email, &login_data.password).unwrap();
+    let token = auth.login(login_data.email, &login_data.password)?;
 
     if token.is_empty() {
         unauthorized(res);
@@ -47,6 +48,7 @@ pub async fn login<'a>(res: &mut Response, login_data: LoginData<'a>) {
         let data = DataToken { token };
         res.render(Json(&data));
     }
+    Ok(())
 }
 
 #[handler]
@@ -57,9 +59,11 @@ pub async fn index(res: &mut Response) {
 }
 
 #[handler]
-pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
+pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) -> AppResult<()> {
     let mut auth = get_auth().await.write().await;
-    let encrypt_psw = auth.get_encrypt_psw(data.password.to_string()).unwrap();
+    let encrypt_psw = auth
+        .get_encrypt_psw(data.password.to_string())
+        .map_err(AppError::PasswordHashError)?;
 
     let user = User {
         id: Uuid::new_v4().to_string(),
@@ -71,6 +75,7 @@ pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) {
         groups: Vec::new(),
     };
 
-    auth.create_user(user.clone()).await.unwrap();
+    auth.create_user(user.clone()).await?;
     res.render(Json(&user));
+    Ok(())
 }

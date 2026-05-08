@@ -5,7 +5,7 @@ services:
   mvt-server:
     build: .
     ports:
-      - "5880:5880"
+      - "5880:5887"
     environment:
       # Configuración de base de datos
       MVT_POSTGRES_DATABASES__DEFAULT: "postgres://mvtuser:mvtpass@postgres:5432/mvtdb"
@@ -17,7 +17,7 @@ services:
 
       # Configuración del servidor
       MVT_SERVER__HOST: "0.0.0.0"
-      MVT_SERVER__PORT: 5880
+      MVT_SERVER__PORT: 5887
 
       # Configuración de seguridad
       MVT_SECURITY__JWT_SECRET: "supersecretjwt-changeme-in-production-this-must-be-at-least-64-chars-long-12345678"

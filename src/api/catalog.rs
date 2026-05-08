@@ -1,14 +1,23 @@
 use salvo::prelude::*;
 
-use crate::{get_catalog, models::catalog::Layer};
+use crate::{
+    error::{AppError, AppResult},
+    get_catalog,
+    models::catalog::Layer,
+};
 
 #[handler]
-pub async fn list(req: &mut Request, res: &mut Response) {
+pub async fn list(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let catalog = get_catalog().await.read().await;
     let mut layers = catalog.layers.clone();
     let scheme = req.scheme().to_string();
 
-    let host = req.headers().get("host").unwrap().to_str().unwrap();
+    let host = req
+        .headers()
+        .get("host")
+        .ok_or(AppError::RequestParamError("Missing host header".to_string()))?
+        .to_str()
+        .map_err(|_| AppError::RequestParamError("Invalid host header encoding".to_string()))?;
 
     for layer in &mut layers {
         layer.url = Some(format!(
@@ -18,6 +27,7 @@ pub async fn list(req: &mut Request, res: &mut Response) {
     }
 
     res.render(Json(&layers));
+    Ok(())
 }
 
 #[handler]

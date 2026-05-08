@@ -49,12 +49,11 @@ pub async fn list_categories(res: &mut Response, depot: &mut Depot) -> AppResult
         .cloned()
         .unwrap_or_default();
     let base = BaseTemplateData { is_auth, translate };
-    if user.is_none() {
+    let Some(current_user) = user else {
         res.render(Redirect::other("/login"));
         res.status_code(StatusCode::FOUND);
         return Ok(());
-    }
-    let current_user = user.unwrap();
+    };
 
     let categories = get_categories().await.read().await;
 
@@ -68,7 +67,7 @@ pub async fn list_categories(res: &mut Response, depot: &mut Depot) -> AppResult
 }
 
 #[handler]
-pub async fn new_category(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn new_category_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -82,7 +81,7 @@ pub async fn new_category(res: &mut Response, depot: &mut Depot) -> AppResult<()
 }
 
 #[handler]
-pub async fn edit_category(
+pub async fn edit_category_page(
     req: &mut Request,
     res: &mut Response,
     depot: &mut Depot,
@@ -135,7 +134,11 @@ pub async fn update_category<'a>(
     res: &mut Response,
     category_form: NewCategory<'a>,
 ) -> AppResult<()> {
-    let category = Category::from_id(category_form.id.as_ref().unwrap()).await;
+    let category_id = category_form
+        .id
+        .as_ref()
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+    let category = Category::from_id(category_id).await;
 
     if let Err(err) = category {
         res.status_code(StatusCode::NOT_FOUND);

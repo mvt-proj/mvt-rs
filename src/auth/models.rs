@@ -53,7 +53,11 @@ impl Group {
 
     pub async fn from_id(id: &str) -> AppResult<Self> {
         let auth = get_auth().await.read().await;
-        let group = auth.groups.iter().find(|group| group.id == id).unwrap();
+        let group = auth
+            .groups
+            .iter()
+            .find(|group| group.id == id)
+            .ok_or_else(|| AppError::NotFound(format!("Group {id} not found")))?;
         Ok(group.clone())
     }
 

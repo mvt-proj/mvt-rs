@@ -1,0 +1,39 @@
+# MVT-RS Configuration Example
+# Copy this file to config/config.yaml and fill in your values.
+#
+# Priority order (highest to lowest):
+#   CLI args  >  this YAML file  >  MVT_xxx environment variables  >  defaults
+#
+# Environment variable mapping: use MVT_ prefix with __ as sub-key separator.
+# Example: MVT_SERVER__PORT=5887 overrides server.port below.
+
+# ─── Server ───────────────────────────────────────────────────────────────────
+server:
+  host: "0.0.0.0"
+  port: 5887
+
+# ─── PostgreSQL Databases ─────────────────────────────────────────────────────
+# At least one entry named "default" is required.
+# Additional named databases can be added with different keys.
+postgres_databases:
+  default: "postgres://user:password@host:5432/dbname"
+  # secondary: "postgres://user:password@host2:5432/dbname2"
+
+# ─── Database Pool & Cache ────────────────────────────────────────────────────
+database:
+  pool_min: 2
+  pool_max: 5
+  sqlite_path: "mvtrs.db"
+  # redis_url: "redis://localhost:6379"   # omit to use disk cache instead
+
+# ─── Security ─────────────────────────────────────────────────────────────────
+# Both secrets must be at least 32 characters long. Use strong random values.
+security:
+  jwt_secret: "change-me-to-a-random-secret-at-least-32-chars-long"
+  session_secret: "change-me-to-another-random-secret-at-least-64-chars-long-here"
+
+# ─── Paths ────────────────────────────────────────────────────────────────────
+paths:
+  config: "config"
+  cache: "cache"
+  assets: "map_assets"

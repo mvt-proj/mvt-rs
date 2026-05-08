@@ -113,4 +113,107 @@ impl Settings {
 
         Ok(settings)
     }
+
+    pub fn validate(&self) -> Result<(), String> {
+        if !self.postgres_databases.contains_key("default") {
+            return Err(
+                "Configuration error: 'postgres_databases' must contain a 'default' entry. \
+                Add it to config.yaml under 'postgres_databases.default' or set \
+                MVT_POSTGRES_DATABASES__DEFAULT env var."
+                    .to_string(),
+            );
+        }
+
+        if self.security.jwt_secret.len() < 32 {
+            return Err(format!(
+                "Configuration error: 'security.jwt_secret' must be at least 32 characters \
+                (current: {}). Set it in config.yaml or via MVT_SECURITY__JWT_SECRET.",
+                self.security.jwt_secret.len()
+            ));
+        }
+
+        if self.server.port == 0 {
+            return Err(
+                "Configuration error: 'server.port' must be between 1 and 65535.".to_string(),
+            );
+        }
+
+        if self.database.redis_url.as_deref().is_some_and(|url| url.is_empty()) {
+            return Err(
+                "Configuration error: 'database.redis_url' is set but empty. \
+                Either provide a valid Redis URL or remove the key entirely."
+                    .to_string(),
+            );
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn valid_settings() -> Settings {
+        let mut dbs = std::collections::HashMap::new();
+        dbs.insert(
+            "default".to_string(),
+            "postgres://user:pass@localhost/db".to_string(),
+        );
+        Settings {
+            server: ServerConfig { host: "0.0.0.0".to_string(), port: 5887 },
+            database: DatabaseConfig {
+                sqlite_path: "mvtrs.db".to_string(),
+                redis_url: None,
+                pool_min: 2,
+                pool_max: 5,
+            },
+            postgres_databases: dbs,
+            security: SecurityConfig {
+                jwt_secret: "a-secret-that-is-at-least-32-chars-long-here".to_string(),
+                session_secret: "a-session-secret-at-least-32-chars-long-here".to_string(),
+            },
+            paths: PathConfig {
+                config: "config".to_string(),
+                cache: "cache".to_string(),
+                assets: "map_assets".to_string(),
+            },
+        }
+    }
+
+    #[test]
+    fn valid_settings_passes() {
+        assert!(valid_settings().validate().is_ok());
+    }
+
+    #[test]
+    fn missing_default_db_fails() {
+        let mut s = valid_settings();
+        s.postgres_databases.clear();
+        let err = s.validate().unwrap_err();
+        assert!(err.contains("default"));
+    }
+
+    #[test]
+    fn short_jwt_secret_fails() {
+        let mut s = valid_settings();
+        s.security.jwt_secret = "short".to_string();
+        let err = s.validate().unwrap_err();
+        assert!(err.contains("jwt_secret"));
+    }
+
+    #[test]
+    fn zero_port_fails() {
+        let mut s = valid_settings();
+        s.server.port = 0;
+        assert!(s.validate().is_err());
+    }
+
+    #[test]
+    fn empty_redis_url_fails() {
+        let mut s = valid_settings();
+        s.database.redis_url = Some("".to_string());
+        let err = s.validate().unwrap_err();
+        assert!(err.contains("redis_url"));
+    }
 }

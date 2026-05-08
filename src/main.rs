@@ -149,6 +149,11 @@ async fn main() -> AppResult<()> {
         std::process::exit(1);
     }
 
+    if let Err(e) = settings.validate() {
+        tracing::error!("CRITICAL: {}", e);
+        std::process::exit(1);
+    }
+
     let config_path = Path::new(&settings.paths.config).join(&settings.database.sqlite_path);
     let db_conn = config_path.to_str().expect("Invalid configuration path");
     let cf_pool = config::db::init_sqlite(db_conn).await?;

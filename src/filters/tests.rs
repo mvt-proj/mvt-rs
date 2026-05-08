@@ -417,3 +417,44 @@ fn test_build_where_clause_or_conditions() {
     assert!(bindings.contains(&"600".to_string()));
     assert!(bindings.contains(&"700000".to_string()));
 }
+
+// SQL injection validation tests
+#[cfg(test)]
+mod sql_injection_tests {
+    use crate::services::utils::validate_filter;
+
+    #[test]
+    fn valid_filter_passes() {
+        assert!(validate_filter("name = 'Buenos Aires'").is_ok());
+        assert!(validate_filter("population > 1000000").is_ok());
+        assert!(validate_filter("").is_ok());
+        assert!(validate_filter("active = true AND region = 'Norte'").is_ok());
+    }
+
+    #[test]
+    fn sql_injection_tautology_rejected() {
+        assert!(validate_filter("1=1").is_err());
+    }
+
+    #[test]
+    fn sql_injection_comment_rejected() {
+        assert!(validate_filter("name = 'x' -- DROP TABLE").is_err());
+        assert!(validate_filter("name = 'x' /* comment */").is_err());
+    }
+
+    #[test]
+    fn sql_injection_dangerous_keywords_rejected() {
+        assert!(validate_filter("name = 'x' DROP TABLE users").is_err());
+        assert!(validate_filter("UNION SELECT * FROM passwords").is_err());
+    }
+
+    #[test]
+    fn sql_injection_hex_literal_rejected() {
+        assert!(validate_filter("id = 0x41414141").is_err());
+    }
+
+    #[test]
+    fn unbalanced_quotes_rejected() {
+        assert!(validate_filter("name = 'unclosed").is_err());
+    }
+}

@@ -31,17 +31,17 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
     let dir = format!("{}/sprites", get_map_assets());
     let dir_path = dir.as_str();
 
-    let entries = fs::read_dir(dir_path).await;
-
-    if let Err(_err) = entries {
-        res.status_code(StatusCode::NOT_FOUND);
-        return Err(AppError::NotFound(format!(
-            "The directory {dir_path} does not exist"
-        )));
-    }
+    let mut entries = match fs::read_dir(dir_path).await {
+        Ok(e) => e,
+        Err(_) => {
+            res.status_code(StatusCode::NOT_FOUND);
+            return Err(AppError::NotFound(format!(
+                "The directory {dir_path} does not exist"
+            )));
+        }
+    };
 
     let mut unique_names: HashSet<String> = HashSet::new();
-    let mut entries = entries.unwrap();
 
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
@@ -72,17 +72,17 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     let dir = format!("{}/glyphs", get_map_assets());
     let dir_path = dir.as_str();
 
-    let entries = fs::read_dir(dir_path).await;
-
-    if let Err(_err) = entries {
-        res.status_code(StatusCode::NOT_FOUND);
-        return Err(AppError::NotFound(format!(
-            "The directory {dir_path} does not exist"
-        )));
-    }
+    let mut entries = match fs::read_dir(dir_path).await {
+        Ok(e) => e,
+        Err(_) => {
+            res.status_code(StatusCode::NOT_FOUND);
+            return Err(AppError::NotFound(format!(
+                "The directory {dir_path} does not exist"
+            )));
+        }
+    };
 
     let mut unique_names: HashSet<String> = HashSet::new();
-    let mut entries = entries.unwrap();
 
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();

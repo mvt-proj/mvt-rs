@@ -1,5 +1,6 @@
 use super::utils::{BaseTemplateData, is_authenticated};
 use crate::VERSION;
+use crate::error::AppResult;
 use askama::Template;
 use salvo::prelude::*;
 use std::collections::HashMap;
@@ -24,7 +25,7 @@ struct ChangePasswordTemplate {
 }
 
 #[handler]
-pub async fn index(res: &mut Response, depot: &mut Depot) {
+pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     let translate = depot
         .get::<HashMap<String, String>>("translate")
@@ -36,15 +37,16 @@ pub async fn index(res: &mut Response, depot: &mut Depot) {
         base,
         version: VERSION.to_string(),
     };
-    res.render(Text::Html(template.render().unwrap()));
+    res.render(Text::Html(template.render()?));
+    Ok(())
 }
 
 #[handler]
-pub async fn login(res: &mut Response, depot: &mut Depot) {
+pub async fn login(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     if is_auth {
         res.render(Redirect::other("/"));
-        return;
+        return Ok(());
     }
 
     let translate = depot
@@ -54,15 +56,16 @@ pub async fn login(res: &mut Response, depot: &mut Depot) {
     let base = BaseTemplateData { is_auth, translate };
 
     let template = LoginTemplate { base };
-    res.render(Text::Html(template.render().unwrap()));
+    res.render(Text::Html(template.render()?));
+    Ok(())
 }
 
 #[handler]
-pub async fn change_password(res: &mut Response, depot: &mut Depot) {
+pub async fn change_password(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let is_auth = is_authenticated(depot).await;
     if !is_auth {
         res.render(Redirect::other("/login"));
-        return;
+        return Ok(());
     }
 
     let translate = depot
@@ -72,5 +75,6 @@ pub async fn change_password(res: &mut Response, depot: &mut Depot) {
     let base = BaseTemplateData { is_auth, translate };
 
     let template = ChangePasswordTemplate { base };
-    res.render(Text::Html(template.render().unwrap()));
+    res.render(Text::Html(template.render()?));
+    Ok(())
 }

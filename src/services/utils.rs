@@ -179,13 +179,13 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
             let before = if idx == 0 {
                 ' '
             } else {
-                upper_buffer.chars().nth(idx - 1).unwrap()
+                upper_buffer.chars().nth(idx - 1).unwrap_or(' ')
             };
             let after_idx = idx + keyword.len();
             let after = if after_idx >= upper_buffer.len() {
                 ' '
             } else {
-                upper_buffer.chars().nth(after_idx).unwrap()
+                upper_buffer.chars().nth(after_idx).unwrap_or(' ')
             };
 
             let is_word_start = !before.is_alphanumeric() && before != '_';
