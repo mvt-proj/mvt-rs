@@ -119,63 +119,48 @@ impl Layer {
     }
 
     pub fn info_html(&self) -> String {
-        let mut rv = format!("<strong>ID:</strong> {}<br>", self.id);
-        rv += &format!("<strong>Name:</strong> {}<br>", self.name);
-        rv += &format!("<strong>Alias:</strong> {}<br>", self.alias);
-        rv += &format!("<strong>Database:</strong> {}<br>", self.database_id);
-        rv += &format!(
-            "<strong>Description:</strong> {}<br>",
-            encode_safe(&self.description.clone())
-        );
-        rv += &format!("<strong>Schema:</strong> {}<br>", self.schema);
-        rv += &format!("<strong>Table:</strong> {}<br>", self.table_name);
-        rv += &format!(
-            "<strong>Fields:</strong> {}<br>",
-            encode_safe(&self.fields.join(", "))
-        );
-        rv += &format!("<strong>Field geom:</strong> {}<br>", self.get_geom());
-        rv += &format!("<strong>SQL Mode:</strong> {}<br>", self.get_sql_mode());
-        rv += &format!("<strong>SRID:</strong> {}<br>", self.get_srid());
-        rv += &format!(
-            "<strong>Filter:</strong> {}<br>",
-            encode_safe(&self.get_filter())
-        );
-        rv += &format!("<strong>Buffer:</strong> {}<br>", self.get_buffer());
-        rv += &format!("<strong>Extent:</strong> {}<br>", self.get_extent());
-        rv += &format!("<strong>Zmin:</strong> {}<br>", self.get_zmin());
-        rv += &format!("<strong>Zmax:</strong> {}<br>", self.get_zmax());
-        rv += &format!(
-            "<strong>Zmax do not simplify:</strong> {}<br>",
-            self.get_zmax_do_not_simplify()
-        );
-        rv += &format!(
-            "<strong>Buffer do not simplify:</strong> {}<br>",
-            self.get_buffer_do_not_simplify()
-        );
-        rv += &format!(
-            "<strong>Extent do not simplify:</strong> {}<br>",
-            self.get_extent_do_not_simplify()
-        );
-        rv += &format!("<strong>Clip geom:</strong> {}<br>", self.get_clip_geom());
-        rv += &format!(
-            "<strong>Delete cache on start:</strong> {}<br>",
-            self.get_delete_cache_on_start()
-        );
-        rv += &format!(
-            "<strong>Max cache age:</strong> {}<br>",
-            self.get_max_cache_age()
-        );
-        rv += &format!(
-            "<strong>Max records:</strong> {}<br>",
-            self.get_max_records()
-        );
-        rv += &format!("<strong>Published:</strong> {}<br>", self.published);
-        rv += &format!(
-            "<strong>Allowed Groups: </strong> {}",
-            self.groups_as_string()
-        );
-        rv = rv.replace("\n", "\\n").replace("\r", "");
-        rv
+        fn row(label: &str, value: &str) -> String {
+            format!(
+                r#"<div class="cfg-row"><dt class="cfg-label">{label}</dt><dd class="cfg-value">{value}</dd></div>"#
+            )
+        }
+        fn badge(value: &str) -> String {
+            let (cls, icon) = match value {
+                "true" => ("cfg-badge-ok", "✓"),
+                "false" => ("cfg-badge-off", "✗"),
+                _ => ("cfg-badge-neutral", ""),
+            };
+            format!(r#"<span class="{cls}">{icon} {value}</span>"#)
+        }
+
+        let mut rows = String::new();
+        rows += &row("ID", &self.id.to_string());
+        rows += &row("Name", &encode_safe(&self.name));
+        rows += &row("Alias", &encode_safe(&self.alias));
+        rows += &row("Database", &encode_safe(&self.database_id));
+        rows += &row("Description", &encode_safe(&self.description));
+        rows += &row("Schema", &encode_safe(&self.schema));
+        rows += &row("Table", &encode_safe(&self.table_name));
+        rows += &row("Fields", &encode_safe(&self.fields.join(", ")));
+        rows += &row("Geom field", &encode_safe(&self.get_geom()));
+        rows += &row("SQL Mode", &encode_safe(&self.get_sql_mode()));
+        rows += &row("SRID", &self.get_srid().to_string());
+        rows += &row("Filter", &encode_safe(&self.get_filter()));
+        rows += &row("Buffer", &self.get_buffer().to_string());
+        rows += &row("Extent", &self.get_extent().to_string());
+        rows += &row("Zoom min", &self.get_zmin().to_string());
+        rows += &row("Zoom max", &self.get_zmax().to_string());
+        rows += &row("Zmax no-simplify", &self.get_zmax_do_not_simplify().to_string());
+        rows += &row("Buffer no-simplify", &self.get_buffer_do_not_simplify().to_string());
+        rows += &row("Extent no-simplify", &self.get_extent_do_not_simplify().to_string());
+        rows += &row("Clip geom", &badge(&self.get_clip_geom().to_string()));
+        rows += &row("Delete cache on start", &badge(&self.get_delete_cache_on_start().to_string()));
+        rows += &row("Max cache age (s)", &self.get_max_cache_age().to_string());
+        rows += &row("Max records", &self.get_max_records().to_string());
+        rows += &row("Published", &badge(&self.published.to_string()));
+        rows += &row("Allowed groups", &encode_safe(&self.groups_as_string()));
+
+        format!(r#"<dl class="cfg-table">{rows}</dl>"#)
     }
 
     pub fn groups_as_string(&self) -> String {

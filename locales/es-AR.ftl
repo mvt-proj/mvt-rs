@@ -141,3 +141,7 @@ yes = Sí
 no = No
 up = Subir
 down = Bajar
+cancel = Cancelar
+no-users-found = No se encontraron usuarios
+no-groups-found = No se encontraron grupos
+no-categories-found = No se encontraron categorías

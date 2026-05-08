@@ -1,10 +1,8 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
 
-<div class="flex justify-start items-center">
-  <a href="/admin/groups" class="button space-x-2">
-    <span class="icon is-small">
-      <i class="fas fa-arrow-left"></i>
-    </span>
+<div class="flex justify-start items-center mb-6">
+  <a href="/admin/groups" class="button__outline gap-2">
+    <i class="fas fa-arrow-left"></i>
     <span>{{ base.translate["back"] }}</span>
   </a>
 </div>
@@ -35,7 +33,7 @@
 
       <div class="mb-4">
         <div class="flex justify-center items-center">
-          <button class="button__outline">{{ base.translate["create-group"] }}</button>
+          <button class="button">{{ base.translate["create-group"] }}</button>
         </div>
       </div>
     </form>

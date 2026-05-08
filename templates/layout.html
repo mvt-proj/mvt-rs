@@ -43,7 +43,7 @@
       </nav>
     </header>
 
-    <main class="p-4 flex-grow">{% block content %}{% endblock %}</main>
+    <main class="{% block main_class %}p-4{% endblock %} flex-grow">{% block content %}{% endblock %}</main>
 
     <footer class="p-4 bg-zinc-800 text-white text-center">
       <p>&copy; 2025 MVT Server</p>

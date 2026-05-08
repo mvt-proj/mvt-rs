@@ -1,11 +1,9 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
 
-<div class="flex justify-start items-center">
-  <a href="/admin/categories" class="button space-x-2">
-    <span class="icon is-small">
-      <i class="fas fa-arrow-left"></i>
-    </span>
-    <span>Back</span>
+<div class="flex justify-start items-center mb-6">
+  <a href="/admin/categories" class="button__outline gap-2">
+    <i class="fas fa-arrow-left"></i>
+    <span>{{ base.translate["back"] }}</span>
   </a>
 </div>
 
@@ -55,7 +53,7 @@
       </div>
       <div class="mb-4">
         <div class="flex justify-center items-center">
-          <button class="button__outline">{{ base.translate["update-category"] }}</button>
+          <button class="button">{{ base.translate["update-category"] }}</button>
         </div>
       </div>
     </form>

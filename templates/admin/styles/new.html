@@ -8,17 +8,13 @@
 {% endblock %}
 
 {% block admin_content %}
-<div class="flex justify-start items-center gap-x-3 mb-6">
-  <a href="/admin/styles" class="button space-x-2">
-    <span class="icon__small mr-2">
-      <i class="fas fa-arrow-left"></i>
-    </span>
+<div class="flex justify-start items-center gap-3 mb-6">
+  <a href="/admin/styles" class="button__outline gap-2">
+    <i class="fas fa-arrow-left"></i>
     <span>{{ base.translate["back"] }}</span>
   </a>
-  <a href="https://maplibre.org/maplibre-style-spec/" target="_blank" class="button space-x-2">
-    <span class="icon__small mr-2">
-      <i class="fas fa-question-circle"></i>
-    </span>
+  <a href="https://maplibre.org/maplibre-style-spec/" target="_blank" class="button__outline gap-2">
+    <i class="fas fa-question-circle"></i>
     <span>{{ base.translate["help"] }}</span>
   </a>
 </div>
@@ -87,7 +83,7 @@
 
       <!-- Submit Button -->
       <div class="flex justify-center items-center">
-        <button class="button__outline">{{ base.translate["create-style"] }}</button>
+        <button class="button">{{ base.translate["create-style"] }}</button>
       </div>
     </form>
   </div>

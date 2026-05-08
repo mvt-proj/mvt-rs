@@ -113,7 +113,7 @@
                         <button
                           class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center space-x-2"
                           title='{{ translate["info"] }}'
-                          onclick='openModal("{{ layer.info_html() }}"); closeDropdown("{{ layer.id }}")'
+                          onclick="openModal(document.getElementById('cfg-{{ layer.id }}').innerHTML); closeDropdown('{{ layer.id }}')"
                           role="menuitem"
                         >
                           <span class="w-5"><i class="fas fa-cog"></i></span>
@@ -220,4 +220,11 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+
+<!-- Layer config stored as inert HTML, read by openModal() via innerHTML -->
+<div hidden>
+  {% for layer in layers %}
+  <div id="cfg-{{ layer.id }}">{{ layer.info_html()|safe }}</div>
+  {% endfor %}
 </div>

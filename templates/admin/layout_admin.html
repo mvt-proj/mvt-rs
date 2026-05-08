@@ -1,52 +1,143 @@
-{% extends "layout.html" %} {% block content %}
-<nav class="mb-4 navbar__admin">
-  <div
-    class="flex flex-wrap gap-4 text-black dark:text-white justify-between lg:justify-start"
-  >
-    <a class="button__outline flex items-center space-x-2" href="/admin/groups">
-      <i class="fas fa-users"></i>
-      <span>{{ base.translate["groups"] }}</span>
-    </a>
+{% extends "layout.html" %}
+{% block main_class %}p-0 flex{% endblock %}
+{% block content %}
 
-    <a class="button__outline flex items-center space-x-2" href="/admin/users">
-      <i class="fas fa-user"></i>
-      <span>{{ base.translate["users"] }}</span>
-    </a>
+<!-- Mobile sidebar overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 hidden" onclick="closeSidebar()"></div>
 
-    <a
-      class="button__outline flex items-center space-x-2"
-      href="/admin/categories"
-    >
-      <i class="fas fa-list"></i>
-      <span>{{ base.translate["categories"] }}</span>
-    </a>
+<!-- Mobile toggle button -->
+<button id="mobile-sidebar-btn" class="lg:hidden fixed bottom-6 left-6 z-30 flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 text-white shadow-xl" onclick="openSidebar()">
+  <i class="fas fa-bars"></i>
+</button>
 
-    <a
-      class="button__outline flex items-center space-x-2"
-      href="/admin/catalog"
-    >
-      <i class="fas fa-layer-group"></i>
-      <span>{{ base.translate["catalog"] }}</span>
-    </a>
-
-    <a class="button__outline flex items-center space-x-2" href="/admin/styles">
-      <i class="fas fa-palette"></i>
-      <span>{{ base.translate["styles"] }}</span>
-    </a>
-    <a
-        class="button__outline flex items-center space-x-2 text-gray-500 cursor-not-allowed opacity-50"
-        href="javascript:void(0)"
-        aria-disabled="true"
-        tabindex="-1"
-      >
-      <i class="fas fa-globe"></i>
-      <span>{{ base.translate["metadata"] }}</span>
-    </a>
-    <a class="button__outline flex items-center space-x-2" href="/admin/monitor/dashboard">
-      <i class="fas fa-tachometer-alt"></i>
-      <span>{{ base.translate["metrics"] }}</span>
-    </a>
+<!-- Sidebar -->
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <button onclick="toggleSidebarCollapse()" class="sidebar-toggle" title="Toggle sidebar">
+      <i id="sidebar-chevron" class="fas fa-chevron-left text-sm"></i>
+    </button>
   </div>
-</nav>
-<div>{% block admin_content %}{% endblock %}</div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-link" href="/admin/groups" data-sidebar-path="/admin/groups">
+      <i class="fas fa-users sidebar-icon"></i>
+      <span class="sidebar-label">{{ base.translate["groups"] }}</span>
+    </a>
+    <a class="sidebar-link" href="/admin/users" data-sidebar-path="/admin/users">
+      <i class="fas fa-user sidebar-icon"></i>
+      <span class="sidebar-label">{{ base.translate["users"] }}</span>
+    </a>
+    <a class="sidebar-link" href="/admin/categories" data-sidebar-path="/admin/categories">
+      <i class="fas fa-list sidebar-icon"></i>
+      <span class="sidebar-label">{{ base.translate["categories"] }}</span>
+    </a>
+    <a class="sidebar-link" href="/admin/catalog" data-sidebar-path="/admin/catalog">
+      <i class="fas fa-layer-group sidebar-icon"></i>
+      <span class="sidebar-label">{{ base.translate["catalog"] }}</span>
+    </a>
+    <a class="sidebar-link" href="/admin/styles" data-sidebar-path="/admin/styles">
+      <i class="fas fa-palette sidebar-icon"></i>
+      <span class="sidebar-label">{{ base.translate["styles"] }}</span>
+    </a>
+    <a class="sidebar-link sidebar-disabled" href="javascript:void(0)" tabindex="-1" aria-disabled="true">
+      <i class="fas fa-globe sidebar-icon"></i>
+      <span class="sidebar-label">{{ base.translate["metadata"] }}</span>
+    </a>
+    <a class="sidebar-link" href="/admin/monitor/dashboard" data-sidebar-path="/admin/monitor">
+      <i class="fas fa-tachometer-alt sidebar-icon"></i>
+      <span class="sidebar-label">{{ base.translate["metrics"] }}</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- Main content -->
+<div class="flex-1 p-6 min-w-0 overflow-x-auto">
+  {% block admin_content %}{% endblock %}
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="modal-delete-confirm" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+  <div class="modal-card max-w-sm w-full mx-4">
+    <header class="modal-header">
+      <h3 id="modal-delete-title" class="text-lg font-semibold">{{ base.translate["delete"] }}</h3>
+      <button class="modal-close" onclick="closeDeleteModal()" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+    <div class="px-6 py-4">
+      <p id="modal-delete-message" class="text-zinc-600 dark:text-zinc-300 mb-6"></p>
+      <div class="flex justify-end gap-3">
+        <button class="button__outline" onclick="closeDeleteModal()">{{ base.translate["cancel"] }}</button>
+        <a id="modal-delete-href" href="#" class="button danger">
+          <i class="fas fa-trash mr-2"></i>{{ base.translate["delete"] }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const sidebar = document.getElementById('sidebar');
+  const chevron = document.getElementById('sidebar-chevron');
+  const overlay = document.getElementById('sidebar-overlay');
+
+  // Mark active sidebar link based on current URL
+  const path = window.location.pathname;
+  document.querySelectorAll('[data-sidebar-path]').forEach(function (link) {
+    if (path.startsWith(link.dataset.sidebarPath)) {
+      link.classList.add('sidebar-link--active');
+    }
+  });
+
+  // Restore desktop collapse state
+  if (window.innerWidth >= 1024 && localStorage.getItem('sidebarCollapsed') === 'true') {
+    sidebar.classList.add('collapsed');
+    chevron.classList.replace('fa-chevron-left', 'fa-chevron-right');
+  }
+
+  window.toggleSidebarCollapse = function () {
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebarCollapsed', String(isCollapsed));
+    chevron.classList.toggle('fa-chevron-left', !isCollapsed);
+    chevron.classList.toggle('fa-chevron-right', isCollapsed);
+  };
+
+  window.openSidebar = function () {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.remove('hidden');
+  };
+
+  window.closeSidebar = function () {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.add('hidden');
+  };
+
+  // On resize to desktop, re-apply collapse state from storage
+  window.addEventListener('resize', function () {
+    if (window.innerWidth >= 1024) {
+      if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        sidebar.classList.add('collapsed');
+        chevron.classList.replace('fa-chevron-left', 'fa-chevron-right');
+      } else {
+        sidebar.classList.remove('collapsed');
+        chevron.classList.replace('fa-chevron-right', 'fa-chevron-left');
+      }
+    }
+  });
+
+  window.openDeleteModal = function (url, message) {
+    document.getElementById('modal-delete-message').textContent = message;
+    document.getElementById('modal-delete-href').href = url;
+    document.getElementById('modal-delete-confirm').classList.add('is-active');
+  };
+
+  window.closeDeleteModal = function () {
+    document.getElementById('modal-delete-confirm').classList.remove('is-active');
+  };
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDeleteModal();
+  });
+})();
+</script>
 {% endblock %}

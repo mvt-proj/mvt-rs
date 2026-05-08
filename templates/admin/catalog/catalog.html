@@ -2,17 +2,20 @@
 <h1 class="title text-center mb-4">{{ base.translate["catalog-of-layers"] }}</h1>
 
 <div id="modal-configuration" class="modal">
-  <div class="modal-card overflow-auto max-w-3xl w-full max-h-[calc(100vh-4rem)]">
-    <header class="modal-header">
-      <p class="font-bold text-1xl text-center">{{ base.translate["configuration"] }}</p>
-      <button class="modal-close" onclick="closeModal()">
-        <span class="icon">
-          <i class="fas fa-times"></i>
+  <div class="modal-card max-w-2xl w-full mx-4 flex flex-col max-h-[calc(100vh-4rem)]">
+    <header class="modal-header shrink-0">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+          <i class="fas fa-cog text-sm"></i>
         </span>
+        <h2 class="text-base font-semibold">{{ base.translate["configuration"] }}</h2>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">
+        <i class="fas fa-times"></i>
       </button>
     </header>
-    <section class="modal-body">
-      <div id="data-json" class="overflow-y-auto"></div>
+    <section class="overflow-y-auto flex-1">
+      <div id="data-json"></div>
     </section>
   </div>
 </div>

@@ -1,29 +1,32 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
-<div class="flex justify-between items-center">
-  <h1 class="title text-center">{{ base.translate["list-of-users"]}}</h1>
+<div class="flex justify-between items-center mb-6">
+  <h1 class="title">{{ base.translate["list-of-users"] }}</h1>
 
-  <div class="text-right">
-    {% if current_user.is_admin() %}
-    <a href="/admin/users/new" class="button space-x-2">
-      <span class="icon__small">
-        <i class="fas fa-user-plus"></i>
-      </span>
-      <span>{{ base.translate["add-user"]}}</span>
-    </a>
-    {% endif %}
-  </div>
+  {% if current_user.is_admin() %}
+  <a href="/admin/users/new" class="button gap-2">
+    <i class="fas fa-user-plus"></i>
+    <span>{{ base.translate["add-user"] }}</span>
+  </a>
+  {% endif %}
 </div>
 
-<div class="overflow-auto mt-4 rounded-lg">
+{% if users.is_empty() %}
+<div class="empty-state">
+  <i class="fas fa-users text-5xl mb-4"></i>
+  <p class="subtitle mb-1">{{ base.translate["no-users-found"] }}</p>
+  <p class="text-sm">{{ base.translate["add-user"] }}</p>
+</div>
+{% else %}
+<div class="overflow-auto rounded-lg">
   <table class="table">
     <thead>
       <tr>
-        <th scope="col">{{ base.translate["first-name"]}}</th>
-        <th scope="col">{{ base.translate["last-name"]}}</th>
-        <th scope="col">{{ base.translate["username"]}}</th>
-        <th scope="col">{{ base.translate["email"]}}</th>
-        <th scope="col">{{ base.translate["groups"]}}</th>
-        <th scope="col"></th>
+        <th scope="col">{{ base.translate["first-name"] }}</th>
+        <th scope="col">{{ base.translate["last-name"] }}</th>
+        <th scope="col">{{ base.translate["username"] }}</th>
+        <th scope="col">{{ base.translate["email"] }}</th>
+        <th scope="col">{{ base.translate["groups"] }}</th>
+        <th scope="col" class="w-12"></th>
       </tr>
     </thead>
     <tbody>
@@ -31,55 +34,50 @@
       <tr>
         <td>{{ user.first_name.as_deref().unwrap_or("") }}</td>
         <td>{{ user.last_name.as_deref().unwrap_or("") }}</td>
-        <td>
-          <span class="font-semibold">{{ user.username }}</span>
-        </td>
+        <td><span class="font-semibold">{{ user.username }}</span></td>
         <td>{{ user.email }}</td>
         <td>{{ user.groups_as_string() }}</td>
-
         <td class="text-right relative">
           {% if current_user.is_admin() %}
           <div class="flex justify-end">
             <div class="relative" data-dropdown="{{ user.id }}">
               <button
                 type="button"
-                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                class="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
                 onclick='toggleDropdown("{{ user.id }}")'
                 aria-haspopup="true"
                 aria-expanded="false"
               >
                 <i class="fas fa-ellipsis-h"></i>
               </button>
-
               <div
                 id="dropdown-menu-{{ user.id }}"
-                class="hidden absolute right-0 mt-2 w-48 bg-white border border-zinc-200 rounded shadow-lg text-sm z-999"
+                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg text-sm z-50"
                 role="menu"
                 aria-label="User actions"
               >
                 <ul class="py-1">
                   <li>
                     <a
-                      class="flex w-full items-center px-3 py-2 hover:bg-gray-50 space-x-2"
+                      class="flex w-full items-center px-3 py-2 gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
                       href="/admin/users/edit/{{ user.id }}"
                       role="menuitem"
                       onclick='closeDropdown("{{ user.id }}")'
                     >
-                      <span class="w-5"><i class="fas fa-pen"></i></span>
-                      <span class="truncate">{{ base.translate["edit"] }}</span>
+                      <i class="fas fa-pen w-4 text-center"></i>
+                      <span>{{ base.translate["edit"] }}</span>
                     </a>
                   </li>
-
                   {% if user.username != "admin" %}
                   <li>
                     <a
-                      class="flex w-full items-center px-3 py-2 hover:bg-red-50 text-red-600 space-x-2"
+                      class="flex w-full items-center px-3 py-2 gap-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 transition-colors"
                       href="/admin/users/delete/{{ user.id }}"
                       role="menuitem"
-                      onclick="if(!confirm('{{ base.translate["confirm-delete-user"] }}')) return false; closeDropdown('{{ user.id }}')"
+                      onclick="event.preventDefault(); openDeleteModal(this.href, '{{ base.translate["confirm-delete-user"] }}'); closeDropdown('{{ user.id }}');"
                     >
-                      <span class="w-5"><i class="fas fa-trash"></i></span>
-                      <span class="truncate">{{ base.translate["delete"] }}</span>
+                      <i class="fas fa-trash w-4 text-center"></i>
+                      <span>{{ base.translate["delete"] }}</span>
                     </a>
                   </li>
                   {% endif %}
@@ -94,4 +92,5 @@
     </tbody>
   </table>
 </div>
+{% endif %}
 {% endblock %}

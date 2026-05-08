@@ -139,3 +139,7 @@ yes = Sì
 no = No
 up = Su
 down = Giù
+cancel = Annulla
+no-users-found = Nessun utente trovato
+no-groups-found = Nessun gruppo trovato
+no-categories-found = Nessuna categoria trovata

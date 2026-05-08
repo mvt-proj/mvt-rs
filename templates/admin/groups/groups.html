@@ -1,78 +1,77 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
-<div class="flex justify-between items-center">
-  <h1 class="title text-center">{{ base.translate["list-of-groups"] }}</h1>
+<div class="flex justify-between items-center mb-6">
+  <h1 class="title">{{ base.translate["list-of-groups"] }}</h1>
 
-  <div class="text-right">
-    {% if current_user.is_admin() %}
-    <a href="/admin/groups/new" class="button space-x-2">
-      <span class="icon__small">
-        <i class="fas fa-plus"></i>
-      </span>
-      <span>{{ base.translate["add-group"] }}</span>
-    </a>
-    {% endif %}
-  </div>
+  {% if current_user.is_admin() %}
+  <a href="/admin/groups/new" class="button gap-2">
+    <i class="fas fa-plus"></i>
+    <span>{{ base.translate["add-group"] }}</span>
+  </a>
+  {% endif %}
 </div>
 
-<div class="overflow-auto mt-4 rounded-lg">
+{% if groups.is_empty() %}
+<div class="empty-state">
+  <i class="fas fa-layer-group text-5xl mb-4"></i>
+  <p class="subtitle mb-1">{{ base.translate["no-groups-found"] }}</p>
+  <p class="text-sm">{{ base.translate["add-group"] }}</p>
+</div>
+{% else %}
+<div class="overflow-auto rounded-lg">
   <table class="table">
     <thead>
       <tr>
         <th scope="col">{{ base.translate["name"] }}</th>
         <th scope="col">{{ base.translate["description"] }}</th>
-        <th scope="col"></th>
+        <th scope="col" class="w-12"></th>
       </tr>
     </thead>
     <tbody>
       {% for group in groups %}
       <tr>
-        <td>
-          <span class="font-semibold">{{ group.name }}</span>
-        </td>
+        <td><span class="font-semibold">{{ group.name }}</span></td>
         <td>{{ group.description }}</td>
-
         <td class="text-right relative">
           {% if current_user.is_admin() %}
           <div class="flex justify-end">
             <div class="relative" data-dropdown="{{ group.id }}">
               <button
                 type="button"
-                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                class="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
                 onclick='toggleDropdown("{{ group.id }}")'
                 aria-haspopup="true"
                 aria-expanded="false"
               >
                 <i class="fas fa-ellipsis-h"></i>
               </button>
-
               <div
                 id="dropdown-menu-{{ group.id }}"
-                class="hidden absolute right-0 mt-2 w-48 bg-white border border-zinc-200 rounded shadow-lg text-sm z-999"
+                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg text-sm z-50"
                 role="menu"
                 aria-label="Group actions"
               >
                 <ul class="py-1">
                   <li>
                     <a
-                      class="flex w-full items-center px-3 py-2 hover:bg-gray-50 space-x-2"
+                      class="flex w-full items-center px-3 py-2 gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
                       href="/admin/groups/edit/{{ group.id }}"
                       role="menuitem"
                       onclick='closeDropdown("{{ group.id }}")'
                     >
-                      <span class="w-5"><i class="fas fa-pen"></i></span>
-                      <span class="truncate">{{ base.translate["edit"] }}</span>
+                      <i class="fas fa-pen w-4 text-center"></i>
+                      <span>{{ base.translate["edit"] }}</span>
                     </a>
                   </li>
                   {% if group.name != "admin" %}
                   <li>
                     <a
-                      class="flex w-full items-center px-3 py-2 hover:bg-red-50 text-red-600 space-x-2"
+                      class="flex w-full items-center px-3 py-2 gap-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 transition-colors"
                       href="/admin/groups/delete/{{ group.id }}"
                       role="menuitem"
-                      onclick="if(!confirm('{{ base.translate["confirm-delete-group"] }}')) return false; closeDropdown('{{ group.id }}')"
+                      onclick="event.preventDefault(); openDeleteModal(this.href, '{{ base.translate["confirm-delete-group"] }}'); closeDropdown('{{ group.id }}');"
                     >
-                      <span class="w-5"><i class="fas fa-trash"></i></span>
-                      <span class="truncate">{{ base.translate["delete"] }}</span>
+                      <i class="fas fa-trash w-4 text-center"></i>
+                      <span>{{ base.translate["delete"] }}</span>
                     </a>
                   </li>
                   {% endif %}
@@ -82,10 +81,10 @@
           </div>
           {% endif %}
         </td>
-
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+{% endif %}
 {% endblock %}
