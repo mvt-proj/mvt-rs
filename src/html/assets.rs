@@ -1,9 +1,9 @@
-use super::utils::{BaseTemplateData, is_authenticated};
+use super::utils::{BaseTemplateData, make_base};
 use crate::error::{AppError, AppResult};
 use crate::get_map_assets;
 use askama::Template;
 use salvo::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use tokio::fs;
 
 #[derive(Template)]
@@ -22,12 +22,7 @@ struct GlyphsTemplate {
 
 #[handler]
 pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
     let dir = format!("{}/sprites", get_map_assets());
     let dir_path = dir.as_str();
 
@@ -63,12 +58,7 @@ pub async fn page_sprites(res: &mut Response, depot: &mut Depot) -> AppResult<()
 
 #[handler]
 pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
     let dir = format!("{}/glyphs", get_map_assets());
     let dir_path = dir.as_str();
 

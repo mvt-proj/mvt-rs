@@ -2,13 +2,12 @@ use askama::Template;
 use prometheus::{Encoder, TextEncoder};
 use salvo::prelude::*;
 use serde_json::json;
-use std::collections::HashMap;
 use std::io;
 use tokio::time::{Duration, interval};
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::IntervalStream;
 
-use crate::html::utils::{BaseTemplateData, is_authenticated};
+use crate::html::utils::{BaseTemplateData, make_base};
 use crate::monitor::metrics::{
     AVG_LATENCY, CACHE_HITS, CACHE_MISSES, LAST_LATENCY, PROCESS_CPU, PROCESS_MEM, REGISTRY,
     REQUESTS_TOTAL,
@@ -42,13 +41,7 @@ pub async fn metrics(res: &mut Response) {
 
 #[handler]
 pub async fn dashboard(res: &mut Response, depot: &mut Depot) {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
     let template = DashboardTemplate { base };
 
     match template.render() {

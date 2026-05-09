@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 pub struct BaseTemplateData {
     pub is_auth: bool,
+    pub is_admin: bool,
     pub translate: HashMap<String, String>,
 }
 
@@ -38,4 +39,14 @@ pub async fn get_session_data(depot: &mut Depot) -> (bool, Option<User>) {
     }
 
     (is_auth, user)
+}
+
+pub async fn make_base(depot: &mut Depot) -> (BaseTemplateData, Option<User>) {
+    let (is_auth, user) = get_session_data(depot).await;
+    let is_admin = user.as_ref().map(|u| u.is_admin()).unwrap_or(false);
+    let translate = depot
+        .get::<HashMap<String, String>>("translate")
+        .cloned()
+        .unwrap_or_default();
+    (BaseTemplateData { is_auth, is_admin, translate }, user)
 }

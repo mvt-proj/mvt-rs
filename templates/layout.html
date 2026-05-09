@@ -13,43 +13,172 @@
     {% block head %}{% endblock %}
   </head>
 
-  <body
-    class="bg-gray-200 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col"
-  >
+  <body class="bg-gray-200 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 h-screen flex flex-col overflow-hidden">
+
+    <!-- Header: always, minimal -->
     <header>
       <nav class="navbar">
-        <h1 class="text-2xl font-bold ">MVT Server</h1>
-        <div
-          class="flex flex-row flex-wrap justify-center sm:justify-end items-center space-x-4"
-        >
-          <a href="/">{{ base.translate["home"] }}</a>
-          <a href="/catalog">{{ base.translate["catalog"] }}</a>
-          <a href="/styles">{{ base.translate["styles"] }}</a>
-          <a href="/sprites">{{ base.translate["sprites"] }}</a>
-          <a href="/glyphs">{{ base.translate["glyphs"] }}</a>
-          <a href="https://github.com/mvt-proj/mvt-rs/blob/main/TUTORIAL.md" target="_blank">{{ base.translate["tutorial"] }}</a>
-        </div>
-        <div
-          class="flex flex-row flex-wrap justify-center sm:justify-end items-center space-x-4"
-        >
-          {% if self.base.is_auth %}
-          <a class="button__outline" href="/admin"> Admin </a>
-          <a class="button__outline" href="/changepassword"> {{ base.translate["password"] }} </a>
-          <a class="button__outline" href="/logout"> {{ base.translate["logout"] }} </a>
-          {% else %}
-          <a class="button__outline" href="/login"> {{ base.translate["login"] }} </a>
-          {% endif %}
-        </div>
+        <h1 class="text-2xl font-bold">MVT Server</h1>
       </nav>
     </header>
 
-    <main class="{% block main_class %}p-4{% endblock %} flex-grow">{% block content %}{% endblock %}</main>
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 hidden" onclick="closeSidebar()"></div>
 
-    <footer class="p-4 bg-zinc-800 text-white text-center">
+    <!-- Mobile toggle button -->
+    <button id="mobile-sidebar-btn" class="lg:hidden fixed bottom-6 left-6 z-30 flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 text-white shadow-xl" onclick="openSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Page body: sidebar + content -->
+    <div class="flex flex-1 min-h-0 overflow-hidden">
+
+      <!-- Sidebar -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-brand-text">MVT Server</span>
+          <button onclick="toggleSidebarCollapse()" class="sidebar-toggle" title="Toggle sidebar">
+            <i id="sidebar-chevron" class="fas fa-chevron-left text-sm"></i>
+          </button>
+        </div>
+        <nav class="sidebar-nav">
+          <p class="sidebar-section-label">Site</p>
+          <a class="sidebar-link" href="/">
+            <i class="fas fa-home sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["home"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/catalog" data-sidebar-path="/catalog">
+            <i class="fas fa-book sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["catalog"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/styles" data-sidebar-path="/styles">
+            <i class="fas fa-paint-brush sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["styles"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/sprites" data-sidebar-path="/sprites">
+            <i class="fas fa-th sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["sprites"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/glyphs" data-sidebar-path="/glyphs">
+            <i class="fas fa-font sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["glyphs"] }}</span>
+          </a>
+          <a class="sidebar-link" href="https://github.com/mvt-proj/mvt-rs/blob/main/TUTORIAL.md" target="_blank">
+            <i class="fas fa-graduation-cap sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["tutorial"] }}</span>
+          </a>
+          {% if self.base.is_admin %}
+          <hr class="sidebar-divider">
+          <p class="sidebar-section-label">Admin</p>
+          <a class="sidebar-link" href="/admin/groups" data-sidebar-path="/admin/groups">
+            <i class="fas fa-users sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["groups"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/admin/users" data-sidebar-path="/admin/users">
+            <i class="fas fa-user sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["users"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/admin/categories" data-sidebar-path="/admin/categories">
+            <i class="fas fa-list sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["categories"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/admin/catalog" data-sidebar-path="/admin/catalog">
+            <i class="fas fa-layer-group sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["catalog"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/admin/styles" data-sidebar-path="/admin/styles">
+            <i class="fas fa-palette sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["styles"] }}</span>
+          </a>
+          <a class="sidebar-link sidebar-disabled" href="javascript:void(0)" tabindex="-1" aria-disabled="true">
+            <i class="fas fa-globe sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["metadata"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/admin/monitor/dashboard" data-sidebar-path="/admin/monitor">
+            <i class="fas fa-tachometer-alt sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["metrics"] }}</span>
+          </a>
+          {% endif %}
+        </nav>
+        <div class="sidebar-footer">
+          {% if self.base.is_auth %}
+          <a class="sidebar-link" href="/changepassword" data-sidebar-path="/changepassword">
+            <i class="fas fa-key sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["password"] }}</span>
+          </a>
+          <a class="sidebar-link" href="/logout">
+            <i class="fas fa-sign-out-alt sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["logout"] }}</span>
+          </a>
+          {% else %}
+          <a class="sidebar-link" href="/login">
+            <i class="fas fa-sign-in-alt sidebar-icon"></i>
+            <span class="sidebar-label">{{ base.translate["login"] }}</span>
+          </a>
+          {% endif %}
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="{% block main_class %}p-4{% endblock %} flex-1 min-w-0 overflow-y-auto overflow-x-auto">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <footer class="p-4 bg-zinc-800 text-white text-center shrink-0">
       <p>&copy; 2025 MVT Server</p>
     </footer>
 
     <script src="/static/js/mvt.js"></script>
     {% block scripts %}{% endblock %}
+
+    <script>
+    (function () {
+      const sidebar = document.getElementById('sidebar');
+      const chevron = document.getElementById('sidebar-chevron');
+      const overlay = document.getElementById('sidebar-overlay');
+
+      const path = window.location.pathname;
+      document.querySelectorAll('[data-sidebar-path]').forEach(function (link) {
+        if (path.startsWith(link.dataset.sidebarPath)) {
+          link.classList.add('sidebar-link--active');
+        }
+      });
+
+      if (window.innerWidth >= 1024 && localStorage.getItem('sidebarCollapsed') === 'true') {
+        sidebar.classList.add('collapsed');
+        chevron.classList.replace('fa-chevron-left', 'fa-chevron-right');
+      }
+
+      window.toggleSidebarCollapse = function () {
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', String(isCollapsed));
+        chevron.classList.toggle('fa-chevron-left', !isCollapsed);
+        chevron.classList.toggle('fa-chevron-right', isCollapsed);
+      };
+
+      window.openSidebar = function () {
+        sidebar.classList.add('mobile-open');
+        overlay.classList.remove('hidden');
+      };
+
+      window.closeSidebar = function () {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.add('hidden');
+      };
+
+      window.addEventListener('resize', function () {
+        if (window.innerWidth >= 1024) {
+          if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.classList.add('collapsed');
+            chevron.classList.replace('fa-chevron-left', 'fa-chevron-right');
+          } else {
+            sidebar.classList.remove('collapsed');
+            chevron.classList.replace('fa-chevron-right', 'fa-chevron-left');
+          }
+        }
+      });
+    })();
+    </script>
   </body>
 </html>

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -9,7 +7,7 @@ use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
     get_auth, get_cache_wrapper, get_catalog, get_categories, get_db_registry,
-    html::utils::{BaseTemplateData, get_session_data, is_authenticated},
+    html::utils::{BaseTemplateData, make_base},
     models::{
         catalog::{Layer, StateLayer},
         category::Category,
@@ -77,12 +75,7 @@ struct NewLayer<'a> {
 
 #[handler]
 pub async fn catalog_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (is_auth, user) = get_session_data(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, user) = make_base(depot).await;
     let Some(current_user) = user else {
         res.render(Redirect::other("/login"));
         res.status_code(StatusCode::FOUND);
@@ -103,13 +96,7 @@ pub async fn new_layer_page(res: &mut Response, depot: &mut Depot) -> AppResult<
     let auth = get_auth().await.read().await;
     let groups = auth.groups.clone();
     let databases = get_db_registry().list_databases();
-    let is_auth = is_authenticated(depot).await;
-
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let template = NewLayerTemplate {
         categories: (categories).to_vec(),
@@ -123,12 +110,7 @@ pub async fn new_layer_page(res: &mut Response, depot: &mut Depot) -> AppResult<
 
 #[handler]
 pub async fn edit_layer_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let categories = get_categories().await.read().await;
     let layer_id = req

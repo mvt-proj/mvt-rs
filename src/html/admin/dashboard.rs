@@ -1,8 +1,7 @@
 use crate::error::AppResult;
-use crate::html::utils::{BaseTemplateData, is_authenticated};
+use crate::html::utils::{BaseTemplateData, make_base};
 use askama::Template;
 use salvo::prelude::*;
-use std::collections::HashMap;
 
 #[derive(Template)]
 #[template(path = "admin/index.html")]
@@ -12,12 +11,7 @@ struct IndexTemplate {
 
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let template = IndexTemplate { base };
     res.render(Text::Html(template.render()?));

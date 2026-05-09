@@ -1,9 +1,8 @@
-use super::utils::{BaseTemplateData, is_authenticated};
+use super::utils::{BaseTemplateData, make_base};
 use crate::VERSION;
 use crate::error::AppResult;
 use askama::Template;
 use salvo::prelude::*;
-use std::collections::HashMap;
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -26,13 +25,7 @@ struct ChangePasswordTemplate {
 
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
     let template = IndexTemplate {
         base,
         version: VERSION.to_string(),
@@ -43,17 +36,11 @@ pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn login(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    if is_auth {
+    let (base, _) = make_base(depot).await;
+    if base.is_auth {
         res.render(Redirect::other("/"));
         return Ok(());
     }
-
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
 
     let template = LoginTemplate { base };
     res.render(Text::Html(template.render()?));
@@ -62,17 +49,11 @@ pub async fn login(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
 
 #[handler]
 pub async fn change_password(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    if !is_auth {
+    let (base, _) = make_base(depot).await;
+    if !base.is_auth {
         res.render(Redirect::other("/login"));
         return Ok(());
     }
-
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
 
     let template = ChangePasswordTemplate { base };
     res.render(Text::Html(template.render()?));

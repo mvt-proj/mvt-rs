@@ -1,11 +1,10 @@
-use super::utils::{BaseTemplateData, is_authenticated};
+use super::utils::{BaseTemplateData, make_base};
 use crate::db::metadata::{Extent, query_extent};
 use crate::get_catalog;
 use crate::models::catalog::{Layer, StateLayer};
 use crate::models::styles::Style;
 use askama::Template;
 use salvo::prelude::*;
-use std::collections::HashMap;
 
 #[derive(Template)]
 #[template(path = "maplayer.html")]
@@ -57,12 +56,7 @@ pub async fn page_map_layer(
     let category = parts.first().unwrap_or(&"").to_string();
     let name = parts.get(1).unwrap_or(&"").to_string();
 
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let (lyr, geometry) = {
         let catalog = get_catalog().await.read().await;
@@ -124,12 +118,7 @@ pub async fn page_map_view(
     let style = Style::from_id(&style_id)
         .await
         .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?;
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let template = if is_minimal {
         MapTemplate::Minimal(MapViewMinimalTemplate { base, style })

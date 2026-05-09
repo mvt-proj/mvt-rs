@@ -21,9 +21,9 @@
 /* ── Sidebar ─────────────────────────────────────────────────────── */
 .sidebar {
   @apply flex flex-col bg-zinc-800 text-zinc-100 shrink-0;
-  @apply sticky top-0 self-start min-h-screen;
   width: 15rem;
   transition: width 0.2s ease;
+  overflow: hidden;
 }
 
 .sidebar.collapsed {
@@ -31,11 +31,21 @@
 }
 
 .sidebar-header {
-  @apply flex items-center justify-end px-3 py-4 border-b border-zinc-700 shrink-0;
+  @apply flex items-center justify-between px-3 py-4 border-b border-zinc-700 shrink-0;
 }
 
 .sidebar.collapsed .sidebar-header {
   @apply justify-center;
+}
+
+.sidebar-brand-text {
+  @apply text-base font-bold text-white truncate;
+  transition: opacity 0.1s ease, width 0.2s ease;
+}
+
+.sidebar.collapsed .sidebar-brand-text {
+  @apply opacity-0 overflow-hidden;
+  width: 0;
 }
 
 .sidebar-toggle {
@@ -72,6 +82,30 @@
   width: 0;
 }
 
+.sidebar.collapsed .sidebar-link {
+  @apply justify-center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar-section-label {
+  @apply pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .sidebar-section-label,
+.sidebar.collapsed .sidebar-divider {
+  display: none;
+}
+
+.sidebar-divider {
+  @apply border-t border-zinc-700 my-1;
+}
+
+.sidebar-footer {
+  @apply flex flex-col gap-1 p-3 border-t border-zinc-700 shrink-0;
+}
+
 .sidebar-disabled {
   @apply opacity-40 cursor-not-allowed pointer-events-none;
 }
@@ -100,7 +134,7 @@
   }
 
   .sidebar .sidebar-header {
-    justify-content: flex-end !important;
+    justify-content: space-between !important;
   }
 }
 

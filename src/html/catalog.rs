@@ -1,4 +1,4 @@
-use super::utils::{BaseTemplateData, get_session_data, is_authenticated};
+use super::utils::{BaseTemplateData, make_base};
 use crate::auth::User;
 use crate::error::AppResult;
 use crate::get_catalog;
@@ -24,12 +24,7 @@ struct CatalogTableTemplate<'a> {
 
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let template = CatalogTemplate { base };
     res.render(Text::Html(template.render()?));
@@ -44,7 +39,7 @@ pub async fn table_catalog(
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
     let catalog = get_catalog().await.read().await;
-    let (_is_auth, user) = get_session_data(depot).await;
+    let (_, user) = make_base(depot).await;
 
     let mut layers: Vec<Layer> = if let Some(filter) = filter {
         catalog

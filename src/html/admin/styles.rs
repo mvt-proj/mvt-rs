@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use askama::Template;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -8,7 +6,7 @@ use crate::{
     auth::User,
     error::{AppError, AppResult},
     get_categories,
-    html::utils::{BaseTemplateData, get_session_data, is_authenticated},
+    html::utils::{BaseTemplateData, make_base},
     models::{category::Category, styles::Style},
 };
 
@@ -46,12 +44,7 @@ struct NewStyle<'a> {
 
 #[handler]
 pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (is_auth, user) = get_session_data(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, user) = make_base(depot).await;
     let Some(current_user) = user else {
         res.render(Redirect::other("/login"));
         res.status_code(StatusCode::FOUND);
@@ -67,12 +60,7 @@ pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()>
 
 #[handler]
 pub async fn new_style_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let categories = get_categories().await.read().await;
     let template = NewStyleTemplate {
@@ -85,12 +73,7 @@ pub async fn new_style_page(res: &mut Response, depot: &mut Depot) -> AppResult<
 
 #[handler]
 pub async fn edit_style_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
     let id = req
         .param::<String>("id")
         .ok_or(AppError::RequestParamError("id".to_string()))?;

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use askama::Template;
 use salvo::macros::Extractible;
 use salvo::prelude::*;
@@ -11,7 +9,7 @@ use crate::{
     config::users::create_user as create_cf_user,
     error::{AppError, AppResult},
     get_auth,
-    html::utils::{BaseTemplateData, get_session_data, is_authenticated},
+    html::utils::{BaseTemplateData, make_base},
 };
 
 // --- Templates ---
@@ -55,14 +53,8 @@ pub struct NewUser<'a> {
 
 #[handler]
 pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (is_auth, user) = get_session_data(depot).await;
+    let (base, user) = make_base(depot).await;
     let auth = get_auth().await.read().await;
-
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
 
     if let Some(current_user) = user {
         let template = ListUsersTemplate {
@@ -80,12 +72,7 @@ pub async fn list_users(res: &mut Response, depot: &mut Depot) -> AppResult<()> 
 
 #[handler]
 pub async fn new_user_page(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let auth = get_auth().await.read().await;
     let template = NewUserTemplate {
@@ -98,12 +85,7 @@ pub async fn new_user_page(res: &mut Response, depot: &mut Depot) -> AppResult<(
 
 #[handler]
 pub async fn edit_user_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let is_auth = is_authenticated(depot).await;
-    let translate = depot
-        .get::<HashMap<String, String>>("translate")
-        .cloned()
-        .unwrap_or_default();
-    let base = BaseTemplateData { is_auth, translate };
+    let (base, _) = make_base(depot).await;
 
     let id = req
         .param::<String>("id")
