@@ -17,12 +17,21 @@ metrics = Metriche
 # Pages
 welcome = Benvenuto su MVT Server!
 welcome-admin = Modalità Amministratore!
-index-subtitle = Un server semplice, veloce e potente per la distribuzione di tile vettoriali.
-mvt-you-can = Con MVT Server puoi
-feature-1 = Servire layer vettoriali ad alte prestazioni.
-feature-2 = Gestire stili di mappa con un server di stili integrato.
-feature-3 = Gestire utenti e gruppi con controllo degli accessi flessibile.
-feature-4 = <strong>Prossimamente:</strong> Un server di metadati conforme a <strong>ISO 19115</strong> per la documentazione dei dati spaziali.
+index-subtitle = Servi layer PostGIS come Mapbox Vector Tiles con cache, autenticazione e gestione degli stili.
+home-capabilities = Funzionalità
+home-cta-catalog = Vedi Catalogo
+home-cta-styles = Vedi Stili
+home-cta-admin = Pannello Admin
+feature-1 = Tile Vettoriali
+feature-1-desc = Servi tabelle e viste PostGIS come tile .pbf con cache su Redis o disco.
+feature-2 = Server di Stili
+feature-2-desc = Pubblica e condividi stili MapLibre/Mapbox dal server di stili integrato.
+feature-3 = Controllo Accessi
+feature-3-desc = Gestisci utenti e gruppi con autenticazione JWT e permessi per layer.
+feature-4 = Multi-Database
+feature-4-desc = Connetti più database PostGIS contemporaneamente e servi layer da ciascuno in modo indipendente.
+feature-5 = Metadati (prossimamente)
+feature-5-desc = Server di metadati conforme a ISO 19115 per la documentazione dei dati spaziali.
 
 catalog-of-layers = Catalogo dei layer pubblicati
 list-of-styles = Elenco degli Stili

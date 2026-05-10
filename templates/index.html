@@ -2,27 +2,88 @@
 
 {% block content %}
 
-<div class="flex justify-center items-center">
-  <div class="text-center max-w-2xl px-6">
-    <h1 class="text-3xl font-bold">{{ base.translate["welcome"] }}</h1>
-    <p class="mt-2 text-lg text-gray-700">
+<div class="flex justify-center items-start py-10 px-4">
+  <div class="w-full max-w-2xl">
 
-      {{ base.translate["index-subtitle"] }}
-    </p>
-
-    <div class="mt-6 text-left">
-      <h2 class="text-xl font-semibold">{{ base.translate["mvt-you-can"] }}:</h2>
-      <ul class="mt-2 list-disc list-inside text-gray-600">
-        <li>{{ base.translate["feature-1"] }}</li>
-        <li>{{ base.translate["feature-2"] }}</li>
-        <li>{{ base.translate["feature-3"] }}</li>
-        <li>{{ base.translate["feature-4"]|safe }}</li>
-      </ul>
+    <!-- Hero -->
+    <div class="text-center mb-10">
+      <img src="/static/images/fondo_azul.webp" alt="MVT Server logo"
+           style="display:block; margin: 0 auto 1.5rem; width: 180px; height: 180px; object-fit: contain; border-radius: 0.75rem;" />
+      <h1 class="text-4xl font-bold mb-3">{{ base.translate["welcome"] }}</h1>
+      <p class="text-base text-zinc-600 dark:text-zinc-400 max-w-lg mx-auto leading-relaxed">
+        {{ base.translate["index-subtitle"] }}
+      </p>
+      <div class="mt-6 flex justify-center gap-3 flex-wrap">
+        <a href="/catalog" class="button">
+          <i class="fas fa-book mr-2"></i>{{ base.translate["home-cta-catalog"] }}
+        </a>
+        <a href="/styles" class="button__outline">
+          <i class="fas fa-palette mr-2"></i>{{ base.translate["home-cta-styles"] }}
+        </a>
+        {% if self.base.is_admin %}
+        <a href="/admin/catalog" class="button__outline">
+          <i class="fas fa-cog mr-2"></i>{{ base.translate["home-cta-admin"] }}
+        </a>
+        {% endif %}
+      </div>
     </div>
 
+    <!-- Feature cards -->
+    <p class="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3 text-center">
+      {{ base.translate["home-capabilities"] }}
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-    <div class="mt-8 flex justify-center">
-      <img src="/static/images/fondo_azul.webp" alt="MVT Server" class="w-1/2 rounded-lg shadow-md" />
+      <div class="flex gap-4 items-start bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow">
+        <div class="mt-0.5 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/40">
+          <i class="fas fa-map text-blue-500 text-sm"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-zinc-800 dark:text-zinc-100 text-sm mb-0.5">{{ base.translate["feature-1"] }}</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{{ base.translate["feature-1-desc"] }}</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4 items-start bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow">
+        <div class="mt-0.5 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/40">
+          <i class="fas fa-palette text-purple-500 text-sm"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-zinc-800 dark:text-zinc-100 text-sm mb-0.5">{{ base.translate["feature-2"] }}</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{{ base.translate["feature-2-desc"] }}</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4 items-start bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow">
+        <div class="mt-0.5 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/40">
+          <i class="fas fa-shield-alt text-green-500 text-sm"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-zinc-800 dark:text-zinc-100 text-sm mb-0.5">{{ base.translate["feature-3"] }}</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{{ base.translate["feature-3-desc"] }}</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4 items-start bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow">
+        <div class="mt-0.5 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/40">
+          <i class="fas fa-database text-orange-500 text-sm"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-zinc-800 dark:text-zinc-100 text-sm mb-0.5">{{ base.translate["feature-4"] }}</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{{ base.translate["feature-4-desc"] }}</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4 items-start bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow opacity-50">
+        <div class="mt-0.5 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-700">
+          <i class="fas fa-file-alt text-zinc-400 text-sm"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-zinc-800 dark:text-zinc-100 text-sm mb-0.5">{{ base.translate["feature-5"] }}</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{{ base.translate["feature-5-desc"] }}</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

@@ -17,12 +17,21 @@ metrics = Métricas
 # Pages
 welcome = ¡Bienvenido a MVT Server!
 welcome-admin = ¡Modo Administrador!
-index-subtitle = Un servidor simple, rápido y potente para la distribución de teselas vectoriales.
-mvt-you-can = Con MVT Server podrá
-feature-1 = Servir capas vectoriales de alto rendimiento.
-feature-2 = Gestionar estilos de mapas con un servidor de estilos integrado.
-feature-3 = Gestionar usuarios y grupos con control de acceso flexible.
-feature-4 = <strong>Próximamente:</strong> Soporte a metadatos compatible con <strong>ISO 19115</strong> para la documentación de datos espaciales.
+index-subtitle = Serví capas de PostGIS como Mapbox Vector Tiles con caché, autenticación y gestión de estilos.
+home-capabilities = Capacidades
+home-cta-catalog = Ver Catálogo
+home-cta-styles = Ver Estilos
+home-cta-admin = Panel de Administración
+feature-1 = Teselas Vectoriales
+feature-1-desc = Serví tablas y vistas de PostGIS como teselas .pbf con caché en Redis o disco.
+feature-2 = Servidor de Estilos
+feature-2-desc = Publicá y compartí estilos MapLibre/Mapbox desde el servidor de estilos integrado.
+feature-3 = Control de Acceso
+feature-3-desc = Gestioná usuarios y grupos con autenticación JWT y permisos por capa.
+feature-4 = Múltiples Bases de Datos
+feature-4-desc = Conectá múltiples bases de datos PostGIS simultáneamente y serví capas de cada una de forma independiente.
+feature-5 = Metadatos (próximamente)
+feature-5-desc = Servidor de metadatos compatible con ISO 19115 para la documentación de datos espaciales.
 
 catalog-of-layers = Catálogo de capas publicadas
 list-of-styles = Listado de Estilos
