@@ -112,6 +112,14 @@ server {
     listen 80;
     server_name yourdomain.com;
 
+    # Enable gzip compression for vector tiles and API responses.
+    # .pbf tiles compress 60-80% on average, significantly reducing bandwidth.
+    gzip on;
+    gzip_types application/x-protobuf application/octet-stream application/json;
+    gzip_min_length 256;
+    gzip_proxied any;
+    gzip_vary on;
+
     location / {
         proxy_pass http://localhost:5800;
         proxy_set_header Host $host;
@@ -142,6 +150,12 @@ http {
     server {
         listen 80;
         server_name yourdomain.com;
+
+        gzip on;
+        gzip_types application/x-protobuf application/octet-stream application/json;
+        gzip_min_length 256;
+        gzip_proxied any;
+        gzip_vary on;
 
         location / {
             proxy_pass http://backend_servers;

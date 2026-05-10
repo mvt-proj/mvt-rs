@@ -23,6 +23,12 @@ This is a simple and high-speed vector tile server developed in Rust, using the 
 - Layer access control via Basic Authentication or JWT.
 - Monitoring and Metrics with Prometheus support.
 
+## Performance Tips
+
+- **Gzip compression**: Enable gzip in your reverse proxy (nginx, caddy, etc.) for `application/x-protobuf` responses. Vector tiles compress 60–80% on average. See the [nginx configuration example in the Tutorial](TUTORIAL.md#server-with-nginx).
+- **Caching**: Configure `max_cache_age` per layer. Static layers (boundaries, basemaps) benefit from long or infinite cache. Real-time layers should use a short TTL. Cache can be invalidated manually per layer from the admin panel.
+- **Redis**: Use Redis as the cache backend when running multiple instances behind a load balancer.
+
 ## Getting Started
 
 Check out the **[MVT Server Tutorial](TUTORIAL.md)** for a complete step-by-step guide on:
