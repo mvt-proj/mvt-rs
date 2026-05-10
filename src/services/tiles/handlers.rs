@@ -46,11 +46,14 @@ pub async fn get_single_layer_tile(
     let mut builder = filters::SqlQueryBuilder::new(9);
     let (where_clause, bindings) = builder.build(&filters);
 
-    let catalog = get_catalog().await.read().await;
+    let layer = {
+        let catalog = get_catalog().await.read().await;
+        catalog
+            .find_layer_by_category_and_name(category, name, StateLayer::Published)
+            .cloned()
+    };
 
-    let Some(layer) =
-        catalog.find_layer_by_category_and_name(category, name, StateLayer::Published)
-    else {
+    let Some(layer) = layer else {
         warn!(category = %category, name = %name, "Layer not found");
         res.status_code(StatusCode::NOT_FOUND);
         res.body(salvo::http::ResBody::Once(Bytes::new()));
@@ -65,7 +68,7 @@ pub async fn get_single_layer_tile(
             AppError::DatabaseError("Pool not found".to_string())
         })?;
 
-    if !validate_user_groups(req, layer, depot).await? {
+    if !validate_user_groups(req, &layer, depot).await? {
         warn!(category = %category, name = %name, "User not authorized for layer");
         res.status_code(StatusCode::FORBIDDEN);
         res.body(salvo::http::ResBody::Once(Bytes::new()));
@@ -150,18 +153,26 @@ pub async fn get_composite_layers_tile(
         .filter(|s| !s.is_empty())
         .collect();
 
-    let catalog = get_catalog().await.read().await;
+    let candidates: Vec<_> = {
+        let catalog = get_catalog().await.read().await;
+        layers_vec
+            .iter()
+            .filter_map(|layer_name| {
+                let (category, name) = layer_name.split_once(':').unwrap_or(("", ""));
+                catalog
+                    .find_layer_by_category_and_name(category, name, StateLayer::Published)
+                    .cloned()
+            })
+            .collect()
+    };
 
     let mut layer_configs = Vec::new();
-    for layer_name in layers_vec {
-        let (category, name) = layer_name.split_once(':').unwrap_or(("", ""));
-        if let Some(layer) = catalog.find_layer_by_category_and_name(category, name, StateLayer::Published) {
-            if validate_user_groups(req, layer, depot).await? {
-                let zmin = layer.zmin.unwrap_or(0);
-                let zmax = layer.zmax.unwrap_or(22);
-                if z >= zmin && z <= zmax {
-                    layer_configs.push(layer.clone());
-                }
+    for layer in candidates {
+        if validate_user_groups(req, &layer, depot).await? {
+            let zmin = layer.zmin.unwrap_or(0);
+            let zmax = layer.zmax.unwrap_or(22);
+            if z >= zmin && z <= zmax {
+                layer_configs.push(layer);
             }
         }
     }
@@ -227,17 +238,22 @@ pub async fn get_category_layers_tile(
     let y = req.param::<u32>("y").unwrap_or(0);
     let z = req.param::<u32>("z").unwrap_or(0);
 
-    let catalog = get_catalog().await.read().await;
-
-    let layers_vec = catalog.find_layers_by_category(&category, StateLayer::Published);
+    let candidates: Vec<_> = {
+        let catalog = get_catalog().await.read().await;
+        catalog
+            .find_layers_by_category(&category, StateLayer::Published)
+            .into_iter()
+            .cloned()
+            .collect()
+    };
 
     let mut layer_configs = Vec::new();
-    for layer in layers_vec {
-        if validate_user_groups(req, layer, depot).await? {
+    for layer in candidates {
+        if validate_user_groups(req, &layer, depot).await? {
             let zmin = layer.zmin.unwrap_or(0);
             let zmax = layer.zmax.unwrap_or(22);
             if z >= zmin && z <= zmax {
-                layer_configs.push(layer.clone());
+                layer_configs.push(layer);
             }
         }
     }
