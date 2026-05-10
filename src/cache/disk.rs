@@ -90,4 +90,34 @@ impl DiskCache {
 
         Ok(())
     }
+
+    /// Returns the current version counter for a layer.
+    /// Stored at `{cache_dir}/.versions/{layer_name}` — outside the tile directory
+    /// so it survives tile cache deletion.
+    pub async fn get_layer_version(&self, layer_name: &str) -> u64 {
+        let path = self.cache_dir.join(".versions").join(layer_name);
+        match fs::read_to_string(&path).await {
+            Ok(s) => s.trim().parse().unwrap_or(0),
+            Err(_) => 0,
+        }
+    }
+
+    /// Increments the version counter for a layer.
+    pub async fn increment_layer_version(&self, layer_name: &str) {
+        let dir = self.cache_dir.join(".versions");
+        if fs::metadata(&dir).await.is_err() {
+            if let Err(e) = fs::create_dir_all(&dir).await {
+                tracing::warn!("Failed to create versions dir: {e}");
+                return;
+            }
+        }
+        let path = dir.join(layer_name);
+        let current: u64 = match fs::read_to_string(&path).await {
+            Ok(s) => s.trim().parse().unwrap_or(0),
+            Err(_) => 0,
+        };
+        if let Err(e) = fs::write(&path, (current + 1).to_string()).await {
+            tracing::warn!("Failed to write version for layer {layer_name}: {e}");
+        }
+    }
 }

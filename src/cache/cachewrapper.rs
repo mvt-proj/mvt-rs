@@ -54,6 +54,14 @@ impl CacheWrapper {
     }
 
     pub async fn delete_cache(&self, catalog: Catalog) -> AppResult<()> {
+        // Increment version for affected layers before clearing tiles, so any
+        // in-flight requests that complete after this point get a fresh ETag.
+        for layer in catalog.layers.iter() {
+            if layer.delete_cache_on_start.unwrap_or(false) {
+                let key = format!("{}_{}", layer.category.name, layer.name);
+                self.increment_layer_version(&key).await;
+            }
+        }
         match &self.mode {
             CacheMode::Redis(redis_cache) => redis_cache.delete_cache(catalog).await,
             CacheMode::Disk(disk_cache) => {
@@ -64,12 +72,29 @@ impl CacheWrapper {
     }
 
     pub async fn delete_layer_cache(&self, layer_name: &String) -> AppResult<()> {
+        self.increment_layer_version(layer_name).await;
         match &self.mode {
             CacheMode::Redis(redis_cache) => redis_cache.delete_layer_cache(layer_name).await,
             CacheMode::Disk(disk_cache) => {
                 disk_cache.delete_layer_cache(layer_name).await;
                 Ok(())
             }
+        }
+    }
+
+    /// Returns the current version counter for a layer.
+    pub async fn get_layer_version(&self, layer_name: &str) -> u64 {
+        match &self.mode {
+            CacheMode::Redis(redis_cache) => redis_cache.get_layer_version(layer_name).await,
+            CacheMode::Disk(disk_cache) => disk_cache.get_layer_version(layer_name).await,
+        }
+    }
+
+    /// Increments the version counter for a layer (called on cache invalidation).
+    pub async fn increment_layer_version(&self, layer_name: &str) {
+        match &self.mode {
+            CacheMode::Redis(redis_cache) => redis_cache.increment_layer_version(layer_name).await,
+            CacheMode::Disk(disk_cache) => disk_cache.increment_layer_version(layer_name).await,
         }
     }
 

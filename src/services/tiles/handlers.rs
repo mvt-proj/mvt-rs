@@ -10,16 +10,18 @@ use crate::services::utils::validate_user_groups;
 use crate::{
     error::{AppError, AppResult},
     filters,
+    get_cache_wrapper,
     get_catalog,
     get_db_registry,
     models::catalog::StateLayer,
     monitor::record_latency,
 };
 
-/// FNV-1a 64-bit hash — deterministic, no external deps.
-fn compute_etag(data: &[u8]) -> String {
+/// FNV-1a 64-bit hash of an arbitrary string. Used to produce ETags from
+/// structured inputs (layer_name:z:x:y:version) without touching tile bytes.
+fn compute_etag(input: &str) -> String {
     let mut hash: u64 = 14695981039346656037;
-    for byte in data {
+    for byte in input.as_bytes() {
         hash ^= *byte as u64;
         hash = hash.wrapping_mul(1099511628211);
     }
@@ -81,6 +83,8 @@ pub async fn get_single_layer_tile(
             filter_params.insert(key.to_string(), value.to_string());
         }
     }
+    let has_filters = !filter_params.is_empty();
+
     let filters = filters::parse_query_params(&filter_params);
     let mut builder = filters::SqlQueryBuilder::new(9);
     let (where_clause, bindings) = builder.build(&filters);
@@ -131,47 +135,85 @@ pub async fn get_single_layer_tile(
     }
 
     let max_cache_age = layer.max_cache_age.unwrap_or(0);
-    let start_time = Instant::now();
+    let layer_key = format!("{}_{}", layer.category.name, layer.name);
 
-    let (tile, via) = match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await
-    {
-        Ok(result) => result,
-        Err(e) => {
-            res.status_code(StatusCode::BAD_REQUEST);
-            res.render(Json(serde_json::json!({
-                "error": "Invalid filter",
-                "message": e.to_string()
-            })));
+    // Filtered requests are never server-cached and change per-request, so
+    // version-based ETags cannot be used for them. Skip ETag entirely.
+    if !has_filters {
+        let version = get_cache_wrapper().get_layer_version(&layer_key).await;
+        let etag = compute_etag(&format!("{layer_key}:{z}:{x}:{y}:{version}"));
+
+        // Early exit: browser already has the current version.
+        // No DB query, no cache read.
+        if is_not_modified(req, &etag) {
+            set_cache_headers(res, &etag, max_cache_age);
+            res.status_code(StatusCode::NOT_MODIFIED);
             return Ok(());
         }
-    };
 
-    let elapsed_time = start_time.elapsed();
-    record_latency(elapsed_time.as_secs_f64());
+        let start_time = Instant::now();
 
-    let etag = compute_etag(&tile);
+        let (tile, via) =
+            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await {
+                Ok(result) => result,
+                Err(e) => {
+                    res.status_code(StatusCode::BAD_REQUEST);
+                    res.render(Json(serde_json::json!({
+                        "error": "Invalid filter",
+                        "message": e.to_string()
+                    })));
+                    return Ok(());
+                }
+            };
 
-    if is_not_modified(req, &etag) {
+        let elapsed_time = start_time.elapsed();
+        record_latency(elapsed_time.as_secs_f64());
+
+        res.headers_mut().insert(
+            "X-Data-Source-Time",
+            HeaderValue::from_str(&elapsed_time.as_millis().to_string())
+                .unwrap_or_else(|_| HeaderValue::from_static("0")),
+        );
+        res.headers_mut().insert(
+            "X-Cache",
+            match via {
+                Via::Database => HeaderValue::from_static("MISS"),
+                Via::Cache => HeaderValue::from_static("HIT"),
+            },
+        );
+
         set_cache_headers(res, &etag, max_cache_age);
-        res.status_code(StatusCode::NOT_MODIFIED);
-        return Ok(());
+        res.body(salvo::http::ResBody::Once(tile));
+    } else {
+        // Filtered request: always hits the DB, no server cache, no ETag.
+        let start_time = Instant::now();
+
+        let (tile, _) =
+            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await {
+                Ok(result) => result,
+                Err(e) => {
+                    res.status_code(StatusCode::BAD_REQUEST);
+                    res.render(Json(serde_json::json!({
+                        "error": "Invalid filter",
+                        "message": e.to_string()
+                    })));
+                    return Ok(());
+                }
+            };
+
+        let elapsed_time = start_time.elapsed();
+        record_latency(elapsed_time.as_secs_f64());
+
+        res.headers_mut().insert(
+            "X-Data-Source-Time",
+            HeaderValue::from_str(&elapsed_time.as_millis().to_string())
+                .unwrap_or_else(|_| HeaderValue::from_static("0")),
+        );
+        res.headers_mut().insert("X-Cache", HeaderValue::from_static("BYPASS"));
+
+        res.body(salvo::http::ResBody::Once(tile));
     }
 
-    res.headers_mut().insert(
-        "X-Data-Source-Time",
-        HeaderValue::from_str(&elapsed_time.as_millis().to_string())
-            .unwrap_or_else(|_| HeaderValue::from_static("0")),
-    );
-    res.headers_mut().insert(
-        "X-Cache",
-        match via {
-            Via::Database => HeaderValue::from_static("MISS"),
-            Via::Cache => HeaderValue::from_static("HIT"),
-        },
-    );
-
-    set_cache_headers(res, &etag, max_cache_age);
-    res.body(salvo::http::ResBody::Once(tile));
     Ok(())
 }
 
@@ -222,13 +264,31 @@ pub async fn get_composite_layers_tile(
     }
 
     // Use the most restrictive (smallest) max_cache_age across all layers.
-    // 0 means infinite on server but we treat non-zero as more restrictive.
     let min_cache_age = layer_configs
         .iter()
         .map(|l| l.max_cache_age.unwrap_or(0))
         .filter(|&v| v > 0)
         .min()
         .unwrap_or(0);
+
+    // Build version-based ETag from all layer versions combined.
+    let cache_wrapper = get_cache_wrapper();
+    let mut etag_input = format!("{z}:{x}:{y}");
+    for layer in &layer_configs {
+        let key = format!("{}_{}", layer.category.name, layer.name);
+        let version = cache_wrapper.get_layer_version(&key).await;
+        etag_input.push(':');
+        etag_input.push_str(&key);
+        etag_input.push(':');
+        etag_input.push_str(&version.to_string());
+    }
+    let etag = compute_etag(&etag_input);
+
+    if is_not_modified(req, &etag) {
+        set_cache_headers(res, &etag, min_cache_age);
+        res.status_code(StatusCode::NOT_MODIFIED);
+        return Ok(());
+    }
 
     let mut futures = Vec::new();
     for layer in layer_configs {
@@ -256,13 +316,6 @@ pub async fn get_composite_layers_tile(
     }
 
     let final_output = Bytes::from(output_data.concat());
-    let etag = compute_etag(&final_output);
-
-    if is_not_modified(req, &etag) {
-        set_cache_headers(res, &etag, min_cache_age);
-        res.status_code(StatusCode::NOT_MODIFIED);
-        return Ok(());
-    }
 
     res.headers_mut().insert(
         "X-Cache",
@@ -318,6 +371,25 @@ pub async fn get_category_layers_tile(
         .min()
         .unwrap_or(0);
 
+    // Build version-based ETag from all layer versions combined.
+    let cache_wrapper = get_cache_wrapper();
+    let mut etag_input = format!("{z}:{x}:{y}");
+    for layer in &layer_configs {
+        let key = format!("{}_{}", layer.category.name, layer.name);
+        let version = cache_wrapper.get_layer_version(&key).await;
+        etag_input.push(':');
+        etag_input.push_str(&key);
+        etag_input.push(':');
+        etag_input.push_str(&version.to_string());
+    }
+    let etag = compute_etag(&etag_input);
+
+    if is_not_modified(req, &etag) {
+        set_cache_headers(res, &etag, min_cache_age);
+        res.status_code(StatusCode::NOT_MODIFIED);
+        return Ok(());
+    }
+
     let mut futures = Vec::new();
     for layer in layer_configs {
         let pg_pool = match get_db_registry().get_pool(&layer.database_id) {
@@ -344,13 +416,6 @@ pub async fn get_category_layers_tile(
     }
 
     let final_output = Bytes::from(output_data.concat());
-    let etag = compute_etag(&final_output);
-
-    if is_not_modified(req, &etag) {
-        set_cache_headers(res, &etag, min_cache_age);
-        res.status_code(StatusCode::NOT_MODIFIED);
-        return Ok(());
-    }
 
     res.headers_mut().insert(
         "X-Cache",

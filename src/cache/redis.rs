@@ -24,7 +24,7 @@ impl RedisCache {
         for layer in catalog.layers.iter() {
             if layer.delete_cache_on_start.unwrap_or(false) {
                 let mut conn = self.pool.get().await?;
-                let key_pattern = format!("{}:*", layer.name);
+                let key_pattern = format!("{}_{}:*", layer.category.name, layer.name);
                 let keys: Vec<String> = conn.keys(key_pattern).await?;
 
                 if !keys.is_empty() {
@@ -76,5 +76,25 @@ impl RedisCache {
         }
 
         Ok(())
+    }
+
+    /// Returns the current version counter for a layer. Uses the prefix "ver:" to
+    /// avoid collisions with tile keys (which use "{layer_name}:z:x:y").
+    pub async fn get_layer_version(&self, layer_name: &str) -> u64 {
+        let Ok(mut conn) = self.pool.get().await else {
+            return 0;
+        };
+        let key = format!("ver:{layer_name}");
+        conn.get::<_, u64>(&key).await.unwrap_or(0)
+    }
+
+    /// Increments the version counter for a layer. Called whenever the layer's
+    /// tile cache is invalidated so that existing client ETags become stale.
+    pub async fn increment_layer_version(&self, layer_name: &str) {
+        let Ok(mut conn) = self.pool.get().await else {
+            return;
+        };
+        let key = format!("ver:{layer_name}");
+        let _: Result<u64, _> = conn.incr(&key, 1u64).await;
     }
 }

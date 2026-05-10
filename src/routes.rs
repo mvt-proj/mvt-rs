@@ -300,6 +300,23 @@ fn build_public_routes() -> Router {
 // MAIN ROUTER
 // ============================================================================
 
+/// Strips `Set-Cookie` from tile responses at the Service level, which runs
+/// its after-phase AFTER the router (including session_handler) has finished.
+/// This lets browsers cache tiles while keeping session auth intact for tiles
+/// that require group-based access control.
+#[handler]
+async fn strip_tile_cookie(
+    req: &mut Request,
+    depot: &mut Depot,
+    res: &mut Response,
+    ctrl: &mut FlowCtrl,
+) {
+    ctrl.call_next(req, depot, res).await;
+    if req.uri().path().starts_with("/services/tiles/") {
+        res.headers_mut().remove("set-cookie");
+    }
+}
+
 pub fn app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
     let cache_5s = build_cache_middleware(5);
     let cors_handler = build_cors_handler();
@@ -317,6 +334,7 @@ pub fn app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
         .push(Router::with_path("static/{**path}").get(serve_static));
 
     Service::new(router)
-        .hoop(cors_handler) // CORS global
+        .hoop(strip_tile_cookie) // outermost: after-phase runs after session_handler
+        .hoop(cors_handler)
         .catcher(Catcher::default().hoop(html::errors::handle_errors))
 }
