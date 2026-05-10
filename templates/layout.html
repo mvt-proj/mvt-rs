@@ -47,6 +47,7 @@
             <i class="fas fa-home sidebar-icon"></i>
             <span class="sidebar-label">{{ base.translate["home"] }}</span>
           </a>
+          {% if !self.base.is_admin %}
           <a class="sidebar-link" href="/catalog" data-sidebar-path="/catalog">
             <i class="fas fa-book sidebar-icon"></i>
             <span class="sidebar-label">{{ base.translate["catalog"] }}</span>
@@ -55,6 +56,7 @@
             <i class="fas fa-paint-brush sidebar-icon"></i>
             <span class="sidebar-label">{{ base.translate["styles"] }}</span>
           </a>
+          {% endif %}
           <a class="sidebar-link" href="/sprites" data-sidebar-path="/sprites">
             <i class="fas fa-th sidebar-icon"></i>
             <span class="sidebar-label">{{ base.translate["sprites"] }}</span>
