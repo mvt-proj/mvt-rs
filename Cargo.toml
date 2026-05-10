@@ -44,7 +44,7 @@ maplibre-legend = "0.4.4"
 
 tokio-stream = { version = "0.1", features = ["net"] }
 prometheus = "0.14"
-sysinfo = { version = "0.38", features = [] }
+sysinfo = { version = "0.39", features = [] }
 futures = "0.3"
 libc = "0.2"
 mime_guess = "2.0.5"
