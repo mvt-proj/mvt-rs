@@ -16,6 +16,45 @@ use crate::{
     monitor::record_latency,
 };
 
+/// FNV-1a 64-bit hash — deterministic, no external deps.
+fn compute_etag(data: &[u8]) -> String {
+    let mut hash: u64 = 14695981039346656037;
+    for byte in data {
+        hash ^= *byte as u64;
+        hash = hash.wrapping_mul(1099511628211);
+    }
+    format!("\"{hash:x}\"")
+}
+
+/// Cache-Control value based on the layer's max_cache_age.
+/// 0 (infinite server cache) → 24h client cache.
+/// >0 → map directly to max-age.
+fn cache_control(max_cache_age: u64) -> String {
+    if max_cache_age == 0 {
+        "public, max-age=86400".to_string()
+    } else {
+        format!("public, max-age={max_cache_age}")
+    }
+}
+
+/// Returns true if the client already has the current version (ETag match).
+fn is_not_modified(req: &Request, etag: &str) -> bool {
+    req.headers()
+        .get("if-none-match")
+        .and_then(|v| v.to_str().ok())
+        .map(|v| v == etag)
+        .unwrap_or(false)
+}
+
+fn set_cache_headers(res: &mut Response, etag: &str, max_cache_age: u64) {
+    if let Ok(v) = HeaderValue::from_str(etag) {
+        res.headers_mut().insert("ETag", v);
+    }
+    if let Ok(v) = HeaderValue::from_str(&cache_control(max_cache_age)) {
+        res.headers_mut().insert("Cache-Control", v);
+    }
+}
+
 #[handler]
 pub async fn get_single_layer_tile(
     req: &mut Request,
@@ -91,6 +130,7 @@ pub async fn get_single_layer_tile(
         return Ok(());
     }
 
+    let max_cache_age = layer.max_cache_age.unwrap_or(0);
     let start_time = Instant::now();
 
     let (tile, via) = match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await
@@ -107,26 +147,30 @@ pub async fn get_single_layer_tile(
     };
 
     let elapsed_time = start_time.elapsed();
-    let elapsed_secs = elapsed_time.as_secs_f64();
-    record_latency(elapsed_secs);
+    record_latency(elapsed_time.as_secs_f64());
 
-    let elapsed_time_str = format!("{}", elapsed_time.as_millis());
+    let etag = compute_etag(&tile);
+
+    if is_not_modified(req, &etag) {
+        set_cache_headers(res, &etag, max_cache_age);
+        res.status_code(StatusCode::NOT_MODIFIED);
+        return Ok(());
+    }
 
     res.headers_mut().insert(
         "X-Data-Source-Time",
-        HeaderValue::from_str(&elapsed_time_str).unwrap_or_else(|_| HeaderValue::from_static("0")),
+        HeaderValue::from_str(&elapsed_time.as_millis().to_string())
+            .unwrap_or_else(|_| HeaderValue::from_static("0")),
     );
-    match via {
-        Via::Database => {
-            res.headers_mut()
-                .insert("X-Cache", HeaderValue::from_static("MISS"));
-        }
-        Via::Cache => {
-            res.headers_mut()
-                .insert("X-Cache", HeaderValue::from_static("HIT Cached"));
-        }
-    }
+    res.headers_mut().insert(
+        "X-Cache",
+        match via {
+            Via::Database => HeaderValue::from_static("MISS"),
+            Via::Cache => HeaderValue::from_static("HIT"),
+        },
+    );
 
+    set_cache_headers(res, &etag, max_cache_age);
     res.body(salvo::http::ResBody::Once(tile));
     Ok(())
 }
@@ -177,21 +221,22 @@ pub async fn get_composite_layers_tile(
         }
     }
 
+    // Use the most restrictive (smallest) max_cache_age across all layers.
+    // 0 means infinite on server but we treat non-zero as more restrictive.
+    let min_cache_age = layer_configs
+        .iter()
+        .map(|l| l.max_cache_age.unwrap_or(0))
+        .filter(|&v| v > 0)
+        .min()
+        .unwrap_or(0);
+
     let mut futures = Vec::new();
     for layer in layer_configs {
         let pg_pool = match get_db_registry().get_pool(&layer.database_id) {
             Some(pool) => pool.clone(),
             None => continue,
         };
-        futures.push(get_tile(
-            pg_pool,
-            layer,
-            x,
-            y,
-            z,
-            String::new(),
-            Vec::new(),
-        ));
+        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new()));
     }
 
     let results = futures::future::join_all(futures).await;
@@ -210,15 +255,23 @@ pub async fn get_composite_layers_tile(
         }
     }
 
+    let final_output = Bytes::from(output_data.concat());
+    let etag = compute_etag(&final_output);
+
+    if is_not_modified(req, &etag) {
+        set_cache_headers(res, &etag, min_cache_age);
+        res.status_code(StatusCode::NOT_MODIFIED);
+        return Ok(());
+    }
+
     res.headers_mut().insert(
         "X-Cache",
         HeaderValue::from_str(&format!("HIT: {cache_hits}, MISS: {cache_misses}"))
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
 
-    let final_output = Bytes::from(output_data.concat());
+    set_cache_headers(res, &etag, min_cache_age);
     res.body(salvo::http::ResBody::Once(final_output));
-
     Ok(())
 }
 
@@ -258,21 +311,20 @@ pub async fn get_category_layers_tile(
         }
     }
 
+    let min_cache_age = layer_configs
+        .iter()
+        .map(|l| l.max_cache_age.unwrap_or(0))
+        .filter(|&v| v > 0)
+        .min()
+        .unwrap_or(0);
+
     let mut futures = Vec::new();
     for layer in layer_configs {
         let pg_pool = match get_db_registry().get_pool(&layer.database_id) {
             Some(pool) => pool.clone(),
             None => continue,
         };
-        futures.push(get_tile(
-            pg_pool,
-            layer,
-            x,
-            y,
-            z,
-            String::new(),
-            Vec::new(),
-        ));
+        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new()));
     }
 
     let results = futures::future::join_all(futures).await;
@@ -291,14 +343,22 @@ pub async fn get_category_layers_tile(
         }
     }
 
+    let final_output = Bytes::from(output_data.concat());
+    let etag = compute_etag(&final_output);
+
+    if is_not_modified(req, &etag) {
+        set_cache_headers(res, &etag, min_cache_age);
+        res.status_code(StatusCode::NOT_MODIFIED);
+        return Ok(());
+    }
+
     res.headers_mut().insert(
         "X-Cache",
         HeaderValue::from_str(&format!("HIT: {cache_hits}, MISS: {cache_misses}"))
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
 
-    let final_output = Bytes::from(output_data.concat());
+    set_cache_headers(res, &etag, min_cache_age);
     res.body(salvo::http::ResBody::Once(final_output));
-
     Ok(())
 }
