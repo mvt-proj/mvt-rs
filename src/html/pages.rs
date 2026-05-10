@@ -1,5 +1,4 @@
 use super::utils::{BaseTemplateData, make_base};
-use crate::VERSION;
 use crate::error::AppResult;
 use askama::Template;
 use salvo::prelude::*;
@@ -8,7 +7,6 @@ use salvo::prelude::*;
 #[template(path = "index.html")]
 struct IndexTemplate {
     base: BaseTemplateData,
-    version: String,
 }
 
 #[derive(Template)]
@@ -26,10 +24,7 @@ struct ChangePasswordTemplate {
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (base, _) = make_base(depot).await;
-    let template = IndexTemplate {
-        base,
-        version: VERSION.to_string(),
-    };
+    let template = IndexTemplate { base };
     res.render(Text::Html(template.render()?));
     Ok(())
 }

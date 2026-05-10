@@ -7,6 +7,7 @@ pub struct BaseTemplateData {
     pub is_auth: bool,
     pub is_admin: bool,
     pub translate: HashMap<String, String>,
+    pub version: &'static str,
 }
 
 pub async fn is_authenticated(depot: &mut Depot) -> bool {
@@ -48,5 +49,5 @@ pub async fn make_base(depot: &mut Depot) -> (BaseTemplateData, Option<User>) {
         .get::<HashMap<String, String>>("translate")
         .cloned()
         .unwrap_or_default();
-    (BaseTemplateData { is_auth, is_admin, translate }, user)
+    (BaseTemplateData { is_auth, is_admin, translate, version: env!("CARGO_PKG_VERSION") }, user)
 }

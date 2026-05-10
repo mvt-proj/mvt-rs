@@ -125,8 +125,13 @@
       </main>
     </div>
 
-    <footer class="p-4 bg-zinc-800 text-white text-center shrink-0">
-      <p>&copy; 2025 MVT Server</p>
+    <footer class="p-4 bg-zinc-800 text-white text-center shrink-0 text-sm text-zinc-400">
+      <p>
+        &copy; <span id="footer-year"></span> MVT Server &mdash; v{{ base.version }}
+        &nbsp;&bull;&nbsp;
+        <a href="https://github.com/mvt-proj/mvt-rs" target="_blank" class="hover:text-white transition-colors">GitHub</a>
+      </p>
+      <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
     </footer>
 
     <script src="/static/js/mvt.js"></script>
