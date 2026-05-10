@@ -83,7 +83,7 @@
 }
 
 .sidebar.collapsed .sidebar-link {
-  @apply justify-center;
+  @apply justify-center gap-0;
   padding-left: 0;
   padding-right: 0;
 }
