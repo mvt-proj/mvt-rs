@@ -223,7 +223,7 @@ pub async fn validate_user_groups(
         .unwrap_or("");
 
     let mut has_common_group = false;
-    let mut auth = get_auth().await.write().await;
+    let auth = get_auth().await.read().await;
 
     if authorization.starts_with("Bearer ") {
         let token = authorization.trim_start_matches("Bearer ").trim();

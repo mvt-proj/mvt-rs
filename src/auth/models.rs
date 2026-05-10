@@ -190,7 +190,7 @@ impl Auth {
         Ok(true)
     }
 
-    pub fn validate_user(&mut self, username: &str, psw: &str) -> bool {
+    pub fn validate_user(&self, username: &str, psw: &str) -> bool {
         for user in self.users.clone().into_iter() {
             if username == user.username {
                 // Manejar el error de validación de password correctamente
@@ -207,7 +207,7 @@ impl Auth {
         false
     }
 
-    pub fn get_user_by_authorization(&mut self, authorization: &str) -> AppResult<Option<&User>> {
+    pub fn get_user_by_authorization(&self, authorization: &str) -> AppResult<Option<&User>> {
         let user = self.get_current_username_and_password(authorization)?;
         if self.validate_user(&user.0, &user.1) {
             return Ok(self.find_user_by_name(&user.0));
