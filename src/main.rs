@@ -19,6 +19,7 @@ mod html;
 mod i18n;
 mod models;
 mod monitor;
+mod plugins;
 mod routes;
 mod services;
 
@@ -59,6 +60,12 @@ static CACHE_WRAPPER: OnceLock<CacheWrapper> = OnceLock::new();
 #[inline]
 pub fn get_cache_wrapper() -> &'static CacheWrapper {
     CACHE_WRAPPER.get().unwrap()
+}
+
+static PLUGIN_REGISTRY: OnceLock<plugins::LuaPluginRegistry> = OnceLock::new();
+#[inline]
+pub fn get_plugin_registry() -> &'static plugins::LuaPluginRegistry {
+    PLUGIN_REGISTRY.get().unwrap()
 }
 
 static CATALOG: OnceCell<RwLock<Catalog>> = OnceCell::const_new();
@@ -176,6 +183,8 @@ async fn main() -> AppResult<()> {
     )
     .await?;
 
+    let plugin_registry = plugins::LuaPluginRegistry::new(&settings.paths.plugins);
+
     DB_REGISTRY.set(db_registry).unwrap();
     SQLITE_CONF.set(cf_pool).unwrap();
     MAP_ASSETS_DIR
@@ -183,6 +192,7 @@ async fn main() -> AppResult<()> {
         .unwrap();
     JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
     CACHE_WRAPPER.set(cache_wrapper).unwrap();
+    PLUGIN_REGISTRY.set(plugin_registry).unwrap();
     CATALOG.set(RwLock::new(catalog)).unwrap();
     CATEGORIES.set(RwLock::new(categories)).unwrap();
     AUTH.set(RwLock::new(auth)).unwrap();

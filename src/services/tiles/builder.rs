@@ -7,8 +7,10 @@ use crate::{
     config::consts::*,
     error::AppResult,
     get_cache_wrapper,
+    get_plugin_registry,
     models::catalog::Layer,
     monitor::{record_cache_hit, record_cache_miss, record_request},
+    plugins::PluginContext,
 };
 
 pub enum Via {
@@ -165,7 +167,12 @@ pub async fn get_tile(
 
     record_request();
 
-    if local_where_clause.is_empty()
+    // Layers with an active Lua plugin bypass server cache: the plugin may
+    // produce different filters depending on context (future: user, time, etc.)
+    let category = &layer_conf.category.name;
+    let has_plugin = get_plugin_registry().has_plugin(name, category);
+
+    if local_where_clause.is_empty() && !has_plugin
         && let Some(tile) = cache_wrapper.get_tile(name, z, x, y, max_cache_age).await
     {
         record_cache_hit();
@@ -181,6 +188,25 @@ pub async fn get_tile(
         local_where_clause.push_str(&query);
     }
 
+    // --- Lua plugin: filter hook ---
+    let ctx = PluginContext {
+        layer: layer_conf.name.clone(),
+        category: category.clone(),
+        z,
+        x,
+        y,
+    };
+    if let Some(lua_filter) = get_plugin_registry().call_filter(name, category, &ctx).await {
+        if !lua_filter.is_empty() {
+            validate_filter(&lua_filter)?;
+            if !local_where_clause.is_empty() {
+                local_where_clause.push_str(" AND ");
+            }
+            local_where_clause.push_str(&lua_filter);
+        }
+    }
+    // --- end Lua plugin ---
+
     let tile: Bytes = query_database(
         pg_pool.clone(),
         layer_conf.clone(),
@@ -192,7 +218,7 @@ pub async fn get_tile(
     )
     .await?;
 
-    if original_local_where_clause_is_empty {
+    if original_local_where_clause_is_empty && !has_plugin {
         cache_wrapper
             .write_tile(name, z, x, y, &tile, max_cache_age)
             .await?;

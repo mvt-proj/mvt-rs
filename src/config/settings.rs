@@ -47,14 +47,16 @@ pub struct SecurityConfig {
 
 #[derive(Debug, Deserialize, Default)]
 pub struct PathConfig {
-    #[serde(default = "default_config_path")] pub config: String,
-    #[serde(default = "default_cache_path")]  pub cache: String,
-    #[serde(default = "default_assets_path")] pub assets: String,
+    #[serde(default = "default_config_path")]  pub config: String,
+    #[serde(default = "default_cache_path")]   pub cache: String,
+    #[serde(default = "default_assets_path")]  pub assets: String,
+    #[serde(default = "default_plugins_path")] pub plugins: String,
 }
 
 fn default_config_path() -> String { "config".to_string() }
 fn default_cache_path() -> String { "cache".to_string() }
 fn default_assets_path() -> String { "map_assets".to_string() }
+fn default_plugins_path() -> String { "plugins".to_string() }
 
 #[derive(Debug, Deserialize, Default)]
 pub struct Settings {
@@ -81,6 +83,7 @@ impl Settings {
             .set_default("paths.config", "config")?
             .set_default("paths.cache", "cache")?
             .set_default("paths.assets", "map_assets")?
+            .set_default("paths.plugins", "plugins")?
             .add_source(
                 config::File::new(&config_path, config::FileFormat::Yaml).required(false),
             )

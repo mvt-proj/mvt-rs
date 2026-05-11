@@ -49,6 +49,7 @@ futures = "0.3"
 libc = "0.2"
 mime_guess = "2.0.5"
 clap = { version = "4.6", features = ["derive"] }
+mlua = { version = "0.10", features = ["lua54", "vendored", "send"] }
 
 [[test]]
 name = "integration"
