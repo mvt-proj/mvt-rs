@@ -180,6 +180,7 @@ mod tests {
                 config: "config".to_string(),
                 cache: "cache".to_string(),
                 assets: "map_assets".to_string(),
+                plugins: "plugins".to_string(),
             },
         }
     }

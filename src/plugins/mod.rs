@@ -164,4 +164,232 @@ impl LuaPluginRegistry {
             }
         }
     }
+
+    /// Builds a registry directly from a map of key → script source.
+    /// Only used in tests to avoid filesystem dependency.
+    #[cfg(test)]
+    fn from_scripts(scripts: &[(&str, &str)]) -> Self {
+        let mut plugins = HashMap::new();
+        for (key, script) in scripts {
+            match Self::load_plugin(key, script) {
+                Ok(lua) => {
+                    plugins.insert(key.to_string(), Mutex::new(lua));
+                }
+                Err(e) => panic!("Test plugin '{}' failed to load: {}", key, e),
+            }
+        }
+        Self { plugins }
+    }
+}
+
+// ============================================================================
+// TESTS
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn ctx(layer: &str, category: &str, z: u32) -> PluginContext {
+        PluginContext {
+            layer: layer.to_string(),
+            category: category.to_string(),
+            z,
+            x: 0,
+            y: 0,
+        }
+    }
+
+    // --- has_plugin ----------------------------------------------------------
+
+    #[test]
+    fn has_plugin_returns_false_when_no_plugin_exists() {
+        let registry = LuaPluginRegistry::from_scripts(&[]);
+        assert!(!registry.has_plugin("mycat_mylayer", "mycat"));
+    }
+
+    #[test]
+    fn has_plugin_returns_true_for_layer_plugin() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return '' end",
+        )]);
+        assert!(registry.has_plugin("mycat_mylayer", "mycat"));
+    }
+
+    #[test]
+    fn has_plugin_returns_true_for_category_plugin() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat",
+            "function filter(ctx) return '' end",
+        )]);
+        assert!(registry.has_plugin("mycat_mylayer", "mycat"));
+    }
+
+    // --- call_filter: no plugin ----------------------------------------------
+
+    #[tokio::test]
+    async fn call_filter_returns_none_when_no_plugin() {
+        let registry = LuaPluginRegistry::from_scripts(&[]);
+        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        assert!(result.is_none());
+    }
+
+    // --- call_filter: layer plugin only --------------------------------------
+
+    #[tokio::test]
+    async fn layer_plugin_returns_empty_string() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return '' end",
+        )]);
+        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        assert_eq!(result, Some(String::new()));
+    }
+
+    #[tokio::test]
+    async fn layer_plugin_returns_where_clause() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return \"population > 1000\" end",
+        )]);
+        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        assert_eq!(result, Some("population > 1000".to_string()));
+    }
+
+    #[tokio::test]
+    async fn layer_plugin_uses_zoom_in_logic() {
+        let script = r#"
+            function filter(ctx)
+                if ctx.z < 10 then
+                    return "area > 5000"
+                end
+                return ""
+            end
+        "#;
+        let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
+
+        let low_zoom = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 8)).await;
+        assert_eq!(low_zoom, Some("area > 5000".to_string()));
+
+        let high_zoom = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 14)).await;
+        assert_eq!(high_zoom, Some(String::new()));
+    }
+
+    #[tokio::test]
+    async fn layer_plugin_receives_correct_context_fields() {
+        let script = r#"
+            function filter(ctx)
+                return ctx.category .. "_" .. ctx.layer .. "_" .. ctx.z
+            end
+        "#;
+        let registry = LuaPluginRegistry::from_scripts(&[("pub_roads", script)]);
+        let result = registry.call_filter("pub_roads", "pub", &ctx("roads", "pub", 12)).await;
+        assert_eq!(result, Some("pub_roads_12".to_string()));
+    }
+
+    // --- call_filter: category plugin only -----------------------------------
+
+    #[tokio::test]
+    async fn category_plugin_applies_to_any_layer_in_category() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat",
+            "function filter(ctx) return \"active = true\" end",
+        )]);
+
+        let r1 = registry.call_filter("mycat_layer1", "mycat", &ctx("layer1", "mycat", 10)).await;
+        let r2 = registry.call_filter("mycat_layer2", "mycat", &ctx("layer2", "mycat", 10)).await;
+
+        assert_eq!(r1, Some("active = true".to_string()));
+        assert_eq!(r2, Some("active = true".to_string()));
+    }
+
+    #[tokio::test]
+    async fn category_plugin_does_not_apply_to_other_category() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat",
+            "function filter(ctx) return \"active = true\" end",
+        )]);
+        let result = registry.call_filter("othercat_layer", "othercat", &ctx("layer", "othercat", 10)).await;
+        assert!(result.is_none());
+    }
+
+    // --- call_filter: both plugins -------------------------------------------
+
+    #[tokio::test]
+    async fn category_and_layer_clauses_are_combined_with_and() {
+        let registry = LuaPluginRegistry::from_scripts(&[
+            ("mycat",        "function filter(ctx) return \"active = true\" end"),
+            ("mycat_roads",  "function filter(ctx) return \"type = 'primary'\" end"),
+        ]);
+        let result = registry.call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10)).await;
+        assert_eq!(result, Some("active = true AND type = 'primary'".to_string()));
+    }
+
+    #[tokio::test]
+    async fn combined_result_skips_empty_clauses() {
+        let registry = LuaPluginRegistry::from_scripts(&[
+            ("mycat",       "function filter(ctx) return \"\" end"),
+            ("mycat_roads", "function filter(ctx) return \"type = 'primary'\" end"),
+        ]);
+        let result = registry.call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10)).await;
+        // category returns "", layer returns clause → only the clause, no leading AND
+        assert_eq!(result, Some("type = 'primary'".to_string()));
+    }
+
+    #[tokio::test]
+    async fn both_plugins_return_empty_gives_some_empty_string() {
+        // Some("") != None: plugin exists (cache bypass) but no WHERE added
+        let registry = LuaPluginRegistry::from_scripts(&[
+            ("mycat",       "function filter(ctx) return \"\" end"),
+            ("mycat_roads", "function filter(ctx) return \"\" end"),
+        ]);
+        let result = registry.call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10)).await;
+        assert_eq!(result, Some(String::new()));
+    }
+
+    // --- time / blocking filter ----------------------------------------------
+
+    #[tokio::test]
+    async fn filter_can_return_always_false_condition() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return \"1=0\" end",
+        )]);
+        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        assert_eq!(result, Some("1=0".to_string()));
+    }
+
+    // --- error handling ------------------------------------------------------
+
+    #[test]
+    fn invalid_lua_syntax_is_rejected_at_load() {
+        let result = LuaPluginRegistry::load_plugin("bad", "this is not lua @@@@");
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn runtime_error_in_filter_returns_none_for_that_plugin() {
+        // Script loads fine but filter() raises a runtime error
+        let script = r#"
+            function filter(ctx)
+                error("something went wrong")
+            end
+        "#;
+        let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
+        // Runtime error → None (logged as warning, does not crash the request)
+        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn missing_filter_function_returns_none() {
+        // Script loads but defines no filter() function
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "-- no filter function defined",
+        )]);
+        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        assert!(result.is_none());
+    }
 }
