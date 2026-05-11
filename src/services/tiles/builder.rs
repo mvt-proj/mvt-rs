@@ -155,6 +155,8 @@ pub async fn get_tile(
     z: u32,
     where_clause: String,
     bindings: Vec<String>,
+    user: Option<String>,
+    groups: Option<Vec<String>>,
 ) -> AppResult<(Bytes, Via)> {
     let name_owned = format!("{}_{}", layer_conf.category.name, layer_conf.name);
     let name = &name_owned;
@@ -195,6 +197,8 @@ pub async fn get_tile(
         z,
         x,
         y,
+        user,
+        groups,
     };
     if let Some(lua_filter) = get_plugin_registry().call_filter(name, category, &ctx).await {
         if !lua_filter.is_empty() {

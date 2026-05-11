@@ -6,7 +6,7 @@ use std::time::Instant;
 use tracing::warn;
 
 use super::builder::{Via, get_tile};
-use crate::services::utils::validate_user_groups;
+use crate::services::utils::{get_request_user, validate_user_groups};
 use crate::{
     error::{AppError, AppResult},
     filters,
@@ -111,6 +111,8 @@ pub async fn get_single_layer_tile(
             AppError::DatabaseError("Pool not found".to_string())
         })?;
 
+    let (req_user, req_groups) = get_request_user(req, depot).await;
+
     if !validate_user_groups(req, &layer, depot).await? {
         warn!(category = %category, name = %name, "User not authorized for layer");
         res.status_code(StatusCode::FORBIDDEN);
@@ -154,7 +156,7 @@ pub async fn get_single_layer_tile(
         let start_time = Instant::now();
 
         let (tile, via) =
-            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await {
+            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings, req_user.clone(), req_groups.clone()).await {
                 Ok(result) => result,
                 Err(e) => {
                     res.status_code(StatusCode::BAD_REQUEST);
@@ -189,7 +191,7 @@ pub async fn get_single_layer_tile(
         let start_time = Instant::now();
 
         let (tile, _) =
-            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings).await {
+            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings, req_user, req_groups).await {
                 Ok(result) => result,
                 Err(e) => {
                     res.status_code(StatusCode::BAD_REQUEST);
@@ -238,6 +240,8 @@ pub async fn get_composite_layers_tile(
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
+
+    let (req_user, req_groups) = get_request_user(req, depot).await;
 
     let candidates: Vec<_> = {
         let catalog = get_catalog().await.read().await;
@@ -296,7 +300,7 @@ pub async fn get_composite_layers_tile(
             Some(pool) => pool.clone(),
             None => continue,
         };
-        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new()));
+        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new(), req_user.clone(), req_groups.clone()));
     }
 
     let results = futures::future::join_all(futures).await;
@@ -343,6 +347,8 @@ pub async fn get_category_layers_tile(
     let x = req.param::<u32>("x").unwrap_or(0);
     let y = req.param::<u32>("y").unwrap_or(0);
     let z = req.param::<u32>("z").unwrap_or(0);
+
+    let (req_user, req_groups) = get_request_user(req, depot).await;
 
     let candidates: Vec<_> = {
         let catalog = get_catalog().await.read().await;
@@ -396,7 +402,7 @@ pub async fn get_category_layers_tile(
             Some(pool) => pool.clone(),
             None => continue,
         };
-        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new()));
+        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new(), req_user.clone(), req_groups.clone()));
     }
 
     let results = futures::future::join_all(futures).await;

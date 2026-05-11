@@ -14,6 +14,7 @@ See [docs/plugins.md](../docs/plugins.md) for the full plugin system documentati
 | `maintenance_blackout.lua` | category or layer | Block all access during a scheduled maintenance window |
 | `status_filter.lua` | layer | Show only features with certain status values |
 | `category_audit_log.lua` | category | Log every tile request without modifying query results |
+| `user_access.lua` | category or layer | Block anonymous users; restrict non-privileged users to public features |
 
 ## Quick start
 

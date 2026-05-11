@@ -54,11 +54,13 @@ Every plugin must define a global `filter(ctx)` function:
 ```lua
 function filter(ctx)
     -- ctx fields:
-    --   ctx.layer     string   layer name
-    --   ctx.category  string   category name
-    --   ctx.z         integer  zoom level (0–22)
-    --   ctx.x         integer  tile column
-    --   ctx.y         integer  tile row
+    --   ctx.layer     string           layer name
+    --   ctx.category  string           category name
+    --   ctx.z         integer          zoom level (0–22)
+    --   ctx.x         integer          tile column
+    --   ctx.y         integer          tile row
+    --   ctx.user      string | nil     authenticated username, or nil if anonymous
+    --   ctx.groups    table<string>    list of group names the user belongs to (empty table if anonymous)
 
     -- Return a SQL WHERE clause fragment (no leading "AND"), or "" for no filter.
     return "population > 1000"
@@ -86,6 +88,65 @@ log(string.format("[my_plugin] zoom=%d", ctx.z))
 ```
 
 Log output appears under the `mvt_server::plugins` tracing target. It is visible when the server runs with the default `mvt_server=info` filter.
+
+## Access control with `ctx.user` and `ctx.groups`
+
+`ctx.user` contains the authenticated username (string), or `nil` for anonymous requests.  
+`ctx.groups` is always a Lua table (array of strings). It is empty for anonymous requests or users with no groups.
+
+### Block anonymous requests
+
+```lua
+function filter(ctx)
+    if ctx.user == nil then
+        return "1=0"   -- return an empty tile for anonymous users
+    end
+    return ""
+end
+```
+
+### Restrict by group membership
+
+```lua
+function filter(ctx)
+    for _, g in ipairs(ctx.groups) do
+        if g == "premium" then
+            return ""   -- premium users see everything
+        end
+    end
+    return "public = true"   -- others only see public features
+end
+```
+
+### Combine user/group with zoom or other conditions
+
+```lua
+function filter(ctx)
+    -- Admins always get the full dataset
+    for _, g in ipairs(ctx.groups) do
+        if g == "admin" then return "" end
+    end
+
+    -- Anonymous users get coarse zoom only
+    if ctx.user == nil then
+        if ctx.z < 12 then return "" end
+        return "1=0"
+    end
+
+    return ""
+end
+```
+
+### Authentication methods
+
+`ctx.user` and `ctx.groups` are populated from whichever auth method the client uses:
+
+| Client auth | `ctx.user` populated? |
+|---|---|
+| Bearer JWT token | Yes |
+| HTTP Basic auth | Yes |
+| Session cookie (admin panel) | Yes |
+| No credentials | No (`nil`) |
 
 ## Filter combination
 

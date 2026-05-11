@@ -11,6 +11,8 @@ pub struct PluginContext {
     pub z: u32,
     pub x: u32,
     pub y: u32,
+    pub user: Option<String>,
+    pub groups: Option<Vec<String>>,
 }
 
 /// Holds one Lua VM per plugin file.
@@ -153,6 +155,12 @@ impl LuaPluginRegistry {
             lua_ctx.set("z", ctx.z)?;
             lua_ctx.set("x", ctx.x)?;
             lua_ctx.set("y", ctx.y)?;
+            lua_ctx.set("user", ctx.user.as_deref())?;
+            let lua_groups = lua.create_table()?;
+            for (i, g) in ctx.groups.iter().flatten().enumerate() {
+                lua_groups.set(i + 1, g.as_str())?;
+            }
+            lua_ctx.set("groups", lua_groups)?;
             filter_fn.call(lua_ctx)
         })();
 
@@ -197,6 +205,8 @@ mod tests {
             z,
             x: 0,
             y: 0,
+            user: None,
+            groups: None,
         }
     }
 
@@ -391,5 +401,89 @@ mod tests {
         )]);
         let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
         assert!(result.is_none());
+    }
+
+    // --- ctx.user / ctx.groups -----------------------------------------------
+
+    fn ctx_with_user(layer: &str, category: &str, user: &str, groups: &[&str]) -> PluginContext {
+        PluginContext {
+            layer: layer.to_string(),
+            category: category.to_string(),
+            z: 10,
+            x: 0,
+            y: 0,
+            user: Some(user.to_string()),
+            groups: Some(groups.iter().map(|s| s.to_string()).collect()),
+        }
+    }
+
+    #[tokio::test]
+    async fn filter_receives_user_as_string() {
+        let script = r#"
+            function filter(ctx)
+                return ctx.user
+            end
+        "#;
+        let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx_with_user("mylayer", "mycat", "alice", &[]))
+            .await;
+        assert_eq!(result, Some("alice".to_string()));
+    }
+
+    #[tokio::test]
+    async fn filter_receives_nil_user_when_unauthenticated() {
+        let script = r#"
+            function filter(ctx)
+                if ctx.user == nil then
+                    return "1=0"
+                end
+                return ""
+            end
+        "#;
+        let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
+        assert_eq!(result, Some("1=0".to_string()));
+    }
+
+    #[tokio::test]
+    async fn filter_receives_groups_as_table() {
+        let script = r#"
+            function filter(ctx)
+                for _, g in ipairs(ctx.groups) do
+                    if g == "premium" then
+                        return ""
+                    end
+                end
+                return "public = true"
+            end
+        "#;
+        let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
+
+        let premium = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx_with_user("mylayer", "mycat", "alice", &["viewer", "premium"]))
+            .await;
+        assert_eq!(premium, Some(String::new()));
+
+        let regular = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx_with_user("mylayer", "mycat", "bob", &["viewer"]))
+            .await;
+        assert_eq!(regular, Some("public = true".to_string()));
+    }
+
+    #[tokio::test]
+    async fn filter_receives_empty_groups_table_when_unauthenticated() {
+        let script = r#"
+            function filter(ctx)
+                return tostring(#ctx.groups)
+            end
+        "#;
+        let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
+        assert_eq!(result, Some("0".to_string()));
     }
 }

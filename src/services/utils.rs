@@ -204,6 +204,48 @@ pub fn validate_filter(filter: &str) -> AppResult<()> {
     Ok(())
 }
 
+/// Extracts the authenticated user's username and group names from the request.
+/// Returns (None, None) when the request is unauthenticated.
+pub async fn get_request_user(
+    req: &Request,
+    depot: &mut salvo::Depot,
+) -> (Option<String>, Option<Vec<String>>) {
+    let authorization = req
+        .headers()
+        .get("authorization")
+        .and_then(|ah| ah.to_str().ok())
+        .unwrap_or("");
+
+    if authorization.starts_with("Bearer ") {
+        let token = authorization.trim_start_matches("Bearer ").trim();
+        let jwt_secret = get_jwt_secret();
+        if let Ok(data) = jsonwebtoken::decode::<JwtClaims>(
+            token,
+            &jsonwebtoken::DecodingKey::from_secret(jwt_secret.as_bytes()),
+            &jsonwebtoken::Validation::default(),
+        ) {
+            let auth = get_auth().await.read().await;
+            if let Some(user) = auth.get_user_by_id(&data.claims.id) {
+                return (Some(user.username.clone()), Some(user.groups_as_vec_string()));
+            }
+        }
+    } else if !authorization.is_empty() {
+        let auth = get_auth().await.read().await;
+        if let Ok(Some(user)) = auth.get_user_by_authorization(authorization) {
+            return (Some(user.username.clone()), Some(user.groups_as_vec_string()));
+        }
+    }
+
+    let (is_auth, user) = get_session_data(depot).await;
+    if is_auth {
+        if let Some(user) = user {
+            return (Some(user.username.clone()), Some(user.groups_as_vec_string()));
+        }
+    }
+
+    (None, None)
+}
+
 pub async fn validate_user_groups(
     req: &Request,
     layer: &Layer,
