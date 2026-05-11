@@ -30,8 +30,10 @@ feature-3 = Access Control
 feature-3-desc = Manage users and groups with JWT authentication and per-layer permissions.
 feature-4 = Multi-Database
 feature-4-desc = Connect multiple PostGIS databases simultaneously and serve layers from each independently.
-feature-5 = Metadata (coming soon)
-feature-5-desc = ISO 19115 compliant metadata server for spatial data documentation.
+feature-5 = Lua Plugins
+feature-5-desc = Inject custom SQL filters at runtime via Lua scripts — per-layer or per-category, with access to user, groups, and zoom level.
+feature-6 = Metadata (coming soon)
+feature-6-desc = ISO 19115 compliant metadata server for spatial data documentation.
 
 catalog-of-layers = Catalog of published layers
 list-of-styles = List of Styles

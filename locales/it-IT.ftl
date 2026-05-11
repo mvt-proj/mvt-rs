@@ -30,8 +30,10 @@ feature-3 = Controllo Accessi
 feature-3-desc = Gestisci utenti e gruppi con autenticazione JWT e permessi per layer.
 feature-4 = Multi-Database
 feature-4-desc = Connetti più database PostGIS contemporaneamente e servi layer da ciascuno in modo indipendente.
-feature-5 = Metadati (prossimamente)
-feature-5-desc = Server di metadati conforme a ISO 19115 per la documentazione dei dati spaziali.
+feature-5 = Plugin Lua
+feature-5-desc = Inietta filtri SQL personalizzati a runtime tramite script Lua — per layer o per categoria, con accesso a utente, gruppi e livello di zoom.
+feature-6 = Metadati (prossimamente)
+feature-6-desc = Server di metadati conforme a ISO 19115 per la documentazione dei dati spaziali.
 
 catalog-of-layers = Catalogo dei layer pubblicati
 list-of-styles = Elenco degli Stili
