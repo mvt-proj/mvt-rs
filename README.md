@@ -22,6 +22,7 @@ This is a simple and high-speed vector tile server developed in Rust, using the 
 - Built-in glyph and sprite server for custom styles.
 - Layer access control via Basic Authentication or JWT.
 - Monitoring and Metrics with Prometheus support.
+- Extensible via Lua plugins: add custom filter logic per layer or category without recompiling.
 
 ## Performance Tips
 
