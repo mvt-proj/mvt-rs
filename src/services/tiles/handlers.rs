@@ -33,7 +33,7 @@ fn compute_etag(input: &str) -> String {
 /// >0 → map directly to max-age.
 fn cache_control(max_cache_age: u64) -> String {
     if max_cache_age == 0 {
-        "public, max-age=86400".to_string()
+        "public, max-age=3600".to_string()
     } else {
         format!("public, max-age={max_cache_age}")
     }
