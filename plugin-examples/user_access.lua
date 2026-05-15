@@ -1,16 +1,20 @@
--- user_access.lua
--- Applies to: any layer or category
+-- @name User access control
+-- @description Restricts tile access by authentication and group membership. Anonymous users receive empty tiles; privileged groups get the full dataset; other authenticated users see only public features.
+-- @author MVT-Server examples
+-- @version 1.0
 --
--- Demonstrates access control based on the authenticated user and their groups.
--- Rename to {category}.lua or {category}_{layer}.lua as needed.
+-- Naming convention: {category}.lua or {category}_{layer}.lua
+-- Rename to match your actual category / layer names.
+--
+-- Parameters to adjust:
+--   PRIVILEGED_GROUPS  list of group names that bypass all filters
+--   The "public" column must exist in your table; rename if needed.
 --
 -- Access tiers:
---   admin   → full dataset, no filter
---   premium → full dataset, no filter
---   (any authenticated user) → only public features
---   anonymous → empty tile
+--   admin / premium → full dataset, no filter
+--   (any authenticated user) → only features where public = true
+--   anonymous → empty tile (1=0)
 
--- Group names that bypass all filters
 local PRIVILEGED_GROUPS = { "admin", "premium" }
 
 local function has_group(groups, target)
@@ -21,18 +25,15 @@ local function has_group(groups, target)
 end
 
 function filter(ctx)
-    -- Block anonymous requests entirely
     if ctx.user == nil then
         return "1=0"
     end
 
-    -- Privileged groups get the full dataset
     for _, g in ipairs(PRIVILEGED_GROUPS) do
         if has_group(ctx.groups, g) then
             return ""
         end
     end
 
-    -- Authenticated users without a privileged group see only public features
     return "public = true"
 end

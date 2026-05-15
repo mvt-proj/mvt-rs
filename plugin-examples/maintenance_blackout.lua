@@ -1,21 +1,21 @@
--- maintenance_blackout.lua
+-- @name Maintenance blackout
+-- @description Blocks all tile access during a scheduled maintenance window. Returns empty tiles during the window; serves normally otherwise. Activate by setting MAINT_ACTIVE = true and reloading the plugin.
+-- @author MVT-Server examples
+-- @version 1.0
 --
 -- Naming convention: {category}.lua or {category}_{layer}.lua
 -- Rename to match your actual category / layer names.
 --
--- Purpose: Block all tile access during a scheduled maintenance window.
--- Returns empty tiles (1=0) during the window; serves normally otherwise.
---
--- To activate a maintenance window, edit the MAINT_* constants below
--- and restart the server.  Set MAINT_ACTIVE = false to disable.
---
--- Times are in server local time. For UTC, replace os.date with os.date("!...")
+-- Parameters to adjust:
+--   MAINT_ACTIVE      set to true to enable the blackout
+--   MAINT_START_HOUR  start of the window, inclusive (0–23)
+--   MAINT_END_HOUR    end of the window, exclusive (0–23)
+--   Time zone: os.date() uses server local time.
+--              Use os.date("!%H") for UTC.
 
--- ── Configuration ────────────────────────────────────────────────────────────
-local MAINT_ACTIVE     = false   -- set to true during maintenance
-local MAINT_START_HOUR = 2       -- start of window (inclusive), 0–23
-local MAINT_END_HOUR   = 4       -- end of window (exclusive), 0–23
--- ─────────────────────────────────────────────────────────────────────────────
+local MAINT_ACTIVE     = false
+local MAINT_START_HOUR = 2     -- 02:00 inclusive
+local MAINT_END_HOUR   = 4     -- 04:00 exclusive
 
 function filter(ctx)
     if not MAINT_ACTIVE then
