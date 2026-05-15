@@ -13,6 +13,7 @@ use crate::{
     get_cache_wrapper,
     get_catalog,
     get_db_registry,
+    get_plugin_registry,
     models::catalog::StateLayer,
     monitor::record_latency,
 };
@@ -138,10 +139,11 @@ pub async fn get_single_layer_tile(
 
     let max_cache_age = layer.max_cache_age.unwrap_or(0);
     let layer_key = format!("{}_{}", layer.category.name, layer.name);
+    let has_plugin = get_plugin_registry().has_plugin(&layer_key, category);
 
-    // Filtered requests are never server-cached and change per-request, so
-    // version-based ETags cannot be used for them. Skip ETag entirely.
-    if !has_filters {
+    // Filtered or plugin-driven requests are dynamic: skip ETags and client cache.
+    // Plugin layers can change per request (time, user) independently of tile version.
+    if !has_filters && !has_plugin {
         let version = get_cache_wrapper().get_layer_version(&layer_key).await;
         let etag = compute_etag(&format!("{layer_key}:{z}:{x}:{y}:{version}"));
 
@@ -187,7 +189,7 @@ pub async fn get_single_layer_tile(
         set_cache_headers(res, &etag, max_cache_age);
         res.body(salvo::http::ResBody::Once(tile));
     } else {
-        // Filtered request: always hits the DB, no server cache, no ETag.
+        // Filtered or plugin-driven request: always hits the DB, no server cache, no ETag.
         let start_time = Instant::now();
 
         let (tile, _) =
@@ -212,6 +214,12 @@ pub async fn get_single_layer_tile(
                 .unwrap_or_else(|_| HeaderValue::from_static("0")),
         );
         res.headers_mut().insert("X-Cache", HeaderValue::from_static("BYPASS"));
+
+        if has_plugin {
+            if let Ok(v) = HeaderValue::from_str("no-store, no-cache") {
+                res.headers_mut().insert("Cache-Control", v);
+            }
+        }
 
         res.body(salvo::http::ResBody::Once(tile));
     }
@@ -275,7 +283,13 @@ pub async fn get_composite_layers_tile(
         .min()
         .unwrap_or(0);
 
+    let any_has_plugin = layer_configs.iter().any(|l| {
+        let key = format!("{}_{}", l.category.name, l.name);
+        get_plugin_registry().has_plugin(&key, &l.category.name)
+    });
+
     // Build version-based ETag from all layer versions combined.
+    // Skipped when any layer has a plugin (dynamic content).
     let cache_wrapper = get_cache_wrapper();
     let mut etag_input = format!("{z}:{x}:{y}");
     for layer in &layer_configs {
@@ -288,7 +302,7 @@ pub async fn get_composite_layers_tile(
     }
     let etag = compute_etag(&etag_input);
 
-    if is_not_modified(req, &etag) {
+    if !any_has_plugin && is_not_modified(req, &etag) {
         set_cache_headers(res, &etag, min_cache_age);
         res.status_code(StatusCode::NOT_MODIFIED);
         return Ok(());
@@ -327,7 +341,13 @@ pub async fn get_composite_layers_tile(
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
 
-    set_cache_headers(res, &etag, min_cache_age);
+    if any_has_plugin {
+        if let Ok(v) = HeaderValue::from_str("no-store, no-cache") {
+            res.headers_mut().insert("Cache-Control", v);
+        }
+    } else {
+        set_cache_headers(res, &etag, min_cache_age);
+    }
     res.body(salvo::http::ResBody::Once(final_output));
     Ok(())
 }
@@ -377,7 +397,13 @@ pub async fn get_category_layers_tile(
         .min()
         .unwrap_or(0);
 
+    let any_has_plugin = layer_configs.iter().any(|l| {
+        let key = format!("{}_{}", l.category.name, l.name);
+        get_plugin_registry().has_plugin(&key, &l.category.name)
+    });
+
     // Build version-based ETag from all layer versions combined.
+    // Skipped when any layer has a plugin (dynamic content).
     let cache_wrapper = get_cache_wrapper();
     let mut etag_input = format!("{z}:{x}:{y}");
     for layer in &layer_configs {
@@ -390,7 +416,7 @@ pub async fn get_category_layers_tile(
     }
     let etag = compute_etag(&etag_input);
 
-    if is_not_modified(req, &etag) {
+    if !any_has_plugin && is_not_modified(req, &etag) {
         set_cache_headers(res, &etag, min_cache_age);
         res.status_code(StatusCode::NOT_MODIFIED);
         return Ok(());
@@ -429,7 +455,13 @@ pub async fn get_category_layers_tile(
             .unwrap_or_else(|_| HeaderValue::from_static("UNKNOWN")),
     );
 
-    set_cache_headers(res, &etag, min_cache_age);
+    if any_has_plugin {
+        if let Ok(v) = HeaderValue::from_str("no-store, no-cache") {
+            res.headers_mut().insert("Cache-Control", v);
+        }
+    } else {
+        set_cache_headers(res, &etag, min_cache_age);
+    }
     res.body(salvo::http::ResBody::Once(final_output));
     Ok(())
 }
