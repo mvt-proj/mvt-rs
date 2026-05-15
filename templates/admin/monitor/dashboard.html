@@ -6,136 +6,220 @@
   <style>
     :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#60a5fa}
     .wrap{max-width:1100px;margin:24px auto;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.81));padding:16px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.81));padding:16px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .span2{grid-column:span 2}
     h1{margin:0 0 8px 0;font-size:18px}
     .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
-    canvas{width:100% !important;height:200px !important}
+    .chart-wrap{position:relative;height:200px}
     .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
     .kv{background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;font-size:13px}
     .small{font-size:12px;color:var(--muted)}
+    /* Status colors */
+    .ok{color:#16a34a;font-weight:600}
+    .warn{color:#d97706;font-weight:600}
+    .crit{color:#dc2626;font-weight:700}
+    /* SSE badge */
+    .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;flex-shrink:0}
+    .badge-live{background:#dcfce7;color:#15803d}
+    .badge-off{background:#fef9c3;color:#a16207}
+    .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+    /* Cache ratio bar */
+    .ratio-bar{width:100%;height:5px;background:#fca5a5;border-radius:3px;margin-top:5px;overflow:hidden}
+    .ratio-fill{height:100%;background:#4ade80;border-radius:3px;transition:width 0.5s}
+    /* Pause button */
+    .btn-pause{margin-left:auto;font-size:12px;padding:4px 11px;border-radius:6px;border:1px solid #94a3b8;background:#f8fafc;cursor:pointer;color:#334155;flex-shrink:0}
+    .btn-pause:hover{background:#e2e8f0}
+    /* Responsive */
+    @media(max-width:640px){.wrap{grid-template-columns:1fr}.span2{grid-column:span 1}}
   </style>
 {% endblock %}
 
 {% block admin_content %}
   <div class="wrap">
-    <div class="card" style="grid-column: span 2;">
-      <h1>MVT Server — Dashboard</h1>
-      <div class="meta">/api/monitor/metrics available for Prometheus.</div>
+
+    <!-- Header card -->
+    <div class="card span2">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+        <h1 style="margin:0">MVT Server — Dashboard</h1>
+        <span id="sse-badge" class="badge badge-off"><span class="dot"></span>Connecting…</span>
+        <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
+      </div>
+      <div class="meta">/api/monitor/metrics disponible para Prometheus.</div>
       <div class="row" id="top-kv">
-        <div class="kv">CPU: <span id="cpu">-</span>%</div>
+        <div class="kv">CPU: <span id="cpu" class="ok">-</span>%</div>
         <div class="kv">Memory: <span id="mem">-</span> GB</div>
-        <div class="kv">RPS (delta/s): <span id="rps">-</span></div>
-        <div class="kv">Cache Hits: <span id="cache-hits-total">-</span></div>
-        <div class="kv">Cache Misses: <span id="cache-misses-total">-</span></div>
-        <div class="kv">Last lat (ms): <span id="last-lat">-</span></div>
-        <div class="kv">Average lat (ms): <span id="avg-lat">-</span></div>
+        <div class="kv">RPS: <span id="rps">-</span></div>
+        <div class="kv">Last lat: <span id="last-lat">-</span> ms</div>
+        <div class="kv">Avg lat: <span id="avg-lat">-</span> ms</div>
+        <div class="kv" style="min-width:150px">
+          Cache hit ratio: <span id="cache-ratio" class="ok">-</span>%
+          <div class="ratio-bar"><div class="ratio-fill" id="ratio-fill" style="width:0%"></div></div>
+        </div>
       </div>
     </div>
 
-    <div class="card"><h1>CPU %</h1><canvas id="cpuChart"></canvas></div>
-    <div class="card"><h1>Memory (GB)</h1><canvas id="memChart"></canvas></div>
-    <div class="card"><h1>RPS (requests/sec)</h1><canvas id="rpsChart"></canvas></div>
-    <div class="card"><h1>Latency (ms)</h1><canvas id="latChart"></canvas></div>
-    <div class="card"><h1>Cache Hits/s</h1><canvas id="cacheHitChart"></canvas></div>
-    <div class="card"><h1>Cache Misses/s</h1><canvas id="cacheMissChart"></canvas></div>
+    <div class="card"><h1>CPU %</h1><div class="chart-wrap"><canvas id="cpuChart"></canvas></div></div>
+    <div class="card"><h1>Memory (GB)</h1><div class="chart-wrap"><canvas id="memChart"></canvas></div></div>
+    <div class="card"><h1>RPS (requests/sec)</h1><div class="chart-wrap"><canvas id="rpsChart"></canvas></div></div>
+    <div class="card"><h1>Latency (ms)</h1><div class="chart-wrap"><canvas id="latChart"></canvas></div></div>
+    <div class="card span2"><h1>Cache Hits/s vs Misses/s</h1><div class="chart-wrap"><canvas id="cacheChart"></canvas></div></div>
+
   </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // helpers
   const maxPoints = 60;
+
   function makeChart(ctx, label, color, yLabel) {
     return new Chart(ctx, {
       type: 'line',
-      data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: color, tension: 0.2, pointRadius: 0 }]},
+      data: { labels: [], datasets: [{
+        label, data: [], borderColor: color,
+        backgroundColor: color + '22', tension: 0.2, pointRadius: 0, fill: true
+      }]},
       options: {
-        animation: false,
-        responsive: true,
-        scales: { y: { title: { display: !!yLabel, text: yLabel }, beginAtZero: true } },
+        animation: false, responsive: true, maintainAspectRatio: false,
+        devicePixelRatio: window.devicePixelRatio || 2,
+        scales: {
+          x: { ticks: { maxTicksLimit: 6, maxRotation: 0 } },
+          y: { title: { display: !!yLabel, text: yLabel }, beginAtZero: true }
+        },
         plugins: { legend: { display: false } }
       }
     });
   }
 
-  const cpuChart = makeChart(document.getElementById('cpuChart').getContext('2d'),'CPU %','#60a5fa','%');
-  const memChart = makeChart(document.getElementById('memChart').getContext('2d'),'Memory (GB)','rgba(96,165,250,0.9)','GB');
-  const rpsChart = makeChart(document.getElementById('rpsChart').getContext('2d'),'RPS','rgba(136,57,160,0.95)','req/s');
-  const latChart = makeChart(document.getElementById('latChart').getContext('2d'),'Latency (ms)','rgba(250,180,60,0.95)','ms');
-  const cacheHitChart = makeChart(document.getElementById('cacheHitChart').getContext('2d'),'Cache Hits/s','rgba(96,220,150,0.95)','hits/s');
-  const cacheMissChart = makeChart(document.getElementById('cacheMissChart').getContext('2d'),'Cache Misses/s','rgba(220,96,96,0.95)','misses/s');
-
-  let lastRequestsTotal = null;
-  let lastCacheHits = null;
-  let lastCacheMisses = null;
-
-  function pushPoint(chart, value) {
-    const t = new Date().toLocaleTimeString();
-    chart.data.labels.push(t);
-    chart.data.datasets[0].data.push(Number((value).toFixed(3)));
-    if (chart.data.labels.length > maxPoints) {
-      chart.data.labels.shift();
-      chart.data.datasets[0].data.shift();
-    }
-    chart.update('none');
+  function makeChart2(ctx, label1, color1, label2, color2, yLabel) {
+    return new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [
+        { label: label1, data: [], borderColor: color1, backgroundColor: color1 + '22', tension: 0.2, pointRadius: 0, fill: true },
+        { label: label2, data: [], borderColor: color2, backgroundColor: color2 + '22', tension: 0.2, pointRadius: 0, fill: true }
+      ]},
+      options: {
+        animation: false, responsive: true, maintainAspectRatio: false,
+        devicePixelRatio: window.devicePixelRatio || 2,
+        scales: {
+          x: { ticks: { maxTicksLimit: 6, maxRotation: 0 } },
+          y: { title: { display: !!yLabel, text: yLabel }, beginAtZero: true }
+        },
+        plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }
+      }
+    });
   }
 
-  // SSE connection
+  const cpuChart   = makeChart(document.getElementById('cpuChart').getContext('2d'),   'CPU %',      '#60a5fa', '%');
+  const memChart   = makeChart(document.getElementById('memChart').getContext('2d'),   'Memory (GB)','#818cf8', 'GB');
+  const rpsChart   = makeChart(document.getElementById('rpsChart').getContext('2d'),   'RPS',        '#a855f7', 'req/s');
+  const latChart   = makeChart2(document.getElementById('latChart').getContext('2d'),  'Last (ms)',  '#f59e0b', 'Avg (ms)', '#6366f1', 'ms');
+  const cacheChart = makeChart2(document.getElementById('cacheChart').getContext('2d'),'Hits/s',     '#4ade80', 'Misses/s', '#f87171', '/s');
+
+  let lastRequestsTotal = null, lastCacheHits = null, lastCacheMisses = null;
+  let paused = false;
+
+  // Push a value onto a chart dataset; only advance labels on dataset 0
+  function pushPoint(chart, value, idx) {
+    const ds = idx === undefined ? 0 : idx;
+    if (ds === 0) {
+      const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      chart.data.labels.push(t);
+      if (chart.data.labels.length > maxPoints) chart.data.labels.shift();
+    }
+    chart.data.datasets[ds].data.push(Number(value.toFixed(3)));
+    if (chart.data.datasets[ds].data.length > maxPoints) chart.data.datasets[ds].data.shift();
+    // Redraw only after last dataset is pushed
+    if (ds === chart.data.datasets.length - 1) chart.update('none');
+  }
+
+  // Apply ok/warn/crit class. For inverted metrics (higher = better) pass invert=true
+  function setStatus(id, value, warnThresh, critThresh, invert) {
+    const el = document.getElementById(id);
+    let cls;
+    if (!invert) {
+      cls = value >= critThresh ? 'crit' : value >= warnThresh ? 'warn' : 'ok';
+    } else {
+      cls = value <= critThresh ? 'crit' : value <= warnThresh ? 'warn' : 'ok';
+    }
+    el.className = cls;
+  }
+
+  function togglePause() {
+    paused = !paused;
+    document.getElementById('btn-pause').textContent = paused ? '▶ Resume' : '⏸ Pause';
+  }
+
+  // SSE
   const evt = new EventSource('/admin/monitor/ssemetrics');
+
+  evt.onopen = () => {
+    const b = document.getElementById('sse-badge');
+    b.className = 'badge badge-live';
+    b.innerHTML = '<span class="dot"></span>Live';
+  };
+
   evt.onmessage = (e) => {
+    if (paused) return;
     try {
       const obj = JSON.parse(e.data);
-      const cpu = Number(obj.cpu_percent) || 0;
-      const mem_gb = Number(obj.memory_gb) || 0;
-      const reqs = Number(obj.requests_total) || 0;
-      const cache_hits_total = Number(obj.cache_hits_total) || 0;
-      const cache_misses_total = Number(obj.cache_misses_total) || 0;
-      const last_lat = Number(obj.last_latency) || 0;
-      const avg_lat = Number(obj.avg_latency) || 0;
+      const cpu          = Number(obj.cpu_percent)     || 0;
+      const mem_gb       = Number(obj.memory_gb)       || 0;
+      const reqs         = Number(obj.requests_total)  || 0;
+      const cache_hits   = Number(obj.cache_hits_total)   || 0;
+      const cache_misses = Number(obj.cache_misses_total) || 0;
+      const last_lat     = Number(obj.last_latency)    || 0;
+      const avg_lat      = Number(obj.avg_latency)     || 0;
 
-      document.getElementById('cpu').textContent = cpu.toFixed(2);
-      document.getElementById('mem').textContent = mem_gb.toFixed(3);
-      document.getElementById('last-lat').textContent = (last_lat*1000).toFixed(3);
-      document.getElementById('avg-lat').textContent = (avg_lat*1000).toFixed(3);
+      // KV text
+      document.getElementById('cpu').textContent      = cpu.toFixed(2);
+      document.getElementById('mem').textContent      = mem_gb.toFixed(3);
+      document.getElementById('last-lat').textContent = (last_lat * 1000).toFixed(2);
+      document.getElementById('avg-lat').textContent  = (avg_lat  * 1000).toFixed(2);
 
+      // Status colors: CPU warn>60%, crit>85%
+      setStatus('cpu', cpu, 60, 85);
+      // Latency in ms: warn>100ms, crit>500ms
+      setStatus('last-lat', last_lat * 1000, 100, 500);
+
+      // RPS delta
       let rps = 0;
-      if (lastRequestsTotal !== null) {
-        rps = reqs - lastRequestsTotal;
-        if (rps < 0) rps = 0;
-      }
+      if (lastRequestsTotal !== null) rps = Math.max(0, reqs - lastRequestsTotal);
       lastRequestsTotal = reqs;
       document.getElementById('rps').textContent = rps.toFixed(2);
 
-      let hitsDelta = 0;
-      if (lastCacheHits !== null) {
-        hitsDelta = cache_hits_total - lastCacheHits;
-        if (hitsDelta < 0) hitsDelta = 0;
-      }
-      lastCacheHits = cache_hits_total;
-      document.getElementById('cache-hits-total').textContent = cache_hits_total.toFixed(0);
+      // Cache deltas
+      let hitsDelta = 0, missesDelta = 0;
+      if (lastCacheHits   !== null) hitsDelta   = Math.max(0, cache_hits   - lastCacheHits);
+      if (lastCacheMisses !== null) missesDelta = Math.max(0, cache_misses - lastCacheMisses);
+      lastCacheHits   = cache_hits;
+      lastCacheMisses = cache_misses;
 
-      let missesDelta = 0;
-      if (lastCacheMisses !== null) {
-        missesDelta = cache_misses_total - lastCacheMisses;
-        if (missesDelta < 0) missesDelta = 0;
-      }
-      lastCacheMisses = cache_misses_total;
-      document.getElementById('cache-misses-total').textContent = cache_misses_total.toFixed(0);
+      // Cache hit ratio (cumulative)
+      const totalCache = cache_hits + cache_misses;
+      const ratio = totalCache > 0 ? (cache_hits / totalCache * 100) : 0;
+      document.getElementById('cache-ratio').textContent = ratio.toFixed(1);
+      document.getElementById('ratio-fill').style.width  = ratio.toFixed(1) + '%';
+      // Inverted: ratio below 40% = crit, below 70% = warn
+      setStatus('cache-ratio', ratio, 70, 40, true);
 
+      // Charts
       pushPoint(cpuChart, cpu);
       pushPoint(memChart, mem_gb);
       pushPoint(rpsChart, rps);
-      pushPoint(latChart, (last_lat*1000));
-      pushPoint(cacheHitChart, hitsDelta);
-      pushPoint(cacheMissChart, missesDelta);
+      pushPoint(latChart, last_lat * 1000, 0);
+      pushPoint(latChart, avg_lat  * 1000, 1);
+      pushPoint(cacheChart, hitsDelta,   0);
+      pushPoint(cacheChart, missesDelta, 1);
 
     } catch (err) {
       console.error('SSE parse error', err);
     }
   };
 
-  evt.onerror = (e) => {
-    console.warn('SSE error, retrying ...', e);
+  evt.onerror = () => {
+    const b = document.getElementById('sse-badge');
+    b.className = 'badge badge-off';
+    b.innerHTML = '<span class="dot"></span>Reconnecting…';
   };
 </script>
 {% endblock %}
