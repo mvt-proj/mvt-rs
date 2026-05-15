@@ -1,0 +1,93 @@
+{% extends "admin/layout_admin.html" %}
+{% block admin_content %}
+
+<h1 class="title text-center mb-6">{{ base.translate["plugins"] }}</h1>
+
+{% if plugins.is_empty() %}
+<div class="flex flex-col items-center justify-center py-20 text-zinc-400 dark:text-zinc-500">
+  <i class="fas fa-puzzle-piece text-5xl mb-4"></i>
+  <p class="text-lg">{{ base.translate["no-plugins-found"] }}</p>
+  <p class="text-sm mt-2">{{ base.translate["plugins-dir-hint"] }}</p>
+</div>
+{% else %}
+<div class="space-y-4">
+  {% for plugin in plugins %}
+  <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 px-5 py-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 shrink-0">
+          <i class="fas fa-puzzle-piece text-sm"></i>
+        </span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <code class="font-semibold text-zinc-800 dark:text-zinc-100">{{ plugin.key }}.lua</code>
+            {% if plugin.key.contains('_') %}
+            <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">{{ base.translate["plugin-layer"] }}</span>
+            {% else %}
+            <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-medium">{{ base.translate["plugin-category"] }}</span>
+            {% endif %}
+            {% if let Some(ver) = &plugin.doc.version %}
+            <span class="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">v{{ ver }}</span>
+            {% endif %}
+          </div>
+          {% if let Some(name) = &plugin.doc.name %}
+          <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{{ name }}</p>
+          {% endif %}
+        </div>
+      </div>
+      <button
+        class="button__outline text-sm shrink-0"
+        onclick="toggleCode('code-{{ loop.index }}')"
+        id="btn-{{ loop.index }}"
+      >
+        <i class="fas fa-code mr-2"></i>{{ base.translate["show-code"] }}
+      </button>
+    </div>
+
+    <!-- Doc metadata -->
+    {% if plugin.doc.description.is_some() || plugin.doc.author.is_some() %}
+    <div class="px-5 pt-4 pb-5 border-t border-zinc-100 dark:border-zinc-700">
+      {% if let Some(desc) = &plugin.doc.description %}
+      <p class="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">{{ desc }}</p>
+      {% endif %}
+      {% if let Some(author) = &plugin.doc.author %}
+      <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-3 flex items-center gap-1.5">
+        <i class="fas fa-user-circle"></i>{{ author }}
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Source code (collapsed by default) -->
+    <div id="code-{{ loop.index }}" class="hidden border-t border-zinc-200 dark:border-zinc-700">
+      <pre class="m-0 overflow-x-auto text-sm max-h-96"><code class="language-lua">{{ plugin.source }}</code></pre>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/lua.min.js"></script>
+<script>
+(function () {
+  window.toggleCode = function (id) {
+    const block = document.getElementById(id);
+    const idx = id.split('-')[1];
+    const btn = document.getElementById('btn-' + idx);
+    const hidden = block.classList.toggle('hidden');
+    if (!hidden && !block.dataset.highlighted) {
+      hljs.highlightElement(block.querySelector('code'));
+      block.dataset.highlighted = '1';
+    }
+  };
+})();
+</script>
+{% endblock %}

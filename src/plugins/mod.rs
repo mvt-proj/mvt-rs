@@ -4,6 +4,44 @@ use std::path::Path;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
 
+/// Parsed `-- @key value` annotations from the top of a Lua plugin file.
+#[derive(Debug, Clone, Default)]
+pub struct PluginDoc {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub author: Option<String>,
+    pub version: Option<String>,
+}
+
+/// Public metadata about a loaded plugin, used by the admin UI.
+#[derive(Debug, Clone)]
+pub struct PluginInfo {
+    pub key: String,
+    pub source: String,
+    pub doc: PluginDoc,
+}
+
+fn parse_doc(source: &str) -> PluginDoc {
+    let mut doc = PluginDoc::default();
+    for line in source.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with("--") {
+            break;
+        }
+        let content = trimmed.trim_start_matches('-').trim();
+        if let Some(v) = content.strip_prefix("@name") {
+            doc.name = Some(v.trim().to_string());
+        } else if let Some(v) = content.strip_prefix("@description") {
+            doc.description = Some(v.trim().to_string());
+        } else if let Some(v) = content.strip_prefix("@author") {
+            doc.author = Some(v.trim().to_string());
+        } else if let Some(v) = content.strip_prefix("@version") {
+            doc.version = Some(v.trim().to_string());
+        }
+    }
+    doc
+}
+
 /// Context passed to every Lua hook.
 pub struct PluginContext {
     pub layer: String,
@@ -25,6 +63,7 @@ pub struct PluginContext {
 /// their WHERE clauses are combined with AND.
 pub struct LuaPluginRegistry {
     plugins: HashMap<String, Mutex<Lua>>,
+    info: Vec<PluginInfo>,
 }
 
 impl std::fmt::Debug for LuaPluginRegistry {
@@ -36,22 +75,29 @@ impl std::fmt::Debug for LuaPluginRegistry {
 }
 
 impl LuaPluginRegistry {
+    pub fn list_plugins(&self) -> &[PluginInfo] {
+        &self.info
+    }
+}
+
+impl LuaPluginRegistry {
     /// Scans `plugins_dir` at startup and loads every `.lua` file found.
     /// Missing or unreadable directory is silently ignored (no plugins active).
     pub fn new(plugins_dir: &str) -> Self {
         let mut plugins = HashMap::new();
+        let mut plugin_list: Vec<PluginInfo> = Vec::new();
         let dir = Path::new(plugins_dir);
 
         if !dir.exists() {
             info!("Plugins directory '{}' not found — no plugins loaded", plugins_dir);
-            return Self { plugins };
+            return Self { plugins, info: plugin_list };
         }
 
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
             Err(e) => {
                 warn!("Cannot read plugins directory '{}': {}", plugins_dir, e);
-                return Self { plugins };
+                return Self { plugins, info: plugin_list };
             }
         };
 
@@ -66,7 +112,7 @@ impl LuaPluginRegistry {
                 None => continue,
             };
 
-            let script = match std::fs::read_to_string(&path) {
+            let source = match std::fs::read_to_string(&path) {
                 Ok(s) => s,
                 Err(e) => {
                     warn!("Cannot read plugin {:?}: {}", path, e);
@@ -74,9 +120,11 @@ impl LuaPluginRegistry {
                 }
             };
 
-            match Self::load_plugin(&key, &script) {
+            match Self::load_plugin(&key, &source) {
                 Ok(lua) => {
                     info!("Loaded Lua plugin: '{}' ({:?})", key, path);
+                    let doc = parse_doc(&source);
+                    plugin_list.push(PluginInfo { key: key.clone(), source, doc });
                     plugins.insert(key, Mutex::new(lua));
                 }
                 Err(e) => {
@@ -85,7 +133,8 @@ impl LuaPluginRegistry {
             }
         }
 
-        Self { plugins }
+        plugin_list.sort_by(|a, b| a.key.cmp(&b.key));
+        Self { plugins, info: plugin_list }
     }
 
     fn load_plugin(key: &str, script: &str) -> LuaResult<Lua> {
@@ -186,7 +235,7 @@ impl LuaPluginRegistry {
                 Err(e) => panic!("Test plugin '{}' failed to load: {}", key, e),
             }
         }
-        Self { plugins }
+        Self { plugins, info: Vec::new() }
     }
 }
 

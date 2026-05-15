@@ -212,6 +212,7 @@ fn build_admin_routes() -> Router {
         .push(build_admin_catalog_routes())
         .push(build_admin_database_routes())
         .push(build_admin_monitor_routes())
+        .push(Router::with_path("plugins").get(html::admin::plugins::index))
 }
 
 fn build_api_users_routes() -> Router {

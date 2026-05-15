@@ -174,9 +174,16 @@ Empty strings are skipped. `None` (plugin absent or runtime error) contributes n
 
 ## Cache behavior
 
-Layers with an active plugin **bypass the server tile cache** (both read and write). This ensures that time-dependent or context-dependent filters always produce fresh results. Tiles are still fetched from the PostGIS database on every request.
+Layers with an active plugin **bypass both caches**:
 
-If a layer has no active plugin, normal cache behavior applies.
+| Cache | Behavior |
+|---|---|
+| Server tile cache | Bypassed — tile is always fetched from PostGIS |
+| Client cache (`Cache-Control`) | Set to `no-store, no-cache` — browser never caches the response |
+
+This ensures that time-dependent or context-dependent filters (e.g. business hours, user-specific rules) always produce fresh results on every request.
+
+If a layer has no active plugin, normal cache behavior applies (`public, max-age=...` based on the layer's `max_cache_age` setting).
 
 ## Error handling
 
@@ -198,17 +205,53 @@ Each plugin lives in its own Lua VM protected by a `tokio::sync::Mutex`. The ove
 
 For typical tile servers (< 1000 req/s), overhead is negligible. Under extreme load, plugin mutex contention is the bottleneck; a VM pool would be the next optimization.
 
+## Plugin documentation annotations
+
+Each plugin can include structured metadata as leading comments. These are displayed in the admin web interface under **Admin → Plugins**.
+
+```lua
+-- @name      Human-readable name shown in the admin UI
+-- @description  What this plugin does and when it applies
+-- @author    Author name or team
+-- @version   Version string (e.g. 1.0, 2024-03)
+```
+
+All fields are optional. Annotations must appear as **consecutive comment lines at the top of the file**, before any code. The parser stops at the first non-comment line.
+
+### Example
+
+```lua
+-- @name Business hours access control
+-- @description Restricts tile access to 08:00–16:00 (server time). Returns an empty tile outside that window.
+-- @author ops-team
+-- @version 1.2
+
+function filter(ctx)
+    local h = tonumber(os.date("%H"))
+    if h >= 8 and h < 16 then
+        return ""
+    end
+    return "1=0"
+end
+```
+
+> **Note:** Because the filter result changes over time, layers with a plugin always bypass the client cache (`Cache-Control: no-store, no-cache`). The server tile cache is also bypassed for plugin-enabled layers.
+
 ## Writing your first plugin
 
 1. Decide the scope: category or layer.
 2. Create a file named `{category}.lua` or `{category}_{layer}.lua` in the plugins directory.
-3. Define a `filter(ctx)` function that returns a SQL condition string.
-4. Restart the server (plugins are loaded at startup).
-5. Watch the logs for `Loaded Lua plugin: '...'` at startup and your `log()` calls during tile requests.
+3. Add `-- @name` and `-- @description` annotations at the top (recommended).
+4. Define a `filter(ctx)` function that returns a SQL condition string.
+5. Restart the server (plugins are loaded at startup).
+6. Watch the logs for `Loaded Lua plugin: '...'` at startup and your `log()` calls during tile requests.
 
 ### Minimal example
 
 ```lua
+-- @name Roads zoom filter
+-- @description Shows only major roads at low zoom levels to reduce tile size.
+
 -- public_roads.lua
 -- Applies to: category="public", layer="roads"
 
