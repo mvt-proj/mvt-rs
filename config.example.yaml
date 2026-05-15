@@ -37,3 +37,4 @@ paths:
   config: "config"
   cache: "cache"
   assets: "map_assets"
+  plugins: "plugins"   # directory scanned for Lua plugin files at startup
