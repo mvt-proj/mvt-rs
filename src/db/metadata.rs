@@ -193,7 +193,7 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
         table = table_safe
     );
 
-    let extent = sqlx::query_as::<_, Extent>(&sql_calc)
+    let extent = sqlx::query_as::<_, Extent>(sqlx::AssertSqlSafe(sql_calc))
         .fetch_one(&pg_pool)
         .await?;
 

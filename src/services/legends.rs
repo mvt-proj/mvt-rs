@@ -1,5 +1,5 @@
 use crate::{error::AppResult, models::styles::Style};
-use maplibre_legend::MapLibreLegend;
+use maplibre_legend::{LegendConfig, MapLibreLegend};
 use salvo::prelude::*;
 
 #[handler]
@@ -22,10 +22,12 @@ pub async fn index(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
     let legend = MapLibreLegend::new(
         &style.style,
-        default_width,
-        default_height,
-        has_label,
-        include_raster,
+        LegendConfig {
+            default_width,
+            default_height,
+            has_label,
+            include_raster,
+        },
     )
     .await?;
 

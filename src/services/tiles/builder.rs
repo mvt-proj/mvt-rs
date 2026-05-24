@@ -119,7 +119,7 @@ pub async fn query_database(
         )
         .replace("{limit_placeholder}", &limit_clause);
 
-    let mut query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(&sql_query)
+    let mut query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(sqlx::AssertSqlSafe(sql_query))
         .bind(z as i32)
         .bind(x as i32)
         .bind(y as i32)
