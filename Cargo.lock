@@ -2447,6 +2447,8 @@ dependencies = [
 [[package]]
 name = "maplibre-legend"
 version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd64d33472e1c6bcccfb1c43e2bb5b007b0c5819340262af20755b1400176317"
 dependencies = [
  "base64",
  "image",

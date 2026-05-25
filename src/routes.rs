@@ -59,7 +59,7 @@ fn build_cors_handler() -> impl Handler + Clone {
 
 fn build_session_handler(settings: &Settings) -> SessionHandler<CookieStore> {
     SessionHandler::builder(CookieStore::new(), settings.security.session_secret.as_bytes())
-        .session_ttl(Some(Duration::from_secs(60 * 20)))
+        .session_ttl(Some(Duration::from_secs(60 * settings.security.session_duration_minutes)))
         .build()
         .expect("Failed to build session handler")
 }

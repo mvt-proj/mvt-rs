@@ -95,6 +95,9 @@ Config is loaded in priority order: CLI args > YAML file > Environment variables
 - `security.session_secret` ≥ 32 chars
 - `security.jwt_secret` ≥ 32 chars
 
+**Optional security settings:**
+- `security.session_duration_minutes` — session TTL in minutes (default: `20`). Env var: `MVT_SECURITY__SESSION_DURATION_MINUTES`
+
 ## Running locally
 
 ```bash

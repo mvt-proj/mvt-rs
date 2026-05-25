@@ -39,10 +39,13 @@ fn default_sqlite() -> String { "mvtrs.db".to_string() }
 fn default_pool_min() -> u32 { 2 }
 fn default_pool_max() -> u32 { 5 }
 
+fn default_session_duration() -> u64 { 20 }
+
 #[derive(Debug, Deserialize, Default)]
 pub struct SecurityConfig {
     #[serde(default)] pub jwt_secret: String,
     #[serde(default)] pub session_secret: String,
+    #[serde(default = "default_session_duration")] pub session_duration_minutes: u64,
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -175,6 +178,7 @@ mod tests {
             security: SecurityConfig {
                 jwt_secret: "a-secret-that-is-at-least-32-chars-long-here".to_string(),
                 session_secret: "a-session-secret-at-least-32-chars-long-here".to_string(),
+                session_duration_minutes: 20,
             },
             paths: PathConfig {
                 config: "config".to_string(),
