@@ -13,6 +13,7 @@ Following FreeBSD `hier(7)` conventions:
 | `/usr/local/etc/rc.d/mvtserver` | The service script |
 | `/var/cache/mvt-server/` | Tile cache storage |
 | `/usr/local/etc/mvt-server/assets/` | Static map assets |
+| `/usr/local/etc/mvt-server/plugins/` | Lua plugin files (`.lua`) |
 | `/var/log/mvt-server.log` | Service logs |
 
 ## Installation Steps
@@ -27,6 +28,7 @@ Following FreeBSD `hier(7)` conventions:
 2. **Setup Directories**:
    ```sh
    mkdir -p /usr/local/etc/mvt-server/assets
+   mkdir -p /usr/local/etc/mvt-server/plugins
    mkdir -p /var/cache/mvt-server
    ```
 
