@@ -169,9 +169,9 @@ async fn main() -> AppResult<()> {
     let catalog = initialize_catalog(&cf_pool).await?;
 
     let db_registry = DbRegistry::new(
-        &settings.postgres_databases,
-        settings.database.pool_min,
-        settings.database.pool_max,
+        &settings.postgres_databases.connections,
+        settings.postgres_databases.pool_min,
+        settings.postgres_databases.pool_max,
     )
     .await?;
 

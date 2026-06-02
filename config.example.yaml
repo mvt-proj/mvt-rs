@@ -16,13 +16,13 @@ server:
 # At least one entry named "default" is required.
 # Additional named databases can be added with different keys.
 postgres_databases:
+  pool_min: 2
+  pool_max: 5
   default: "postgres://user:password@host:5432/dbname"
   # secondary: "postgres://user:password@host2:5432/dbname2"
 
 # ─── Database Pool & Cache ────────────────────────────────────────────────────
 database:
-  pool_min: 2
-  pool_max: 5
   sqlite_path: "mvtrs.db"
   # redis_url: "redis://localhost:6379"   # omit to use disk cache instead
 

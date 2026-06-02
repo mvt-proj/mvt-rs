@@ -29,10 +29,16 @@ pub struct DatabaseConfig {
     #[serde(default = "default_sqlite")]
     pub sqlite_path: String,
     pub redis_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct PostgresDatabasesConfig {
     #[serde(default = "default_pool_min")]
     pub pool_min: u32,
     #[serde(default = "default_pool_max")]
     pub pool_max: u32,
+    #[serde(flatten)]
+    pub connections: HashMap<String, String>,
 }
 
 fn default_sqlite() -> String { "mvtrs.db".to_string() }
@@ -65,7 +71,7 @@ fn default_plugins_path() -> String { "plugins".to_string() }
 pub struct Settings {
     #[serde(default)] pub server: ServerConfig,
     #[serde(default)] pub database: DatabaseConfig,
-    #[serde(default)] pub postgres_databases: HashMap<String, String>,
+    #[serde(default)] pub postgres_databases: PostgresDatabasesConfig,
     #[serde(default)] pub security: SecurityConfig,
     #[serde(default)] pub paths: PathConfig,
 }
@@ -81,8 +87,8 @@ impl Settings {
             .set_default("server.host", "0.0.0.0")?
             .set_default("server.port", 5887)?
             .set_default("database.sqlite_path", "mvtrs.db")?
-            .set_default("database.pool_min", 2)?
-            .set_default("database.pool_max", 5)?
+            .set_default("postgres_databases.pool_min", 2)?
+            .set_default("postgres_databases.pool_max", 5)?
             .set_default("paths.config", "config")?
             .set_default("paths.cache", "cache")?
             .set_default("paths.assets", "map_assets")?
@@ -121,7 +127,7 @@ impl Settings {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if !self.postgres_databases.contains_key("default") {
+        if !self.postgres_databases.connections.contains_key("default") {
             return Err(
                 "Configuration error: 'postgres_databases' must contain a 'default' entry. \
                 Add it to config.yaml under 'postgres_databases.default' or set \
@@ -161,8 +167,8 @@ mod tests {
     use super::*;
 
     fn valid_settings() -> Settings {
-        let mut dbs = std::collections::HashMap::new();
-        dbs.insert(
+        let mut connections = std::collections::HashMap::new();
+        connections.insert(
             "default".to_string(),
             "postgres://user:pass@localhost/db".to_string(),
         );
@@ -171,10 +177,12 @@ mod tests {
             database: DatabaseConfig {
                 sqlite_path: "mvtrs.db".to_string(),
                 redis_url: None,
+            },
+            postgres_databases: PostgresDatabasesConfig {
                 pool_min: 2,
                 pool_max: 5,
+                connections,
             },
-            postgres_databases: dbs,
             security: SecurityConfig {
                 jwt_secret: "a-secret-that-is-at-least-32-chars-long-here".to_string(),
                 session_secret: "a-session-secret-at-least-32-chars-long-here".to_string(),
@@ -197,7 +205,7 @@ mod tests {
     #[test]
     fn missing_default_db_fails() {
         let mut s = valid_settings();
-        s.postgres_databases.clear();
+        s.postgres_databases.connections.clear();
         let err = s.validate().unwrap_err();
         assert!(err.contains("default"));
     }
