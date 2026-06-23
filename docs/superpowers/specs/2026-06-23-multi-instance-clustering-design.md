@@ -6,9 +6,9 @@
 
 ## Goal
 
-Keep the in-memory config state (`Catalog`, `Categories`, `Auth`) fresh across
-multiple `mvt-rs` instances running behind a load balancer, covering two
-deployment situations:
+Keep the in-memory config state (`Catalog`, `Categories`, `Auth`, `Styles`)
+fresh across multiple `mvt-rs` instances running behind a load balancer, covering
+two deployment situations:
 
 1. **Same host** (jails / docker on one machine) — instances share one SQLite
    config file via a shared volume.
@@ -53,7 +53,12 @@ Selected via `cluster.mode`:
 | `standalone` (default) | initializes | — | — | everything (current behavior) | single instance |
 | `shared` (situation 1) | initializes (shared volume) | yes — `LocalBackend` | — | everything | symmetric peers |
 | `owner` (situation 2) | initializes | **no** | **yes** | everything | sole writer |
-| `client` (situation 2) | **does not initialize** | yes — `RemoteBackend` | — | tiles/styles/legends | read-only |
+| `client` (situation 2) | **does not initialize** | yes — `RemoteBackend` | — | tiles + styles + legends | read-only |
+
+All four in-memory states (`Catalog`, `Categories`, `Auth`, `Styles`) are treated
+uniformly: every admin-managed item type (users, groups, categories, catalog
+layers, and styles) is cached in memory, bumps `config_version` on write, travels
+in the snapshot, and is rebuilt by the watcher. There is no special-casing.
 
 Notes:
 
@@ -81,7 +86,7 @@ location /admin     { proxy_pass http://mvt_owner; }
 location /auth      { proxy_pass http://mvt_owner; }
 location /api/admin { proxy_pass http://mvt_owner; }
 
-# tiles / styles / legends (reads)  =>  balanced pool
+# tiles / styles / legends (reads, all served from memory)  =>  balanced pool
 location /          { proxy_pass http://mvt_tiles; }
 
 # /internal must NOT be routed publicly
@@ -102,12 +107,13 @@ the `config/*.rs` write functions):
 - `get_config_version(pool) -> Result<i64, sqlx::Error>`
 - `bump_config_version(pool) -> Result<i64, sqlx::Error>`
 
-Every cached-config write bumps it: categories, layers, users, groups. **Styles
-are excluded** (not cached in memory — always read fresh from SQLite).
+Every cached-config write bumps it: categories, layers, users, groups, **and
+styles** (`create_style`/`update_style`/`delete_style`). Styles are now cached in
+memory like the others (see below), so they participate in the sync.
 
 ### `ConfigSnapshot`
 
-The unit that travels over the API and that gets swapped into memory. All three
+The unit that travels over the API and that gets swapped into memory. All four
 fields already derive `Serialize`/`Deserialize`:
 
 ```rust
@@ -116,6 +122,7 @@ pub struct ConfigSnapshot {
     pub catalog: Catalog,
     pub categories: Vec<Category>,
     pub auth: Auth,            // includes users (with password hashes) + groups
+    pub styles: Vec<Style>,
 }
 ```
 
@@ -137,7 +144,7 @@ trait ConfigSyncBackend: Send + Sync {
 
 - **`LocalBackend { pool }`** (`shared`/`owner`): `current_version` =
   `get_config_version(pool)`; `fetch_snapshot` rebuilds from SQLite
-  (`Catalog::new`, `get_categories`, `Auth::new`).
+  (`Catalog::new`, `get_categories`, `Auth::new`, `get_styles`).
 - **`RemoteBackend { owner_url, secret, http }`** (`client`): `current_version`
   = `GET {owner}/internal/config/version`; `fetch_snapshot` =
   `GET {owner}/internal/config/snapshot`, deserialized from JSON.
@@ -151,14 +158,31 @@ loop:
     current = backend.current_version()?    // on error: warn + continue
     if current > known:
         snapshot = backend.fetch_snapshot()?
-        apply(snapshot)                     // swap under RwLocks:
-                                            // get_catalog/get_categories/get_auth
+        apply(snapshot)                     // swap under RwLocks: get_catalog /
+                                            // get_categories / get_auth / get_styles_cache
         known = next_known_version(known, current, reload_ok)
 ```
 
 `next_known_version(known, current, reload_ok)` advances `known` only when a
 higher version was observed **and** the reload succeeded, so a failed reload is
 retried on the next tick.
+
+### Styles cache (new global)
+
+Styles are now cached in memory like categories, in a new global
+`STYLES: OnceCell<RwLock<Vec<Style>>>` with a `get_styles_cache()` getter
+(mirroring `CATEGORIES`/`get_categories`). `Style` already derives
+`Serialize`/`Deserialize`/`Clone`, and `get_styles(pool)` returns `Vec<Style>`.
+
+The public read endpoints switch from SQLite to the in-memory cache so clients
+(which have no SQLite) can serve them:
+
+- `services::styles::index` (`/styles/{style_name}`) and `services::legends::index`
+  (`/legends/{style_name}`) currently call `Style::from_category_and_name` →
+  `get_style_by_category_and_name(None)` → `get_cf_pool()`. They are changed to
+  look up the style by `category:name` in `get_styles_cache()` (in memory).
+- The admin style pages (`html::admin::styles::*`) keep using the pool — they run
+  only on the owner (routed there by nginx) and are write/list paths.
 
 ### Internal API (owner only)
 
@@ -223,7 +247,7 @@ ready (orchestrator-friendly).
 
 The rest of the globals are set for all modes: `DB_REGISTRY` (clients also serve
 tiles from the same PostGIS), `CACHE_WRAPPER` (initialized with the snapshot
-catalog on clients), `CATALOG`/`CATEGORIES`/`AUTH`.
+catalog on clients), `CATALOG`/`CATEGORIES`/`AUTH`/`STYLES`.
 
 Watcher spawn:
 
@@ -239,9 +263,9 @@ owner | standalone => (no watcher)
   internal API.
 - `owner` → full router **plus** the `/internal/config/*` sub-router behind the
   cluster-secret hoop.
-- `client` → **reduced router**: public read routes only
-  (tiles/styles/legends/health) + the auth hoops (which validate session/JWT in
-  memory, without touching SQLite). It does **not** mount admin, write API, or
+- `client` → **reduced router**: public read routes only (tiles + styles +
+  legends + health) + the auth hoops (which validate session/JWT in memory,
+  without touching SQLite). It does **not** mount admin, write API, or
   `/internal`.
 
 Why the reduced router on clients: a client has no `SQLITE_CONF`, so any handler
@@ -251,7 +275,10 @@ those paths are never reached (and nginx never routes them there anyway).
 **Verified:** the tile pipeline serves entirely from memory. `get_request_user`
 (`src/services/utils.rs:209`) and `validate_user_groups`
 (`src/services/utils.rs:249`) resolve against `get_auth()` (in memory) and tile
-handlers read `get_catalog()` (in memory); none call `get_cf_pool()`.
+handlers read `get_catalog()` (in memory); none call `get_cf_pool()`. The public
+styles/legends endpoints currently *do* read SQLite (`get_cf_pool()` via
+`Style::from_category_and_name`); this design moves them to `get_styles_cache()`
+(in memory) so they are safe to mount on clients.
 
 ## Security
 
@@ -285,14 +312,15 @@ TDD (failing test → implementation). Three levels:
 **A. Unit tests** (in-memory SQLite pool via a shared `test_support` helper):
 
 1. `config_version` `get`/`bump` (starts at 0, increments, persists).
-2. Bumps on writes: categories/layers/users/groups raise the version.
+2. Bumps on writes: categories/layers/users/groups/**styles** raise the version.
 3. `next_known_version` pure logic (advances only when reload succeeded).
 4. `cluster.*` validation: invalid `mode` fails; `client` without
    `owner_url`/`shared_secret` fails; `owner` without `shared_secret` fails;
    `standalone`/`shared` valid without extras.
-5. `ConfigSnapshot` serialization round-trip (incl. `Auth` with hashes/groups).
+5. `ConfigSnapshot` serialization round-trip (incl. `Auth` with hashes/groups and
+   `styles`).
 6. `LocalBackend`: `current_version` and `fetch_snapshot` against the in-memory
-   pool return the expected catalog/categories/auth.
+   pool return the expected catalog/categories/auth/**styles**.
 
 **B. Integration tests** (`tests/integration/`, salvo `test` feature):
 
@@ -308,6 +336,8 @@ TDD (failing test → implementation). Three levels:
    with `owner_url` + secret + short interval (3s).
    - Edit/create a layer on the owner → within ≤3s the client logs the reload
      and `GET :5888/api/catalog/layer` reflects the change without restart.
+   - Edit a style on the owner → within ≤3s `GET :5888/styles/{cat:name}` on the
+     client returns the updated style (served from the synced in-memory cache).
    - Basic auth on client tiles: request a protected tile from the client with
      `Authorization: Basic ...` → validates against the synced hashes.
    - `GET :5887/internal/config/snapshot` without the secret → `401`.
@@ -325,7 +355,12 @@ remain valid and are reused here:
   `ConfigSyncBackend` trait.
 
 This design adds situation 2 (owner/client + internal API + `RemoteBackend` +
-cluster config + nginx routing) on top, additively.
+cluster config + nginx routing) on top, additively. It also **supersedes the
+paused plan's exclusion of styles**: the paused plan left styles out (not cached
+in memory); here all five admin item types — users, groups, categories, catalog
+layers, and styles — are cached, versioned, snapshotted, and reloaded uniformly,
+which requires the new `STYLES` global and moving the public styles/legends read
+path to memory.
 
 ## Out of scope
 
