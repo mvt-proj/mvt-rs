@@ -305,6 +305,70 @@ and never travel in cleartext.
 choice), used only by the `client` role for outbound calls to the owner. The
 `standalone`/`shared` modes never exercise it.
 
+## Documentation & examples
+
+### `config.example.yaml`
+
+Add a commented `cluster:` block showing all four modes (the file is the
+canonical reference users copy from):
+
+```yaml
+# ─── Clustering / multi-instance ──────────────────────────────────────────────
+# Keep in-memory config (catalog, categories, users, groups, styles) fresh across
+# several instances behind a load balancer. Default is a single standalone server.
+cluster:
+  # standalone | shared | owner | client
+  #   standalone : single instance (default).
+  #   shared     : several instances on the SAME host sharing one SQLite file
+  #                via a shared volume (situation 1).
+  #   owner      : holds the single SQLite and exposes the internal sync API
+  #                (situation 2, cross-host).
+  #   client     : no local SQLite; pulls config from the owner over HTTP
+  #                (situation 2, cross-host).
+  mode: "standalone"
+
+  # How often (seconds) each non-owner instance polls for config changes.
+  config_watch_interval_secs: 10
+
+  # Required when mode = client: base URL of the owner instance.
+  # owner_url: "https://owner-host:5887"
+
+  # Required when mode = owner or client: shared secret that authorizes the
+  # internal /internal/config/* API. Use a strong random value (>= 16 chars).
+  # The internal API ships config including password hashes, so this traffic
+  # MUST go over TLS or a trusted private network, and /internal must not be
+  # exposed publicly by the load balancer.
+  # shared_secret: "change-me-to-a-random-cluster-secret"
+```
+
+Env-var equivalents are documented inline: `MVT_CLUSTER__MODE`,
+`MVT_CLUSTER__CONFIG_WATCH_INTERVAL_SECS`, `MVT_CLUSTER__OWNER_URL`,
+`MVT_CLUSTER__SHARED_SECRET`.
+
+### `docs/clustering.md` (new advanced doc)
+
+A standalone advanced topic (same style as `docs/plugins.md`), linked from the
+README "Advanced usage" list. Outline:
+
+1. **Overview** — the staleness problem and the single-SQLite constraint.
+2. **Situation 1 — same host (shared volume):** `mode: shared`, shared-volume
+   setup, `config_watch_interval_secs`.
+3. **Situation 2 — different hosts (owner/client):** roles, `owner_url`,
+   `shared_secret`, the internal API, GeoServer master/slave analogy.
+4. **Load balancer (nginx) example:** the full upstream/location config (admin
+   and auth to the owner; tiles/styles/legends to the balanced pool; `/internal`
+   not exposed).
+5. **Security:** cluster secret, TLS / private network requirement (hashes cross
+   hosts), not exposing `/internal`.
+6. **Behavior & limits:** propagation delay (≤ interval), owner as single writer,
+   client cold-start needs the owner, tile cache invalidation out of scope.
+7. **Verification:** the two-instance smoke test.
+
+### README
+
+Add a one-line link to `docs/clustering.md` under the existing "Advanced usage"
+section.
+
 ## Testing strategy
 
 TDD (failing test → implementation). Three levels:
