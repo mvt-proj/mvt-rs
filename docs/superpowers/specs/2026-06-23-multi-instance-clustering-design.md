@@ -24,6 +24,23 @@ There is **always a single SQLite database** for the configuration. No Postgres
 or Redis as a config store, and no per-host SQLite copies. The data PostGIS is
 remote / third-party-managed and is out of scope for config storage.
 
+## Backward compatibility (default behavior)
+
+If the `config.yaml` has **no `cluster` block at all**, the server must behave
+**exactly as it does today**: a single standalone instance. This is guaranteed
+by:
+
+- `cluster` is `#[serde(default)]` and `cluster.mode` defaults to `"standalone"`.
+- `standalone` initializes the local SQLite, runs **no** watcher, exposes **no**
+  internal API, and mounts the **full** current router.
+- No new config keys are required; `owner_url`/`shared_secret` stay `None`.
+
+The one mechanism that changes even in `standalone` is the styles read path
+(styles are now served from the in-memory `STYLES` cache instead of a per-request
+SQLite read). This stays functionally identical **only if** style writes refresh
+that cache inline — see the Styles cache section. With that in place, a single
+instance behaves indistinguishably from today.
+
 ## Architecture overview
 
 The config source of truth is one SQLite file. The in-memory state derives from
@@ -183,6 +200,19 @@ The public read endpoints switch from SQLite to the in-memory cache so clients
   look up the style by `category:name` in `get_styles_cache()` (in memory).
 - The admin style pages (`html::admin::styles::*`) keep using the pool — they run
   only on the owner (routed there by nginx) and are write/list paths.
+
+**Inline cache refresh on style writes (required for `standalone`/`owner`).**
+Today's admin handlers update their in-memory global inline after a write
+(`get_catalog().write()` in `src/html/admin/catalog.rs:194`, `get_auth().write()`
+in `src/html/admin/users.rs:111`, etc.). Styles have no such refresh today
+because they were not cached. The style write handlers
+(`create_style`/`update_style`/`delete_style`) must now, after the SQLite write
+and the `config_version` bump, refresh the `STYLES` global inline (re-read via
+`get_styles` and swap under the `RwLock`). This is essential because
+`standalone`/`owner` run **no watcher** — without the inline refresh, a style edit
+on a single instance would not be reflected by the public endpoint (which now
+reads from the cache). For `shared`/`client`, the watcher also covers it, but the
+inline refresh keeps the writing instance instantly consistent.
 
 ### Internal API (owner only)
 
@@ -395,6 +425,11 @@ TDD (failing test → implementation). Three levels:
    `current_version`/`fetch_snapshot` match the owner's `LocalBackend`.
 
 **C. Manual verification** (touches global singletons / nginx):
+
+0. **Backward-compatibility (standalone)**: with no `cluster` block in
+   `config.yaml`, the server starts as today. Edit a style in the admin panel and
+   immediately `GET /styles/{cat:name}` reflects the change (inline cache refresh,
+   no watcher, no restart). Confirms default behavior is unchanged.
 
 9. Owner+client smoke test: owner on `:5887` (temp SQLite), client on `:5888`
    with `owner_url` + secret + short interval (3s).
