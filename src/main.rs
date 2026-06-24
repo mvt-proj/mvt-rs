@@ -4,6 +4,7 @@ use salvo::server::ServerHandle;
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::sync::{Arc, OnceLock};
+use std::time::Duration;
 use tokio::signal;
 use tokio::sync::{OnceCell, RwLock};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -211,6 +212,14 @@ async fn main() -> AppResult<()> {
     CATEGORIES.set(RwLock::new(categories)).unwrap();
     AUTH.set(RwLock::new(auth)).unwrap();
     STYLES.set(RwLock::new(styles)).unwrap();
+
+    if settings.cluster.mode == "shared" {
+        cluster::watcher::start_config_watcher(
+            cluster::backend::SyncBackend::Local { pool: get_cf_pool() },
+            Duration::from_secs(settings.cluster.config_watch_interval_secs),
+            settings.paths.config.clone(),
+        );
+    }
 
     let i18n_service = Arc::new(i18n::I18n::new());
 
