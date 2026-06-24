@@ -47,7 +47,8 @@ cluster:
   # standalone | shared | owner | client
   #   standalone : single instance (default).
   #   shared     : several instances on the SAME host sharing one SQLite file
-  #                via a shared volume (situation 1).
+  #                via a shared volume (all must open the same file path; typically
+  #                same-host jails/containers, as SQLite over NFS is unreliable).
   #   owner      : holds the single SQLite and exposes the internal sync API
   #                (situation 2, cross-host).
   #   client     : no local SQLite; pulls config from the owner over HTTP
@@ -57,7 +58,7 @@ cluster:
   # How often (seconds) each non-owner instance polls for config changes.
   config_watch_interval_secs: 10
 
-  # Required when mode = client: base URL of the owner instance.
+  # Required when mode = client (ignored for other modes): base URL of the owner instance.
   # owner_url: "https://owner-host:5887"
 
   # Required when mode = owner or client: shared secret authorizing the internal

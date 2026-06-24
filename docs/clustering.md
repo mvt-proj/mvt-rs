@@ -32,8 +32,10 @@ Two deployment situations are supported:
 ## Situation 1 — Same host (shared volume)
 
 All instances run on the same machine and mount the same directory containing
-`mvtrs.db`. The watcher reads the version counter directly from the shared SQLite
-file; no network call is needed.
+`mvtrs.db`. All instances must open the same SQLite file via a shared filesystem path
+(a shared volume) — typically same-host jails or containers, because SQLite over a
+network filesystem (NFS) is unreliable. The watcher reads the version counter directly
+from the shared SQLite file; no network call is needed.
 
 ### Configuration
 
@@ -232,8 +234,11 @@ The following two-instance smoke test verifies the end-to-end sync path:
    style (save both).
 
 4. Wait 5–10 seconds (one poll interval). Without restarting the client, request the
-   same layer and style from the **client** (`http://localhost:5888/`). Both changes
-   should be reflected.
+   same layer and style from the **client** via the public read endpoints:
+   - Tile: `GET http://localhost:5888/services/tiles/<layer>/<z>/<x>/<y>.pbf`
+   - Style: `GET http://localhost:5888/services/styles/<category:name>`
+   (Note: clients have no admin panel, so `/api/catalog/layer` and `/api/admin/...`
+   are unavailable; use only `/services/...` endpoints.) Both changes should be reflected.
 
 5. Confirm the internal API is protected:
    ```bash
