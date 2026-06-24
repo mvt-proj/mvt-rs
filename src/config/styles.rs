@@ -1,4 +1,5 @@
 use crate::get_cf_pool;
+use crate::config::system_settings::bump_config_version;
 use crate::models::{category::Category, styles::Style};
 use sqlx::{Row, sqlite::SqlitePool};
 
@@ -152,6 +153,8 @@ pub async fn create_style(style: Style, pool: Option<&SqlitePool>) -> Result<(),
     .execute(pool)
     .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -173,6 +176,8 @@ pub async fn update_style(style: Style, pool: Option<&SqlitePool>) -> Result<(),
     .execute(pool)
     .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -189,5 +194,21 @@ pub async fn delete_style(id: &str, pool: Option<&SqlitePool>) -> Result<(), sql
     .execute(pool)
     .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::system_settings::get_config_version;
+    use crate::config::test_support::in_memory_pool;
+
+    #[tokio::test]
+    async fn delete_style_bumps_version() {
+        let pool = in_memory_pool().await;
+        delete_style("nonexistent", Some(&pool)).await.unwrap();
+        assert_eq!(get_config_version(&pool).await.unwrap(), 1);
+    }
 }
