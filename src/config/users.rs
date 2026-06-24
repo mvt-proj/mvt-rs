@@ -1,5 +1,6 @@
 use crate::auth::{Group, User};
 use crate::get_cf_pool;
+use crate::config::system_settings::bump_config_version;
 use sqlx::{Row, sqlite::SqlitePool};
 use std::collections::HashMap;
 
@@ -82,6 +83,8 @@ pub async fn create_user(user: &User, pool: Option<&SqlitePool>) -> Result<(), s
         .execute(pool)
         .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -110,6 +113,8 @@ pub async fn update_user(
         .execute(pool)
         .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -121,5 +126,21 @@ pub async fn delete_user(id: String, pool: Option<&SqlitePool>) -> Result<(), sq
         .execute(pool)
         .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::system_settings::get_config_version;
+    use crate::config::test_support::in_memory_pool;
+
+    #[tokio::test]
+    async fn delete_user_bumps_version() {
+        let pool = in_memory_pool().await;
+        delete_user("nonexistent".to_string(), Some(&pool)).await.unwrap();
+        assert_eq!(get_config_version(&pool).await.unwrap(), 1);
+    }
 }
