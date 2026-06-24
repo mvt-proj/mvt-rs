@@ -1,5 +1,6 @@
 use crate::auth::Group;
 use crate::get_cf_pool;
+use crate::config::system_settings::bump_config_version;
 use crate::models::{catalog::Layer, category::Category};
 use sqlx::{Row, sqlite::SqlitePool};
 
@@ -190,6 +191,8 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .execute(pool)
     .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -248,6 +251,8 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .execute(pool)
     .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -258,6 +263,8 @@ pub async fn delete_layer(pool: Option<&SqlitePool>, layer_id: &str) -> Result<(
         .bind(layer_id)
         .execute(pool)
         .await?;
+
+    bump_config_version(pool).await?;
 
     Ok(())
 }
@@ -281,5 +288,21 @@ pub async fn switch_layer_published(
         .execute(pool)
         .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::system_settings::get_config_version;
+    use crate::config::test_support::in_memory_pool;
+
+    #[tokio::test]
+    async fn delete_layer_bumps_version() {
+        let pool = in_memory_pool().await;
+        delete_layer(Some(&pool), "nonexistent").await.unwrap();
+        assert_eq!(get_config_version(&pool).await.unwrap(), 1);
+    }
 }
