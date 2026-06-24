@@ -187,54 +187,106 @@ async fn main() -> AppResult<()> {
         std::process::exit(1);
     }
 
-    let config_path = Path::new(&settings.paths.config).join(&settings.database.sqlite_path);
-    let db_conn = config_path.to_str().expect("Invalid configuration path");
-    let cf_pool = config::db::init_sqlite(db_conn).await?;
-
-    let auth = initialize_auth(&settings.paths.config, &cf_pool).await?;
-    let catalog = initialize_catalog(&cf_pool).await?;
-
-    let db_registry = DbRegistry::new(
-        &settings.postgres_databases.connections,
-        settings.postgres_databases.pool_min,
-        settings.postgres_databases.pool_max,
-    )
-    .await?;
-
-    let categories = get_cf_categories(Some(&cf_pool)).await?;
-    let styles = config::styles::get_styles(Some(&cf_pool)).await?;
-    let cache_wrapper = CacheWrapper::initialize_cache(
-        settings.database.redis_url.clone(),
-        settings.paths.cache.clone().into(),
-        catalog.clone(),
-    )
-    .await?;
-
-    let plugin_registry = plugins::LuaPluginRegistry::new(&settings.paths.plugins);
-
-    DB_REGISTRY.set(db_registry).unwrap();
-    SQLITE_CONF.set(cf_pool).unwrap();
-    MAP_ASSETS_DIR
-        .set(settings.paths.assets.clone())
-        .unwrap();
-    JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
     CONFIG_DIR.set(settings.paths.config.clone()).unwrap();
-    if let Some(secret) = settings.cluster.shared_secret.clone() {
-        CLUSTER_SECRET.set(secret).unwrap();
-    }
-    CACHE_WRAPPER.set(cache_wrapper).unwrap();
-    PLUGIN_REGISTRY.set(plugin_registry).unwrap();
-    CATALOG.set(RwLock::new(catalog)).unwrap();
-    CATEGORIES.set(RwLock::new(categories)).unwrap();
-    AUTH.set(RwLock::new(auth)).unwrap();
-    STYLES.set(RwLock::new(styles)).unwrap();
 
-    if settings.cluster.mode == "shared" {
+    if settings.cluster.mode == "client" {
+        let owner_url = settings.cluster.owner_url.clone().expect("client requires owner_url");
+        let secret = settings.cluster.shared_secret.clone().expect("client requires shared_secret");
+        CLUSTER_SECRET.set(secret.clone()).unwrap();
+
+        let snapshot = cluster::bootstrap::bootstrap_from_owner(
+            &owner_url,
+            &secret,
+            Duration::from_secs(settings.cluster.config_watch_interval_secs),
+        )
+        .await;
+
+        // Initialize globals that do not depend on the config SQLite.
+        let db_registry = DbRegistry::new(
+            &settings.postgres_databases.connections,
+            settings.postgres_databases.pool_min,
+            settings.postgres_databases.pool_max,
+        )
+        .await?;
+        let cache_wrapper = CacheWrapper::initialize_cache(
+            settings.database.redis_url.clone(),
+            settings.paths.cache.clone().into(),
+            snapshot.catalog.clone(),
+        )
+        .await?;
+        let plugin_registry = plugins::LuaPluginRegistry::new(&settings.paths.plugins);
+
+        DB_REGISTRY.set(db_registry).unwrap();
+        MAP_ASSETS_DIR.set(settings.paths.assets.clone()).unwrap();
+        JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
+        CACHE_WRAPPER.set(cache_wrapper).unwrap();
+        PLUGIN_REGISTRY.set(plugin_registry).unwrap();
+
+        // Initialize the four in-memory states from the snapshot.
+        CATALOG.set(RwLock::new(snapshot.catalog.clone())).unwrap();
+        CATEGORIES.set(RwLock::new(snapshot.categories.clone())).unwrap();
+        STYLES.set(RwLock::new(snapshot.styles.clone())).unwrap();
+        {
+            let mut auth = snapshot.auth.clone();
+            auth.config_dir = settings.paths.config.clone();
+            AUTH.set(RwLock::new(auth)).unwrap();
+        }
+
         cluster::watcher::start_config_watcher(
-            cluster::backend::SyncBackend::Local { pool: get_cf_pool() },
+            cluster::backend::SyncBackend::remote(owner_url, secret),
             Duration::from_secs(settings.cluster.config_watch_interval_secs),
             settings.paths.config.clone(),
         );
+    } else {
+        // Existing standalone/shared/owner init path.
+        let config_path = Path::new(&settings.paths.config).join(&settings.database.sqlite_path);
+        let db_conn = config_path.to_str().expect("Invalid configuration path");
+        let cf_pool = config::db::init_sqlite(db_conn).await?;
+
+        let auth = initialize_auth(&settings.paths.config, &cf_pool).await?;
+        let catalog = initialize_catalog(&cf_pool).await?;
+
+        let db_registry = DbRegistry::new(
+            &settings.postgres_databases.connections,
+            settings.postgres_databases.pool_min,
+            settings.postgres_databases.pool_max,
+        )
+        .await?;
+
+        let categories = get_cf_categories(Some(&cf_pool)).await?;
+        let styles = config::styles::get_styles(Some(&cf_pool)).await?;
+        let cache_wrapper = CacheWrapper::initialize_cache(
+            settings.database.redis_url.clone(),
+            settings.paths.cache.clone().into(),
+            catalog.clone(),
+        )
+        .await?;
+
+        let plugin_registry = plugins::LuaPluginRegistry::new(&settings.paths.plugins);
+
+        DB_REGISTRY.set(db_registry).unwrap();
+        SQLITE_CONF.set(cf_pool).unwrap();
+        MAP_ASSETS_DIR
+            .set(settings.paths.assets.clone())
+            .unwrap();
+        JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
+        if let Some(secret) = settings.cluster.shared_secret.clone() {
+            CLUSTER_SECRET.set(secret).unwrap();
+        }
+        CACHE_WRAPPER.set(cache_wrapper).unwrap();
+        PLUGIN_REGISTRY.set(plugin_registry).unwrap();
+        CATALOG.set(RwLock::new(catalog)).unwrap();
+        CATEGORIES.set(RwLock::new(categories)).unwrap();
+        AUTH.set(RwLock::new(auth)).unwrap();
+        STYLES.set(RwLock::new(styles)).unwrap();
+
+        if settings.cluster.mode == "shared" {
+            cluster::watcher::start_config_watcher(
+                cluster::backend::SyncBackend::Local { pool: get_cf_pool() },
+                Duration::from_secs(settings.cluster.config_watch_interval_secs),
+                settings.paths.config.clone(),
+            );
+        }
     }
 
     let i18n_service = Arc::new(i18n::I18n::new());
