@@ -304,6 +304,8 @@ mod tests {
         s.cluster.mode = "client".to_string();
         assert!(s.validate().is_err());
         s.cluster.owner_url = Some("https://owner:5887".to_string());
+        // owner_url set but shared_secret still missing → should fail
+        assert!(s.validate().is_err());
         s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
         assert!(s.validate().is_ok());
     }
