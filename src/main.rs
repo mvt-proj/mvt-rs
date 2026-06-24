@@ -11,6 +11,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod api;
 mod auth;
 mod cache;
+mod cluster;
 mod config;
 mod db;
 mod error;

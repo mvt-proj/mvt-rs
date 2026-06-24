@@ -9,4 +9,4 @@ pub mod system_settings;
 pub mod users;
 
 #[cfg(test)]
-mod test_support;
+pub mod test_support;
