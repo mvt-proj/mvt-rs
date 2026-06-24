@@ -228,6 +228,8 @@ pub async fn update_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> A
         })
         .unwrap_or_default();
 
+    let layer_key = format!("{}_{}", category.name, layer_form.name);
+
     let layer = Layer {
         id: layer_form.id,
         category,
@@ -266,6 +268,13 @@ pub async fn update_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> A
         res.status_code(StatusCode::BAD_REQUEST);
         return Err(err);
     }
+
+    // The layer config changed (fields, filter, sql_mode, ...): invalidate its
+    // tile cache exactly like the manual "clear cache" action. This bumps the
+    // layer version so the ETag changes (forcing browsers/QGIS to refetch) and
+    // removes the stale tiles, so the next request regenerates them from the DB
+    // with the updated columns.
+    get_cache_wrapper().delete_layer_cache(&layer_key).await?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
