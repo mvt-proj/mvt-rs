@@ -2452,7 +2452,7 @@ checksum = "dd64d33472e1c6bcccfb1c43e2bb5b007b0c5819340262af20755b1400176317"
 dependencies = [
  "base64",
  "image",
- "reqwest",
+ "reqwest 0.13.1",
  "serde",
  "serde_json",
  "svg",
@@ -2654,6 +2654,7 @@ dependencies = [
  "prometheus",
  "redis",
  "regex",
+ "reqwest 0.12.28",
  "salvo",
  "serde",
  "serde_json",
@@ -3619,6 +3620,44 @@ checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
 name = "reqwest"
+version = "0.12.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
+dependencies = [
+ "base64",
+ "bytes",
+ "futures-core",
+ "http",
+ "http-body",
+ "http-body-util",
+ "hyper",
+ "hyper-rustls",
+ "hyper-util",
+ "js-sys",
+ "log",
+ "percent-encoding",
+ "pin-project-lite",
+ "quinn",
+ "rustls",
+ "rustls-pki-types",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sync_wrapper",
+ "tokio",
+ "tokio-rustls",
+ "tower",
+ "tower-http",
+ "tower-service",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "webpki-roots",
+]
+
+[[package]]
+name = "reqwest"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04e9018c9d814e5f30cc16a0f03271aeab3571e609612d9fe78c1aa8d11c2f62"
@@ -3960,7 +3999,7 @@ dependencies = [
  "hyper-util",
  "local-ip-address",
  "percent-encoding",
- "reqwest",
+ "reqwest 0.13.1",
  "salvo_core",
  "tokio",
  "tracing",

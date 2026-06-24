@@ -44,6 +44,7 @@ accept-language = "3.1"
 
 maplibre-legend = "0.5.0"
 # maplibre-legend = { path = "../maplibre-legend"}
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 
 tokio-stream = { version = "0.1", features = ["net"] }
 prometheus = "0.14"

@@ -103,6 +103,9 @@ pub enum AppError {
 
     #[error("Web error: {0}")]
     WebError(#[from] salvo::prelude::StatusError),
+
+    #[error("HTTP client error: {0}")]
+    HttpClientError(#[from] reqwest::Error),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
