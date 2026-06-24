@@ -38,6 +38,7 @@ Check out the **[MVT Server Tutorial](TUTORIAL.md)** for a complete step-by-step
 - Managing Layers & Administration UI
 - Consuming Tiles in QGIS, MapLibre, OpenLayers, and Leaflet
 - Advanced usage (Styles, Legends, Sprites, Glyphs)
+- [Clustering / multi-instance behind a load balancer](docs/clustering.md)
 
 ## Configuration
 

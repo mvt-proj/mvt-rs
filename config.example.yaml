@@ -39,3 +39,32 @@ paths:
   cache: "cache"
   assets: "map_assets"
   plugins: "plugins"   # directory scanned for Lua plugin files at startup
+
+# ─── Clustering / multi-instance ──────────────────────────────────────────────
+# Keep in-memory config (catalog, categories, users, groups, styles) fresh across
+# several instances behind a load balancer. Default is a single standalone server.
+cluster:
+  # standalone | shared | owner | client
+  #   standalone : single instance (default).
+  #   shared     : several instances on the SAME host sharing one SQLite file
+  #                via a shared volume (situation 1).
+  #   owner      : holds the single SQLite and exposes the internal sync API
+  #                (situation 2, cross-host).
+  #   client     : no local SQLite; pulls config from the owner over HTTP
+  #                (situation 2, cross-host).
+  mode: "standalone"
+
+  # How often (seconds) each non-owner instance polls for config changes.
+  config_watch_interval_secs: 10
+
+  # Required when mode = client: base URL of the owner instance.
+  # owner_url: "https://owner-host:5887"
+
+  # Required when mode = owner or client: shared secret authorizing the internal
+  # /internal/config/* API. Use a strong random value (>= 16 chars). That API
+  # ships config including password hashes, so this traffic MUST go over TLS or a
+  # trusted private network, and /internal must not be exposed publicly.
+  # shared_secret: "change-me-to-a-random-cluster-secret"
+
+# Env-var equivalents: MVT_CLUSTER__MODE, MVT_CLUSTER__CONFIG_WATCH_INTERVAL_SECS,
+# MVT_CLUSTER__OWNER_URL, MVT_CLUSTER__SHARED_SECRET
