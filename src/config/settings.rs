@@ -208,6 +208,19 @@ impl Settings {
             }
         }
 
+        // Every clustered instance must share one Redis cache. With a per-host
+        // disk cache, a config change on one node cannot invalidate the cached
+        // tiles of the others, so peers keep serving stale tiles forever.
+        if self.cluster.mode != "standalone"
+            && self.database.redis_url.as_deref().unwrap_or("").is_empty()
+        {
+            return Err(format!(
+                "Configuration error: cluster.mode = {} requires a shared Redis cache \
+                 (set database.redis_url)",
+                self.cluster.mode
+            ));
+        }
+
         Ok(())
     }
 }
@@ -310,6 +323,7 @@ mod tests {
     #[test]
     fn client_requires_owner_url_and_secret() {
         let mut s = valid_settings();
+        s.database.redis_url = Some("redis://localhost:6379".to_string());
         s.cluster.mode = "client".to_string();
         assert!(s.validate().is_err());
         s.cluster.owner_url = Some("https://owner:5887".to_string());
@@ -322,6 +336,7 @@ mod tests {
     #[test]
     fn owner_requires_secret() {
         let mut s = valid_settings();
+        s.database.redis_url = Some("redis://localhost:6379".to_string());
         s.cluster.mode = "owner".to_string();
         assert!(s.validate().is_err());
         s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
@@ -331,5 +346,26 @@ mod tests {
     #[test]
     fn cache_invalidation_extra_delay_default_is_five() {
         assert_eq!(default_cache_invalidation_extra_delay(), 5);
+    }
+
+    #[test]
+    fn cluster_requires_redis() {
+        // owner/client/shared all need a shared Redis cache; without redis_url
+        // validation must fail even when the mode-specific fields are present.
+        for mode in ["owner", "client", "shared"] {
+            let mut s = valid_settings();
+            s.cluster.mode = mode.to_string();
+            s.cluster.owner_url = Some("https://owner:5887".to_string());
+            s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
+            let err = s.validate().unwrap_err();
+            assert!(err.contains("Redis"), "mode {mode} should require Redis: {err}");
+        }
+    }
+
+    #[test]
+    fn standalone_does_not_require_redis() {
+        let s = valid_settings();
+        assert_eq!(s.cluster.mode, "standalone");
+        assert!(s.validate().is_ok());
     }
 }
