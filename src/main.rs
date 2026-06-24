@@ -58,6 +58,18 @@ pub fn get_jwt_secret() -> &'static String {
     JWT_SECRET.get().unwrap()
 }
 
+static CLUSTER_SECRET: OnceLock<String> = OnceLock::new();
+#[inline]
+pub fn get_cluster_secret() -> &'static str {
+    CLUSTER_SECRET.get().map(|s| s.as_str()).unwrap_or("")
+}
+
+static CONFIG_DIR: OnceLock<String> = OnceLock::new();
+#[inline]
+pub fn get_config_dir() -> &'static str {
+    CONFIG_DIR.get().map(|s| s.as_str()).unwrap_or("")
+}
+
 static CACHE_WRAPPER: OnceLock<CacheWrapper> = OnceLock::new();
 #[inline]
 pub fn get_cache_wrapper() -> &'static CacheWrapper {
@@ -206,6 +218,10 @@ async fn main() -> AppResult<()> {
         .set(settings.paths.assets.clone())
         .unwrap();
     JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
+    CONFIG_DIR.set(settings.paths.config.clone()).unwrap();
+    if let Some(secret) = settings.cluster.shared_secret.clone() {
+        CLUSTER_SECRET.set(secret).unwrap();
+    }
     CACHE_WRAPPER.set(cache_wrapper).unwrap();
     PLUGIN_REGISTRY.set(plugin_registry).unwrap();
     CATALOG.set(RwLock::new(catalog)).unwrap();
