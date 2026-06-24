@@ -55,8 +55,19 @@ cluster:
   #                (situation 2, cross-host).
   mode: "standalone"
 
+  # IMPORTANT: any non-standalone mode (shared | owner | client) REQUIRES a shared
+  # Redis cache (set database.redis_url above). All instances must point at the same
+  # Redis so a config change on one node invalidates the cached tiles of the others.
+  # Startup fails otherwise. With a per-host disk cache, peers would serve stale tiles.
+
   # How often (seconds) each non-owner instance polls for config changes.
   config_watch_interval_secs: 10
+
+  # Extra seconds added to config_watch_interval_secs before the owner clears the
+  # shared cache after a layer edit (owner/shared modes only). The delay lets every
+  # peer reload the new config first, so a lagging peer cannot repopulate the shared
+  # cache with a stale tile. Default 5.
+  cache_invalidation_extra_delay_secs: 5
 
   # Required when mode = client (ignored for other modes): base URL of the owner instance.
   # owner_url: "https://owner-host:5887"
@@ -68,4 +79,5 @@ cluster:
   # shared_secret: "change-me-to-a-random-cluster-secret"
 
 # Env-var equivalents: MVT_CLUSTER__MODE, MVT_CLUSTER__CONFIG_WATCH_INTERVAL_SECS,
-# MVT_CLUSTER__OWNER_URL, MVT_CLUSTER__SHARED_SECRET
+# MVT_CLUSTER__CACHE_INVALIDATION_EXTRA_DELAY_SECS, MVT_CLUSTER__OWNER_URL,
+# MVT_CLUSTER__SHARED_SECRET

@@ -6,7 +6,8 @@ use uuid::Uuid;
 use crate::{
     auth::{Group, User},
     error::{AppError, AppResult},
-    get_auth, get_cache_wrapper, get_catalog, get_categories, get_db_registry,
+    get_auth, get_cache_invalidation_delay, get_cache_wrapper, get_catalog, get_categories,
+    get_db_registry,
     html::utils::{BaseTemplateData, make_base},
     models::{
         catalog::{Layer, StateLayer},
@@ -274,7 +275,25 @@ pub async fn update_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> A
     // layer version so the ETag changes (forcing browsers/QGIS to refetch) and
     // removes the stale tiles, so the next request regenerates them from the DB
     // with the updated columns.
-    get_cache_wrapper().delete_layer_cache(&layer_key).await?;
+    //
+    // In clustered owner/shared modes the invalidation is deferred: update_layer
+    // already bumped config_version, so peers reload the new config within their
+    // watch interval; clearing the shared cache only after that elapses prevents
+    // a lagging peer from repopulating it with a stale tile.
+    match get_cache_invalidation_delay() {
+        Some(delay) => {
+            let key = layer_key.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                if let Err(e) = get_cache_wrapper().delete_layer_cache(&key).await {
+                    tracing::warn!("deferred cache invalidation failed for {key}: {e}");
+                }
+            });
+        }
+        None => {
+            get_cache_wrapper().delete_layer_cache(&layer_key).await?;
+        }
+    }
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);

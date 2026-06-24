@@ -29,6 +29,25 @@ Two deployment situations are supported:
 
 ---
 
+## Shared cache requirement
+
+Any non-standalone mode **requires a shared Redis tile cache** (`database.redis_url`),
+and all instances must point at the same Redis. Startup fails otherwise. This is what
+makes config changes propagate to tiles: the tile bytes and the per-layer cache
+version (used for the ETag) both live in Redis, so when one instance invalidates a
+layer, every instance immediately sees the cleared tiles and the new ETag. With a
+per-host disk cache each instance would have an isolated cache and peers would serve
+stale tiles indefinitely.
+
+**Invalidation timing.** Editing a layer bumps the config version right away, so peers
+start reloading the new config within their watch interval. The actual cache clear is
+**deferred** by `config_watch_interval_secs + cache_invalidation_extra_delay_secs`
+(owner/shared modes). Clearing only after peers have converged prevents a lagging
+instance from regenerating — and re-caching — a tile from the old config in the
+window between the edit and the reload.
+
+---
+
 ## Situation 1 — Same host (shared volume)
 
 All instances run on the same machine and mount the same directory containing
@@ -45,6 +64,7 @@ Set `mode: shared` on every instance and point them all at the same SQLite file:
 # All instances use the same config
 database:
   sqlite_path: "/shared/data/mvtrs.db"
+  redis_url: "redis://shared-redis:6379"   # required: all instances share this cache
 
 cluster:
   mode: "shared"
@@ -55,6 +75,7 @@ Or via environment variables:
 
 ```bash
 MVT_DATABASE__SQLITE_PATH=/shared/data/mvtrs.db
+MVT_DATABASE__REDIS_URL=redis://shared-redis:6379
 MVT_CLUSTER__MODE=shared
 MVT_CLUSTER__CONFIG_WATCH_INTERVAL_SECS=10
 ```
@@ -79,15 +100,20 @@ from the owner on startup, and refreshes on a polling interval thereafter.
 ### Owner configuration
 
 ```yaml
+database:
+  redis_url: "redis://shared-redis:6379"   # required: same Redis as every client
+
 cluster:
   mode: "owner"
   config_watch_interval_secs: 10   # owner's own watcher is a no-op, but set for clarity
+  cache_invalidation_extra_delay_secs: 5   # extra wait before clearing the shared cache
   shared_secret: "change-me-to-a-random-cluster-secret"
 ```
 
 Environment variables:
 
 ```bash
+MVT_DATABASE__REDIS_URL=redis://shared-redis:6379
 MVT_CLUSTER__MODE=owner
 MVT_CLUSTER__SHARED_SECRET=change-me-to-a-random-cluster-secret
 ```
@@ -95,6 +121,9 @@ MVT_CLUSTER__SHARED_SECRET=change-me-to-a-random-cluster-secret
 ### Client configuration
 
 ```yaml
+database:
+  redis_url: "redis://shared-redis:6379"   # required: same Redis as the owner
+
 cluster:
   mode: "client"
   config_watch_interval_secs: 10
@@ -105,6 +134,7 @@ cluster:
 Environment variables:
 
 ```bash
+MVT_DATABASE__REDIS_URL=redis://shared-redis:6379
 MVT_CLUSTER__MODE=client
 MVT_CLUSTER__CONFIG_WATCH_INTERVAL_SECS=10
 MVT_CLUSTER__OWNER_URL=https://owner-host:5887
@@ -204,7 +234,8 @@ The `/internal/config/snapshot` response contains the full serialized config,
 | Single writer | Only the owner (or any instance in `shared` mode) can persist config changes |
 | Client cold-start | A `client` instance retries until the owner is reachable; startup blocks until the first snapshot is applied |
 | Owner down | Clients continue serving from their last in-memory snapshot but cannot pick up new config changes; new clients cannot cold-start |
-| Tile-cache invalidation | Out of scope — Redis or disk tile caches are not invalidated across instances when config changes |
+| Shared cache required | Every non-standalone mode requires a shared Redis cache (`database.redis_url`); startup fails without it. All instances must point at the same Redis. |
+| Tile-cache invalidation | Editing a layer clears that layer's tiles and bumps its cache version in the shared Redis, so all instances drop the stale tiles and clients get a new ETag. In `owner`/`shared` modes the clear is deferred by `config_watch_interval_secs + cache_invalidation_extra_delay_secs` so peers reload the new config before the cache is repopulated. |
 | Backward compatibility | `mode: standalone` (the default) adds no watcher, no internal API, and uses the full router — identical to pre-clustering behaviour |
 
 ---

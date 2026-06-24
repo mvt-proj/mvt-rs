@@ -70,6 +70,15 @@ pub fn get_config_dir() -> &'static str {
     CONFIG_DIR.get().map(|s| s.as_str()).unwrap_or("")
 }
 
+/// Delay applied before invalidating the shared cache after a layer edit.
+/// `Some` in clustered owner/shared modes (so peers reload the new config
+/// before the cache is cleared); `None` means invalidate immediately.
+static CACHE_INVALIDATION_DELAY: OnceLock<Option<Duration>> = OnceLock::new();
+#[inline]
+pub fn get_cache_invalidation_delay() -> Option<Duration> {
+    CACHE_INVALIDATION_DELAY.get().copied().flatten()
+}
+
 static CACHE_WRAPPER: OnceLock<CacheWrapper> = OnceLock::new();
 #[inline]
 pub fn get_cache_wrapper() -> &'static CacheWrapper {
@@ -188,6 +197,19 @@ async fn main() -> AppResult<()> {
     }
 
     CONFIG_DIR.set(settings.paths.config.clone()).unwrap();
+
+    // In clustered owner/shared modes, defer cache invalidation so every peer
+    // reloads the edited config (within its watch interval) before the shared
+    // cache is cleared; otherwise a lagging peer could repopulate it with a
+    // stale tile. Standalone/client clear immediately (client has no admin).
+    let cache_invalidation_delay = match settings.cluster.mode.as_str() {
+        "owner" | "shared" => Some(Duration::from_secs(
+            settings.cluster.config_watch_interval_secs
+                + settings.cluster.cache_invalidation_extra_delay_secs,
+        )),
+        _ => None,
+    };
+    CACHE_INVALIDATION_DELAY.set(cache_invalidation_delay).unwrap();
 
     if settings.cluster.mode == "client" {
         let owner_url = settings.cluster.owner_url.clone().expect("client requires owner_url");

@@ -30,12 +30,19 @@ pub struct ClusterConfig {
     pub mode: String,
     #[serde(default = "default_config_watch_interval")]
     pub config_watch_interval_secs: u64,
+    /// Extra seconds added to `config_watch_interval_secs` before the owner
+    /// invalidates the shared cache after a layer edit, giving every peer time
+    /// to reload the new config first so a lagging instance cannot repopulate
+    /// the cache with a stale tile. See cluster cache-invalidation timing.
+    #[serde(default = "default_cache_invalidation_extra_delay")]
+    pub cache_invalidation_extra_delay_secs: u64,
     pub owner_url: Option<String>,
     pub shared_secret: Option<String>,
 }
 
 fn default_cluster_mode() -> String { "standalone".to_string() }
 fn default_config_watch_interval() -> u64 { 10 }
+fn default_cache_invalidation_extra_delay() -> u64 { 5 }
 
 #[derive(Debug, Deserialize, Default)]
 pub struct DatabaseConfig {
@@ -109,6 +116,7 @@ impl Settings {
             .set_default("paths.plugins", "plugins")?
             .set_default("cluster.mode", "standalone")?
             .set_default("cluster.config_watch_interval_secs", 10)?
+            .set_default("cluster.cache_invalidation_extra_delay_secs", 5)?
             .add_source(
                 config::File::new(&config_path, config::FileFormat::Yaml).required(false),
             )
@@ -239,6 +247,7 @@ mod tests {
             cluster: ClusterConfig {
                 mode: "standalone".to_string(),
                 config_watch_interval_secs: 10,
+                cache_invalidation_extra_delay_secs: 5,
                 owner_url: None,
                 shared_secret: None,
             },
@@ -317,5 +326,10 @@ mod tests {
         assert!(s.validate().is_err());
         s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
         assert!(s.validate().is_ok());
+    }
+
+    #[test]
+    fn cache_invalidation_extra_delay_default_is_five() {
+        assert_eq!(default_cache_invalidation_extra_delay(), 5);
     }
 }
