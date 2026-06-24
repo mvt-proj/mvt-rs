@@ -111,6 +111,7 @@ pub async fn create_style<'a>(res: &mut Response, style_form: NewStyle<'a>) -> A
         return Err(err);
     }
 
+    crate::reload_styles_cache().await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/styles"));
@@ -152,6 +153,7 @@ pub async fn update_style<'a>(res: &mut Response, style_form: NewStyle<'a>) -> A
         return Err(err);
     }
 
+    crate::reload_styles_cache().await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/styles"));
@@ -179,6 +181,7 @@ pub async fn delete_style(req: &mut Request, res: &mut Response) -> AppResult<()
         return Err(err);
     }
 
+    crate::reload_styles_cache().await?;
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
     res.render(Redirect::other("/admin/styles"));

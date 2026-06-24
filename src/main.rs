@@ -27,7 +27,7 @@ use crate::db::connection::DbRegistry;
 use crate::error::AppResult;
 use auth::Auth;
 use cache::cachewrapper::CacheWrapper;
-use models::{catalog::Catalog, category::Category};
+use models::{catalog::Catalog, category::Category, styles::Style};
 use monitor::start_system_monitor;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -84,6 +84,18 @@ static AUTH: OnceCell<RwLock<Auth>> = OnceCell::const_new();
 #[inline]
 pub async fn get_auth() -> &'static RwLock<Auth> {
     AUTH.get().unwrap()
+}
+
+static STYLES: OnceCell<RwLock<Vec<Style>>> = OnceCell::const_new();
+#[inline]
+pub async fn get_styles_cache() -> &'static RwLock<Vec<Style>> {
+    STYLES.get().unwrap()
+}
+
+pub async fn reload_styles_cache() -> AppResult<()> {
+    let styles = config::styles::get_styles(Some(get_cf_pool())).await?;
+    *get_styles_cache().await.write().await = styles;
+    Ok(())
 }
 
 async fn initialize_auth(config_dir: &str, pool: &SqlitePool) -> AppResult<Auth> {
@@ -176,6 +188,7 @@ async fn main() -> AppResult<()> {
     .await?;
 
     let categories = get_cf_categories(Some(&cf_pool)).await?;
+    let styles = config::styles::get_styles(Some(&cf_pool)).await?;
     let cache_wrapper = CacheWrapper::initialize_cache(
         settings.database.redis_url.clone(),
         settings.paths.cache.clone().into(),
@@ -196,6 +209,7 @@ async fn main() -> AppResult<()> {
     CATALOG.set(RwLock::new(catalog)).unwrap();
     CATEGORIES.set(RwLock::new(categories)).unwrap();
     AUTH.set(RwLock::new(auth)).unwrap();
+    STYLES.set(RwLock::new(styles)).unwrap();
 
     let i18n_service = Arc::new(i18n::I18n::new());
 
