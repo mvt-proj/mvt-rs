@@ -2,6 +2,10 @@ use sqlx::SqlitePool;
 
 use crate::error::AppResult;
 
+// Consumed by the plugin cluster watcher (src/plugins/watcher.rs) and the
+// plugins API (src/api/plugins.rs), which are not yet wired into the module
+// tree. Kept ahead of that paused work; remove the allow once they are mounted.
+#[allow(dead_code)]
 pub async fn get_plugins_version(pool: &SqlitePool) -> AppResult<i64> {
     let row: (String,) =
         sqlx::query_as("SELECT value FROM system_settings WHERE key = 'plugins_version'")
@@ -10,6 +14,7 @@ pub async fn get_plugins_version(pool: &SqlitePool) -> AppResult<i64> {
     Ok(row.0.parse().unwrap_or(0))
 }
 
+#[allow(dead_code)]
 pub async fn bump_plugins_version(pool: &SqlitePool) -> AppResult<i64> {
     let new_version: (i64,) = sqlx::query_as(
         "UPDATE system_settings SET value = CAST(value AS INTEGER) + 1

@@ -27,6 +27,67 @@ Two deployment situations are supported:
 | Same host, shared volume | All instances on one machine sharing a single SQLite file | `shared` |
 | Different hosts | Owner instance exposes an HTTP sync API; clients pull from it | `owner` + `client` |
 
+### Topology — owner / client (different hosts)
+
+```text
+                              ┌──────────────────────────┐
+                              │   Load balancer (nginx)  │
+                              │                          │
+        writes ───────────────┤  /admin /auth /api/admin │
+   (admin/config)             │      → owner only        │
+                              │                          │
+        reads  ───────────────┤  /services/* /  → pool   │
+   (tiles/styles)             └────────────┬─────────────┘
+                                           │
+          ┌────────────────────────────────┼────────────────────────────────┐
+          │                                │                                │
+          ▼                                ▼                                ▼
+┌───────────────────┐          ┌───────────────────┐          ┌───────────────────┐
+│   OWNER  :5887    │          │  CLIENT 1  :5887  │          │  CLIENT 2  :5887  │
+│  (single writer)  │          │   (read-only)     │          │   (read-only)     │
+│                   │          │                   │          │                   │
+│ full router       │          │ reduced router    │          │ reduced router    │
+│ admin + write API │          │ tiles/styles/leg. │          │ tiles/styles/leg. │
+│ in-mem config ◀─┐ │          │ in-mem config     │          │ in-mem config     │
+│                 │ │          │      ▲            │          │      ▲            │
+│ ┌─────────────┐ │ │          │      │ watcher    │          │      │ watcher    │
+│ │  SQLite     │ │ │          │      │ polls      │          │      │ polls      │
+│ │  mvtrs.db   │ │ │          │      │ every N s  │          │      │ every N s  │
+│ │ config_ver  │ │ │          └──────┼────────────┘          └──────┼────────────┘
+│ └─────────────┘ │ │                 │                              │
+│                 │ │   GET /internal/config/version   (x-cluster-secret)
+│ ┌─────────────┐ │ └───────GET /internal/config/snapshot───────────┘
+│ │ /internal   │ │            (full config incl. password hashes)
+│ │ sync API    │─┘
+│ └─────────────┘ │
+└─────────┬─────────┘          ┌───────────────────────────────────────────────┐
+          │                    │            SHARED Redis (required)            │
+          └────────────────────┤  tile bytes  +  per-layer cache version (ETag)│
+   every instance reads/writes ┤  one edit → all instances drop stale tiles    │
+                               └───────────────────────────────────────────────┘
+
+Flow on a layer edit:
+  1. admin write hits OWNER → updates SQLite + bumps config_version
+  2. CLIENT watchers see new version → pull snapshot → swap in-mem config
+  3. cache clear deferred (interval + extra_delay) so peers converge first
+```
+
+### Topology — shared (same host, shared volume)
+
+```text
+   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+   │ instance A   │   │ instance B   │   │ instance C   │   (all mode: shared,
+   │ in-mem cfg ◀─┤   │ in-mem cfg ◀─┤   │ in-mem cfg ◀─┤    any can write)
+   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘
+          │ watcher reads config_version directly from file
+          └─────────────┬──────────────┬─────────────┘
+                        ▼              ▼
+              ┌────────────────┐  ┌────────────────┐
+              │ shared SQLite  │  │ shared Redis   │
+              │ /shared/mvtrs  │  │ tiles + ETag   │
+              └────────────────┘  └────────────────┘
+```
+
 ---
 
 ## Shared cache requirement
