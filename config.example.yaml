@@ -39,3 +39,45 @@ paths:
   cache: "cache"
   assets: "map_assets"
   plugins: "plugins"   # directory scanned for Lua plugin files at startup
+
+# ─── Clustering / multi-instance ──────────────────────────────────────────────
+# Keep in-memory config (catalog, categories, users, groups, styles) fresh across
+# several instances behind a load balancer. Default is a single standalone server.
+cluster:
+  # standalone | shared | owner | client
+  #   standalone : single instance (default).
+  #   shared     : several instances on the SAME host sharing one SQLite file
+  #                via a shared volume (all must open the same file path; typically
+  #                same-host jails/containers, as SQLite over NFS is unreliable).
+  #   owner      : holds the single SQLite and exposes the internal sync API
+  #                (situation 2, cross-host).
+  #   client     : no local SQLite; pulls config from the owner over HTTP
+  #                (situation 2, cross-host).
+  mode: "standalone"
+
+  # IMPORTANT: any non-standalone mode (shared | owner | client) REQUIRES a shared
+  # Redis cache (set database.redis_url above). All instances must point at the same
+  # Redis so a config change on one node invalidates the cached tiles of the others.
+  # Startup fails otherwise. With a per-host disk cache, peers would serve stale tiles.
+
+  # How often (seconds) each non-owner instance polls for config changes.
+  config_watch_interval_secs: 10
+
+  # Extra seconds added to config_watch_interval_secs before the owner clears the
+  # shared cache after a layer edit (owner/shared modes only). The delay lets every
+  # peer reload the new config first, so a lagging peer cannot repopulate the shared
+  # cache with a stale tile. Default 5.
+  cache_invalidation_extra_delay_secs: 5
+
+  # Required when mode = client (ignored for other modes): base URL of the owner instance.
+  # owner_url: "https://owner-host:5887"
+
+  # Required when mode = owner or client: shared secret authorizing the internal
+  # /internal/config/* API. Use a strong random value (>= 16 chars). That API
+  # ships config including password hashes, so this traffic MUST go over TLS or a
+  # trusted private network, and /internal must not be exposed publicly.
+  # shared_secret: "change-me-to-a-random-cluster-secret"
+
+# Env-var equivalents: MVT_CLUSTER__MODE, MVT_CLUSTER__CONFIG_WATCH_INTERVAL_SECS,
+# MVT_CLUSTER__CACHE_INVALIDATION_EXTRA_DELAY_SECS, MVT_CLUSTER__OWNER_URL,
+# MVT_CLUSTER__SHARED_SECRET

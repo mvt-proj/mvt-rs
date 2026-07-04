@@ -18,7 +18,7 @@ pub async fn index(req: &mut Request, res: &mut Response) -> AppResult<()> {
 
     let category = parts.first().unwrap_or(&"");
     let name = parts.get(1).unwrap_or(&"");
-    let style = Style::from_category_and_name(category, name).await?;
+    let style = Style::from_category_and_name_cached(category, name).await?;
 
     let legend = MapLibreLegend::new(
         &style.style,

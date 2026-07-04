@@ -25,6 +25,26 @@ fn default_host() -> String { "0.0.0.0".to_string() }
 fn default_port() -> u16 { 5887 }
 
 #[derive(Debug, Deserialize, Default)]
+pub struct ClusterConfig {
+    #[serde(default = "default_cluster_mode")]
+    pub mode: String,
+    #[serde(default = "default_config_watch_interval")]
+    pub config_watch_interval_secs: u64,
+    /// Extra seconds added to `config_watch_interval_secs` before the owner
+    /// invalidates the shared cache after a layer edit, giving every peer time
+    /// to reload the new config first so a lagging instance cannot repopulate
+    /// the cache with a stale tile. See cluster cache-invalidation timing.
+    #[serde(default = "default_cache_invalidation_extra_delay")]
+    pub cache_invalidation_extra_delay_secs: u64,
+    pub owner_url: Option<String>,
+    pub shared_secret: Option<String>,
+}
+
+fn default_cluster_mode() -> String { "standalone".to_string() }
+fn default_config_watch_interval() -> u64 { 10 }
+fn default_cache_invalidation_extra_delay() -> u64 { 5 }
+
+#[derive(Debug, Deserialize, Default)]
 pub struct DatabaseConfig {
     #[serde(default = "default_sqlite")]
     pub sqlite_path: String,
@@ -74,6 +94,7 @@ pub struct Settings {
     #[serde(default)] pub postgres_databases: PostgresDatabasesConfig,
     #[serde(default)] pub security: SecurityConfig,
     #[serde(default)] pub paths: PathConfig,
+    #[serde(default)] pub cluster: ClusterConfig,
 }
 
 impl Settings {
@@ -93,6 +114,9 @@ impl Settings {
             .set_default("paths.cache", "cache")?
             .set_default("paths.assets", "map_assets")?
             .set_default("paths.plugins", "plugins")?
+            .set_default("cluster.mode", "standalone")?
+            .set_default("cluster.config_watch_interval_secs", 10)?
+            .set_default("cluster.cache_invalidation_extra_delay_secs", 5)?
             .add_source(
                 config::File::new(&config_path, config::FileFormat::Yaml).required(false),
             )
@@ -158,6 +182,45 @@ impl Settings {
             );
         }
 
+        match self.cluster.mode.as_str() {
+            "standalone" | "shared" => {}
+            "owner" => {
+                if self.cluster.shared_secret.as_deref().unwrap_or("").is_empty() {
+                    return Err("Configuration error: cluster.mode = owner requires \
+                        cluster.shared_secret".to_string());
+                }
+            }
+            "client" => {
+                if self.cluster.owner_url.as_deref().unwrap_or("").is_empty() {
+                    return Err("Configuration error: cluster.mode = client requires \
+                        cluster.owner_url".to_string());
+                }
+                if self.cluster.shared_secret.as_deref().unwrap_or("").is_empty() {
+                    return Err("Configuration error: cluster.mode = client requires \
+                        cluster.shared_secret".to_string());
+                }
+            }
+            other => {
+                return Err(format!(
+                    "Configuration error: invalid cluster.mode '{other}' \
+                     (expected standalone | shared | owner | client)"
+                ));
+            }
+        }
+
+        // Every clustered instance must share one Redis cache. With a per-host
+        // disk cache, a config change on one node cannot invalidate the cached
+        // tiles of the others, so peers keep serving stale tiles forever.
+        if self.cluster.mode != "standalone"
+            && self.database.redis_url.as_deref().unwrap_or("").is_empty()
+        {
+            return Err(format!(
+                "Configuration error: cluster.mode = {} requires a shared Redis cache \
+                 (set database.redis_url)",
+                self.cluster.mode
+            ));
+        }
+
         Ok(())
     }
 }
@@ -193,6 +256,13 @@ mod tests {
                 cache: "cache".to_string(),
                 assets: "map_assets".to_string(),
                 plugins: "plugins".to_string(),
+            },
+            cluster: ClusterConfig {
+                mode: "standalone".to_string(),
+                config_watch_interval_secs: 10,
+                cache_invalidation_extra_delay_secs: 5,
+                owner_url: None,
+                shared_secret: None,
             },
         }
     }
@@ -231,5 +301,71 @@ mod tests {
         s.database.redis_url = Some("".to_string());
         let err = s.validate().unwrap_err();
         assert!(err.contains("redis_url"));
+    }
+
+    #[test]
+    fn cluster_mode_default_is_standalone() {
+        assert_eq!(default_cluster_mode(), "standalone");
+    }
+
+    #[test]
+    fn config_watch_interval_default_is_ten() {
+        assert_eq!(default_config_watch_interval(), 10);
+    }
+
+    #[test]
+    fn invalid_cluster_mode_fails() {
+        let mut s = valid_settings();
+        s.cluster.mode = "bogus".to_string();
+        assert!(s.validate().is_err());
+    }
+
+    #[test]
+    fn client_requires_owner_url_and_secret() {
+        let mut s = valid_settings();
+        s.database.redis_url = Some("redis://localhost:6379".to_string());
+        s.cluster.mode = "client".to_string();
+        assert!(s.validate().is_err());
+        s.cluster.owner_url = Some("https://owner:5887".to_string());
+        // owner_url set but shared_secret still missing → should fail
+        assert!(s.validate().is_err());
+        s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
+        assert!(s.validate().is_ok());
+    }
+
+    #[test]
+    fn owner_requires_secret() {
+        let mut s = valid_settings();
+        s.database.redis_url = Some("redis://localhost:6379".to_string());
+        s.cluster.mode = "owner".to_string();
+        assert!(s.validate().is_err());
+        s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
+        assert!(s.validate().is_ok());
+    }
+
+    #[test]
+    fn cache_invalidation_extra_delay_default_is_five() {
+        assert_eq!(default_cache_invalidation_extra_delay(), 5);
+    }
+
+    #[test]
+    fn cluster_requires_redis() {
+        // owner/client/shared all need a shared Redis cache; without redis_url
+        // validation must fail even when the mode-specific fields are present.
+        for mode in ["owner", "client", "shared"] {
+            let mut s = valid_settings();
+            s.cluster.mode = mode.to_string();
+            s.cluster.owner_url = Some("https://owner:5887".to_string());
+            s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
+            let err = s.validate().unwrap_err();
+            assert!(err.contains("Redis"), "mode {mode} should require Redis: {err}");
+        }
+    }
+
+    #[test]
+    fn standalone_does_not_require_redis() {
+        let s = valid_settings();
+        assert_eq!(s.cluster.mode, "standalone");
+        assert!(s.validate().is_ok());
     }
 }

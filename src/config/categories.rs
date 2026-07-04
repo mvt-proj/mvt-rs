@@ -1,5 +1,6 @@
 use crate::get_cf_pool;
 use crate::models::category::Category;
+use crate::config::system_settings::bump_config_version;
 use sqlx::{Row, sqlite::SqlitePool};
 
 pub async fn get_categories(pool: Option<&SqlitePool>) -> Result<Vec<Category>, sqlx::Error> {
@@ -39,6 +40,8 @@ pub async fn create_category(
         .execute(pool)
         .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -77,6 +80,8 @@ pub async fn update_category(
         .execute(pool)
         .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
 }
 
@@ -91,5 +96,40 @@ pub async fn delete_category(
         .execute(pool)
         .await?;
 
+    bump_config_version(pool).await?;
+
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::system_settings::get_config_version;
+    use crate::config::test_support::in_memory_pool;
+
+    fn cat(id: &str) -> Category {
+        Category { id: id.into(), name: format!("name-{id}"), description: "d".into() }
+    }
+
+    #[tokio::test]
+    async fn create_category_bumps_version() {
+        let pool = in_memory_pool().await;
+        create_category(Some(&pool), cat("c1")).await.unwrap();
+        assert_eq!(get_config_version(&pool).await.unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn update_category_bumps_version() {
+        let pool = in_memory_pool().await;
+        create_category(Some(&pool), cat("c1")).await.unwrap();
+        update_category(Some(&pool), cat("c1")).await.unwrap();
+        assert_eq!(get_config_version(&pool).await.unwrap(), 2);
+    }
+
+    #[tokio::test]
+    async fn delete_category_bumps_version() {
+        let pool = in_memory_pool().await;
+        delete_category(Some(&pool), "nonexistent").await.unwrap();
+        assert_eq!(get_config_version(&pool).await.unwrap(), 1);
+    }
 }

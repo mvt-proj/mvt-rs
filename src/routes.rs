@@ -318,12 +318,40 @@ async fn strip_tile_cookie(
     }
 }
 
-pub fn app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
+/// Reduced router for `cluster.mode = client`: no SQLite, so only memory-served
+/// reads (tiles/styles/legends), health, and static assets are mounted. Admin,
+/// write API, and `/internal` are intentionally absent (nginx routes those to
+/// the owner).
+pub fn client_app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
     let cache_5s = build_cache_middleware(5);
     let cors_handler = build_cors_handler();
     let session_handler = build_session_handler(settings);
 
     let router = Router::new()
+        .options(handler::empty())
+        .hoop(Logger::default())
+        .hoop(affix_state::inject(i18n_service))
+        .hoop(session_handler)
+        .push(Router::with_path("health").get(health::get_health))
+        .push(build_services_routes(settings, cache_5s))
+        .push(Router::with_path("static/{**path}").get(serve_static));
+
+    Service::new(router)
+        .hoop(strip_tile_cookie)
+        .hoop(cors_handler)
+        .catcher(Catcher::default().hoop(html::errors::handle_errors))
+}
+
+pub fn app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
+    if settings.cluster.mode == "client" {
+        return client_app_router(settings, i18n_service);
+    }
+
+    let cache_5s = build_cache_middleware(5);
+    let cors_handler = build_cors_handler();
+    let session_handler = build_session_handler(settings);
+
+    let mut router = Router::new()
         .options(handler::empty()) // Catch-all OPTIONS para preflight
         .hoop(Logger::default())
         .hoop(affix_state::inject(i18n_service))
@@ -333,6 +361,10 @@ pub fn app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
         .push(Router::with_path("health").get(health::get_health))
         .push(build_services_routes(settings, cache_5s))
         .push(Router::with_path("static/{**path}").get(serve_static));
+
+    if settings.cluster.mode == "owner" {
+        router = router.push(crate::cluster::api::build_internal_routes());
+    }
 
     Service::new(router)
         .hoop(strip_tile_cookie) // outermost: after-phase runs after session_handler
