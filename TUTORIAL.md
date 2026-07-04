@@ -1,13 +1,32 @@
 # MVT Server Tutorial
 
-MVT Server allows you to publish geographic layers in vector tile format on an intranet or the internet for consumption by desktop clients like QGIS, or web clients such as MapLibre, OpenLayers, or Leaflet.
+MVT Server is not just a vector tile server.
 
-MVT Server not only allows you to publish geographic layers in vector tile format, but also includes an administration panel that simplifies the management of publishing your layers and configuring styles.
+It is an open source platform designed to publish vector maps directly from PostGIS. Through a web administration interface you can publish layers, organize them into catalogs and categories, manage users and permissions, configure MapLibre styles, serve legends, sprites and glyphs, monitor the platform and expose production-ready vector tile services without relying on complex configuration files.
 
+## Typical Workflow
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/c7a90392-b180-419e-bc0e-20d3b56ec000" width="40%" />
-</div>
+```text
+PostGIS
+    │
+    ▼
+MVT Server Administration
+    │
+    ├── Publish layers
+    ├── Organize categories
+    ├── Configure permissions
+    ├── Manage MapLibre styles
+    ├── Serve legends
+    ├── Manage cache
+    │
+    ▼
+Vector Tile Services
+    │
+    ├── MapLibre
+    ├── QGIS
+    ├── OpenLayers
+    └── Leaflet
+```
 
 ## Table of Contents
 1. [Requirements](#requirements)
