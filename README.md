@@ -40,7 +40,7 @@ MVT Server supports both **Standalone** and **Cluster** deployments.
 - Shared Redis cache
 - Load balancer support
 
-See `docs/clustering.md`.
+See [docs/clustering.md](docs/clustering.md).
 
 ---
 
@@ -118,7 +118,7 @@ Its goal is not to replace existing tools, but to simplify the publication and a
 
 ## Getting Started
 
-See the **TUTORIAL.md** for installation, configuration, publishing layers, MapLibre styles, QGIS integration, monitoring and clustering.
+See [TUTORIAL.md](TUTORIAL.md) for installation, configuration, publishing layers, MapLibre styles, QGIS integration, monitoring and clustering.
 
 ```sh
 git clone https://github.com/mvt-proj/mvt-rs.git
