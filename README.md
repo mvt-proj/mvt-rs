@@ -1,14 +1,46 @@
-# MVT Server: An Open Source Vector Map Publishing Platform for PostGIS
+# MVT Server: An Open Source Cartographic Publishing Platform for PostGIS and MapLibre
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/f7726fd2-bd84-463b-8389-44d6a43fcef5" width="40%" />
 </div>
 
-**MVT Server** is an open source platform for publishing vector maps directly from PostGIS.
+**MVT Server** is an open source cartographic publishing platform that transforms PostGIS data into production-ready cartographic services.
 
-It combines high-performance vector tile generation with a modern web administration interface for managing layers, styles, categories, authentication, caching, monitoring and map assets.
+It combines high-performance vector tile generation with a modern web administration interface for publishing, organizing and managing layers, maps, styles, legends, glyphs, sprites and related services.
 
 Rather than focusing only on serving vector tiles, MVT Server provides the tools required to publish, organize and operate production-ready vector map services.
+
+---
+
+## What Can MVT Server Publish?
+
+| Resource | Description |
+|---|---|
+| 🗺 Vector Tile Layers | Publish PostGIS tables and views as MVT services |
+| 🌍 Maps | Complete MapLibre maps composed from multiple layers |
+| 🎨 Layer Styles | Reusable styles for individual layers |
+| 📖 Legends | Dynamic legends |
+| 🔤 Glyphs | Font hosting |
+| 🎯 Sprites | Icon hosting |
+
+---
+
+## Deployment
+
+MVT Server supports both **Standalone** and **Cluster** deployments.
+
+### Standalone
+- Single executable
+- Local cache or shared Redis cache
+- Simple installation
+
+### Cluster
+- Multiple instances
+- Shared PostgreSQL/PostGIS
+- Shared Redis cache
+- Load balancer support
+
+See `docs/clustering.md`.
 
 ---
 
