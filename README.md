@@ -1,14 +1,16 @@
-# MVT Server: An Open Source Cartographic Publishing Platform for PostGIS and MapLibre
+# MVT Server
+
+## One Platform. Every Cartographic Resource.
+
+*An Open Source Cartographic Publishing Platform*
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/f7726fd2-bd84-463b-8389-44d6a43fcef5" width="40%" />
 </div>
 
-**MVT Server** is an open source cartographic publishing platform that transforms PostGIS data into production-ready cartographic services.
+**MVT Server** turns PostGIS data into complete, production-ready cartographic services — not just vector tiles.
 
-It combines high-performance vector tile generation with a modern web administration interface for publishing, organizing and managing layers, maps, styles, legends, glyphs, sprites and related services.
-
-Rather than focusing only on serving vector tiles, MVT Server provides the tools required to publish, organize and operate production-ready vector map services.
+Layers, maps, styles, legends, glyphs and sprites are all published, organized and operated from one place: a single Rust binary with a modern web administration interface behind it. No hand-edited config files, no juggling separate tools for each resource.
 
 ---
 
@@ -22,6 +24,34 @@ Rather than focusing only on serving vector tiles, MVT Server provides the tools
 | 📖 Legends | Dynamic legends |
 | 🔤 Glyphs | Font hosting |
 | 🎯 Sprites | Icon hosting |
+
+Every resource above is managed through the same web interface — created, versioned and served without touching a config file.
+
+---
+
+## See It In Action
+
+Two clips, one continuous workflow — from raw PostGIS table to a styled map in QGIS, without touching a config file.
+
+### 1. Publish a layer and consume it as a vector tile service
+
+Publish a PostGIS table as an MVT layer from the admin UI, then connect to it live from QGIS as a Vector Tiles source.
+
+<!--
+Replace with the real asset URL: drag video1_edited.mp4 into a new GitHub issue/comment,
+copy the resulting https://github.com/user-attachments/assets/... link, and paste it below.
+-->
+https://github.com/user-attachments/assets/REPLACE_WITH_VIDEO1_ASSET_ID
+
+### 2. Publish a style and apply it to that layer
+
+Create a MapLibre style from the admin UI and attach it to the layer published in step 1 — same layer, now with cartography.
+
+<!--
+Replace with the real asset URL: drag video2.mkv into a new GitHub issue/comment,
+copy the resulting https://github.com/user-attachments/assets/... link, and paste it below.
+-->
+https://github.com/user-attachments/assets/REPLACE_WITH_VIDEO2_ASSET_ID
 
 ---
 
@@ -48,13 +78,11 @@ See [docs/clustering.md](docs/clustering.md).
 
 Publishing vector maps should be as easy as publishing a web application.
 
-The open source geospatial ecosystem already provides outstanding tools for serving vector tiles, implementing OGC standards and exposing geospatial APIs.
+The open source geospatial ecosystem already provides outstanding tools for serving vector tiles, implementing OGC standards and exposing geospatial APIs. MVT Server focuses on a different challenge:
 
-MVT Server focuses on a different challenge:
+> **One platform to publish, manage and operate every cartographic resource — directly from PostGIS.**
 
-> **Providing a complete platform to publish, manage and operate vector map services directly from PostGIS.**
-
-Instead of manually editing configuration files, administrators can manage the complete publication workflow through a web interface.
+That's the idea behind the slogan: it's not about adding one more tile server to the ecosystem, it's about giving every resource a map needs (layers, styles, legends, glyphs, sprites) a single home, with a web interface instead of hand-edited config files.
 
 ---
 
@@ -77,17 +105,15 @@ Its goal is not to replace existing tools, but to simplify the publication and a
 
 ---
 
-## Key Features
+## Platform Capabilities
 
-### Publishing
+Beyond *what* MVT Server publishes (see the table above), this is *how* it operates as a platform:
 
-- Publish PostGIS tables and views as vector tiles.
+### Sources & Composition
+
 - Multiple PostgreSQL databases.
 - Single-layer, multi-layer and category-based sources.
 - Layer composition.
-- MapLibre Style hosting.
-- Legend server.
-- Sprite and glyph hosting.
 
 ### Administration
 
@@ -118,13 +144,22 @@ Its goal is not to replace existing tools, but to simplify the publication and a
 
 ## Getting Started
 
-See [TUTORIAL.md](TUTORIAL.md) for installation, configuration, publishing layers, MapLibre styles, QGIS integration, monitoring and clustering.
-
 ```sh
 git clone https://github.com/mvt-proj/mvt-rs.git
 cd mvt-rs
 cargo build --release
+./target/release/mvt-rs
 ```
+
+Then open the web administration interface at `http://localhost:<port>` *(confirm/replace with the actual default port)* to connect your PostGIS database and publish your first layer.
+
+See [TUTORIAL.md](TUTORIAL.md) for full installation, configuration, publishing layers, MapLibre styles, QGIS integration, monitoring and clustering instructions.
+
+---
+
+## License
+
+MVT Server is licensed under the [BSD-3-Clause license](https://github.com/mvt-proj/mvt-rs#BSD-3-Clause-1-ov-file).
 
 ---
 
