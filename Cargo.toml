@@ -22,10 +22,7 @@ tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
-# sqlx = { version = "0.9", features = [ "runtime-tokio-rustls" , "postgres", "sqlite", "migrate" ] }
 sqlx = { version = "0.9", features = [ "runtime-tokio", "tls-rustls-aws-lc-rs", "postgres", "sqlite", "migrate" ] }
-
-
 
 redis = { version = "1.2", features = ["tokio-comp"] }
 bb8 = "0.9"
@@ -44,7 +41,7 @@ accept-language = "3.1"
 
 maplibre-legend = "0.5.0"
 # maplibre-legend = { path = "../maplibre-legend"}
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-native-certs"] }
 
 tokio-stream = { version = "0.1", features = ["net"] }
 prometheus = "0.14"
@@ -53,7 +50,7 @@ futures = "0.3"
 libc = "0.2"
 mime_guess = "2.0.5"
 clap = { version = "4.6", features = ["derive"] }
-mlua = { version = "0.11", features = ["lua55", "vendored", "send"] }
+mlua = { version = "0.12", features = ["lua55", "vendored", "send"] }
 
 [[test]]
 name = "integration"
