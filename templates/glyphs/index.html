@@ -6,13 +6,13 @@
 <div class="overflow-auto mt-4 rounded-lg">
 
 
-  <div class="flex justify-between items-center bg-white rounded-lg border border-zinc-300 py-4 px-5 mb-8 space-x-2">
+  <div class="flex justify-between items-center bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 py-4 px-5 mb-8 space-x-2">
     <span id="url-glyphs" class="text-blue-500">
       <span class="server"></span>/services/map_assets/glyphs/{fontstack}/{range}.pbf
     </span>
 
     <button
-      class="flex items-center justify-center w-10 h-10 rounded text-zinc-900 hover:bg-zinc-200"
+      class="flex items-center justify-center w-10 h-10 rounded text-zinc-900 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
       title="{{ base.translate["copy"] }}"
       onclick="copyToClipboard('url-glyphs')"
     >
@@ -38,7 +38,7 @@
         <td class="text-right">
           <div class="flex justify-end space-x-2">
               <button
-                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
                 title="{{ base.translate["copy"] }}"
                 onclick="copyToClipboard('{{ glyph }}')"
               >

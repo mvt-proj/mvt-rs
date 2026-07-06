@@ -48,7 +48,7 @@
             <div class="relative" data-dropdown="{{ layer.id }}">
               <button
                 type="button"
-                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
                 onclick='toggleDropdown("{{ layer.id }}")'
                 aria-haspopup="true"
                 aria-expanded="false"
@@ -58,7 +58,7 @@
 
               <div
                 id="dropdown-menu-{{ layer.id }}"
-                class="hidden absolute right-0 mt-2 w-56 bg-white border border-zinc-200 rounded shadow-lg text-sm z-999"
+                class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg text-sm z-999"
                 role="menu"
                 aria-label="Actions menu"
               >
@@ -67,7 +67,7 @@
                   <li>
                     <button
                       type="button"
-                      class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center space-x-2"
+                      class="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-2"
                       onclick='copyToClipboard("url-{{ layer.category.name }}:{{ layer.name }}"); closeDropdown("{{ layer.id }}")'
                       role="menuitem"
                       title='{{ translate["copy"] }}'
@@ -82,7 +82,7 @@
                     <li>
                       {% if layer.published %}
                         <a
-                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                           href='/maplayer/{{ layer.category.name }}:{{ layer.name }}'
                           target="_blank"
                           role="menuitem"
@@ -94,7 +94,7 @@
                         </a>
                       {% else %}
                         <div
-                          class="block w-full text-left px-3 py-2 items-center space-x-2 text-gray-400 cursor-not-allowed"
+                          class="block w-full text-left px-3 py-2 items-center space-x-2 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
                           role="menuitem"
                           aria-disabled="true"
                           title='{{ translate["map"] }}'
@@ -111,7 +111,7 @@
                     {% if current_user.is_admin() %}
                       <li>
                         <button
-                          class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center space-x-2"
+                          class="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-2"
                           title='{{ translate["info"] }}'
                           onclick="openModal(document.getElementById('cfg-{{ layer.id }}').innerHTML); closeDropdown('{{ layer.id }}')"
                           role="menuitem"
@@ -125,7 +125,7 @@
                       <li>
                         {% if layer.published %}
                           <a
-                            class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                            class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                             href='/maplayer/{{ layer.category.name }}:{{ layer.name }}'
                             target="_blank"
                             role="menuitem"
@@ -137,7 +137,7 @@
                           </a>
                         {% else %}
                           <div
-                            class="block w-full text-left px-3 py-2 items-center space-x-2 text-gray-400 cursor-not-allowed"
+                            class="block w-full text-left px-3 py-2 items-center space-x-2 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
                             role="menuitem"
                             aria-disabled="true"
                             title='{{ translate["map"] }}'
@@ -151,7 +151,7 @@
                       <!-- Switch published -->
                       <li>
                         <a
-                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                           href='/admin/catalog/layers/swichpublished/{{ layer.id }}'
                           role="menuitem"
                           onclick='closeDropdown("{{ layer.id }}")'
@@ -171,7 +171,7 @@
                       <!-- Delete cache -->
                       <li>
                         <a
-                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                           href='/admin/catalog/layers/delete_cache/{{ layer.id }}'
                           role="menuitem"
                           onclick="if(!confirm('{{ translate["confirm-delete-cache"] }}')) return false; closeDropdown('{{ layer.id }}')"
@@ -185,7 +185,7 @@
                       <!-- Edit -->
                       <li>
                         <a
-                          class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                          class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                           href='/admin/catalog/layers/edit/{{ layer.id }}'
                           role="menuitem"
                           onclick='closeDropdown("{{ layer.id }}")'
@@ -199,7 +199,7 @@
                       <!-- Delete publication -->
                       <li>
                         <a
-                          class="block px-3 py-2 hover:bg-red-50 text-red-600 items-center space-x-2"
+                          class="block px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 items-center space-x-2"
                           href='/admin/catalog/layers/delete/{{ layer.id }}'
                           role="menuitem"
                           onclick="if(!confirm('{{ translate["confirm-delete-layer"] }}')) return false; closeDropdown('{{ layer.id }}')"

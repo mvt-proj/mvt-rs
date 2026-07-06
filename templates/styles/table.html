@@ -29,7 +29,7 @@
             <div class="relative" data-dropdown="{{ style.id }}">
               <button
                 type="button"
-                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                class="flex items-center justify-center w-10 h-10 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
                 onclick="toggleDropdown('{{ style.id }}')"
                 aria-haspopup="true"
                 aria-expanded="false"
@@ -39,7 +39,7 @@
 
               <div
                 id="dropdown-menu-{{ style.id }}"
-                class="hidden absolute right-0 mt-2 w-48 bg-white border border-zinc-200 rounded shadow-lg text-sm z-999"
+                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg text-sm z-999"
                 role="menu"
                 aria-label="Actions menu"
               >
@@ -47,7 +47,7 @@
                   <li>
                     <button
                       type="button"
-                      class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center space-x-2"
+                      class="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-2"
                       onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}'); closeDropdown('{{ style.id }}')"
                       role="menuitem"
                     >
@@ -58,7 +58,7 @@
 
                   <li>
                     <a
-                      class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                      class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                       href="/services/legends/{{ style.category.name }}:{{ style.name }}?has_label=true"
                       target="_blank"
                       role="menuitem"
@@ -72,7 +72,7 @@
                   <li>
                     {% if style.is_map() %}
                     <a
-                      class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                      class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                       href="/mapview/{{ style.id }}"
                       target="_blank"
                       role="menuitem"
@@ -82,7 +82,7 @@
                       <span>{{ translate["map"] }}</span>
                     </a>
                     {% else %}
-                    <div class="block w-full text-left px-3 py-2 items-center space-x-2 text-gray-400 cursor-not-allowed">
+                    <div class="block w-full text-left px-3 py-2 items-center space-x-2 text-zinc-400 dark:text-zinc-500 cursor-not-allowed">
                       <span class="w-5"><i class="fas fa-map"></i></span>
                       <span>{{ translate["map"] }}</span>
                     </div>
@@ -93,7 +93,7 @@
                     {% if current_user.is_admin() %}
                   <li>
                     <a
-                      class="block px-3 py-2 hover:bg-gray-50 items-center space-x-2"
+                      class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
                       href="/admin/styles/edit/{{ style.id }}"
                       role="menuitem"
                       onclick="closeDropdown('{{ style.id }}')"
@@ -105,7 +105,7 @@
 
                   <li>
                     <a
-                      class="block px-3 py-2 hover:bg-red-50 text-red-600 items-center space-x-2"
+                      class="block px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 items-center space-x-2"
                       href="/admin/styles/delete/{{ style.id }}"
                       onclick="if(!confirm('{{ translate["confirm-delete-style"] }}')) return false; closeDropdown('{{ style.id }}')"
                       role="menuitem"
