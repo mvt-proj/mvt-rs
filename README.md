@@ -37,21 +37,21 @@ Two clips, one continuous workflow — from raw PostGIS table to a styled map in
 
 Publish a PostGIS table as an MVT layer from the admin UI, then connect to it live from QGIS as a Vector Tiles source.
 
-<!--
-Replace with the real asset URL: drag video1_edited.mp4 into a new GitHub issue/comment,
-copy the resulting https://github.com/user-attachments/assets/... link, and paste it below.
--->
-https://github.com/user-attachments/assets/REPLACE_WITH_VIDEO1_ASSET_ID
+
+
+https://github.com/user-attachments/assets/cb4071d2-39fa-4ccb-99a2-d97bad72e599
+
+
 
 ### 2. Publish a style and apply it to that layer
 
 Create a MapLibre style from the admin UI and attach it to the layer published in step 1 — same layer, now with cartography.
 
-<!--
-Replace with the real asset URL: drag video2.mkv into a new GitHub issue/comment,
-copy the resulting https://github.com/user-attachments/assets/... link, and paste it below.
--->
-https://github.com/user-attachments/assets/REPLACE_WITH_VIDEO2_ASSET_ID
+
+
+https://github.com/user-attachments/assets/220999be-fb03-4c8d-85c0-b520a4037eb7
+
+
 
 ---
 
