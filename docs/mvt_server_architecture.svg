@@ -1,0 +1,113 @@
+<svg width="1000" height="840" viewBox="0 0 1000 840" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img">
+<title>MVT Server architecture: load balancer, owner, read-only clients and shared Redis</title>
+<desc>Diagram showing nginx routing writes only to the owner and reads to the pool of instances; the owner holds SQLite and exposes an internal sync API that clients poll periodically; all instances share Redis for tile caching.</desc>
+
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="1000" height="840" fill="#ffffff"/>
+
+<text x="500" y="32" text-anchor="middle" font-size="19" font-weight="600" fill="#1f2937">MVT Server — multi-instance config sync architecture</text>
+
+<!-- Load balancer -->
+<rect x="300" y="55" width="400" height="65" rx="10" fill="#eef2ff" stroke="#6366f1" stroke-width="1"/>
+<text x="500" y="80" text-anchor="middle" font-size="14" font-weight="600" fill="#312e81">Load balancer (nginx)</text>
+<text x="500" y="99" text-anchor="middle" font-size="11" fill="#4338ca">writes → owner only &#160;·&#160; reads → round-robin pool</text>
+
+<!-- Trunk from LB to bus -->
+<line x1="500" y1="120" x2="500" y2="140" stroke="#6366f1" stroke-width="1.8"/>
+<line x1="200" y1="140" x2="810" y2="140" stroke="#6366f1" stroke-width="1.2"/>
+
+<!-- Drop to OWNER (writes, solid+thick) -->
+<line x1="200" y1="140" x2="200" y2="172" stroke="#4f46e5" stroke-width="2.4" marker-end="url(#arrow)"/>
+<text x="150" y="160" text-anchor="end" font-size="10.5" fill="#4338ca">writes</text>
+<text x="150" y="172" text-anchor="end" font-size="9.5" fill="#6b7280">/admin /auth /api/admin</text>
+
+<!-- Drops to CLIENT1 / CLIENT2 (reads, dashed) -->
+<line x1="510" y1="140" x2="510" y2="172" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+<line x1="810" y1="140" x2="810" y2="172" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+<text x="660" y="160" text-anchor="middle" font-size="10.5" fill="#4338ca">reads → /services/*</text>
+
+<!-- OWNER box -->
+<rect x="60" y="175" width="280" height="330" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1"/>
+<text x="200" y="203" text-anchor="middle" font-size="14" font-weight="600" fill="#4c1d95">OWNER :5887</text>
+<text x="200" y="220" text-anchor="middle" font-size="10.5" fill="#6d28d9">single writer</text>
+<text x="200" y="240" text-anchor="middle" font-size="10.5" fill="#374151">full router · admin + write API</text>
+
+<rect x="80" y="258" width="240" height="70" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+<text x="200" y="280" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">SQLite storage</text>
+<text x="200" y="298" text-anchor="middle" font-size="10.5" fill="#6d28d9">mvtrs.db · config_version</text>
+
+<rect x="80" y="343" width="240" height="62" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+<text x="200" y="366" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">/internal sync API</text>
+<text x="200" y="384" text-anchor="middle" font-size="10.5" fill="#6d28d9">version + full snapshot</text>
+
+<text x="200" y="425" text-anchor="middle" font-size="10" fill="#7c3aed">in-mem config (source of truth)</text>
+<text x="200" y="440" text-anchor="middle" font-size="9.5" fill="#9ca3af">requires header: x-cluster-secret</text>
+
+<!-- CLIENT 1 box -->
+<rect x="380" y="175" width="260" height="330" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+<text x="510" y="203" text-anchor="middle" font-size="14" font-weight="600" fill="#1e3a8a">CLIENT 1 :5887</text>
+<text x="510" y="220" text-anchor="middle" font-size="10.5" fill="#2563eb">read-only</text>
+<text x="510" y="240" text-anchor="middle" font-size="10.5" fill="#374151">reduced router · tiles/styles/leg.</text>
+
+<rect x="400" y="268" width="220" height="66" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="0.8"/>
+<text x="510" y="290" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e3a8a">Config watcher</text>
+<text x="510" y="308" text-anchor="middle" font-size="10.5" fill="#2563eb">polls every N seconds</text>
+
+<text x="510" y="360" text-anchor="middle" font-size="10" fill="#3b82f6">in-mem config</text>
+<text x="510" y="374" text-anchor="middle" font-size="9.5" fill="#9ca3af">swapped when new version detected</text>
+
+<!-- CLIENT 2 box -->
+<rect x="680" y="175" width="260" height="330" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+<text x="810" y="203" text-anchor="middle" font-size="14" font-weight="600" fill="#1e3a8a">CLIENT 2 :5887</text>
+<text x="810" y="220" text-anchor="middle" font-size="10.5" fill="#2563eb">read-only</text>
+<text x="810" y="240" text-anchor="middle" font-size="10.5" fill="#374151">reduced router · tiles/styles/leg.</text>
+
+<rect x="700" y="268" width="220" height="66" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="0.8"/>
+<text x="810" y="290" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e3a8a">Config watcher</text>
+<text x="810" y="308" text-anchor="middle" font-size="10.5" fill="#2563eb">polls every N seconds</text>
+
+<text x="810" y="360" text-anchor="middle" font-size="10" fill="#3b82f6">in-mem config</text>
+<text x="810" y="374" text-anchor="middle" font-size="9.5" fill="#9ca3af">swapped when new version detected</text>
+
+<!-- Sync bus: owner <-> clients -->
+<line x1="200" y1="505" x2="200" y2="530" stroke="#8b5cf6" stroke-width="1.5"/>
+<line x1="200" y1="530" x2="510" y2="530" stroke="#8b5cf6" stroke-width="1.5"/>
+<line x1="200" y1="530" x2="810" y2="530" stroke="#8b5cf6" stroke-width="1.5"/>
+<line x1="510" y1="530" x2="510" y2="505" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="810" y1="530" x2="810" y2="505" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="500" y="547" text-anchor="middle" font-size="10.5" fill="#6d28d9">GET /internal/config/version → GET /internal/config/snapshot</text>
+
+<!-- Redis box -->
+<rect x="60" y="565" width="880" height="105" rx="12" fill="#ecfdf5" stroke="#10b981" stroke-width="1"/>
+<text x="500" y="596" text-anchor="middle" font-size="14" font-weight="600" fill="#065f46">Shared Redis (required)</text>
+<text x="500" y="617" text-anchor="middle" font-size="11" fill="#047857">tile bytes + per-layer cache version (ETag)</text>
+<text x="500" y="635" text-anchor="middle" font-size="11" fill="#047857">one edit → all instances drop stale tiles</text>
+
+<!-- Instances -> Redis -->
+<line x1="280" y1="505" x2="280" y2="565" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="560" y1="505" x2="560" y2="565" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="860" y1="505" x2="860" y2="565" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="280" y="490" text-anchor="middle" font-size="9.5" fill="#059669">tile read/write</text>
+
+<!-- Footer flow -->
+<text x="60" y="710" font-size="12" font-weight="600" fill="#1f2937">Flow on a layer edit:</text>
+<text x="60" y="732" font-size="11.5" fill="#374151">1. An admin write hits the OWNER → updates SQLite + bumps config_version</text>
+<text x="60" y="752" font-size="11.5" fill="#374151">2. CLIENT watchers detect the new version → pull snapshot → swap in-mem config</text>
+<text x="60" y="772" font-size="11.5" fill="#374151">3. Cache clear is deferred (interval + extra_delay) so peers converge first</text>
+
+<!-- Legend -->
+<line x1="60" y1="800" x2="90" y2="800" stroke="#4f46e5" stroke-width="2.4"/>
+<text x="96" y="804" font-size="10" fill="#374151">write path</text>
+<line x1="200" y1="800" x2="230" y2="800" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="236" y="804" font-size="10" fill="#374151">read path</text>
+<line x1="330" y1="800" x2="360" y2="800" stroke="#8b5cf6" stroke-width="1.5"/>
+<text x="366" y="804" font-size="10" fill="#374151">config sync (poll/pull)</text>
+<line x1="540" y1="800" x2="570" y2="800" stroke="#10b981" stroke-width="1.6"/>
+<text x="576" y="804" font-size="10" fill="#374151">shared tile cache</text>
+
+</svg>
