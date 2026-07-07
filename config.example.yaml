@@ -30,7 +30,7 @@ database:
 # Both secrets must be at least 32 characters long. Use strong random values.
 security:
   jwt_secret: "change-me-to-a-random-secret-at-least-32-chars-long"
-  session_secret: "change-me-to-another-random-secret-at-least-64-chars-long-here"
+  session_secret: "change-me-to-another-random-secret-value-that-is-at-least-64-characters-long"
   session_duration_minutes: 20   # session TTL in minutes (default: 20)
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
