@@ -29,11 +29,11 @@ Two deployment situations are supported:
 
 ### Topology — owner / client (different hosts)
 
-![Arquitectura MVT Server](docs/mvt_server_architecture.svg)
+![Arquitecture MVT Server](mvt_server_architecture.svg)
 
 ### Topology — shared (same host, shared volume)
 
-![MVT Server all mode architecture](docs/mvt_server_all_mode.svg)
+![MVT Server all mode architecture](mvt_server_all_mode.svg)
 
 ---
 
