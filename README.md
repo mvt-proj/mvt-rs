@@ -19,6 +19,7 @@ Layers, maps, styles, legends, glyphs and sprites are all published, organized a
 | Resource | Description |
 |---|---|
 | 🗺 Vector Tile Layers | Publish PostGIS tables and views as MVT services |
+| 🧭 TileJSON | TileJSON 3.0.0 document per layer plus a discovery index, for zero-config client setup |
 | 🌍 Maps | Complete MapLibre maps composed from multiple layers |
 | 🎨 Layer Styles | Reusable styles for individual layers |
 | 📖 Legends | Dynamic legends |

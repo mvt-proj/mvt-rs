@@ -207,13 +207,17 @@ server {
 
 Key points:
 
-- `/services/tiles/...`, `/services/styles/{name}`, `/services/legends/{name}`, and
-  `/services/map_assets/...` are all under the `/services/` prefix and can be served
-  by any instance (tiles from PostGIS, styles/legends from in-memory cache).
+- `/services/tiles/...`, `/services/styles/{name}`, `/services/legends/{name}`,
+  `/services/tilejson/...`, and `/services/map_assets/...` are all under the
+  `/services/` prefix and can be served by any instance (tiles from PostGIS,
+  styles/legends from in-memory cache, TileJSON built on demand from the catalog).
 - `/admin`, `/auth`, and `/api/admin` must reach the owner only because it is the
   single writer.
 - `/internal` must **never** appear in a public nginx `location` block. It is a
   server-to-server API only.
+- Behind the load balancer, set `server.public_url` (env `MVT_SERVER__PUBLIC_URL`)
+  on every instance so absolute URLs in TileJSON responses use the public domain
+  instead of the instance's own host.
 
 ---
 

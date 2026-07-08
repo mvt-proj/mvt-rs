@@ -41,6 +41,7 @@ Vector Tile Services
 6. [Serving a data layer](#serving-a-data-layer)
 7. [Consuming Services](#consuming-services)
    - [About the Sources](#about-the-sources)
+   - [TileJSON (Service Discovery)](#tilejson-service-discovery)
    - [Filtering](#filtering)
    - [QGIS](#qgis)
    - [Web Clients](#web-clients)
@@ -95,6 +96,10 @@ To migrate from your existing setup:
 server:
   host: "0.0.0.0"
   port: 5887
+  # Optional: public base URL used to build absolute URLs (e.g. in TileJSON
+  # responses). Set this when running behind a proxy or load balancer;
+  # when unset, URLs are derived from the request headers.
+  # public_url: "https://tiles.example.com"
 
 database:
   sqlite_path: "config/mvtrs.db"
@@ -349,6 +354,51 @@ This system offers flexibility in working with *vector tiles*, allowing both ind
 
 ---
 
+### TileJSON (Service Discovery)
+
+Every published layer also exposes a [TileJSON 3.0.0](https://github.com/mapbox/tilejson-spec/tree/master/3.0.0) document, so clients (MapLibre, QGIS, OpenLayers) can discover the tile URL, zoom range, bounds, and field schema without manual configuration.
+
+**Index of available layers:**
+```
+http://127.0.0.1:5887/services/tilejson
+```
+Returns a JSON array with `id`, `name`, `description`, and `tilejson_url` for every published layer visible to the requesting user.
+
+**Per-layer document:**
+```
+http://127.0.0.1:5887/services/tilejson/category:layer_name.json
+```
+Returns the TileJSON document for that layer:
+
+```json
+{
+  "tilejson": "3.0.0",
+  "tiles": ["http://127.0.0.1:5887/services/tiles/category:layer_name/{z}/{x}/{y}.pbf"],
+  "vector_layers": [
+    {
+      "id": "layer_name",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "fields": { "id": "int4", "name": "Column comment or type name" }
+    }
+  ],
+  "name": "Layer alias",
+  "scheme": "xyz",
+  "minzoom": 0,
+  "maxzoom": 22,
+  "bounds": [-63.08, -31.44, -63.01, -31.39],
+  "center": [-63.05, -31.42, 11.0]
+}
+```
+
+**Notes:**
+- `name` comes from the layer's alias (falling back to its name); `description` from the layer's description.
+- Each entry in `fields` is described by its PostgreSQL column comment when one is set (`COMMENT ON COLUMN ...`), otherwise by its type name.
+- Access control mirrors the tile endpoint: only published layers are served, and group-restricted layers require authentication (404 / 403 otherwise).
+- Behind a proxy or load balancer, set `server.public_url` (see [Configuration](#configuration)) so the URLs in the document use your public domain.
+
+---
+
 ### Filtering
 
 MVT Server supports advanced filtering directly from the source URL using query parameters. These filters are translated into SQL `WHERE` clauses dynamically.
@@ -455,6 +505,10 @@ It might be desirable in future versions to restrict which fields are allowed in
 3. Source URL: copy de url from published layer
 4. URL Style: It will be seen later, for now leave empty
 
+> **Tip:** instead of the raw tile URL you can paste the layer's TileJSON URL
+> (`http://.../services/tilejson/category:layer_name.json`) as the Source URL.
+> QGIS then configures the zoom range and extent automatically from the document.
+
 ![imagen](https://github.com/user-attachments/assets/5479944a-6a52-443f-8518-b88c04f5f75c)
 
 ![imagen](https://github.com/user-attachments/assets/c16021d4-7d99-4d6d-b622-035a6d6c20b5)
@@ -482,6 +536,14 @@ This example demonstrates how to integrate vector tiles into a **MapLibre GL JS*
 Alternatively, a single source can be used to load all three layers at once from:
 ```
 http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
+```
+
+A source can also be defined from the layer's TileJSON document instead of writing the `tiles` array by hand — MapLibre picks up the tile URL, zoom range, and bounds automatically:
+```js
+map.addSource("polygons", {
+  type: "vector",
+  url: "http://127.0.0.1:5887/services/tilejson/public:polygons_example.json"
+});
 ```
 
 #### OpenLayers
