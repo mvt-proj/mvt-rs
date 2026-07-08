@@ -24,6 +24,13 @@ pub struct Field {
 }
 
 #[derive(FromRow, Serialize, Debug)]
+pub struct FieldWithComment {
+    pub name: String,
+    pub udt: String,
+    pub description: Option<String>,
+}
+
+#[derive(FromRow, Serialize, Debug)]
 pub struct Srid {
     pub name: i32,
 }
@@ -110,6 +117,41 @@ pub async fn query_fields(
     "#;
 
     let data = sqlx::query_as::<_, Field>(sql)
+        .bind(schema)
+        .bind(table)
+        .fetch_all(&pg_pool)
+        .await?;
+
+    Ok(data)
+}
+
+pub async fn query_fields_with_comments(
+    database_id: &str,
+    schema: String,
+    table: String,
+) -> AppResult<Vec<FieldWithComment>> {
+    let pg_pool: PgPool = get_db_registry()
+        .get_pool(database_id)
+        .ok_or(AppError::DatabaseError("DB not found".to_string()))?
+        .clone();
+
+    let sql = r#"
+        SELECT
+            a.attname AS name,
+            t.typname AS udt,
+            col_description(c.oid, a.attnum) AS description
+        FROM pg_attribute a
+        JOIN pg_class c      ON a.attrelid = c.oid
+        JOIN pg_namespace n  ON c.relnamespace = n.oid
+        JOIN pg_type t       ON a.atttypid = t.oid
+        WHERE n.nspname = $1
+          AND c.relname = $2
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+        ORDER BY a.attnum;
+    "#;
+
+    let data = sqlx::query_as::<_, FieldWithComment>(sql)
         .bind(schema)
         .bind(table)
         .fetch_all(&pg_pool)
