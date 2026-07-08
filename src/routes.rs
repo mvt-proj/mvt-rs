@@ -15,7 +15,7 @@ use crate::{
     api, auth, config::settings::Settings, html,
     i18n::{I18n, i18n_middleware},
     monitor,
-    services::{health, legends, styles, tiles::handlers as tiles},
+    services::{health, legends, styles, tilejson, tiles::handlers as tiles},
 };
 
 const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
@@ -278,6 +278,8 @@ fn build_services_routes(settings: &Settings, cache: impl Handler) -> Router {
         .push(build_tiles_routes())
         .push(Router::with_path("styles/{style_name}").get(styles::index))
         .push(Router::with_path("legends/{style_name}").get(legends::index))
+        .push(Router::with_path("tilejson").get(tilejson::tilejson_index))
+        .push(Router::with_path("tilejson/{layer_name}.json").get(tilejson::tilejson_layer))
         .push(
             Router::with_path("map_assets/{**path}").get(
                 StaticDir::new([&settings.paths.assets])

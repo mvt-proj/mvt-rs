@@ -1,8 +1,17 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
+use salvo::http::{StatusCode, header::HeaderValue};
+use salvo::prelude::*;
 use serde::Serialize;
+use tracing::warn;
 
-use crate::models::catalog::Layer;
+use crate::{
+    db::metadata::{query_extent, query_fields_with_comments},
+    error::AppResult,
+    get_catalog, get_public_url,
+    models::catalog::{Layer, StateLayer},
+    services::utils::validate_user_groups,
+};
 
 /// A single entry of the TileJSON 3.0.0 `vector_layers` array.
 #[derive(Debug, Serialize)]
@@ -118,6 +127,149 @@ pub fn build_tilejson(
         bounds,
         center,
     }
+}
+
+/// World bounds in EPSG:4326 (Web Mercator latitude limits), used when the
+/// extent query fails so the document is still valid.
+const WORLD_BOUNDS: [f64; 4] = [-180.0, -85.05112877980659, 180.0, 85.05112877980659];
+
+fn base_url_from_request(req: &Request) -> String {
+    let header = |name: &str| {
+        req.headers()
+            .get(name)
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_string)
+    };
+    resolve_base_url(
+        get_public_url(),
+        header("x-forwarded-proto").as_deref(),
+        header("x-forwarded-host").as_deref(),
+        req.uri().scheme_str().unwrap_or("http"),
+        header("host").as_deref().unwrap_or("localhost"),
+    )
+}
+
+/// Bounds for the layer; falls back to world bounds on error (never a 500).
+async fn layer_bounds(layer: &Layer) -> [f64; 4] {
+    match query_extent(layer).await {
+        Ok(ext) => [ext.xmin, ext.ymin, ext.xmax, ext.ymax],
+        Err(e) => {
+            warn!(layer = %layer.name, error = ?e, "TileJSON: extent query failed, using world bounds");
+            WORLD_BOUNDS
+        }
+    }
+}
+
+/// `{field: description}` map for the layer's configured fields.
+/// Description is the PostgreSQL column comment, falling back to the type
+/// name. On query failure returns an empty map (never a 500).
+async fn layer_fields(layer: &Layer) -> BTreeMap<String, String> {
+    let columns = match query_fields_with_comments(
+        &layer.database_id,
+        layer.schema.clone(),
+        layer.table_name.clone(),
+    )
+    .await
+    {
+        Ok(columns) => columns,
+        Err(e) => {
+            warn!(layer = %layer.name, error = ?e, "TileJSON: field query failed, omitting fields");
+            return BTreeMap::new();
+        }
+    };
+
+    let by_name: HashMap<String, _> = columns
+        .into_iter()
+        .map(|c| (c.name.clone(), c))
+        .collect();
+
+    configured_fields(layer)
+        .into_iter()
+        .filter_map(|name| {
+            by_name
+                .get(&name)
+                .map(|c| (name, c.description.clone().unwrap_or_else(|| c.udt.clone())))
+        })
+        .collect()
+}
+
+fn set_json_cache_headers(res: &mut Response) {
+    res.headers_mut().insert(
+        "Cache-Control",
+        HeaderValue::from_static("public, max-age=3600"),
+    );
+}
+
+#[handler]
+pub async fn tilejson_layer(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    let layer_name = req.param::<String>("layer_name").unwrap_or_default();
+    let (category, name) = layer_name.split_once(':').unwrap_or(("", ""));
+
+    let layer = {
+        let catalog = get_catalog().await.read().await;
+        catalog
+            .find_layer_by_category_and_name(category, name, StateLayer::Published)
+            .cloned()
+    };
+
+    let Some(layer) = layer else {
+        warn!(category = %category, name = %name, "TileJSON: layer not found");
+        res.status_code(StatusCode::NOT_FOUND);
+        return Ok(());
+    };
+
+    if !validate_user_groups(req, &layer, depot).await? {
+        warn!(category = %category, name = %name, "TileJSON: user not authorized for layer");
+        res.status_code(StatusCode::FORBIDDEN);
+        return Ok(());
+    }
+
+    let bounds = layer_bounds(&layer).await;
+    let fields = layer_fields(&layer).await;
+    let base_url = base_url_from_request(req);
+
+    set_json_cache_headers(res);
+    res.render(Json(build_tilejson(&layer, bounds, fields, &base_url)));
+    Ok(())
+}
+
+#[handler]
+pub async fn tilejson_index(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    let layers = {
+        let catalog = get_catalog().await.read().await;
+        catalog.get_published_layers()
+    };
+    let base_url = base_url_from_request(req);
+
+    let mut entries = Vec::new();
+    for layer in layers {
+        if !validate_user_groups(req, &layer, depot).await? {
+            continue;
+        }
+        let id = format!("{}:{}", layer.category.name, layer.name);
+        entries.push(TileJsonIndexEntry {
+            name: if layer.alias.is_empty() {
+                layer.name.clone()
+            } else {
+                layer.alias.clone()
+            },
+            description: layer.description.clone(),
+            tilejson_url: format!("{base_url}/services/tilejson/{id}.json"),
+            id,
+        });
+    }
+
+    set_json_cache_headers(res);
+    res.render(Json(entries));
+    Ok(())
 }
 
 #[cfg(test)]
