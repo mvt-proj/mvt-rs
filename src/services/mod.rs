@@ -3,5 +3,6 @@ pub mod legends;
 pub mod styles;
 #[cfg(test)]
 mod tests;
+pub mod tilejson;
 pub mod tiles;
 pub mod utils;
