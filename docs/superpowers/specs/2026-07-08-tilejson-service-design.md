@@ -72,15 +72,14 @@ New optional setting `server.public_url` (env `MVT_SERVER__PUBLIC_URL`) in
 2. Otherwise derive from the request:
    `{X-Forwarded-Proto | request scheme}://{X-Forwarded-Host | Host}`.
 
-Document the setting in `config.example.yaml`, `.env.example`, and CLAUDE.md.
+Document the setting in `config.example.yaml` and CLAUDE.md.
 
 ## Access control
 
 Mirror the tile endpoint exactly: only `published` layers are served; when a
 layer has groups, validate with `validate_user_groups` (JWT/session). The
 index filters out layers the user cannot access. Unknown layer or missing
-permission produces the same `AppError` responses as the tile endpoint
-(404 / 401).
+permission produces the same responses as the tile endpoint (404 / 403).
 
 ## Errors and headers
 
