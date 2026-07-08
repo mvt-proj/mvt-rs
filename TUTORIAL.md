@@ -505,9 +505,12 @@ It might be desirable in future versions to restrict which fields are allowed in
 3. Source URL: copy de url from published layer
 4. URL Style: It will be seen later, for now leave empty
 
-> **Tip:** instead of the raw tile URL you can paste the layer's TileJSON URL
-> (`http://.../services/tilejson/category:layer_name.json`) as the Source URL.
-> QGIS then configures the zoom range and extent automatically from the document.
+> **Note:** QGIS's built-in generic connection only accepts the XYZ tile
+> template (`.../{z}/{x}/{y}.pbf`), not a TileJSON URL. The layer's TileJSON
+> document (`http://.../services/tilejson/category:layer_name.json`) is still
+> useful here: it gives you the exact tile URL to paste, plus the Min/Max Zoom
+> values for the connection dialog and the layer's field schema. Plugins such
+> as the MapTiler plugin can consume TileJSON URLs directly.
 
 ![imagen](https://github.com/user-attachments/assets/5479944a-6a52-443f-8518-b88c04f5f75c)
 
