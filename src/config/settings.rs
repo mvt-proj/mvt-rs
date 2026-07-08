@@ -19,6 +19,10 @@ pub struct ServerConfig {
     pub host: String,
     #[serde(default = "default_port")]
     pub port: u16,
+    /// Public base URL used in absolute URLs (TileJSON `tiles` array),
+    /// e.g. "https://tiles.example.com". When unset, the URL is derived
+    /// from the request (X-Forwarded-Proto / X-Forwarded-Host / Host).
+    pub public_url: Option<String>,
 }
 
 fn default_host() -> String { "0.0.0.0".to_string() }
@@ -236,7 +240,7 @@ mod tests {
             "postgres://user:pass@localhost/db".to_string(),
         );
         Settings {
-            server: ServerConfig { host: "0.0.0.0".to_string(), port: 5887 },
+            server: ServerConfig { host: "0.0.0.0".to_string(), port: 5887, public_url: None },
             database: DatabaseConfig {
                 sqlite_path: "mvtrs.db".to_string(),
                 redis_url: None,
@@ -270,6 +274,13 @@ mod tests {
     #[test]
     fn valid_settings_passes() {
         assert!(valid_settings().validate().is_ok());
+    }
+
+    #[test]
+    fn public_url_defaults_to_none() {
+        let s = valid_settings();
+        assert!(s.server.public_url.is_none());
+        assert!(s.validate().is_ok());
     }
 
     #[test]

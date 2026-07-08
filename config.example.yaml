@@ -11,6 +11,12 @@
 server:
   host: "0.0.0.0"
   port: 5887
+  # Optional: public base URL used to build absolute URLs (e.g. the TileJSON
+  # `tiles` array). Set this when running behind a proxy or load balancer.
+  # When unset, URLs are derived from the request headers
+  # (X-Forwarded-Proto / X-Forwarded-Host / Host).
+  # Env var: MVT_SERVER__PUBLIC_URL
+  # public_url: "https://tiles.example.com"
 
 # ─── PostgreSQL Databases ─────────────────────────────────────────────────────
 # At least one entry named "default" is required.

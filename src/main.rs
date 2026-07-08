@@ -70,6 +70,12 @@ pub fn get_config_dir() -> &'static str {
     CONFIG_DIR.get().map(|s| s.as_str()).unwrap_or("")
 }
 
+static PUBLIC_URL: OnceLock<Option<String>> = OnceLock::new();
+#[inline]
+pub fn get_public_url() -> Option<&'static str> {
+    PUBLIC_URL.get().and_then(|url| url.as_deref())
+}
+
 /// Delay applied before invalidating the shared cache after a layer edit.
 /// `Some` in clustered owner/shared modes (so peers reload the new config
 /// before the cache is cleared); `None` means invalidate immediately.
@@ -197,6 +203,7 @@ async fn main() -> AppResult<()> {
     }
 
     CONFIG_DIR.set(settings.paths.config.clone()).unwrap();
+    PUBLIC_URL.set(settings.server.public_url.clone()).unwrap();
 
     // In clustered owner/shared modes, defer cache invalidation so every peer
     // reloads the edited config (within its watch interval) before the shared
