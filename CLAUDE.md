@@ -59,6 +59,7 @@ src/
 └── services/
     ├── tiles/           # Tile generation pipeline (single, multi-layer, category)
     ├── styles.rs        # Style JSON endpoint
+    ├── tilejson.rs      # TileJSON 3.0.0 documents (per layer + index)
     ├── legends.rs       # Legend endpoint
     └── utils.rs         # SQL injection validation, field conversion
 ```
@@ -97,6 +98,9 @@ Config is loaded in priority order: CLI args > YAML file > Environment variables
 
 **Optional security settings:**
 - `security.session_duration_minutes` — session TTL in minutes (default: `20`). Env var: `MVT_SECURITY__SESSION_DURATION_MINUTES`
+
+**Optional server settings:**
+- `server.public_url` — public base URL for absolute URLs in TileJSON responses (default: derived from request headers). Env var: `MVT_SERVER__PUBLIC_URL`
 
 ## Running locally
 
