@@ -574,9 +574,7 @@ You can request:
 
 ## Advanced Filtering
 
-MVT Server supports advanced filtering directly from the source URL using query parameters. These filters are translated into SQL `WHERE` clauses dynamically.
-
-This makes it possible to display different subsets of data on the map depending on the user query — all without modifying the backend or exposing database logic.
+Beyond serving whole layers, MVT Server supports filtering directly from the source URL using query parameters. Filters are translated into SQL `WHERE` clauses dynamically, which makes it possible to display different subsets of data depending on the user query — without modifying the backend or exposing database logic.
 
 ---
 
@@ -670,7 +668,31 @@ It might be desirable in future versions to restrict which fields are allowed in
 - Safely binds user input to prevent SQL injection (except `IN` currently uses inline literals).
 - Compatible with QGIS, MapLibre, and web clients.
 
+#### Programmable filtering (plugins)
+
+Beyond query parameters, MVT Server supports Lua plugins that can inspect each tile request (user, groups, zoom, query string) and inject additional SQL filters — useful for access control and row-level security. See [docs/plugins.md](docs/plugins.md).
+
 ---
+
+## Caching
+
+Generating a tile costs a database query, so MVT Server caches every tile it serves. Two backends are available:
+
+- **Disk cache** (default): tiles are stored under the directory set in `paths.cache`. No extra services required — ideal for a single-instance setup.
+- **Redis**: enabled by setting `database.redis_url` in `config.yaml`. Required when several instances run behind a load balancer, so all of them share the same cache and invalidations reach every node (see [Production Deployment](#production-deployment)).
+
+```yaml
+database:
+  sqlite_path: "mvtrs.db"
+  redis_url: "redis://localhost:6379"   # omit to use the disk cache
+```
+
+How long tiles live is decided per layer, with two fields of the layer form:
+
+- **Cache** (in seconds): how long a tile is served from the cache before being regenerated. `0` means cached tiles never expire — recommended for layers that rarely change.
+- **Delete cache on start**: clears the layer's cache every time the server starts.
+
+Editing a layer automatically invalidates its cached tiles, and each layer's cache can also be cleared manually from the Catalog with its purge button.
 
 ## Production Deployment
 
