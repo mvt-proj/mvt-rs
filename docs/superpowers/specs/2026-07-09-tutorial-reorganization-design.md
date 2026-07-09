@@ -93,7 +93,8 @@ The Table of Contents is regenerated to match the final sections exactly.
 
 ## Screenshots
 
-The user will capture new screenshots. Suggested list and placement:
+All screenshots will be recaptured from scratch — no existing image is
+reused. Suggested list and placement:
 
 | # | Screenshot | Section |
 |---|-----------|---------|
@@ -105,12 +106,12 @@ The user will capture new screenshots. Suggested list and placement:
 | 6 | Styles list or style editor | §9 |
 | 7 | QGIS generic connection dialog | §8 |
 | 8 | QGIS with the layer rendered | §8 |
-| 9 | Monitoring dashboard (reuse current if UI unchanged) | §13 |
-| 10 | Legends output (current ones look recent; optional) | §9 |
+| 9 | Monitoring dashboard | §13 |
+| 10 | Legends output (individual and combined) | §9 |
 
-Old screenshot links are removed as sections are rewritten; new images are
-inserted at the placements above (placeholders `<!-- screenshot: ... -->` if
-an image is not ready yet, so the text can land first).
+All old screenshot links are removed during the rewrite. Each placement gets
+a `<!-- screenshot: <description> -->` placeholder so the text can land
+first; the user swaps in the new images as they are captured.
 
 ## Error handling / risks
 
