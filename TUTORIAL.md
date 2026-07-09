@@ -78,12 +78,15 @@ The binary is generated at `target/release/mvt-server`. You can move it anywhere
 
 MVT Server reads its settings from a single `config.yaml` file. A fully commented reference is available at [`config.example.yaml`](config.example.yaml); copy it to `config/config.yaml` and adjust the values.
 
-A minimal working configuration looks like this:
+A complete configuration looks like this (optional settings commented out):
 
 ```yaml
 server:
   host: "0.0.0.0"
   port: 5887
+  # Public base URL used to build absolute URLs (e.g. in TileJSON responses).
+  # Set it when running behind a proxy or load balancer.
+  # public_url: "https://tiles.example.com"
 
 # At least one entry named "default" is required.
 postgres_databases:
@@ -100,11 +103,22 @@ database:
 security:
   jwt_secret: "change-me-to-a-random-secret-at-least-32-chars-long"
   session_secret: "change-me-to-another-random-secret-at-least-32-chars"
+  session_duration_minutes: 20   # session TTL (default: 20)
 
 paths:
   config: "config"
   cache: "cache"
   assets: "map_assets"
+  plugins: "plugins"   # directory scanned for Lua plugin files at startup
+
+# Multi-instance setups only. A single server runs as "standalone" (default);
+# the other modes (shared | owner | client) are covered in docs/clustering.md.
+cluster:
+  mode: "standalone"
+  # config_watch_interval_secs: 10
+  # cache_invalidation_extra_delay_secs: 5
+  # owner_url: "https://owner-host:5887"   # required when mode = client
+  # shared_secret: "change-me"             # required when mode = owner or client
 ```
 
 Some notes:
@@ -112,6 +126,8 @@ Some notes:
 - `postgres_databases` can hold several named connections; each layer chooses which one it reads from. The `default` entry is mandatory.
 - `database.sqlite_path` is the internal SQLite file where MVT Server stores its own configuration (users, groups, catalog, styles). The path is relative to `paths.config` and the file is created automatically on first run.
 - `database.redis_url` switches the tile cache from disk to Redis — see [Caching](#caching).
+- `paths.plugins` points to the Lua plugins directory — see [docs/plugins.md](docs/plugins.md).
+- `cluster` only matters when running several instances behind a load balancer — see [docs/clustering.md](docs/clustering.md). Any non-standalone mode requires a shared Redis cache.
 - Every setting can also be provided as an environment variable with the `MVT_` prefix and `__` as sub-key separator, e.g. `MVT_SERVER__PORT=5887`.
 - When running behind a proxy or load balancer, set `server.public_url` so absolute URLs (e.g. in TileJSON responses) use your public domain.
 
