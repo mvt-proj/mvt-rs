@@ -415,7 +415,6 @@ Sprites bundle the icons a style uses into a single image plus a JSON index. You
 
 #### Directory Structure
 
-Your assets should be organized as follows:
 ```
 map_assets
 ├── glyphs
