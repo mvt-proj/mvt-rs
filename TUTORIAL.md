@@ -54,67 +54,54 @@ Vector Tile Services
 ---
 
 ## Requirements
-- Operating System (Freebsd, MacOS, Linux, Windows)
-- Access to a PostgreSQL server with PostGIS version 3.0.0 or higher installed, either local or remote. The **MVT Server** will be able to publish geographic layers as vector tiles.
-- Port `5800` available (or configurable)
 
-## Installation / Compilation
+- An operating system supported by Rust: Linux, FreeBSD, macOS or Windows.
+- Access to a PostgreSQL server with PostGIS 3.0.0 or higher, local or remote. The geographic layers you publish will be read from here.
+- A free port for the server (default: `5887`).
 
-For now, the only option is to download the code and compile it manually. In the future, binaries will be provided for different operating systems. To compile the server, ensure you have Rust installed on your system.
+## Installation
 
-https://www.rust-lang.org/tools/install
-
-
-Then, you can compile and run the project as follows:
+For now, the only option is to download the code and compile it manually; binaries for different operating systems will be provided in the future. To compile the server, make sure [Rust is installed](https://www.rust-lang.org/tools/install) on your system.
 
 ```sh
 # Clone the repository
 git clone https://github.com/mvt-proj/mvt-rs.git
-# Navigate to the project directory
 cd mvt-rs
 
 # Compile for production
 cargo build --release
 ```
 
-The binary will be generated in the **/target/release/** directory.
+The binary is generated at `target/release/mvt-server`. You can move it anywhere you like — just make sure it can find its configuration file (next section).
 
-You can move it to another location if needed, but remember that the environment variables must be set either in the shell or in the .env file. Alternatively, you can start the server by passing the required arguments.
+> **Prefer containers?** The repository ships a complete Docker setup (MVT Server + PostGIS + Redis) in [`docker-example/`](docker-example/DOCKER_README.md).
 
 ## Configuration
 
-Starting with version `0.18.0`, MVT Server uses a centralized `config.yaml` file. The `.env` file is no longer supported.
+MVT Server reads its settings from a single `config.yaml` file. A fully commented reference is available at [`config.example.yaml`](config.example.yaml); copy it to `config/config.yaml` and adjust the values.
 
-### Migrating to version 0.18.0
-
-To migrate from your existing setup:
-
-1. Create a `config.yaml` file in your configuration directory.
-2. Use the following structure, adapting values from your old setup:
+A minimal working configuration looks like this:
 
 ```yaml
 server:
   host: "0.0.0.0"
   port: 5887
-  # Optional: public base URL used to build absolute URLs (e.g. in TileJSON
-  # responses). Set this when running behind a proxy or load balancer;
-  # when unset, URLs are derived from the request headers.
-  # public_url: "https://tiles.example.com"
+
+# At least one entry named "default" is required.
+postgres_databases:
+  pool_min: 2
+  pool_max: 5
+  default: "postgres://user:password@host:5432/database"
+  # foo: "postgres://user:password@host:5432/database_foo"
 
 database:
-  sqlite_path: "config/mvtrs.db"
-  pool_min: 5
-  pool_max: 20
-  redis_url: "redis://..." # Optional
+  sqlite_path: "mvtrs.db"
+  # redis_url: "redis://localhost:6379"   # omit to use the disk cache
 
-# Format: "postgres://user:password@host:port/database"
-postgres_databases:
-  default: "postgres://user:password@host:5432/database"
-  foo: "postgres://user:password@host:5432/database_foo"
-
+# Both secrets must be at least 32 characters long.
 security:
-  jwt_secret: "your-jwt-secret"
-  session_secret: "your-session-secret"
+  jwt_secret: "change-me-to-a-random-secret-at-least-32-chars-long"
+  session_secret: "change-me-to-another-random-secret-at-least-32-chars"
 
 paths:
   config: "config"
@@ -122,31 +109,49 @@ paths:
   assets: "map_assets"
 ```
 
-### Loading Configuration
-The server loads configuration in this order of priority (highest to lowest):
-1. **Command line argument**: `--config /path/to/config.yaml`
-2. **Environment variable**: `MVT_CONFIG_PATH=/path/to/config.yaml`
-3. **Default path**: `config/config.yaml` (in current working directory)
+Some notes:
+
+- `postgres_databases` can hold several named connections; each layer chooses which one it reads from. The `default` entry is mandatory.
+- `database.sqlite_path` is the internal SQLite file where MVT Server stores its own configuration (users, groups, catalog, styles). The path is relative to `paths.config` and the file is created automatically on first run.
+- `database.redis_url` switches the tile cache from disk to Redis — see [Caching](#caching).
+- Every setting can also be provided as an environment variable with the `MVT_` prefix and `__` as sub-key separator, e.g. `MVT_SERVER__PORT=5887`.
+- When running behind a proxy or load balancer, set `server.public_url` so absolute URLs (e.g. in TileJSON responses) use your public domain.
+
+### Loading priority
+
+The server looks for its configuration file in this order (highest to lowest):
+
+1. Command line argument: `--config /path/to/config.yaml`
+2. Environment variable: `MVT_CONFIG_PATH=/path/to/config.yaml`
+3. Default path: `config/config.yaml` (relative to the working directory)
+
+Individual values are resolved as: CLI args > YAML file > `MVT_*` environment variables > defaults.
+
+> **Upgrading from a version older than 0.18.0?** The `.env` file is no longer supported. Move its values into `config.yaml` using the structure above.
 
 
-## First Use & Authentication
+## First Run & Login
 
-When the server starts for the first time, the necessary components for its configuration will be automatically generated. An initial user with the 'admin' role will be created with the following credentials:
+Start the server:
+
+```sh
+./target/release/mvt-server --config config/config.yaml
+```
+
+On the first run, MVT Server initializes everything it needs: it creates its internal SQLite database and an initial administrator account with the following credentials:
 
 - Email: **admin@example.com**
 - Password: **admin**
 
-The initial access credentials for MVT Server are: email **admin@example.com** and password **admin**. It is of utmost importance that, upon your first access to the platform, you change this default password to a new, strong password of your choice. This will help protect your server and data from unauthorized access
+Open `http://localhost:5887` in your browser (or the corresponding domain if the server is hosted remotely) and log in.
 
+<!-- screenshot: login screen -->
 
-Access `http://localhost:5800`
+> **Important:** change the default password immediately after your first login. Leaving it as `admin` exposes your server and data to unauthorized access.
 
-To access the MVT Server administration interface, simply enter the address http://localhost:5800 (or the corresponding domain if it is hosted on a remote server) in your web browser. Once there, you can manage your geographic layers, styles, and other server configurations.
+After logging in you land on the home page, from which the administration panel is reached:
 
-![imagen](https://github.com/user-attachments/assets/82a1d638-83c9-4a3d-b92a-1c1c5911d9f8)
-
-
-![imagen](https://github.com/user-attachments/assets/2ce993cd-5bc3-42c4-be23-311bca4bbd7c)
+<!-- screenshot: home / main panel after login -->
 
 ### MVT Server Administration Panel
 
