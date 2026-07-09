@@ -210,9 +210,11 @@ Use the **Map** button to check that the parameters entered in the form are corr
 <!-- screenshot: Map view of a published layer -->
 
 
-## Consuming Services
+## Consuming Tiles
 
-### About the Sources
+Your layer is published — now let's consume it from clients. MVT Server exposes *vector tiles* through three types of *sources*, plus a TileJSON document per layer so clients can configure themselves automatically.
+
+### Tile Sources
 
 This server provides access to *vector tiles* through three types of *sources*:
 
@@ -261,14 +263,7 @@ http://127.0.0.1:5887/services/tiles/category/category_1/{z}/{x}/{y}.pbf
 
 ---
 
-#### Summary and Final Notes
-
----
-
-- Each layer within a composite tile follows its own rules regarding visibility, publishing, caching, etc.
-- Leveraging the server's built-in caching capabilities, the composition is performed at the server level rather than in the database.
-
----
+#### Summary
 
 | Source Type | Base Route | Example |
 |------------|-----------|---------|
@@ -276,9 +271,10 @@ http://127.0.0.1:5887/services/tiles/category/category_1/{z}/{x}/{y}.pbf
 | **Multiple layers** | `/services/tiles/multi/{layers}/{z}/{x}/{y}.pbf` | `/services/tiles/multi/rivers,roads/12/2345/3210.pbf` |
 | **By category** | `/services/tiles/category/{category}/{z}/{x}/{y}.pbf` | `/services/tiles/category/hydrography/12/2345/3210.pbf` |
 
-This system offers flexibility in working with *vector tiles*, allowing both individual layer access and dynamic layer composition.
+Notes:
 
----
+- Each layer within a composite tile follows its own rules regarding visibility, publishing and caching.
+- Composition is performed at the server level (leveraging the built-in cache) rather than in the database.
 
 ### TileJSON (Service Discovery)
 
@@ -326,10 +322,12 @@ Returns the TileJSON document for that layer:
 ---
 
 ### QGIS
-1. Add Source Vector Layer (click with the right button)
-2. New Generic Connection
-3. Source URL: copy de url from published layer
-4. URL Style: It will be seen later, for now leave empty
+
+1. In the Browser panel, right-click **Vector Tiles** and choose **New Generic Connection**
+2. Give the connection a name
+3. **URL**: paste the tile URL of the published layer, e.g. `http://127.0.0.1:5887/services/tiles/category:layer_name/{z}/{x}/{y}.pbf`
+4. Set **Min. Zoom Level** and **Max. Zoom Level** to match the layer
+5. **Style URL** can be left empty for now — styles are covered in [Styling](#styling)
 
 > **Note:** QGIS's built-in generic connection only accepts the XYZ tile
 > template (`.../{z}/{x}/{y}.pbf`), not a TileJSON URL. The layer's TileJSON
@@ -338,15 +336,9 @@ Returns the TileJSON document for that layer:
 > values for the connection dialog and the layer's field schema. Plugins such
 > as the MapTiler plugin can consume TileJSON URLs directly.
 
-![imagen](https://github.com/user-attachments/assets/5479944a-6a52-443f-8518-b88c04f5f75c)
+<!-- screenshot: QGIS New Generic Connection dialog -->
 
-![imagen](https://github.com/user-attachments/assets/c16021d4-7d99-4d6d-b622-035a6d6c20b5)
-
-![imagen](https://github.com/user-attachments/assets/8a6e3daa-4b6f-4877-97d4-e5e6184b35f8)
-
-![imagen](https://github.com/user-attachments/assets/e6e9e9ad-743c-4269-bef6-cae1335d8755)
-
-
+<!-- screenshot: QGIS with the layer rendered -->
 
 ### Web Clients
 
