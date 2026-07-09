@@ -396,15 +396,22 @@ These examples provide a starting point for integrating vector tiles into your w
 
 ## Styling
 
+So far the map shows raw geometry. This section covers everything related to how it looks: styles, the sprites and glyphs styles reference, and legends generated from them.
+
 ### Serving Styles
 
-The MVT Server can also serve styles that define how vector tiles are rendered. These styles can be consumed in different ways:
+MVT Server serves styles that define how vector tiles are rendered. They can be consumed in two ways:
 
-1. **For rendering in QGIS:** Styles are applied at the layer level, specifying how a layer should be rendered with colors, labels, symbols, and color scales.
+1. **In QGIS:** styles are applied at the layer level, specifying colors, labels, symbols and color scales.
+2. **In MapLibre:** styles define a complete "project", including sources, layers, metadata, sprites, glyphs, zoom levels and map center. See the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
 
-2. **For use in MapLibre:** Styles define a complete "project," including sources, layers, metadata, layer styles, sprites, glyphs, zoom levels, and map center. More details can be found in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
+Styles are created and published from the **Styles** section of the admin panel.
+
+<!-- screenshot: Styles list or style editor -->
 
 ### Sprites
+
+Sprites bundle the icons a style uses into a single image plus a JSON index. Your assets should be organized as follows under `paths.assets`:
 
 #### Directory Structure
 
@@ -532,7 +539,7 @@ In your **MapLibre** style JSON, add the glyphs path in the root:
 
 ```json
 {
-  "glyphs": "http://127.0.0.1:5800/services/glyphs/{fontstack}/{range}.pbf"
+  "glyphs": "http://127.0.0.1:5887/services/glyphs/{fontstack}/{range}.pbf"
 }
 ```
 
@@ -553,24 +560,16 @@ You have now successfully created and configured glyphs for your MVT Server! ðŸŽ
 
 ### Legends
 
-This feature allows you to serve legends based on the styles defined in the previous section, using the [maplibre-legends](https://github.com/mvt-proj/maplibre-legend) library, which is part of the MVT Server ecosystem.
-
-The legend service is particularly useful for integration with data visualization software.
+MVT Server can serve legends generated from published styles, using the [maplibre-legend](https://github.com/mvt-proj/maplibre-legend) library, part of the MVT Server ecosystem. The legend service is particularly useful for integration with data visualization software.
 
 You can request:
+
 - Individual legends by passing the layer ID
 - Combined legends
 - Legends with or without titles
 - Legends that include or exclude raster layers
 
-Examples:
-
-<img width="1863" height="849" alt="imagen" src="https://github.com/user-attachments/assets/0829e0bf-e16b-4c2b-bc42-2d04fc0edce5" />
-
-
-
-![combined](https://github.com/user-attachments/assets/886481e2-e064-4ab4-b1b4-18195fde9db4)
-
+<!-- screenshot: legends output, individual and combined -->
 
 **More documentation: coming soon**
 
