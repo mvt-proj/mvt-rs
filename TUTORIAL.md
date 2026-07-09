@@ -120,10 +120,9 @@ Some notes:
 The server looks for its configuration file in this order (highest to lowest):
 
 1. Command line argument: `--config /path/to/config.yaml`
-2. Environment variable: `MVT_CONFIG_PATH=/path/to/config.yaml`
-3. Default path: `config/config.yaml` (relative to the working directory)
+2. Default path: `config/config.yaml` (relative to the working directory)
 
-Individual values are resolved as: CLI args > YAML file > `MVT_*` environment variables > defaults.
+Individual values are resolved as: CLI args > `MVT_*` environment variables > YAML file > defaults.
 
 > **Upgrading from a version older than 0.18.0?** The `.env` file is no longer supported. Move its values into `config.yaml` using the structure above.
 
@@ -152,7 +151,7 @@ After logging in you land on the home page, from which the administration panel 
 
 ## The Admin Panel
 
-The administration panel is where the whole platform is managed. It is organized in five sections:
+The administration panel is where the whole platform is managed. It is organized in five main sections:
 
 ### Groups (User Roles)
 
@@ -209,8 +208,6 @@ Use the **Map** button to check that the parameters entered in the form are corr
 Your layer is published — now let's consume it from clients. MVT Server exposes *vector tiles* through three types of *sources*, plus a TileJSON document per layer so clients can configure themselves automatically.
 
 ### Tile Sources
-
-This server provides access to *vector tiles* through three types of *sources*:
 
 1. Single-layer source
 2. Multi-layer source
@@ -438,17 +435,17 @@ map_assets
 
 Sprites are served dynamically by MVT Server. Each sprite set is accessible via a URL like this:
 
-`http://127.0.0.1:5887/services/sprites/{sprite_name}/sprite`
+`http://127.0.0.1:5887/services/map_assets/sprites/{sprite_name}/sprite`
 
 For example, to use the maplibre sprite set:
 
-`http://127.0.0.1:5887/services/sprites/maplibre/sprite`
+`http://127.0.0.1:5887/services/map_assets/sprites/maplibre/sprite`
 
 To configure this in your MapLibre style JSON:
 ```
 {
   "version": 8,
-  "sprite": "http://127.0.0.1:5887/services/sprites/maplibre/sprite",
+  "sprite": "http://127.0.0.1:5887/services/map_assets/sprites/maplibre/sprite",
   "sources": { ... },
   "layers": [ ... ]
 }
@@ -530,7 +527,7 @@ In your **MapLibre** style JSON, add the glyphs path in the root:
 
 ```json
 {
-  "glyphs": "http://127.0.0.1:5887/services/glyphs/{fontstack}/{range}.pbf"
+  "glyphs": "http://127.0.0.1:5887/services/map_assets/glyphs/{fontstack}/{range}.pbf"
 }
 ```
 
@@ -544,10 +541,6 @@ In the **layout** section, specify the font name where needed:
 The current version of the MVT Server supports only one font in the array. This is because the server ensures the font's existence beforehand through the administration panel.
 
 The glyphs available on the server can be viewed from the Glyphs menu.
-
----
-
-You have now successfully created and configured glyphs for your MVT Server! 🎉
 
 ### Legends
 
@@ -656,15 +649,13 @@ It might be desirable in future versions to restrict which fields are allowed in
 ### Summary
 
 - Combine static (`filter`) and dynamic (query params) filters.
-- Express logical conditions using `and__`, `or__`, `not__`.
+- Express logical conditions using the default AND, `or__`, and `not__`.
 - Safely binds user input to prevent SQL injection (except `IN` currently uses inline literals).
 - Compatible with QGIS, MapLibre, and web clients.
 
 ### Programmable filtering (plugins)
 
 Beyond query parameters, MVT Server supports Lua plugins that can inspect each tile request (user, groups, zoom, query string) and inject additional SQL filters — useful for access control and row-level security. See [docs/plugins.md](docs/plugins.md).
-
----
 
 ## Caching
 
@@ -749,8 +740,8 @@ mvt_server_process_memory_bytes
 mvt_server_requests_total
 mvt_server_cache_hits_total
 mvt_server_cache_misses_total
-mvt_server_request_latency_seconds
-mvt_server_request_latency_avg_seconds
+mvt_server_last_request_latency_seconds
+mvt_server_avg_request_latency_seconds
 ```
 
 These can be scraped by Prometheus or any compatible monitoring system for long-term storage and alerting.
