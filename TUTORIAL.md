@@ -129,68 +129,6 @@ The server loads configuration in this order of priority (highest to lowest):
 3. **Default path**: `config/config.yaml` (in current working directory)
 
 
-### Server with Nginx
-Example reverse proxy configuration (`/etc/nginx/sites-available/application.conf`):
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    # Enable gzip compression for vector tiles and API responses.
-    # .pbf tiles compress 60-80% on average, significantly reducing bandwidth.
-    gzip on;
-    gzip_types application/x-protobuf application/octet-stream application/json;
-    gzip_min_length 256;
-    gzip_proxied any;
-    gzip_vary on;
-
-    location / {
-        proxy_pass http://localhost:5800;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-#### Setting Up a Load Balancer with Nginx
-
-Configure Nginx as a load balancer to distribute traffic across multiple backend servers. Load balancing improves application performance, enhances availability, and ensures fault tolerance.
-
-##### Prerequisites
-
-   - A Unix server with Nginx installed.
-   - Three (for example) backend servers running on ports 5800, 5801, and 5802.
-
-It is recommended to use Redis as a cache in this case."
-
-```nginx
-http {
-    upstream backend_servers {
-        server localhost:5800;
-        server localhost:5801;
-        server localhost:5802;
-    }
-
-    server {
-        listen 80;
-        server_name yourdomain.com;
-
-        gzip on;
-        gzip_types application/x-protobuf application/octet-stream application/json;
-        gzip_min_length 256;
-        gzip_proxied any;
-        gzip_vary on;
-
-        location / {
-            proxy_pass http://backend_servers;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-    }
-}
-```
-
 ## First Use & Authentication
 
 When the server starts for the first time, the necessary components for its configuration will be automatically generated. An initial user with the 'admin' role will be created with the following credentials:
@@ -399,7 +337,264 @@ Returns the TileJSON document for that layer:
 
 ---
 
-### Filtering
+### QGIS
+1. Add Source Vector Layer (click with the right button)
+2. New Generic Connection
+3. Source URL: copy de url from published layer
+4. URL Style: It will be seen later, for now leave empty
+
+> **Note:** QGIS's built-in generic connection only accepts the XYZ tile
+> template (`.../{z}/{x}/{y}.pbf`), not a TileJSON URL. The layer's TileJSON
+> document (`http://.../services/tilejson/category:layer_name.json`) is still
+> useful here: it gives you the exact tile URL to paste, plus the Min/Max Zoom
+> values for the connection dialog and the layer's field schema. Plugins such
+> as the MapTiler plugin can consume TileJSON URLs directly.
+
+![imagen](https://github.com/user-attachments/assets/5479944a-6a52-443f-8518-b88c04f5f75c)
+
+![imagen](https://github.com/user-attachments/assets/c16021d4-7d99-4d6d-b622-035a6d6c20b5)
+
+![imagen](https://github.com/user-attachments/assets/8a6e3daa-4b6f-4877-97d4-e5e6184b35f8)
+
+![imagen](https://github.com/user-attachments/assets/e6e9e9ad-743c-4269-bef6-cae1335d8755)
+
+
+
+### Web Clients
+
+
+This section provides examples of how to consume vector tiles from the **MVT Server** using different mapping libraries: **MapLibre GL JS**, **OpenLayers**, and **Leaflet**.
+
+
+#### MapLibre GL JS
+[View Example](examples/maplibre.html)
+
+This example demonstrates how to integrate vector tiles into a **MapLibre GL JS** map. The best approach is to use **MapLibre styles**, which allow for better layer management and styling flexibility. The example loads three separate sources for polygons, lines, and points:
+- **Polygons:** `public:polygons_example`
+- **Lines:** `public:lines_example`
+- **Points:** `public:points_example`
+
+Alternatively, a single source can be used to load all three layers at once from:
+```
+http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
+```
+
+A source can also be defined from the layer's TileJSON document instead of writing the `tiles` array by hand — MapLibre picks up the tile URL, zoom range, and bounds automatically:
+```js
+map.addSource("polygons", {
+  type: "vector",
+  url: "http://127.0.0.1:5887/services/tilejson/public:polygons_example.json"
+});
+```
+
+#### OpenLayers
+[View Example](examples/openlayers.html)
+
+This example illustrates how to render vector tiles using **OpenLayers**. It loads the same three sources for polygons, lines, and points while also supporting the combined source for improved efficiency.
+
+#### Leaflet
+[View Example](examples/leaflet.html)
+
+This example showcases how to use **Leaflet** with vector tiles. Since Leaflet does not natively support vector tiles, it utilizes plugins to correctly render the data from the MVT Server.
+
+Each example is configured to fetch tiles from:
+```
+http://127.0.0.1:5887/services/tiles/public:{layer}/{z}/{x}/{y}.pbf
+```
+where `{layer}` can be:
+- `polygons_example`
+- `lines_example`
+- `points_example`
+
+or use the combined source:
+```
+http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
+```
+for all three layers.
+
+These examples provide a starting point for integrating vector tiles into your web mapping applications.
+
+## Styling
+
+### Serving Styles
+
+The MVT Server can also serve styles that define how vector tiles are rendered. These styles can be consumed in different ways:
+
+1. **For rendering in QGIS:** Styles are applied at the layer level, specifying how a layer should be rendered with colors, labels, symbols, and color scales.
+
+2. **For use in MapLibre:** Styles define a complete "project," including sources, layers, metadata, layer styles, sprites, glyphs, zoom levels, and map center. More details can be found in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
+
+### Sprites
+
+#### Directory Structure
+
+Your assets should be organized as follows:
+```
+map_assets
+├── glyphs
+└── sprites
+    ├── fa-brand
+    │   ├── sprite.json
+    │   └── sprite.png
+    ├── fa-regular
+    │   ├── sprite.json
+    │   ├── sprite.png
+    │   ├── sprite@2x.json
+    │   └── sprite@2x.png
+    ├── fa-solid
+    │   ├── sprite.json
+    │   └── sprite.png
+    ├── maplibre
+    │   ├── sprite.json
+    │   ├── sprite.png
+    │   ├── sprite@2x.json
+    │   └── sprite@2x.png
+    └── maptiler
+        ├── sprite.json
+        ├── sprite.png
+        ├── sprite@2x.json
+        └── sprite@2x.png
+```
+
+#### Serving Sprites
+
+Sprites are served dynamically by MVT Server. Each sprite set is accessible via a URL like this:
+
+`http://127.0.0.1:5887/services/sprites/{sprite_name}/sprite`
+
+For example, to use the maplibre sprite set:
+
+`http://127.0.0.1:5887/services/sprites/maplibre/sprite`
+
+To configure this in your MapLibre style JSON:
+```
+{
+  "version": 8,
+  "sprite": "http://127.0.0.1:5887/services/sprites/maplibre/sprite",
+  "sources": { ... },
+  "layers": [ ... ]
+}
+```
+
+This tells MapLibre to fetch the sprite JSON and images from your MVT Server.
+
+#### Creating Custom Sprites with Spreet
+
+To create your own sprite sets, you can use [Spreet](https://github.com/flother/spreet), a simple tool for generating sprite sheets and metadata from individual images.
+
+### Glyphs
+
+This tutorial will guide you through the process of generating glyphs for the **MVT Server** using **fontnik**. Glyphs allow the map server to render text labels properly.
+
+#### 1. Setting Up the Project
+
+Create a new project directory and install `fontnik`:
+
+```sh
+$ mkdir glyphs-project
+$ cd glyphs-project
+$ npm install fontnik
+# or using pnpm
+$ pnpm install fontnik
+```
+
+#### 2. Downloading a Font
+
+Download a font of your choice. In this example, we will use **EmblemaOne** from Google Fonts:
+
+[Google Fonts - Emblema One](https://fonts.google.com/specimen/Emblema+One)
+
+Extract the downloaded ZIP file and move `EmblemaOne-Regular.ttf` into the `glyphs-project` directory.
+
+#### 3. Generating Glyphs
+
+Create a directory to store the glyphs:
+
+```sh
+$ mkdir -p glyphs/EmblemaOne-Regular
+```
+
+Run the following commands to generate glyph files for different Unicode ranges:
+
+```sh
+$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 0, end: 255}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/0-255.pbf', data))"
+
+$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 256, end: 511}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/256-511.pbf', data))"
+
+$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 512, end: 767}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/512-767.pbf', data))"
+```
+
+##### Resulting Directory Structure
+
+After running these commands, your `glyphs` directory should have the following structure:
+
+```
+glyphs/
+└── EmblemaOne-Regular/
+    ├── 0-255.pbf
+    ├── 256-511.pbf
+    └── 512-767.pbf
+```
+
+#### 4. Deploying Glyphs to MVT Server
+
+Move or copy the `EmblemaOne-Regular` directory into your **MVT Server's** glyphs directory:
+
+```sh
+$ mv glyphs/EmblemaOne-Regular /path/to/map_assets/glyphs/
+```
+
+MVT Server will now be able to serve the glyphs.
+
+#### 5. Configuring MapLibre to Use the Glyphs
+
+In your **MapLibre** style JSON, add the glyphs path in the root:
+
+```json
+{
+  "glyphs": "http://127.0.0.1:5800/services/glyphs/{fontstack}/{range}.pbf"
+}
+```
+
+In the **layout** section, specify the font name where needed:
+
+```json
+"text-font": ["EmblemaOne-Regular"]
+```
+
+##### Important Note
+The current version of the MVT Server supports only one font in the array. This is because the server ensures the font's existence beforehand through the administration panel.
+
+The glyphs available on the server can be viewed from the Glyphs menu.
+
+---
+
+You have now successfully created and configured glyphs for your MVT Server! 🎉
+
+### Legends
+
+This feature allows you to serve legends based on the styles defined in the previous section, using the [maplibre-legends](https://github.com/mvt-proj/maplibre-legend) library, which is part of the MVT Server ecosystem.
+
+The legend service is particularly useful for integration with data visualization software.
+
+You can request:
+- Individual legends by passing the layer ID
+- Combined legends
+- Legends with or without titles
+- Legends that include or exclude raster layers
+
+Examples:
+
+<img width="1863" height="849" alt="imagen" src="https://github.com/user-attachments/assets/0829e0bf-e16b-4c2b-bc42-2d04fc0edce5" />
+
+
+
+![combined](https://github.com/user-attachments/assets/886481e2-e064-4ab4-b1b4-18195fde9db4)
+
+
+**More documentation: coming soon**
+
+## Advanced Filtering
 
 MVT Server supports advanced filtering directly from the source URL using query parameters. These filters are translated into SQL `WHERE` clauses dynamically.
 
@@ -499,276 +694,30 @@ It might be desirable in future versions to restrict which fields are allowed in
 
 ---
 
-### QGIS
-1. Add Source Vector Layer (click with the right button)
-2. New Generic Connection
-3. Source URL: copy de url from published layer
-4. URL Style: It will be seen later, for now leave empty
+## Production Deployment
 
-> **Note:** QGIS's built-in generic connection only accepts the XYZ tile
-> template (`.../{z}/{x}/{y}.pbf`), not a TileJSON URL. The layer's TileJSON
-> document (`http://.../services/tilejson/category:layer_name.json`) is still
-> useful here: it gives you the exact tile URL to paste, plus the Min/Max Zoom
-> values for the connection dialog and the layer's field schema. Plugins such
-> as the MapTiler plugin can consume TileJSON URLs directly.
+### Server with Nginx
+Example reverse proxy configuration (`/etc/nginx/sites-available/application.conf`):
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
 
-![imagen](https://github.com/user-attachments/assets/5479944a-6a52-443f-8518-b88c04f5f75c)
+    # Enable gzip compression for vector tiles and API responses.
+    # .pbf tiles compress 60-80% on average, significantly reducing bandwidth.
+    gzip on;
+    gzip_types application/x-protobuf application/octet-stream application/json;
+    gzip_min_length 256;
+    gzip_proxied any;
+    gzip_vary on;
 
-![imagen](https://github.com/user-attachments/assets/c16021d4-7d99-4d6d-b622-035a6d6c20b5)
-
-![imagen](https://github.com/user-attachments/assets/8a6e3daa-4b6f-4877-97d4-e5e6184b35f8)
-
-![imagen](https://github.com/user-attachments/assets/e6e9e9ad-743c-4269-bef6-cae1335d8755)
-
-
-
-### Web Clients
-
-
-This section provides examples of how to consume vector tiles from the **MVT Server** using different mapping libraries: **MapLibre GL JS**, **OpenLayers**, and **Leaflet**.
-
-
-#### MapLibre GL JS
-[View Example](examples/maplibre.html)
-
-This example demonstrates how to integrate vector tiles into a **MapLibre GL JS** map. The best approach is to use **MapLibre styles**, which allow for better layer management and styling flexibility. The example loads three separate sources for polygons, lines, and points:
-- **Polygons:** `public:polygons_example`
-- **Lines:** `public:lines_example`
-- **Points:** `public:points_example`
-
-Alternatively, a single source can be used to load all three layers at once from:
-```
-http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
-```
-
-A source can also be defined from the layer's TileJSON document instead of writing the `tiles` array by hand — MapLibre picks up the tile URL, zoom range, and bounds automatically:
-```js
-map.addSource("polygons", {
-  type: "vector",
-  url: "http://127.0.0.1:5887/services/tilejson/public:polygons_example.json"
-});
-```
-
-#### OpenLayers
-[View Example](examples/openlayers.html)
-
-This example illustrates how to render vector tiles using **OpenLayers**. It loads the same three sources for polygons, lines, and points while also supporting the combined source for improved efficiency.
-
-#### Leaflet
-[View Example](examples/leaflet.html)
-
-This example showcases how to use **Leaflet** with vector tiles. Since Leaflet does not natively support vector tiles, it utilizes plugins to correctly render the data from the MVT Server.
-
-Each example is configured to fetch tiles from:
-```
-http://127.0.0.1:5887/services/tiles/public:{layer}/{z}/{x}/{y}.pbf
-```
-where `{layer}` can be:
-- `polygons_example`
-- `lines_example`
-- `points_example`
-
-or use the combined source:
-```
-http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
-```
-for all three layers.
-
-These examples provide a starting point for integrating vector tiles into your web mapping applications.
-
-
-
-
-## Serving Styles
-
-### Introduction
-The MVT Server can also serve styles that define how vector tiles are rendered. These styles can be consumed in different ways:
-
-1. **For rendering in QGIS:** Styles are applied at the layer level, specifying how a layer should be rendered with colors, labels, symbols, and color scales.
-
-2. **For use in MapLibre:** Styles define a complete "project," including sources, layers, metadata, layer styles, sprites, glyphs, zoom levels, and map center. More details can be found in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
-
-
-## Serving Legends
-
-### Introduction
-
-This feature allows you to serve legends based on the styles defined in the previous section, using the [maplibre-legends](https://github.com/mvt-proj/maplibre-legend) library, which is part of the MVT Server ecosystem.
-
-The legend service is particularly useful for integration with data visualization software.
-
-You can request:
-- Individual legends by passing the layer ID
-- Combined legends
-- Legends with or without titles
-- Legends that include or exclude raster layers
-
-Examples:
-
-<img width="1863" height="849" alt="imagen" src="https://github.com/user-attachments/assets/0829e0bf-e16b-4c2b-bc42-2d04fc0edce5" />
-
-
-
-![combined](https://github.com/user-attachments/assets/886481e2-e064-4ab4-b1b4-18195fde9db4)
-
-
-**More documentation: coming soon**
-
-
-## Serving Glyphs and Sprites in MVT Server
-
-### Introduction
-
-In MVT Server, sprites and glyphs are essential for rendering vector tiles with custom icons and fonts. This section explains how to structure your assets and configure your MapLibre style to use them correctly.
-
-### Directory Structure
-
-Your assets should be organized as follows:
-```
-map_assets
-├── glyphs
-└── sprites
-    ├── fa-brand
-    │   ├── sprite.json
-    │   └── sprite.png
-    ├── fa-regular
-    │   ├── sprite.json
-    │   ├── sprite.png
-    │   ├── sprite@2x.json
-    │   └── sprite@2x.png
-    ├── fa-solid
-    │   ├── sprite.json
-    │   └── sprite.png
-    ├── maplibre
-    │   ├── sprite.json
-    │   ├── sprite.png
-    │   ├── sprite@2x.json
-    │   └── sprite@2x.png
-    └── maptiler
-        ├── sprite.json
-        ├── sprite.png
-        ├── sprite@2x.json
-        └── sprite@2x.png
-```
-
-### Serving Sprites
-
-Sprites are served dynamically by MVT Server. Each sprite set is accessible via a URL like this:
-
-`http://127.0.0.1:5887/services/sprites/{sprite_name}/sprite`
-
-For example, to use the maplibre sprite set:
-
-`http://127.0.0.1:5887/services/sprites/maplibre/sprite`
-
-To configure this in your MapLibre style JSON:
-```
-{
-  "version": 8,
-  "sprite": "http://127.0.0.1:5887/services/sprites/maplibre/sprite",
-  "sources": { ... },
-  "layers": [ ... ]
+    location / {
+        proxy_pass http://localhost:5800;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 }
 ```
-
-This tells MapLibre to fetch the sprite JSON and images from your MVT Server.
-
-### Creating Custom Sprites with Spreet
-
-To create your own sprite sets, you can use [Spreet](https://github.com/flother/spreet), a simple tool for generating sprite sheets and metadata from individual images.
-
-### Serving Glyphs
-
-#### Creating Glyphs for MVT Server
-
-This tutorial will guide you through the process of generating glyphs for the **MVT Server** using **fontnik**. Glyphs allow the map server to render text labels properly.
-
-##### 1. Setting Up the Project
-
-Create a new project directory and install `fontnik`:
-
-```sh
-$ mkdir glyphs-project
-$ cd glyphs-project
-$ npm install fontnik
-# or using pnpm
-$ pnpm install fontnik
-```
-
-##### 2. Downloading a Font
-
-Download a font of your choice. In this example, we will use **EmblemaOne** from Google Fonts:
-
-[Google Fonts - Emblema One](https://fonts.google.com/specimen/Emblema+One)
-
-Extract the downloaded ZIP file and move `EmblemaOne-Regular.ttf` into the `glyphs-project` directory.
-
-##### 3. Generating Glyphs
-
-Create a directory to store the glyphs:
-
-```sh
-$ mkdir -p glyphs/EmblemaOne-Regular
-```
-
-Run the following commands to generate glyph files for different Unicode ranges:
-
-```sh
-$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 0, end: 255}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/0-255.pbf', data))"
-
-$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 256, end: 511}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/256-511.pbf', data))"
-
-$ node -e "require('fontnik').range({font: require('fs').readFileSync('EmblemaOne-Regular.ttf'), start: 512, end: 767}, (err, data) => require('fs').writeFileSync('glyphs/EmblemaOne-Regular/512-767.pbf', data))"
-```
-
-###### Resulting Directory Structure
-
-After running these commands, your `glyphs` directory should have the following structure:
-
-```
-glyphs/
-└── EmblemaOne-Regular/
-    ├── 0-255.pbf
-    ├── 256-511.pbf
-    └── 512-767.pbf
-```
-
-##### 4. Deploying Glyphs to MVT Server
-
-Move or copy the `EmblemaOne-Regular` directory into your **MVT Server's** glyphs directory:
-
-```sh
-$ mv glyphs/EmblemaOne-Regular /path/to/map_assets/glyphs/
-```
-
-MVT Server will now be able to serve the glyphs.
-
-##### 5. Configuring MapLibre to Use the Glyphs
-
-In your **MapLibre** style JSON, add the glyphs path in the root:
-
-```json
-{
-  "glyphs": "http://127.0.0.1:5800/services/glyphs/{fontstack}/{range}.pbf"
-}
-```
-
-In the **layout** section, specify the font name where needed:
-
-```json
-"text-font": ["EmblemaOne-Regular"]
-```
-
-###### Important Note
-The current version of the MVT Server supports only one font in the array. This is because the server ensures the font's existence beforehand through the administration panel.
-
-The glyphs available on the server can be viewed from the Glyphs menu.
-
----
-
-You have now successfully created and configured glyphs for your MVT Server! 🎉
-
-
 
 ## Monitoring and Metrics
 
