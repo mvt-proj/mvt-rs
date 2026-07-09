@@ -30,26 +30,24 @@ Vector Tile Services
 
 ## Table of Contents
 1. [Requirements](#requirements)
-2. [Installation / Compilation](#installation--compilation)
-3. [Running the Application](#running-the-application)
-   - [Desktop Environment](#desktop-environment)
-   - [Server with Nginx](#server-with-nginx)
-4. [First Use & Authentication](#first-use--authentication)
-5. [Configuration](#configuration)
-   - [Environment Variables](#environment-variables)
-   - [Command Arguments](#command-arguments)
-6. [Serving a data layer](#serving-a-data-layer)
-7. [Consuming Services](#consuming-services)
-   - [About the Sources](#about-the-sources)
+2. [Installation](#installation)
+3. [Configuration](#configuration)
+4. [First Run & Login](#first-run--login)
+5. [The Admin Panel](#the-admin-panel)
+6. [Publishing Your First Layer](#publishing-your-first-layer)
+7. [Consuming Tiles](#consuming-tiles)
+   - [Tile Sources](#tile-sources)
    - [TileJSON (Service Discovery)](#tilejson-service-discovery)
-   - [Filtering](#filtering)
    - [QGIS](#qgis)
    - [Web Clients](#web-clients)
-9. [Serving Styles](#serving-styles)
-10. [Serving Legends](#serving-legends)
-11. [Serving Sprites and Glyphs in MVT Server](#serving-glyphs-and-sprites-in-mvt-server)
-   - [Sprites](#serving-sprites)
-   - [Glyphs](#serving-glyphs)
+8. [Styling](#styling)
+   - [Serving Styles](#serving-styles)
+   - [Sprites](#sprites)
+   - [Glyphs](#glyphs)
+   - [Legends](#legends)
+9. [Advanced Filtering](#advanced-filtering)
+10. [Caching](#caching)
+11. [Production Deployment](#production-deployment)
 12. [Monitoring and Metrics](#monitoring-and-metrics)
 ---
 
@@ -129,7 +127,6 @@ Individual values are resolved as: CLI args > YAML file > `MVT_*` environment va
 
 > **Upgrading from a version older than 0.18.0?** The `.env` file is no longer supported. Move its values into `config.yaml` using the structure above.
 
-
 ## First Run & Login
 
 Start the server:
@@ -179,8 +176,6 @@ The central section of the panel: here you declare the geographic layers to publ
 
 Define and manage rendering styles following the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/): colors, symbols, labels, color scales. Published styles can be consumed by clients such as QGIS and MapLibre — covered in [Styling](#styling).
 
-
-
 ## Publishing Your First Layer
 
 1. Go to the **Catalog** menu
@@ -208,7 +203,6 @@ When setting up the cache, consider how frequently the layer's data changes:
 Use the **Map** button to check that the parameters entered in the form are correct and the layer is being served.
 
 <!-- screenshot: Map view of a published layer -->
-
 
 ## Consuming Tiles
 
@@ -342,9 +336,7 @@ Returns the TileJSON document for that layer:
 
 ### Web Clients
 
-
 This section provides examples of how to consume vector tiles from the **MVT Server** using different mapping libraries: **MapLibre GL JS**, **OpenLayers**, and **Leaflet**.
-
 
 #### MapLibre GL JS
 [View Example](examples/maplibre.html)
@@ -578,11 +570,11 @@ Beyond serving whole layers, MVT Server supports filtering directly from the sou
 
 ---
 
-#### Filter Syntax
+### Filter Syntax
 
 The filter format supports three logical modes and several SQL-like operators.
 
-##### Operators
+#### Operators
 
 | Suffix        | SQL Equivalent |
 |---------------|----------------|
@@ -596,7 +588,7 @@ The filter format supports three logical modes and several SQL-like operators.
 | `__ilike`       | `ILIKE`         |
 | `__in`         | `IN` (comma-separated values) |
 
-##### Logical Modes
+#### Logical Modes
 
 | Prefix        | Logic |
 |---------------|-------|
@@ -606,7 +598,7 @@ The filter format supports three logical modes and several SQL-like operators.
 
 ---
 
-#### Example URLs
+### Example URLs
 
 ```text
 /services/tiles/public:states/{z}/{x}/{y}.pbf?or__name__in='FOO','BAR'&or__id__in=6,9,22,24
@@ -627,7 +619,7 @@ WHERE (vur_foo >= $1 OR vur_bar >= $2)
 
 ---
 
-#### Admin-defined `filter` (static filter)
+### Admin-defined `filter` (static filter)
 
 In the layer configuration panel, administrators can define a **fixed SQL filter** in the `filter` field. This filter is applied **before** any dynamic query parameters.
 
@@ -651,7 +643,7 @@ WHERE status = 'public' AND (category = $1)
 
 ---
 
-#### Query Parameter Freedom
+### Query Parameter Freedom
 
 In the current version, users are free to specify **any field** in the query string. There's no restriction on which columns can be queried. This makes the system very flexible, but it also means:
 
@@ -661,14 +653,14 @@ It might be desirable in future versions to restrict which fields are allowed in
 
 ---
 
-#### Summary
+### Summary
 
 - Combine static (`filter`) and dynamic (query params) filters.
 - Express logical conditions using `and__`, `or__`, `not__`.
 - Safely binds user input to prevent SQL injection (except `IN` currently uses inline literals).
 - Compatible with QGIS, MapLibre, and web clients.
 
-#### Programmable filtering (plugins)
+### Programmable filtering (plugins)
 
 Beyond query parameters, MVT Server supports Lua plugins that can inspect each tile request (user, groups, zoom, query string) and inject additional SQL filters — useful for access control and row-level security. See [docs/plugins.md](docs/plugins.md).
 
@@ -696,8 +688,12 @@ Editing a layer automatically invalidates its cached tiles, and each layer's cac
 
 ## Production Deployment
 
-### Server with Nginx
-Example reverse proxy configuration (`/etc/nginx/sites-available/application.conf`):
+For production use, run MVT Server behind a reverse proxy such as Nginx: it can terminate TLS and compress tiles before they leave your network.
+
+### Nginx reverse proxy
+
+Example configuration (`/etc/nginx/sites-available/application.conf`):
+
 ```nginx
 server {
     listen 80;
@@ -712,16 +708,22 @@ server {
     gzip_vary on;
 
     location / {
-        proxy_pass http://localhost:5800;
+        proxy_pass http://localhost:5887;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 }
 ```
 
+Remember to set `server.public_url` in `config.yaml` so absolute URLs (e.g. in TileJSON responses) use your public domain.
+
+### Scaling out
+
+To distribute traffic across several MVT Server instances — load balancing, shared Redis cache, configuration synchronization between nodes — see [docs/clustering.md](docs/clustering.md). For a containerized setup with PostGIS and Redis included, see [docker-example/](docker-example/DOCKER_README.md).
+
 ## Monitoring and Metrics
 
-MVT-RS includes a built-in monitoring dashboard with real-time metrics visualization. The server exposes both a web dashboard and Prometheus-compatible metrics endpoint.
+MVT Server includes a built-in monitoring dashboard with real-time metrics visualization. The server exposes both a web dashboard and Prometheus-compatible metrics endpoint.
 
 ### Accessing the Dashboard
 
@@ -733,8 +735,7 @@ Navigate to `/admin/monitor/dashboard` to view real-time server metrics includin
 - **Latency**: Last request and average response times in milliseconds
 - **Cache Performance**: Cache hits and misses per second
 
-<img width="934" height="860" alt="imagen" src="https://github.com/user-attachments/assets/661de924-e343-417c-88f2-344be51bbe34" />
-
+<!-- screenshot: monitoring dashboard -->
 
 The dashboard updates every 5 seconds via Server-Sent Events (SSE) and displays historical data in interactive charts.
 
@@ -751,7 +752,6 @@ mvt_server_cache_misses_total
 mvt_server_request_latency_seconds
 mvt_server_request_latency_avg_seconds
 ```
-
 
 These can be scraped by Prometheus or any compatible monitoring system for long-term storage and alerting.
 
