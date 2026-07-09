@@ -70,7 +70,7 @@ pub async fn login(res: &mut Response, depot: &mut Depot, data: Login) -> AppRes
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     depot.set_session(session);
 
-    res.render(Redirect::other("/admin"));
+    res.render(Redirect::other("/"));
     Ok(())
 }
 
