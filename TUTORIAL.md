@@ -153,78 +153,61 @@ After logging in you land on the home page, from which the administration panel 
 
 <!-- screenshot: home / main panel after login -->
 
-### MVT Server Administration Panel
+## The Admin Panel
 
-The MVT Server administration panel is an essential tool for managing all aspects of publishing your geographic layers as vector tiles. Through an intuitive web interface, you'll have control over:
+The administration panel is where the whole platform is managed. It is organized in five sections:
 
-#### 1. Groups (User Roles)
+### Groups (User Roles)
 
-- Creation and Management: Define user groups or roles with different levels of access and permissions. This allows you to control who can perform administrative tasks, publish layers, create styles, etc.
-- Permission Assignment: Assign specific permissions to each group to granularly control access to the server's various functionalities.
+Groups define roles with different levels of access. Create groups and assign them permissions to control who can perform administrative tasks, publish layers, or create styles. Layers can also be restricted so that only members of certain groups can consume them.
 
-#### 2. Users
+### Users
 
-- Creation and Management: Create new user accounts and manage existing ones.
-- Role Assignment: Assign users to specific groups to determine their permissions and level of access.
-- Administrative Users: Only users belonging to the "admin" group (or another that is configured as such) will have the ability to perform administrative tasks, such as managing users, groups, categories, catalog, and styles.
+Create and manage user accounts, and assign each user to one or more groups. Only users belonging to the "admin" group can perform administrative tasks such as managing users, groups, categories, the catalog, and styles.
 
-#### 3. Categories
+### Categories
 
-- Logical Organization: Categories act as namespaces to organize your layers and styles logically. This is especially useful when working with a large number of layers, as it allows you to keep them organized and easy to find.
+Categories act as namespaces that organize layers and styles logically. They also form part of every tile URL (`category:layer_name`), and they are especially useful when working with a large number of layers.
 
+### Catalog (Layer Publishing)
 
-#### 4. Catalog (Layer Publishing)
+The central section of the panel: here you declare the geographic layers to publish as vector tiles — their data source, fields, zoom range, cache policy and access permissions. The next section walks through it.
 
-- Layer Declaration: This is the central section of the administrator. Here you define and declare the geographic layers you want to publish as vector tiles.
-- Layer Configuration: Specify the data source for each layer, projections, and other relevant parameters.
-- Publishing: Once configured, the layers will be available for publishing as vector tiles.
+<!-- screenshot: Catalog list with per-layer buttons (Map, cache, edit) -->
 
-#### 5. Styles
+### Styles
 
-- Creation and Management: Define and manage rendering styles for your layers. Styles determine how the layers will appear on the map (colors, symbols, labels, etc.).
-- Style Publishing: Publish the created styles so they can be used by clients like QGIS.
-- Style Language: MVT Server likely supports a style language like the Maplibre Style Specification, which allows you to define complex and custom styles.
-
-#### In summary
-
-The MVT Server administration panel gives you complete control over the publication of your geographic layers as vector tiles. From managing users and permissions to the detailed configuration of layers and styles, this tool allows you to create and maintain interactive and personalized maps efficiently.
-
-![imagen](https://github.com/user-attachments/assets/accf44c6-644f-48fd-933a-9b2f65b2dd59)
+Define and manage rendering styles following the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/): colors, symbols, labels, color scales. Published styles can be consumed by clients such as QGIS and MapLibre — covered in [Styling](#styling).
 
 
 
-## Serving a data layer
+## Publishing Your First Layer
 
-1. Go to the "Catalog" menu
-2. Select "Add Layer"
+1. Go to the **Catalog** menu
+2. Click **Add Layer**
 3. Fill out the form
 
-![imagen](https://github.com/user-attachments/assets/53e36cec-57b3-411d-a0ac-d032b812b57b)
+<!-- screenshot: Add Layer form with schema, table and fields expanded -->
 
+The **Name** field must contain a single word, preferably lowercase. **Alias** accepts a more descriptive label.
 
-The "Name" field must contain a single word preferably in lowercase. In "Alias", you can enter a more descriptive label.
+The form lists the schemas available in the PostgreSQL database. After selecting a schema, its tables (geographic layers) are displayed; once a table is selected, its fields are shown. It is recommended to publish only the fields you actually need.
 
-The form allows you to list available schemas in the PostgreSQL database. After selecting a schema, the tables (geographic layers) will be displayed. Finally, once a table is selected, its fields will be shown. It is recommended to publish only the necessary fields.
+It is also advisable to configure **ZMin** and **ZMax** properly to improve performance — setting ZMin = 0 for a small locality layer is unnecessary, for example. After adding the layer, you can use the map view to find appropriate zoom values.
 
-It is also advisable to properly configure ZMin and ZMax to improve performance. For example, setting ZMin = 0 for a small locality layer is unnecessary. After adding the layer, you can use the map to assign appropriate zoom values.
+Most of the remaining fields can keep their default values.
 
-Most of the following fields can be left with their default values.
+When setting up the cache, consider how frequently the layer's data changes:
 
-When setting up the cache, consider how frequently the layer updates:
-
-- For layers that change infrequently, it is recommended to set Cache = 0 (infinite cache duration).
-- The cache can be cleared or purged at any time using the corresponding button.
-- Each layer manages its own cache expiration independently.
-
-
-![imagen](https://github.com/user-attachments/assets/8868309a-5b31-4f3f-b916-1f667dd656b0)
-
+- **Cache** is expressed in seconds; each layer manages its own expiration independently.
+- For layers that change infrequently, set **Cache = 0**: cached tiles never expire.
+- A layer's cache can be cleared at any time with the corresponding button — more on this in [Caching](#caching).
 
 ### Testing the Layer
 
-You can check if the parameters entered in the form are correct and if the layer has been successfully published by using the "Map" button.
+Use the **Map** button to check that the parameters entered in the form are correct and the layer is being served.
 
-![imagen](https://github.com/user-attachments/assets/532e617d-7db5-4041-b0cf-84c7af764183)
+<!-- screenshot: Map view of a published layer -->
 
 
 ## Consuming Services
