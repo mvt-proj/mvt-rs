@@ -228,7 +228,7 @@ mod tests {
 
     #[test]
     fn test_validate_user_nonexistent_user() {
-        let mut auth = create_test_auth();
+        let auth = create_test_auth();
 
         let is_valid = auth.validate_user("nonexistent", "anypassword");
         assert!(!is_valid);
