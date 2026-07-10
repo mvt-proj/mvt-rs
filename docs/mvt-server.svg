@@ -1,0 +1,98 @@
+<svg width="1000" height="880" viewBox="0 0 1000 880" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img">
+  <title>MVT Server — logical architecture: PostGIS, administration and vector tile services</title>
+  <desc>Diagram showing PostGIS as the data source, MVT Server Administration as the management layer and Vector Tile Services as the client consumption layer.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="880" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="500" y="32" text-anchor="middle" font-size="19" font-weight="600" fill="#1f2937">MVT Server — logical architecture overview</text>
+
+  <!-- ============ PostGIS ============ -->
+  <rect x="320" y="60" width="360" height="75" rx="12" fill="#eef2ff" stroke="#6366f1" stroke-width="1"/>
+  <text x="500" y="90" text-anchor="middle" font-size="16" font-weight="600" fill="#312e81">PostGIS</text>
+  <text x="500" y="112" text-anchor="middle" font-size="11" fill="#4338ca">spatial database · source of truth for geodata</text>
+
+  <!-- Trunk PostGIS -> MVT Admin -->
+  <line x1="500" y1="135" x2="500" y2="175" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="515" y="160" font-size="10" fill="#4338ca">serves layers</text>
+
+  <!-- ============ MVT Server Administration ============ -->
+  <rect x="60" y="180" width="880" height="330" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1"/>
+  <text x="500" y="210" text-anchor="middle" font-size="15" font-weight="600" fill="#4c1d95">MVT Server Administration</text>
+  <text x="500" y="228" text-anchor="middle" font-size="10.5" fill="#6d28d9">management layer · publish, configure and serve</text>
+
+  <!-- Sub-items: 2 columns x 3 rows -->
+  <!-- Row 1 -->
+  <rect x="90" y="250" width="390" height="62" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+  <text x="285" y="275" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">Publish layers</text>
+  <text x="285" y="295" text-anchor="middle" font-size="10.5" fill="#6d28d9">expose PostGIS tables as vector tile layers</text>
+
+  <rect x="520" y="250" width="390" height="62" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+  <text x="715" y="275" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">Organize categories</text>
+  <text x="715" y="295" text-anchor="middle" font-size="10.5" fill="#6d28d9">group layers into logical collections</text>
+
+  <!-- Row 2 -->
+  <rect x="90" y="325" width="390" height="62" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+  <text x="285" y="350" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">Configure permissions</text>
+  <text x="285" y="370" text-anchor="middle" font-size="10.5" fill="#6d28d9">control access per layer and per user</text>
+
+  <rect x="520" y="325" width="390" height="62" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+  <text x="715" y="350" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">Manage MapLibre styles</text>
+  <text x="715" y="370" text-anchor="middle" font-size="10.5" fill="#6d28d9">define and edit rendering styles</text>
+
+  <!-- Row 3 -->
+  <rect x="90" y="400" width="390" height="62" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+  <text x="285" y="425" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">Serve legends</text>
+  <text x="285" y="445" text-anchor="middle" font-size="10.5" fill="#6d28d9">publish legend graphics for each layer</text>
+
+  <rect x="520" y="400" width="390" height="62" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+  <text x="715" y="425" text-anchor="middle" font-size="12.5" font-weight="600" fill="#4c1d95">Manage cache</text>
+  <text x="715" y="445" text-anchor="middle" font-size="10.5" fill="#6d28d9">warm, invalidate and monitor tile cache</text>
+
+  <!-- Trunk MVT Admin -> Vector Tile Services -->
+  <line x1="500" y1="510" x2="500" y2="560" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="515" y="540" font-size="10" fill="#6d28d9">exposes services</text>
+
+  <!-- ============ Vector Tile Services ============ -->
+  <rect x="60" y="565" width="880" height="240" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+  <text x="500" y="595" text-anchor="middle" font-size="15" font-weight="600" fill="#1e3a8a">Vector Tile Services</text>
+  <text x="500" y="613" text-anchor="middle" font-size="10.5" fill="#2563eb">client consumption layer · web and desktop mapping</text>
+
+  <!-- Sub-items: 2 columns x 2 rows -->
+  <!-- Row 1 -->
+  <rect x="90" y="635" width="390" height="62" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="0.8"/>
+  <text x="285" y="660" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e3a8a">MapLibre</text>
+  <text x="285" y="680" text-anchor="middle" font-size="10.5" fill="#2563eb">open-source WebGL map renderer</text>
+
+  <rect x="520" y="635" width="390" height="62" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="0.8"/>
+  <text x="715" y="660" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e3a8a">QGIS</text>
+  <text x="715" y="680" text-anchor="middle" font-size="10.5" fill="#2563eb">desktop GIS · consumes MVT as XYZ / vector</text>
+
+  <!-- Row 2 -->
+  <rect x="90" y="710" width="390" height="62" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="0.8"/>
+  <text x="285" y="735" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e3a8a">OpenLayers</text>
+  <text x="285" y="755" text-anchor="middle" font-size="10.5" fill="#2563eb">flexible web mapping library</text>
+
+  <rect x="520" y="710" width="390" height="62" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="0.8"/>
+  <text x="715" y="735" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e3a8a">Leaflet</text>
+  <text x="715" y="755" text-anchor="middle" font-size="10.5" fill="#2563eb">lightweight interactive maps</text>
+
+  <!-- ============ Legend ============ -->
+  <rect x="60" y="820" width="18" height="18" rx="4" fill="#eef2ff" stroke="#6366f1" stroke-width="1"/>
+  <text x="84" y="834" font-size="10.5" fill="#374151">data source</text>
+
+  <rect x="200" y="820" width="18" height="18" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1"/>
+  <text x="224" y="834" font-size="10.5" fill="#374151">administration</text>
+
+  <rect x="350" y="820" width="18" height="18" rx="4" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+  <text x="374" y="834" font-size="10.5" fill="#374151">client services</text>
+
+  <line x1="520" y1="829" x2="560" y2="829" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="568" y="834" font-size="10.5" fill="#374151">data / service flow</text>
+</svg>

@@ -5,28 +5,7 @@ MVT Server is not just a vector tile server.
 It is an open source platform designed to publish vector maps directly from PostGIS. Through a web administration interface you can publish layers, organize them into catalogs and categories, manage users and permissions, configure MapLibre styles, serve legends, sprites and glyphs, monitor the platform and expose production-ready vector tile services without relying on complex configuration files.
 
 ## Typical Workflow
-
-```text
-PostGIS
-    │
-    ▼
-MVT Server Administration
-    │
-    ├── Publish layers
-    ├── Organize categories
-    ├── Configure permissions
-    ├── Manage MapLibre styles
-    ├── Serve legends
-    ├── Manage cache
-    │
-    ▼
-Vector Tile Services
-    │
-    ├── MapLibre
-    ├── QGIS
-    ├── OpenLayers
-    └── Leaflet
-```
+![MVT-Server](docs/mvt-server.svg)
 
 ## Table of Contents
 1. [Requirements](#requirements)
@@ -157,13 +136,13 @@ On the first run, MVT Server initializes everything it needs: it creates its int
 
 Open `http://localhost:5887` in your browser (or the corresponding domain if the server is hosted remotely) and log in.
 
-<!-- screenshot: login screen -->
+![Login](docs/login.png)
 
 > **Important:** change the default password immediately after your first login. Leaving it as `admin` exposes your server and data to unauthorized access.
 
 After logging in you land on the home page, from which the administration panel is reached:
 
-<!-- screenshot: home / main panel after login -->
+![Home](docs/home.png)
 
 ## The Admin Panel
 
@@ -185,7 +164,7 @@ Categories act as namespaces that organize layers and styles logically. They als
 
 The central section of the panel: here you declare the geographic layers to publish as vector tiles — their data source, fields, zoom range, cache policy and access permissions. The next section walks through it.
 
-<!-- screenshot: Catalog list with per-layer buttons (Map, cache, edit) -->
+![Catalog](docs/catalog.png)
 
 ### Styles
 
@@ -197,7 +176,7 @@ Define and manage rendering styles following the [MapLibre Style Specification](
 2. Click **Add Layer**
 3. Fill out the form
 
-<!-- screenshot: Add Layer form with schema, table and fields expanded -->
+![Publish Layer](docs/publish_layer.png)
 
 The **Name** field must contain a single word, preferably lowercase. **Alias** accepts a more descriptive label.
 
@@ -217,7 +196,7 @@ When setting up the cache, consider how frequently the layer's data changes:
 
 Use the **Map** button to check that the parameters entered in the form are correct and the layer is being served.
 
-<!-- screenshot: Map view of a published layer -->
+![Testing Layer](docs/testing_layer.png)
 
 ## Consuming Tiles
 
@@ -343,9 +322,9 @@ Returns the TileJSON document for that layer:
 > values for the connection dialog and the layer's field schema. Plugins such
 > as the MapTiler plugin can consume TileJSON URLs directly.
 
-<!-- screenshot: QGIS New Generic Connection dialog -->
+![QGis Connetion](docs/qgis_connection.png)
 
-<!-- screenshot: QGIS with the layer rendered -->
+![QGIS Render](docs/qgis_render.png)
 
 ### Web Clients
 
@@ -412,7 +391,8 @@ MVT Server serves styles that define how vector tiles are rendered. They can be 
 
 Styles are created and published from the **Styles** section of the admin panel.
 
-<!-- screenshot: Styles list or style editor -->
+![Styles](docs/styles.png)
+![New Layer Style](docs/new_layer_style.png)
 
 ### Sprites
 
@@ -742,7 +722,7 @@ Navigate to `/admin/monitor/dashboard` to view real-time server metrics includin
 - **Latency**: Last request and average response times in milliseconds
 - **Cache Performance**: Cache hits and misses per second
 
-<!-- screenshot: monitoring dashboard -->
+![Dashboard](docs/dashboard.png)
 
 The dashboard updates every 5 seconds via Server-Sent Events (SSE) and displays historical data in interactive charts.
 
