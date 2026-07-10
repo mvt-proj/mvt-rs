@@ -152,7 +152,7 @@ pub async fn i18n_middleware(
     res: &mut Response,
     ctrl: &mut FlowCtrl,
 ) {
-    if let Ok(i18n) = depot.obtain::<Arc<I18n>>() {
+    if let Ok(i18n) = depot.get_typed::<Arc<I18n>>() {
         let lang = i18n.resolve_lang(req);
         let translations = i18n.get_all_translations(&lang);
 
