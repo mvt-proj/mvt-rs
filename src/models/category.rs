@@ -61,10 +61,12 @@ impl Category {
 
         let mut catalog = get_catalog().await.write().await;
 
-        let position = catalog.layers.iter().position(|l| l.category.id == self.id);
-
-        if let Some(pos) = position {
-            catalog.layers[pos].category = category.clone();
+        for layer in catalog
+            .layers
+            .iter_mut()
+            .filter(|l| l.category.id == self.id)
+        {
+            layer.category = category.clone();
         }
 
         categories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
