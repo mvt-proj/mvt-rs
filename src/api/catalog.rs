@@ -31,15 +31,18 @@ pub async fn list(req: &mut Request, res: &mut Response) -> AppResult<()> {
 }
 
 #[handler]
-pub async fn create_layer(req: &mut Request, res: &mut Response) {
-    let layer = req.parse_json::<Layer>().await;
-
-    match layer {
-        Ok(lyr) => {
+pub async fn create_layer(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    match req.parse_json::<Layer>().await {
+        Ok(mut lyr) => {
+            lyr.name = crate::services::utils::normalize_name(&lyr.name)?;
             let mut catalog = get_catalog().await.write().await;
-            let _ = catalog.add_layer(lyr.clone()).await;
-            res.render(Json(lyr))
+            catalog.add_layer(lyr.clone()).await?;
+            res.render(Json(lyr));
         }
-        Err(e) => res.render(format!("{e:?}")),
+        Err(e) => {
+            res.status_code(StatusCode::BAD_REQUEST);
+            res.render(format!("{e:?}"));
+        }
     }
+    Ok(())
 }
