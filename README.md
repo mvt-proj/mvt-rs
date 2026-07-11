@@ -30,6 +30,21 @@ Every resource above is managed through the same web interface — created, vers
 
 ---
 
+## Fine-Grained Publishing Control
+
+Publishing from PostGIS is not all-or-nothing. Every layer is tuned individually, from the admin interface:
+
+- **Which tables or views get published** — nothing is exposed unless you explicitly publish it.
+- **Which fields of that layer travel in the tile** — and in what order.
+- **Cache policy per layer** — each layer sets its own cache max-age, independently of the rest.
+- **Record limit per request** — cap how many records a single tile request may return, per layer.
+- **SQL filters and zoom range per layer** — control which records are served and at which zoom levels.
+- **Access control per layer** — restrict a layer to specific user groups.
+
+The tiles you serve carry exactly the data you intend — no more, no less.
+
+---
+
 ## See It In Action
 
 Two clips, one continuous workflow — from raw PostGIS table to a styled map in QGIS, without touching a config file.
@@ -115,6 +130,7 @@ Beyond *what* MVT Server publishes (see the table above), this is *how* it opera
 - Multiple PostgreSQL databases.
 - Single-layer, multi-layer and category-based sources.
 - Layer composition.
+- Fine-grained control per layer: published fields and their order, SQL filter, zoom range, cache, record limits, allowed groups.
 
 ### Administration
 
