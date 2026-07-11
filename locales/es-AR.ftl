@@ -114,6 +114,7 @@ username = Nombre de Usuario
 first-name = Nombre
 last-name = Apellido
 name = Nombre
+info-name-format = Solo minúsculas, números y guión bajo. Los espacios se reemplazan por _ y los acentos se quitan automáticamente
 layer-name = Nombre Capa
 category = Categoría
 description = Descripción

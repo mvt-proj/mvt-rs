@@ -112,6 +112,7 @@ username = Username
 first-name = First Name
 last-name = Last Name
 name = Name
+info-name-format = Lowercase letters, numbers and underscore only. Spaces become _ and accents are removed automatically
 layer-name = Layer Name
 category = Category
 description = Description
