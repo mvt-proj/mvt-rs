@@ -61,15 +61,26 @@
       .replace(/_+/g, '_');
   }
 
-  document.addEventListener('input', function (e) {
-    var el = e.target;
-    if (!el.matches || !el.matches('input[data-normalize-name]')) return;
+  function applyNameNormalization(el) {
     var before = el.value;
     var after = normalizeName(before);
     if (after === before) return;
     var pos = el.selectionStart - (before.length - after.length);
     el.value = after;
     el.setSelectionRange(Math.max(0, pos), Math.max(0, pos));
+  }
+
+  document.addEventListener('input', function (e) {
+    if (e.isComposing) return;
+    var el = e.target;
+    if (!el.matches || !el.matches('input[data-normalize-name]')) return;
+    applyNameNormalization(el);
+  });
+
+  document.addEventListener('compositionend', function (e) {
+    var el = e.target;
+    if (!el.matches || !el.matches('input[data-normalize-name]')) return;
+    applyNameNormalization(el);
   });
 })();
 </script>
