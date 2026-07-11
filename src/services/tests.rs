@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::services::utils::validate_filter;
+    use crate::services::utils::{validate_filter, normalize_name};
 
     #[test]
     fn test_validate_filter_empty() {
@@ -77,5 +77,52 @@ mod tests {
     fn test_validate_filter_unbalanced_quotes() {
         assert!(validate_filter("name = 'missing quote").is_err());
         assert!(validate_filter("name = \"missing quote").is_err());
+    }
+
+    #[test]
+    fn test_normalize_name_spaces_and_case() {
+        assert_eq!(
+            normalize_name("departamentos Capital").unwrap(),
+            "departamentos_capital"
+        );
+        assert_eq!(normalize_name("GRUPOS").unwrap(), "grupos");
+    }
+
+    #[test]
+    fn test_normalize_name_accents() {
+        assert_eq!(normalize_name("Categoría Ríos").unwrap(), "categoria_rios");
+        assert_eq!(normalize_name("Ñandú Güemes").unwrap(), "nandu_guemes");
+    }
+
+    #[test]
+    fn test_normalize_name_collapses_separators() {
+        assert_eq!(normalize_name("  foo   bar  ").unwrap(), "foo_bar");
+        assert_eq!(normalize_name("foo__bar").unwrap(), "foo_bar");
+        assert_eq!(normalize_name("foo \t bar").unwrap(), "foo_bar");
+    }
+
+    #[test]
+    fn test_normalize_name_drops_symbols() {
+        assert_eq!(normalize_name("depto. (norte)").unwrap(), "depto_norte");
+        assert_eq!(normalize_name("capa-2024!").unwrap(), "capa2024");
+    }
+
+    #[test]
+    fn test_normalize_name_no_leading_or_trailing_underscore() {
+        assert_eq!(normalize_name("!foo bar!").unwrap(), "foo_bar");
+        assert_eq!(normalize_name(" _foo_ ").unwrap(), "foo");
+    }
+
+    #[test]
+    fn test_normalize_name_already_normalized_passthrough() {
+        assert_eq!(normalize_name("departamentos_capital").unwrap(), "departamentos_capital");
+    }
+
+    #[test]
+    fn test_normalize_name_empty_result_is_error() {
+        assert!(normalize_name("").is_err());
+        assert!(normalize_name("   ").is_err());
+        assert!(normalize_name("!!!").is_err());
+        assert!(normalize_name("___").is_err());
     }
 }

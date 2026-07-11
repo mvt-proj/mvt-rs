@@ -295,3 +295,41 @@ pub async fn validate_user_groups(
     let (is_auth, _) = get_session_data(depot).await;
     Ok(has_common_group || is_auth)
 }
+
+/// Normalizes an entity name (layer, style, category, group) for use in URLs
+/// and cache keys: lowercase, accents transliterated, whitespace runs become
+/// `_`, anything outside `[a-z0-9_]` is dropped, repeated `_` collapsed.
+/// Errors if nothing valid remains.
+#[allow(dead_code)]
+pub fn normalize_name(name: &str) -> AppResult<String> {
+    let mut result = String::with_capacity(name.len());
+    for ch in name.trim().to_lowercase().chars() {
+        let mapped = match ch {
+            'a'..='z' | '0'..='9' => Some(ch),
+            ' ' | '\t' | '_' => Some('_'),
+            'á' | 'à' | 'ä' | 'â' => Some('a'),
+            'é' | 'è' | 'ë' | 'ê' => Some('e'),
+            'í' | 'ì' | 'ï' | 'î' => Some('i'),
+            'ó' | 'ò' | 'ö' | 'ô' => Some('o'),
+            'ú' | 'ù' | 'ü' | 'û' => Some('u'),
+            'ñ' => Some('n'),
+            _ => None,
+        };
+        if let Some(c) = mapped {
+            if c == '_' {
+                if !result.is_empty() && !result.ends_with('_') {
+                    result.push('_');
+                }
+            } else {
+                result.push(c);
+            }
+        }
+    }
+    let result = result.trim_end_matches('_');
+    if result.is_empty() {
+        return Err(AppError::InvalidInput(format!(
+            "name '{name}' contains no valid characters (allowed: a-z, 0-9, _)"
+        )));
+    }
+    Ok(result.to_string())
+}
