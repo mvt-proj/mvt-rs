@@ -31,7 +31,7 @@ Aplicada de forma idéntica en Rust y JS:
 1. `trim()` de los extremos
 2. Pasar a minúsculas
 3. Transliterar acentos y eñes: `á é í ó ú ü ñ` → `a e i o u u n`
-4. Espacios y tabs (secuencias completas) → `_`
+4. Espacios en blanco (cualquier whitespace, secuencias completas) → `_`
 5. Descartar todo carácter que no sea `[a-z0-9_]`
 6. Colapsar `_` repetidos
 

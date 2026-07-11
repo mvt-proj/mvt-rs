@@ -119,6 +119,11 @@ mod tests {
     }
 
     #[test]
+    fn test_normalize_name_other_whitespace() {
+        assert_eq!(normalize_name("foo\u{a0}bar\r\nbaz").unwrap(), "foo_bar_baz");
+    }
+
+    #[test]
     fn test_normalize_name_empty_result_is_error() {
         assert!(normalize_name("").is_err());
         assert!(normalize_name("   ").is_err());

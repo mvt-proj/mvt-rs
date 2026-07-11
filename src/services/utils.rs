@@ -306,13 +306,14 @@ pub fn normalize_name(name: &str) -> AppResult<String> {
     for ch in name.trim().to_lowercase().chars() {
         let mapped = match ch {
             'a'..='z' | '0'..='9' => Some(ch),
-            ' ' | '\t' | '_' => Some('_'),
+            '_' => Some('_'),
             'á' | 'à' | 'ä' | 'â' => Some('a'),
             'é' | 'è' | 'ë' | 'ê' => Some('e'),
             'í' | 'ì' | 'ï' | 'î' => Some('i'),
             'ó' | 'ò' | 'ö' | 'ô' => Some('o'),
             'ú' | 'ù' | 'ü' | 'û' => Some('u'),
             'ñ' => Some('n'),
+            c if c.is_whitespace() => Some('_'),
             _ => None,
         };
         if let Some(c) = mapped {
