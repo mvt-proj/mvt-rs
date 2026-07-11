@@ -310,13 +310,15 @@ impl Catalog {
         Ok(())
     }
 
-    pub async fn add_layer(&mut self, layer: Layer) -> AppResult<()> {
+    pub async fn add_layer(&mut self, mut layer: Layer) -> AppResult<()> {
+        layer.name = crate::services::utils::normalize_name(&layer.name)?;
         create_layer(None, layer.clone()).await?;
         self.layers.push(layer);
         Ok(())
     }
 
-    pub async fn update_layer(&mut self, layer: Layer) -> AppResult<()> {
+    pub async fn update_layer(&mut self, mut layer: Layer) -> AppResult<()> {
+        layer.name = crate::services::utils::normalize_name(&layer.name)?;
         update_layer(None, layer.clone()).await?;
         let position = self.layers.iter().position(|lyr| lyr.id == layer.id);
         match position {

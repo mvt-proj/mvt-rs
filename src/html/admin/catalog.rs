@@ -229,7 +229,11 @@ pub async fn update_layer<'a>(res: &mut Response, layer_form: NewLayer<'a>) -> A
         })
         .unwrap_or_default();
 
-    let layer_key = format!("{}_{}", category.name, layer_form.name);
+    let layer_key = format!(
+        "{}_{}",
+        category.name,
+        crate::services::utils::normalize_name(&layer_form.name)?
+    );
 
     let layer = Layer {
         id: layer_form.id,
