@@ -34,6 +34,8 @@
             type="text"
             placeholder="{{ base.translate["name"] }}"
             value="{{ group.name }}"
+            data-normalize-name
+            pattern="[a-z0-9_]+"
             required
           />
         </div>

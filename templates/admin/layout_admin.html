@@ -40,6 +40,37 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeDeleteModal();
   });
+
+  // Live normalization for entity name inputs (mirrors normalize_name() in
+  // src/services/utils.rs; the server strips leading/trailing "_" on save).
+  var NAME_ACCENTS = {
+    'á': 'a', 'à': 'a', 'ä': 'a', 'â': 'a',
+    'é': 'e', 'è': 'e', 'ë': 'e', 'ê': 'e',
+    'í': 'i', 'ì': 'i', 'ï': 'i', 'î': 'i',
+    'ó': 'o', 'ò': 'o', 'ö': 'o', 'ô': 'o',
+    'ú': 'u', 'ù': 'u', 'ü': 'u', 'û': 'u',
+    'ñ': 'n'
+  };
+
+  function normalizeName(value) {
+    return value
+      .toLowerCase()
+      .replace(/[áàäâéèëêíìïîóòöôúùüûñ]/g, function (ch) { return NAME_ACCENTS[ch]; })
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_');
+  }
+
+  document.addEventListener('input', function (e) {
+    var el = e.target;
+    if (!el.matches || !el.matches('input[data-normalize-name]')) return;
+    var before = el.value;
+    var after = normalizeName(before);
+    if (after === before) return;
+    var pos = el.selectionStart - (before.length - after.length);
+    el.value = after;
+    el.setSelectionRange(Math.max(0, pos), Math.max(0, pos));
+  });
 })();
 </script>
 {% endblock %}

@@ -48,7 +48,7 @@
         <div class="mb-4">
           <label class="label" for="name">{{ base.translate["name"] }}</label>
           <div class="mt-1">
-            <input class="input" type="text" name="name" id="name" value="{{ layer.name }}" required>
+            <input class="input" type="text" name="name" id="name" value="{{ layer.name }}" data-normalize-name pattern="[a-z0-9_]+" required>
           </div>
         </div>
 
