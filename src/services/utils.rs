@@ -300,7 +300,6 @@ pub async fn validate_user_groups(
 /// and cache keys: lowercase, accents transliterated, whitespace runs become
 /// `_`, anything outside `[a-z0-9_]` is dropped, repeated `_` collapsed.
 /// Errors if nothing valid remains.
-#[allow(dead_code)]
 pub fn normalize_name(name: &str) -> AppResult<String> {
     let mut result = String::with_capacity(name.len());
     for ch in name.trim().to_lowercase().chars() {

@@ -15,6 +15,7 @@ pub struct Category {
 
 impl Category {
     pub async fn new(name: String, description: String) -> AppResult<Self> {
+        let name = crate::services::utils::normalize_name(&name)?;
         let category = Category {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -37,6 +38,7 @@ impl Category {
     }
 
     pub async fn update_category(&self, name: String, description: String) -> AppResult<Self> {
+        let name = crate::services::utils::normalize_name(&name)?;
         let category = Category {
             id: self.id.clone(),
             name,

@@ -25,6 +25,7 @@ impl Style {
         description: String,
         style: String,
     ) -> AppResult<Self> {
+        let name = crate::services::utils::normalize_name(&name)?;
         let style = Style {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -81,6 +82,7 @@ impl Style {
         description: String,
         style: String,
     ) -> AppResult<Self> {
+        let name = crate::services::utils::normalize_name(&name)?;
         let style = Style {
             id: self.id.clone(),
             name,

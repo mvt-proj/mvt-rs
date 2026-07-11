@@ -39,6 +39,7 @@ pub struct Group {
 
 impl Group {
     pub async fn new(name: String, description: String) -> AppResult<Self> {
+        let name = crate::services::utils::normalize_name(&name)?;
         let group = Group {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -62,6 +63,7 @@ impl Group {
     }
 
     pub async fn update_group(&self, name: String, description: String) -> AppResult<Self> {
+        let name = crate::services::utils::normalize_name(&name)?;
         let group = Group {
             id: self.id.clone(),
             name,
