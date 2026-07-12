@@ -7,7 +7,7 @@
 // If the CDN import fails the module never executes and the editor keeps
 // working without lint feedback.
 
-import { validateStyleMin } from 'https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-style-spec@25.0.2/dist/index.mjs';
+import { validateStyleMin, latest } from 'https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-style-spec@25.0.2/dist/index.mjs';
 
 const DUMMY_SOURCE = '__mvt_dummy_source__';
 const DUMMY_GLYPHS = 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf';
@@ -60,10 +60,39 @@ function wrapFragment(fragment) {
   };
 }
 
+// validateStyleMin deliberately ignores unknown properties at the style root
+// and at the layer level (it installs a catch-all "*" validator there, so the
+// GL runtime's leniency toward vendor extensions carries over). For typo
+// detection in the editor we want those flagged, so this sweeps the user's
+// original JSON against the spec's own key lists.
+function unknownKeyErrors(json) {
+  const errors = [];
+  if ('version' in json) {
+    for (const key of Object.keys(json)) {
+      if (!(key in latest.$root)) {
+        errors.push({ path: key, message: `unknown property "${key}"` });
+      }
+    }
+  }
+  if (Array.isArray(json.layers)) {
+    json.layers.forEach((layer, i) => {
+      if (!layer || typeof layer !== 'object') return;
+      for (const key of Object.keys(layer)) {
+        // "ref" is deprecated and gone from the spec, but the validator and
+        // runtime still accept it.
+        if (!(key in latest.layer) && key !== 'ref') {
+          errors.push({ path: `layers[${i}].${key}`, message: `unknown property "${key}"` });
+        }
+      }
+    });
+  }
+  return errors;
+}
+
 export function validateStyle(json) {
   try {
     if (json && typeof json === 'object' && 'version' in json) {
-      return validateStyleMin(json).map(toDisplayError);
+      return validateStyleMin(json).map(toDisplayError).concat(unknownKeyErrors(json));
     }
     const wrapped = wrapFragment(json ?? {});
     if (wrapped === null) {
@@ -71,7 +100,8 @@ export function validateStyle(json) {
     }
     return validateStyleMin(wrapped)
       .map(toDisplayError)
-      .filter((e) => !e.message.includes(DUMMY_SOURCE) && !e.path.includes(DUMMY_SOURCE));
+      .filter((e) => !e.message.includes(DUMMY_SOURCE) && !e.path.includes(DUMMY_SOURCE))
+      .concat(unknownKeyErrors(json));
   } catch (err) {
     console.warn('style validation skipped:', err);
     return [];
