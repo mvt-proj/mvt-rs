@@ -60,17 +60,35 @@ function wrapFragment(fragment) {
   };
 }
 
-// validateStyleMin deliberately ignores unknown properties at the style root
-// and at the layer level (it installs a catch-all "*" validator there, so the
-// GL runtime's leniency toward vendor extensions carries over). For typo
-// detection in the editor we want those flagged, so this sweeps the user's
-// original JSON against the spec's own key lists.
+// validateStyleMin deliberately ignores unknown properties at the style root,
+// at the layer level, and inside vector/raster sources (catch-all validators,
+// so the GL runtime's leniency toward vendor extensions carries over; other
+// source types, paint and layout are strict upstream). For typo detection in
+// the editor we want those flagged, so this sweeps the user's original JSON
+// against the spec's own key lists.
+const LENIENT_SOURCE_SPECS = {
+  vector: 'source_vector',
+  raster: 'source_raster',
+};
+
 function unknownKeyErrors(json) {
   const errors = [];
   if ('version' in json) {
     for (const key of Object.keys(json)) {
       if (!(key in latest.$root)) {
         errors.push({ path: key, message: `unknown property "${key}"` });
+      }
+    }
+  }
+  if (json.sources && typeof json.sources === 'object') {
+    for (const [name, source] of Object.entries(json.sources)) {
+      if (!source || typeof source !== 'object') continue;
+      const specKey = LENIENT_SOURCE_SPECS[source.type];
+      if (!specKey) continue;
+      for (const key of Object.keys(source)) {
+        if (!(key in latest[specKey])) {
+          errors.push({ path: `sources.${name}.${key}`, message: `unknown property "${key}"` });
+        }
       }
     }
   }
