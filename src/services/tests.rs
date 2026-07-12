@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::services::utils::{validate_filter, normalize_name};
+    use crate::services::utils::{validate_filter, normalize_name, validate_style_json};
+    use crate::error::AppError;
 
     #[test]
     fn test_validate_filter_empty() {
@@ -129,5 +130,27 @@ mod tests {
         assert!(normalize_name("   ").is_err());
         assert!(normalize_name("!!!").is_err());
         assert!(normalize_name("___").is_err());
+    }
+
+    #[test]
+    fn test_validate_style_json_accepts_valid_json() {
+        assert!(validate_style_json("{}").is_ok());
+        assert!(validate_style_json(r#"{"layers":[{"id":"a"}]}"#).is_ok());
+        assert!(validate_style_json(r#"{"version":8,"sources":{},"layers":[]}"#).is_ok());
+    }
+
+    #[test]
+    fn test_validate_style_json_rejects_invalid_json() {
+        assert!(validate_style_json("").is_err());
+        assert!(validate_style_json("{not json").is_err());
+        assert!(validate_style_json(r#"{"layers": [}"#).is_err());
+    }
+
+    #[test]
+    fn test_validate_style_json_error_is_invalid_input() {
+        match validate_style_json("nope}") {
+            Err(AppError::InvalidInput(_)) => {}
+            other => panic!("expected InvalidInput, got {other:?}"),
+        }
     }
 }

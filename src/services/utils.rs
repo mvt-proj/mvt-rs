@@ -333,3 +333,13 @@ pub fn normalize_name(name: &str) -> AppResult<String> {
     }
     Ok(result.to_string())
 }
+
+/// Validates that a style payload is parseable JSON before persisting it.
+/// Full MapLibre spec validation happens client-side; this is the server's
+/// defense in depth so a broken style can never reach the database (where
+/// `Style::to_json()` would silently degrade it to `{}`).
+pub fn validate_style_json(style: &str) -> AppResult<()> {
+    serde_json::from_str::<serde_json::Value>(style)
+        .map(|_| ())
+        .map_err(|e| AppError::InvalidInput(format!("style is not valid JSON: {e}")))
+}

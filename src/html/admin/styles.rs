@@ -90,6 +90,11 @@ pub async fn edit_style_page(req: &mut Request, res: &mut Response, depot: &mut 
 
 #[handler]
 pub async fn create_style<'a>(res: &mut Response, style_form: NewStyle<'a>) -> AppResult<()> {
+    if let Err(err) = crate::services::utils::validate_style_json(&style_form.style) {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
+
     let category = match Category::from_id(&style_form.category).await {
         Ok(cat) => cat,
         Err(err) => {
@@ -138,6 +143,11 @@ pub async fn update_style<'a>(res: &mut Response, style_form: NewStyle<'a>) -> A
             return Err(err);
         }
     };
+
+    if let Err(err) = crate::services::utils::validate_style_json(&style_form.style) {
+        res.status_code(StatusCode::BAD_REQUEST);
+        return Err(err);
+    }
 
     let result = style
         .update_style(
