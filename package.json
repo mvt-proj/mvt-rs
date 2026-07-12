@@ -13,7 +13,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@tailwindcss/vite>vite": "6.4.2",
+      "vite": "^6.4.2",
+      "launch-editor": "^2.9.3",
       "picomatch": ">=4.0.4",
       "yaml": ">=2.8.3",
       "postcss": ">=8.5.10"
