@@ -197,10 +197,12 @@
 
     document.getElementById('btnFullStyle').addEventListener('click', () => {
       editor.set(fullStyle);
+      document.dispatchEvent(new Event('style-editor-changed'));
     });
 
     document.getElementById('btnPartialStyle').addEventListener('click', () => {
       editor.set(partialStyle);
+      document.dispatchEvent(new Event('style-editor-changed'));
     });
 
     document.querySelector('form').addEventListener('submit', (event) => {

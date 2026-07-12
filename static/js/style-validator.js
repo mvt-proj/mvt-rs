@@ -29,6 +29,8 @@ function toDisplayError(error) {
 // standalone styles: wrap them in a synthetic style so the official
 // validator can run. Layer indices are preserved, so error paths keep
 // pointing at the user's original JSON.
+// Only the "layers" key is validated; other fragment keys are intentionally
+// ignored (the mvt-rs fragment convention is layers-only).
 function wrapFragment(fragment) {
   if (!Array.isArray(fragment.layers)) {
     return null;
@@ -96,6 +98,11 @@ function renderPanel(panel, errors) {
     const item = document.createElement('li');
     item.textContent = error.path ? `${error.path}: ${error.message}` : error.message;
     list.appendChild(item);
+  }
+  if (errors.length > 50) {
+    const more = document.createElement('li');
+    more.textContent = `… +${errors.length - 50}`;
+    list.appendChild(more);
   }
   panel.appendChild(list);
 }
