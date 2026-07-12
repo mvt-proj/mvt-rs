@@ -4,6 +4,7 @@
   <!-- Include JSONEditor library -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.2.0/jsoneditor.min.js" integrity="sha512-QL8qeB9ctAtMXXILiMcO83THPl+1UB2N8CBGSNexHL5AQ/PVl14364HO56l2Ct6P8UEKkOS3xkD28FPqPHshBQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.2.0/jsoneditor.min.css" integrity="sha512-8G+Vb2+10BSrSo+wupdzJIylDLpGtEYniQhp0rsbTigPG7Onn2S08Ai/KEGlxN2Ncx9fGqVHtRehMuOjPb9f8g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script type="module" src="/static/js/style-validator.js"></script>
 
 {% endblock %}
 
@@ -82,6 +83,10 @@
         {{ base.translate["invalid-json"] }}
       </div>
 
+      <div id="styleLintPanel" class="mb-4" style="display: none;"
+           data-msg-valid="{{ base.translate["style-lint-valid"] }}"
+           data-msg-errors="{{ base.translate["style-lint-errors"] }}"></div>
+
       <!-- Submit Button -->
       <div class="flex justify-center items-center">
         <button class="button">{{ base.translate["create-style"] }}</button>
@@ -99,6 +104,7 @@
     const editor = new JSONEditor(container, {
       modes: ['code', 'tree', 'text', 'preview'],
       mode: 'code',
+      onChangeText: () => document.dispatchEvent(new Event('style-editor-changed')),
     });
 
     const fullStyle = {
@@ -210,6 +216,7 @@
     });
 
     editor.set({});
+    document.dispatchEvent(new CustomEvent('style-editor-ready', { detail: { editor } }));
   });
 </script>
 {% endblock %}
