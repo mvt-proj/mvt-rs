@@ -28,6 +28,7 @@ It is an open source platform designed to publish vector maps directly from Post
    - [Legends](#legends)
 9. [Advanced Filtering](#advanced-filtering)
 10. [Caching](#caching)
+    - [Disabling the Cache (Testing Only)](#disabling-the-cache-testing-only)
 11. [Production Deployment](#production-deployment)
 12. [Monitoring and Metrics](#monitoring-and-metrics)
 ---
@@ -674,6 +675,16 @@ How long tiles live is decided per layer, with two fields of the layer form:
 - **Delete cache on start**: clears the layer's cache every time the server starts.
 
 Editing a layer automatically invalidates its cached tiles, and each layer's cache can also be cleared manually from the Catalog with its purge button.
+
+### Disabling the Cache (Testing Only)
+
+The `--no-cache` CLI flag disables tile caching entirely: every request regenerates the tile from the database, and nothing is read from or written to Redis/disk.
+
+```sh
+cargo run -- --no-cache
+```
+
+This is meant for local development and tests where you need to observe fresh tile generation on every request. **Never use `--no-cache` in production** — it turns every tile request into a full database query, which will overwhelm your database under real traffic.
 
 ## Production Deployment
 

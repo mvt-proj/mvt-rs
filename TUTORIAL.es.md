@@ -28,6 +28,7 @@ Es una plataforma de código abierto diseñada para publicar mapas vectoriales d
    - [Leyendas](#leyendas)
 9. [Filtrado Avanzado](#filtrado-avanzado)
 10. [Caché](#caché)
+    - [Deshabilitar la Caché (Solo para Testing)](#deshabilitar-la-caché-solo-para-testing)
 11. [Despliegue en Producción](#despliegue-en-producción)
 12. [Monitoreo y Métricas](#monitoreo-y-métricas)
 ---
@@ -674,6 +675,16 @@ Cuánto tiempo viven los tiles se decide por capa, con dos campos del formulario
 - **Delete cache on start**: limpia la caché de la capa cada vez que el servidor arranca.
 
 Editar una capa invalida automáticamente sus tiles cacheados, y la caché de cada capa también puede limpiarse manualmente desde el Catálogo con su botón de purga.
+
+### Deshabilitar la Caché (Solo para Testing)
+
+El flag de línea de comandos `--no-cache` deshabilita por completo la caché de tiles: cada request regenera el tile desde la base de datos, y no se lee ni se escribe nada en Redis/disco.
+
+```sh
+cargo run -- --no-cache
+```
+
+Está pensado para desarrollo local y tests donde necesitás observar la generación fresca de tiles en cada request. **Nunca uses `--no-cache` en producción** — convierte cada request de tile en una consulta completa a la base de datos, lo que va a saturarla bajo tráfico real.
 
 ## Despliegue en Producción
 
