@@ -11,6 +11,8 @@ pub struct CliArgs {
     pub host: Option<String>,
     #[arg(long)]
     pub port: Option<u16>,
+    #[arg(long)]
+    pub no_cache: bool,
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -99,11 +101,13 @@ pub struct Settings {
     #[serde(default)] pub security: SecurityConfig,
     #[serde(default)] pub paths: PathConfig,
     #[serde(default)] pub cluster: ClusterConfig,
+    #[serde(skip)] pub no_cache: bool,
 }
 
 impl Settings {
     pub fn new() -> Result<Self, config::ConfigError> {
         let args = CliArgs::parse();
+        let no_cache = args.no_cache;
         let config_path = args
             .config
             .unwrap_or_else(|| "config/config.yaml".to_string());
@@ -144,10 +148,11 @@ impl Settings {
             e
         })?;
 
-        let settings: Settings = s.try_deserialize().map_err(|e| {
+        let mut settings: Settings = s.try_deserialize().map_err(|e| {
             tracing::error!("Error deserializing configuration: {}", e);
             e
         })?;
+        settings.no_cache = no_cache;
 
         tracing::debug!("Loaded settings: {:?}", settings);
 
@@ -268,6 +273,7 @@ mod tests {
                 owner_url: None,
                 shared_secret: None,
             },
+            no_cache: false,
         }
     }
 
@@ -378,5 +384,17 @@ mod tests {
         let s = valid_settings();
         assert_eq!(s.cluster.mode, "standalone");
         assert!(s.validate().is_ok());
+    }
+
+    #[test]
+    fn no_cache_flag_defaults_to_false() {
+        let args = CliArgs::parse_from(["mvt-rs"]);
+        assert!(!args.no_cache);
+    }
+
+    #[test]
+    fn no_cache_flag_parses_true() {
+        let args = CliArgs::parse_from(["mvt-rs", "--no-cache"]);
+        assert!(args.no_cache);
     }
 }
