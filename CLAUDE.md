@@ -138,3 +138,13 @@ cargo test -- --nocapture     # with stdout
 ```
 
 Tests live in `src/*/tests.rs` modules. Integration tests are in `tests/integration/`.
+
+## Documentation & i18n
+
+User-facing docs (`README.md`, `TUTORIAL.md`) support translations via
+suffix files: `README.<lang>.md`, `TUTORIAL.<lang>.md` (e.g. `README.es.md`).
+
+- English files are the source of truth; keep translations in sync manually.
+- Each file starts with a language-switcher line linking to its siblings.
+- Shared assets (`docs/*.png`, `docs/*.svg`) are not duplicated per language.
+- `docs/clustering.md` and `docs/plugins.md` remain English-only for now.
