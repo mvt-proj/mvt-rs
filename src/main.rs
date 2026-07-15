@@ -241,6 +241,7 @@ async fn main() -> AppResult<()> {
             settings.database.redis_url.clone(),
             settings.paths.cache.clone().into(),
             snapshot.catalog.clone(),
+            settings.no_cache,
         )
         .await?;
         let plugin_registry = plugins::LuaPluginRegistry::new(&settings.paths.plugins);
@@ -288,6 +289,7 @@ async fn main() -> AppResult<()> {
             settings.database.redis_url.clone(),
             settings.paths.cache.clone().into(),
             catalog.clone(),
+            settings.no_cache,
         )
         .await?;
 

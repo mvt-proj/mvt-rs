@@ -8,6 +8,7 @@ use std::path::PathBuf;
 pub enum CacheMode {
     Redis(RedisCache),
     Disk(DiskCache),
+    Disabled,
 }
 
 #[derive(Debug, Clone)]
@@ -28,11 +29,22 @@ impl CacheWrapper {
         }
     }
 
+    pub fn new_disabled() -> Self {
+        CacheWrapper {
+            mode: CacheMode::Disabled,
+        }
+    }
+
     pub async fn initialize_cache(
         redis_conn: Option<String>,
         disk_cache_dir: PathBuf,
         catalog: Catalog,
+        disabled: bool,
     ) -> AppResult<CacheWrapper> {
+        if disabled {
+            return Ok(CacheWrapper::new_disabled());
+        }
+
         if let Some(redis_conn) = redis_conn
             && !redis_conn.is_empty()
         {
@@ -50,10 +62,14 @@ impl CacheWrapper {
         match &self.mode {
             CacheMode::Disk(disk_cache) => disk_cache.cache_dir.clone(),
             CacheMode::Redis(_) => PathBuf::new(),
+            CacheMode::Disabled => PathBuf::new(),
         }
     }
 
     pub async fn delete_cache(&self, catalog: Catalog) -> AppResult<()> {
+        if matches!(self.mode, CacheMode::Disabled) {
+            return Ok(());
+        }
         // Increment version for affected layers before clearing tiles, so any
         // in-flight requests that complete after this point get a fresh ETag.
         for layer in catalog.layers.iter() {
@@ -68,10 +84,14 @@ impl CacheWrapper {
                 disk_cache.delete_cache_dir(catalog).await;
                 Ok(())
             }
+            CacheMode::Disabled => Ok(()),
         }
     }
 
     pub async fn delete_layer_cache(&self, layer_name: &String) -> AppResult<()> {
+        if matches!(self.mode, CacheMode::Disabled) {
+            return Ok(());
+        }
         self.increment_layer_version(layer_name).await;
         match &self.mode {
             CacheMode::Redis(redis_cache) => redis_cache.delete_layer_cache(layer_name).await,
@@ -79,6 +99,7 @@ impl CacheWrapper {
                 disk_cache.delete_layer_cache(layer_name).await;
                 Ok(())
             }
+            CacheMode::Disabled => Ok(()),
         }
     }
 
@@ -87,6 +108,7 @@ impl CacheWrapper {
         match &self.mode {
             CacheMode::Redis(redis_cache) => redis_cache.get_layer_version(layer_name).await,
             CacheMode::Disk(disk_cache) => disk_cache.get_layer_version(layer_name).await,
+            CacheMode::Disabled => 0,
         }
     }
 
@@ -95,6 +117,7 @@ impl CacheWrapper {
         match &self.mode {
             CacheMode::Redis(redis_cache) => redis_cache.increment_layer_version(layer_name).await,
             CacheMode::Disk(disk_cache) => disk_cache.increment_layer_version(layer_name).await,
+            CacheMode::Disabled => {}
         }
     }
 
@@ -120,6 +143,7 @@ impl CacheWrapper {
                 let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
                 disk_cache.get_cache(tilepath, max_cache_age).await.ok()
             }
+            CacheMode::Disabled => None,
         }
     }
 
@@ -148,6 +172,7 @@ impl CacheWrapper {
                 let tilepath = tilefolder.join(y.to_string()).with_extension("pbf");
                 disk_cache.write_tile_to_file(&tilepath, tile).await
             }
+            CacheMode::Disabled => Ok(()),
         }
     }
 
@@ -155,6 +180,67 @@ impl CacheWrapper {
         match &self.mode {
             CacheMode::Redis(redis_cache) => redis_cache.exists_key(key).await,
             CacheMode::Disk(_) => Ok(false),
+            CacheMode::Disabled => Ok(false),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn empty_catalog() -> Catalog {
+        Catalog { layers: vec![] }
+    }
+
+    #[tokio::test]
+    async fn disabled_mode_write_then_get_returns_none() {
+        let wrapper = CacheWrapper::new_disabled();
+        wrapper
+            .write_tile("layer", 1, 2, 3, b"tile-bytes", 0)
+            .await
+            .expect("write_tile should be a no-op success");
+
+        let tile = wrapper.get_tile("layer", 1, 2, 3, 0).await;
+        assert!(tile.is_none());
+    }
+
+    #[tokio::test]
+    async fn disabled_mode_delete_and_version_are_noop() {
+        let wrapper = CacheWrapper::new_disabled();
+
+        wrapper
+            .delete_cache(empty_catalog())
+            .await
+            .expect("delete_cache no-op");
+        wrapper
+            .delete_layer_cache(&"layer".to_string())
+            .await
+            .expect("delete_layer_cache no-op");
+
+        assert_eq!(wrapper.get_layer_version("layer").await, 0);
+        wrapper.increment_layer_version("layer").await;
+        assert_eq!(wrapper.get_layer_version("layer").await, 0);
+
+        assert!(!wrapper.exists_key("key".to_string()).await.unwrap());
+        assert_eq!(wrapper.cache_dir(), PathBuf::new());
+    }
+
+    #[tokio::test]
+    async fn initialize_cache_disabled_skips_disk_setup() {
+        let untouched_dir =
+            std::env::temp_dir().join("mvt-rs-test-no-cache-untouched");
+
+        let wrapper = CacheWrapper::initialize_cache(
+            None,
+            untouched_dir.clone(),
+            empty_catalog(),
+            true,
+        )
+        .await
+        .expect("disabled cache should initialize without a backend");
+
+        assert_eq!(wrapper.cache_dir(), PathBuf::new());
+        assert!(!untouched_dir.exists());
     }
 }
