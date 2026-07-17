@@ -141,6 +141,7 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 - Categorías.
 - Gestión de usuarios y grupos.
 - Autenticación mediante JWT o Basic Auth.
+- Interfaz multi-idioma: inglés, español (Argentina/España), italiano, portugués (Brasil) y francés.
 
 ### Infraestructura
 
