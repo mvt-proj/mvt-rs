@@ -86,6 +86,8 @@
                data-msg-valid="{{ base.translate["style-lint-valid"] }}"
                data-msg-errors="{{ base.translate["style-lint-errors"] }}"></div>
 
+          <script id="style-data" type="application/json">{{ style_json_safe|safe }}</script>
+
           <!-- Buttons -->
           <div class="flex justify-center items-center gap-3">
             <button
@@ -127,7 +129,7 @@
     const hiddenInput = document.getElementById('jsonInput');
     const errorMessage = document.getElementById('jsonError');
 
-    let currentStyle = `{{ style.style|safe }}`;
+    let currentStyle = document.getElementById('style-data').textContent;
 
     editor = new JSONEditor(container, {
       modes: ['code', 'tree', 'text', 'preview'],

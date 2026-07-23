@@ -28,6 +28,7 @@ struct NewStyleTemplate {
 #[template(path = "admin/styles/edit.html")]
 struct EditStyleTemplate {
     style: Style,
+    style_json_safe: String,
     categories: Vec<Category>,
     base: BaseTemplateData,
 }
@@ -79,8 +80,13 @@ pub async fn edit_style_page(req: &mut Request, res: &mut Response, depot: &mut 
         .ok_or(AppError::RequestParamError("id".to_string()))?;
     let style = Style::from_id(&id).await?;
     let categories = get_categories().await.read().await;
+    // Escape "</" so the JSON can't break out of the <script type="application/json">
+    // block it's embedded in (e.g. a style value containing "</script>"); JSON.parse
+    // unescapes "\/" back to "/" so the parsed value is unaffected.
+    let style_json_safe = style.style.replace("</", "<\\/");
     let template = EditStyleTemplate {
         style: style.clone(),
+        style_json_safe,
         categories: (categories).to_vec(),
         base,
     };
