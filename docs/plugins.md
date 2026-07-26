@@ -1,6 +1,6 @@
-# MVT-RS Plugin System
+# MVT Server plugin system
 
-MVT-RS supports a Lua scripting engine that lets sysadmins inject custom SQL `WHERE` clauses into tile queries at runtime — without modifying server code or restarting the process... (wait: plugins are loaded at startup; a restart is needed to pick up new/changed files).
+MVT Server supports a Lua scripting engine that lets sysadmins inject custom SQL `WHERE` clauses into tile queries at runtime — without modifying server code or restarting the process... (wait: plugins are loaded at startup; a restart is needed to pick up new/changed files).
 
 ## Overview
 
@@ -231,7 +231,7 @@ function filter(ctx)
     if h >= 8 and h < 16 then
         return ""
     end
-    return "1=0"
+    return "1-0"
 end
 ```
 
@@ -276,3 +276,7 @@ The easiest way to test is to request a tile and inspect the server log. With `R
 ## Plugin examples
 
 See the `plugin-examples/` directory for documented examples covering common use cases.
+
+---
+
+🏠 **[mvtproj.dev](https://mvtproj.dev)**

@@ -1,12 +1,12 @@
-# MVT-RS Clustering / Multi-Instance
+# MVT Server clustering / multi-instance
 
-MVT-RS can run as a single process (the default) or as a cluster of instances behind
+MVT Server can run as a single process (the default) or as a cluster of instances behind
 a load balancer. This document explains when and how to use the clustering feature,
 covering both deployment situations and the relevant security requirements.
 
 ## Overview
 
-Each MVT-RS instance holds the full application config — catalog layers, categories,
+Each MVT Server instance holds the full application config — catalog layers, categories,
 users, groups, and styles — in memory. A write (e.g. editing a layer in the admin
 panel) updates the SQLite config database and refreshes the in-memory state of the
 instance that handled the request.
@@ -29,7 +29,7 @@ Two deployment situations are supported:
 
 ### Topology — owner / client (different hosts)
 
-![Arquitecture MVT Server](mvt_server_architecture.svg)
+![Architecture MVT Server](mvt_server_architecture.svg)
 
 ### Topology — shared (same host, shared volume)
 
@@ -175,16 +175,6 @@ absent. Your load balancer must route write traffic exclusively to the owner (se
 ## Load balancer (nginx)
 
 ```nginx
-upstream mvt_owner {
-    server owner-host:5887;
-}
-
-upstream mvt_tiles {
-    server owner-host:5887;
-    server client1-host:5887;
-    server client2-host:5887;
-}
-
 server {
     listen 443 ssl;
     # ... ssl config ...
@@ -260,7 +250,7 @@ The following two-instance smoke test verifies the end-to-end sync path:
    ```bash
    MVT_CLUSTER__MODE=owner \
    MVT_CLUSTER__SHARED_SECRET=test-secret-1234 \
-   cargo run -- --config config/config.yaml
+   ./target/release/mvt-server --config config/config.yaml
    ```
 
 2. Start a **client** on port 5888:
@@ -270,7 +260,7 @@ The following two-instance smoke test verifies the end-to-end sync path:
    MVT_CLUSTER__OWNER_URL=http://localhost:5887 \
    MVT_CLUSTER__SHARED_SECRET=test-secret-1234 \
    MVT_CLUSTER__CONFIG_WATCH_INTERVAL_SECS=5 \
-   cargo run -- --config config/config.yaml
+   ./target/release/mvt-server --config config/config.yaml
    ```
 
 3. On the **owner** admin panel (`http://localhost:5887/admin`), edit a layer and a
@@ -294,3 +284,7 @@ The following two-instance smoke test verifies the end-to-end sync path:
         http://localhost:5887/internal/config/snapshot
    # HTTP/1.1 200 OK
    ```
+
+---
+
+🏠 **[mvtproj.dev](https://mvtproj.dev)**
