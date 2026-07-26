@@ -168,10 +168,10 @@ Beyond *what* MVT Server publishes (see the table above), this is *how* it opera
 git clone https://github.com/mvt-proj/mvt-rs.git
 cd mvt-rs
 cargo build --release
-./target/release/mvt-rs
+./target/release/mvt-server --config config/config.yaml
 ```
 
-Then open the web administration interface at `http://localhost:<port>` *(confirm/replace with the actual default port)* to connect your PostGIS database and publish your first layer.
+Then open the web administration interface at `http://localhost:5887` to connect your PostGIS database and publish your first layer.
 
 See [TUTORIAL.md](TUTORIAL.md) for full installation, configuration, publishing layers, MapLibre styles, QGIS integration, monitoring and clustering instructions.
 

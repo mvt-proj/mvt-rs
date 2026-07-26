@@ -168,10 +168,10 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 git clone https://github.com/mvt-proj/mvt-rs.git
 cd mvt-rs
 cargo build --release
-./target/release/mvt-rs
+./target/release/mvt-server --config config/config.yaml
 ```
 
-Luego abrí la interfaz de administración web en `http://localhost:<port>` *(confirmar/reemplazar con el puerto por defecto real)* para conectar tu base de datos PostGIS y publicar tu primera capa.
+Luego abrí la interfaz de administración web en `http://localhost:5887` para conectar tu base de datos PostGIS y publicar tu primera capa.
 
 Ver [TUTORIAL.es.md](TUTORIAL.es.md) para instrucciones completas de instalación, configuración, publicación de capas, estilos MapLibre, integración con QGIS, monitoreo y clustering.
 
