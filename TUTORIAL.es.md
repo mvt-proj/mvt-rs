@@ -543,18 +543,37 @@ Los glifos disponibles en el servidor pueden verse desde el menú Glyphs.
 
 ### Leyendas
 
-MVT Server puede servir leyendas generadas a partir de estilos publicados, usando la biblioteca [maplibre-legend](https://github.com/mvt-proj/maplibre-legend), parte del ecosistema de MVT Server. El servicio de leyendas es particularmente útil para integrarse con software de visualización de datos.
+MVT Server puede servir leyendas generadas a partir de estilos publicados en formato SVG, usando la biblioteca [maplibre-legend](https://github.com/mvt-proj/maplibre-legend).
 
-Podés solicitar:
+**Endpoint:**
+`GET /services/legends/{category}:{style_name}`
 
-- Leyendas individuales pasando el ID de la capa
-- Leyendas combinadas
-- Leyendas con o sin títulos
-- Leyendas que incluyen o excluyen capas raster
+#### Parámetros
+
+| Parámetro | Tipo | Ubicación | Descripción |
+|-----------|------|-----------|-------------|
+| `category:style_name` | String | Ruta | La categoría y el nombre del estilo (ej: `public:moderno`). |
+| `layer_id` | String | Consulta | Filtra por un ID de capa específico dentro del estilo. Si se omite, se renderizan todas las capas. |
+| `width` | u32 | Consulta | Ancho por defecto para cada ítem de la leyenda (por defecto: `250`). |
+| `height` | u32 | Consulta | Alto por defecto para cada ítem de la leyenda (por defecto: `40`). |
+| `has_label` | bool | Consulta | Incluye etiquetas de texto en la leyenda (por defecto: `false`). |
+| `include_raster` | bool | Consulta | Incluye capas raster en la leyenda (por defecto: `false`). |
+| `reverse` | bool | Consulta | Invierte el orden de las capas (por defecto: `false`). |
+
+#### Ejemplos
+
+**Leyenda completa de un estilo:**
+```
+http://127.0.0.1:5887/services/legends/public:mi_estilo?has_label=true
+```
+
+**Leyenda de una capa individual:**
+```
+http://127.0.0.1:5887/services/legends/public:mi_estilo?layer_id=caminos&has_label=true
+```
 
 <!-- screenshot: legends output, individual and combined -->
 
-**Más documentación: próximamente**
 
 ## Filtrado Avanzado
 

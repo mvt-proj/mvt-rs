@@ -543,18 +543,37 @@ The glyphs available on the server can be viewed from the Glyphs menu.
 
 ### Legends
 
-MVT Server can serve legends generated from published styles, using the [maplibre-legend](https://github.com/mvt-proj/maplibre-legend) library, part of the MVT Server ecosystem. The legend service is particularly useful for integration with data visualization software.
+MVT Server can serve legends generated from published styles in SVG format, using the [maplibre-legend](https://github.com/mvt-proj/maplibre-legend) library.
 
-You can request:
+**Endpoint:**
+`GET /services/legends/{category}:{style_name}`
 
-- Individual legends by passing the layer ID
-- Combined legends
-- Legends with or without titles
-- Legends that include or exclude raster layers
+#### Parameters
+
+| Parameter | Type | Location | Description |
+|-----------|------|----------|-------------|
+| `category:style_name` | String | Path | The category and name of the style (e.g., `public:modern`). |
+| `layer_id` | String | Query | Filter by a specific layer ID within the style. If omitted, all layers are rendered. |
+| `width` | u32 | Query | Default width for each legend item (default: `250`). |
+| `height` | u32 | Query | Default height for each legend item (default: `40`). |
+| `has_label` | bool | Query | Include text labels in the legend (default: `false`). |
+| `include_raster` | bool | Query | Include raster layers in the legend (default: `false`). |
+| `reverse` | bool | Query | Reverse the order of layers (default: `false`). |
+
+#### Examples
+
+**Full Legend for a Style:**
+```
+http://127.0.0.1:5887/services/legends/public:my_style?has_label=true
+```
+
+**Individual Layer Legend:**
+```
+http://127.0.0.1:5887/services/legends/public:my_style?layer_id=roads&has_label=true
+```
 
 <!-- screenshot: legends output, individual and combined -->
 
-**More documentation: coming soon**
 
 ## Advanced Filtering
 
