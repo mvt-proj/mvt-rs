@@ -2,9 +2,9 @@
 
 # MVT Server
 
-## Una Plataforma. Todos los Recursos Cartográficos.
+## Una plataforma. Todos los recursos cartográficos.
 
-*Una Plataforma de Publicación Cartográfica de Código Abierto*
+*Una plataforma de publicación cartográfica de código abierto*
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/f7726fd2-bd84-463b-8389-44d6a43fcef5" width="40%" />
@@ -16,7 +16,7 @@ Capas, mapas, estilos, leyendas, glifos y sprites se publican, organizan y opera
 
 ---
 
-## ¿Qué Puede Publicar MVT Server?
+## ¿Qué puede publicar MVT Server?
 
 | Recurso | Descripción |
 |---|---|
@@ -32,11 +32,11 @@ Cada recurso de la tabla anterior se gestiona desde la misma interfaz web — cr
 
 ---
 
-## Control de Publicación Detallado
+## Control de publicación detallado
 
 Publicar desde PostGIS no es todo o nada. Cada capa se ajusta individualmente, desde la interfaz de administración:
 
-- **Qué tablas o vistas se publican** — nada se expone a menos que lo publiques explícitamente.
+- **Qué tablas o vistas se publican** — nada se expone a menos que lo publiques explitamente.
 - **Qué campos de esa capa viajan en el tile** — y en qué orden.
 - **Política de caché por capa** — cada capa define su propio max-age de caché, independientemente del resto.
 - **Límite de registros por solicitud** — limita cuántos registros puede devolver una solicitud de tile, por capa.
@@ -47,7 +47,7 @@ Los tiles que servís llevan exactamente los datos que querés — ni más, ni m
 
 ---
 
-## Viéndolo en Acción
+## Viéndolo en acción
 
 Dos clips, un único flujo de trabajo continuo — desde una tabla de PostGIS sin procesar hasta un mapa con estilo en QGIS, sin tocar un archivo de configuración.
 
@@ -92,7 +92,7 @@ Ver [docs/clustering.md](docs/clustering.md).
 
 ---
 
-## Filosofía del Proyecto
+## Filosofía del proyecto
 
 Publicar mapas vectoriales debería ser tan simple como publicar una aplicación web.
 
@@ -104,7 +104,7 @@ Esa es la idea detrás del eslogan: no se trata de sumar un servidor de tiles m�
 
 ---
 
-## El Ecosistema Geoespacial de Código Abierto
+## El ecosistema geoespacial de código abierto
 
 El ecosistema geoespacial es rico en excelente software de código abierto. Cada proyecto tiene su propia filosofía y fortalezas, y muchos se complementan entre sí en lugar de competir.
 
@@ -123,11 +123,11 @@ Su objetivo no es reemplazar las herramientas existentes, sino simplificar la pu
 
 ---
 
-## Capacidades de la Plataforma
+## Capacidades de la plataforma
 
 Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo* opera como plataforma:
 
-### Fuentes y Composición
+### Fuentes y composición
 
 - Múltiples bases de datos PostgreSQL.
 - Fuentes de una sola capa, multi-capa y basadas en categoría.
@@ -154,7 +154,7 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 
 ---
 
-## Consejos de Rendimiento
+## Consejos de rendimiento
 
 - Habilitá gzip para los vector tiles.
 - Configurá la caché por capa.
@@ -162,7 +162,7 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 
 ---
 
-## Primeros Pasos
+## Primeros pasos
 
 ```sh
 git clone https://github.com/mvt-proj/mvt-rs.git
