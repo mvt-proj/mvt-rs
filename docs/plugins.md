@@ -4,7 +4,7 @@ MVT Server supports a Lua scripting engine that lets sysadmins inject custom SQL
 
 ## Overview
 
-Plugins are Lua 5.4 scripts loaded from a configurable directory at server startup. Each plugin is sandboxed in its own Lua VM. When a tile is requested, the server calls the plugin's `filter()` function and appends the returned string to the SQL `WHERE` clause of the tile query.
+Plugins are Lua 5.5 scripts loaded from a configurable directory at server startup. Each plugin is sandboxed in its own Lua VM. When a tile is requested, the server calls the plugin's `filter()` function and appends the returned string to the SQL `WHERE` clause of the tile query.
 
 This enables:
 - Zoom-dependent feature filtering (density control)
@@ -91,7 +91,7 @@ Log output appears under the `mvt_server::plugins` tracing target. It is visible
 
 ## Access control with `ctx.user` and `ctx.groups`
 
-`ctx.user` contains the authenticated username (string), or `nil` for anonymous requests.  
+`ctx.user` contains the authenticated username (string), or `nil` for anonymous requests.
 `ctx.groups` is always a Lua table (array of strings). It is empty for anonymous requests or users with no groups.
 
 ### Block anonymous requests
