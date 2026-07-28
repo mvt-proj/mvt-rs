@@ -391,6 +391,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "base64"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b25655df2c3cdd83c5e5b293b88acd880332b2ddadd7c30ac43144fdc0033da9"
+
+[[package]]
 name = "base64ct"
 version = "1.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -803,7 +809,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ddef33a339a91ea89fb53151bd0a4689cfce27055c291dfa69945475d22c747"
 dependencies = [
  "aes-gcm",
- "base64",
+ "base64 0.22.1",
  "hmac 0.12.1",
  "percent-encoding",
  "rand 0.8.7",
@@ -1687,7 +1693,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3314d5adb5d94bcdf56771f2e50dbbc80bb4bdf88967526706205ac9eff24eb"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "headers-core",
  "http",
@@ -1859,7 +1865,7 @@ version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96547c2556ec9d12fb1578c4eaf448b04993e7fb79cbaad930a656880a6bdfa0"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "futures-channel",
  "futures-util",
@@ -2198,7 +2204,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eba32bfb4ffdeaca3e34431072faf01745c9b26d25504aa7a6cf5684334fc4fc"
 dependencies = [
  "aws-lc-rs",
- "base64",
+ "base64 0.22.1",
+ "getrandom 0.2.17",
+ "js-sys",
+ "pem",
+ "serde",
+ "serde_json",
+ "signature",
+ "simple_asn1",
+ "zeroize",
+]
+
+[[package]]
+name = "jsonwebtoken"
+version = "11.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "881733cbc631fc9e472e24447ce32a64bedf2da498d6d8570b08edc87de71f65"
+dependencies = [
+ "base64 0.22.1",
  "ed25519-dalek",
  "getrandom 0.2.17",
  "hmac 0.12.1",
@@ -2331,7 +2354,7 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd64d33472e1c6bcccfb1c43e2bb5b007b0c5819340262af20755b1400176317"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "image",
  "reqwest",
  "serde",
@@ -2512,7 +2535,7 @@ dependencies = [
  "accept-language",
  "argon2",
  "askama",
- "base64",
+ "base64 0.23.0",
  "bb8",
  "bb8-redis",
  "bytes",
@@ -2525,7 +2548,7 @@ dependencies = [
  "html-escape",
  "include_dir",
  "intl-memoizer",
- "jsonwebtoken",
+ "jsonwebtoken 11.0.0",
  "libc",
  "maplibre-legend",
  "mime_guess",
@@ -2875,7 +2898,7 @@ version = "3.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d30c53c26bc5b31a98cd02d20f25a7c8567146caf63ed593a9d87b2775291be"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "serde_core",
 ]
 
@@ -3498,7 +3521,7 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04e9018c9d814e5f30cc16a0f03271aeab3571e609612d9fe78c1aa8d11c2f62"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -3809,12 +3832,12 @@ version = "0.95.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9cc59f3046d72917b17cd9fa973b5136734d2292f32a5672edbb1f4dbc949083"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "http-body-util",
  "hyper-rustls",
  "hyper-util",
- "jsonwebtoken",
+ "jsonwebtoken 10.4.0",
  "rustls",
  "salvo_core",
  "serde",
@@ -3906,7 +3929,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e399ae70702e4e30a96a02851d3c3682258e6cba0dff6e0ce282d07d4d925829"
 dependencies = [
  "async-trait",
- "base64",
+ "base64 0.22.1",
  "brotli",
  "bytes",
  "chardetng",
@@ -3956,7 +3979,7 @@ version = "0.95.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7fab6556b9bd76d68adb182478092be3c5e3c961c1e8acf8f65c10dbb40dadf"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "etag",
  "futures-util",
  "http-body-util",
@@ -4003,7 +4026,7 @@ dependencies = [
  "anyhow",
  "async-lock",
  "async-trait",
- "base64",
+ "base64 0.22.1",
  "blake3",
  "hmac 0.12.1",
  "postcard",
@@ -4342,7 +4365,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05b44e85bf579a8eeb4ceaa77a3a523baf2bf0e9bac7e40f405d537b5d2d5ccb"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "cfg-if",
  "crc",
@@ -4444,7 +4467,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87a2bdd6e83f6b3ea525ca9fee568030508b58355a43d0b2c1674d5f79dcd65e"
 dependencies = [
  "atoi",
- "base64",
+ "base64 0.22.1",
  "bitflags",
  "byteorder",
  "crc",
