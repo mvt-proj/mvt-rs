@@ -113,6 +113,7 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    #[serde(skip_serializing)]
     pub password: String,
     pub groups: Vec<Group>,
 }

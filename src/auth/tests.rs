@@ -381,4 +381,20 @@ mod tests {
         assert!(auth.validate_user("user1", password));
         assert!(auth.validate_user("user2", password));
     }
+
+    #[test]
+    fn test_user_password_not_serialized() {
+        let user = User {
+            id: "1".to_string(),
+            username: "test".to_string(),
+            email: "test@test.com".to_string(),
+            first_name: None,
+            last_name: None,
+            password: "supersecrethash".to_string(),
+            groups: vec![],
+        };
+
+        let value = serde_json::to_value(&user).unwrap();
+        assert!(value.get("password").is_none());
+    }
 }
