@@ -127,6 +127,31 @@ pub async fn reload_styles_cache() -> AppResult<()> {
     Ok(())
 }
 
+/// Invalidates a layer's tile cache exactly like the manual "clear cache"
+/// action: bumps the layer version (so ETags change and clients/QGIS
+/// refetch) and removes stale tiles. In clustered owner/shared modes
+/// (`get_cache_invalidation_delay()` returns `Some`), the clear is deferred
+/// so peers have time to reload the already-bumped config before the
+/// shared cache is wiped — otherwise a lagging peer could repopulate it
+/// with a stale tile.
+pub async fn invalidate_layer_tile_cache(layer_key: &str) -> AppResult<()> {
+    let key = layer_key.to_string();
+    match get_cache_invalidation_delay() {
+        Some(delay) => {
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                if let Err(e) = get_cache_wrapper().delete_layer_cache(&key).await {
+                    tracing::warn!("deferred cache invalidation failed for {key}: {e}");
+                }
+            });
+        }
+        None => {
+            get_cache_wrapper().delete_layer_cache(&key).await?;
+        }
+    }
+    Ok(())
+}
+
 async fn initialize_auth(config_dir: &str, pool: &SqlitePool) -> AppResult<Auth> {
     let auth = Auth::new(config_dir, pool).await?;
     Ok(auth)
