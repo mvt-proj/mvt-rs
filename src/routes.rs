@@ -250,6 +250,7 @@ fn build_api_routes() -> Router {
         .push(
             Router::with_path("admin")
                 .hoop(auth::jwt_auth_handler())
+                .hoop(auth::require_api_admin)
                 .push(build_api_users_routes())
                 .push(build_api_database_routes())
                 .push(build_api_catalog_routes()),

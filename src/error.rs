@@ -80,6 +80,9 @@ pub enum AppError {
     #[error("Unauthorized access")]
     UnauthorizedAccess,
 
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+
     #[error("Invalid email or password")]
     InvalidCredentials,
 
@@ -115,6 +118,7 @@ impl AppError {
         match self {
             // Self::UnauthorizedAccess => StatusCode::UNAUTHORIZED,
             Self::UnauthorizedAccess | Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
+            Self::Forbidden(_) => StatusCode::FORBIDDEN,
             Self::UserNotFound
             | Self::UserNotFoundError(_)
             | Self::NotFound(_)

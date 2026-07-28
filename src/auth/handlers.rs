@@ -50,6 +50,19 @@ pub async fn require_user_admin(res: &mut Response, depot: &mut Depot) -> AppRes
     Ok(())
 }
 
+#[handler]
+pub async fn require_api_admin(depot: &mut Depot) -> AppResult<()> {
+    let is_admin = depot
+        .jwt_auth_data::<JwtClaims>()
+        .is_some_and(|data| data.claims.is_admin());
+
+    if is_admin {
+        Ok(())
+    } else {
+        Err(AppError::Forbidden("Admin privileges required".to_string()))
+    }
+}
+
 pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
     let jwt_secret = get_jwt_secret();
 
@@ -133,4 +146,85 @@ pub async fn change_password(
     res.render(Redirect::other("/"));
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jsonwebtoken::{EncodingKey, Header, encode};
+    use salvo::test::TestClient;
+    use time::{Duration, OffsetDateTime};
+
+    fn ensure_jwt_secret() {
+        // `jsonwebtoken` 10.4 requires a process-level `CryptoProvider` before any
+        // encode/decode call. Cargo feature unification pulls in both `rust_crypto`
+        // (this crate's declared choice) and `aws_lc_rs` (via salvo's default
+        // `jwt-auth` feature), so the crate can't auto-select one and panics unless
+        // we install a provider explicitly. This mirrors what production code needs
+        // too (see concern in task report) but is scoped here to keep this task's
+        // diff minimal.
+        let _ = jsonwebtoken::crypto::CryptoProvider::install_default(
+            &jsonwebtoken::crypto::rust_crypto::DEFAULT_PROVIDER,
+        );
+        let _ = crate::JWT_SECRET.set("test-only-secret-not-used-in-prod".to_string());
+    }
+
+    fn sign_token(groups: Vec<String>) -> String {
+        ensure_jwt_secret();
+        let claims = JwtClaims {
+            id: "1".to_string(),
+            username: "tester".to_string(),
+            email: "tester@test.com".to_string(),
+            groups,
+            exp: (OffsetDateTime::now_utc() + Duration::hours(1)).unix_timestamp(),
+        };
+        encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(crate::get_jwt_secret().as_bytes()),
+        )
+        .unwrap()
+    }
+
+    fn protected_router() -> Router {
+        #[handler]
+        async fn ok(res: &mut Response) {
+            res.render("ok");
+        }
+
+        Router::new()
+            .hoop(jwt_auth_handler())
+            .hoop(require_api_admin)
+            .get(ok)
+    }
+
+    #[tokio::test]
+    async fn require_api_admin_allows_admin_token() {
+        let token = sign_token(vec!["admin".to_string()]);
+        let service = Service::new(protected_router());
+        let res = TestClient::get("http://127.0.0.1:5800/")
+            .bearer_auth(token)
+            .send(&service)
+            .await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn require_api_admin_rejects_non_admin_token() {
+        let token = sign_token(vec!["users".to_string()]);
+        let service = Service::new(protected_router());
+        let res = TestClient::get("http://127.0.0.1:5800/")
+            .bearer_auth(token)
+            .send(&service)
+            .await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn require_api_admin_rejects_missing_token() {
+        ensure_jwt_secret();
+        let service = Service::new(protected_router());
+        let res = TestClient::get("http://127.0.0.1:5800/").send(&service).await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::FORBIDDEN);
+    }
 }
