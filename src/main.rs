@@ -201,6 +201,20 @@ async fn listen_shutdown_signal(handle: ServerHandle) {
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
+    // `jsonwebtoken` requires a process-level CryptoProvider before any
+    // encode/decode call, auto-selected only if exactly one crypto feature
+    // is compiled in. Our direct dependency (rust_crypto only) and salvo's
+    // transitive one (aws_lc_rs only, different major version) currently
+    // resolve as separate compiled crates, so each auto-selects fine on its
+    // own — but that's an accident of the current version split, not a
+    // guarantee. If a future dependency bump lets Cargo unify them into one
+    // copy with both features again (this has already happened once), every
+    // JWT encode/decode — including the very first login — panics with no
+    // explicit provider selected. Install one for our copy defensively.
+    let _ = jsonwebtoken::crypto::CryptoProvider::install_default(
+        &jsonwebtoken::crypto::rust_crypto::DEFAULT_PROVIDER,
+    );
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .with(
