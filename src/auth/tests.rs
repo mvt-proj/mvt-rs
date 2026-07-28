@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use super::super::models::{Auth, Group, JwtClaims, User};
+    use super::super::models::{Auth, Group, JwtClaims, User, count_group_references};
     use super::super::utils::decode_basic_auth;
     use base64::{Engine as _, engine::general_purpose};
+    use crate::models::catalog::Layer;
+    use crate::models::category::Category;
 
     fn create_test_auth() -> Auth {
         Auth {
@@ -40,6 +42,98 @@ mod tests {
             password: encrypted_password,
             groups,
         }
+    }
+
+    fn test_layer(id: &str, groups: Option<Vec<Group>>) -> Layer {
+        Layer {
+            id: id.to_string(),
+            category: Category {
+                id: "cat-1".to_string(),
+                name: "public".to_string(),
+                description: String::new(),
+            },
+            geometry: "polygons".to_string(),
+            name: "layer".to_string(),
+            alias: "Layer".to_string(),
+            description: String::new(),
+            database_id: "default".to_string(),
+            schema: "public".to_string(),
+            table_name: "t".to_string(),
+            fields: vec![],
+            filter: None,
+            srid: None,
+            geom: None,
+            sql_mode: None,
+            buffer: None,
+            extent: None,
+            zmin: None,
+            zmax: None,
+            zmax_do_not_simplify: None,
+            buffer_do_not_simplify: None,
+            extent_do_not_simplify: None,
+            clip_geom: None,
+            delete_cache_on_start: None,
+            max_cache_age: None,
+            max_records: None,
+            published: true,
+            url: None,
+            groups,
+        }
+    }
+
+    #[test]
+    fn test_count_group_references_none() {
+        let auth = create_test_auth();
+        let other_group = Group {
+            id: "other".to_string(),
+            name: "other".to_string(),
+            description: String::new(),
+        };
+        let users = vec![create_test_user(
+            &auth,
+            "u1",
+            "u1@test.com",
+            "pw",
+            vec![other_group.clone()],
+        )];
+        let layers = vec![test_layer("l1", Some(vec![other_group]))];
+        assert_eq!(count_group_references("target", &users, &layers), (0, 0));
+    }
+
+    #[test]
+    fn test_count_group_references_counts_users_and_layers() {
+        let auth = create_test_auth();
+        let target_group = Group {
+            id: "target".to_string(),
+            name: "target".to_string(),
+            description: String::new(),
+        };
+        let other_group = Group {
+            id: "other".to_string(),
+            name: "other".to_string(),
+            description: String::new(),
+        };
+        let users = vec![
+            create_test_user(&auth, "u1", "u1@test.com", "pw", vec![target_group.clone()]),
+            create_test_user(
+                &auth,
+                "u2",
+                "u2@test.com",
+                "pw",
+                vec![target_group.clone(), other_group.clone()],
+            ),
+            create_test_user(&auth, "u3", "u3@test.com", "pw", vec![other_group]),
+        ];
+        let layers = vec![
+            test_layer("l1", Some(vec![target_group])),
+            test_layer("l2", None),
+        ];
+        assert_eq!(count_group_references("target", &users, &layers), (2, 1));
+    }
+
+    #[test]
+    fn test_count_group_references_empty_input() {
+        assert_eq!(count_group_references("target", &[], &[]), (0, 0));
     }
 
     #[test]

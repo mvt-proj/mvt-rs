@@ -12,7 +12,8 @@ use tracing::warn;
 use crate::config::groups::{create_group, delete_group, get_groups, update_group};
 use crate::config::users::{create_user, delete_user, get_users, update_user};
 use crate::error::{AppError, AppResult};
-use crate::{get_auth, get_jwt_secret};
+use crate::models::catalog::Layer;
+use crate::{get_auth, get_catalog, get_jwt_secret};
 
 use super::utils::decode_basic_auth;
 
@@ -96,7 +97,20 @@ impl Group {
     }
 
     pub async fn delete_group(&self) -> AppResult<()> {
+        let catalog = get_catalog().await.read().await;
+        let layers = catalog.layers.clone();
+        drop(catalog);
+
         let mut auth = get_auth().await.write().await;
+        let (user_count, layer_count) = count_group_references(&self.id, &auth.users, &layers);
+
+        if user_count > 0 || layer_count > 0 {
+            return Err(AppError::Conflict(format!(
+                "Group '{}' is in use by {user_count} user(s) and {layer_count} layer(s)",
+                self.name
+            )));
+        }
+
         let position = auth.groups.iter().position(|group| group.id == self.id);
 
         delete_group(self.id.clone(), None).await?;
@@ -112,6 +126,26 @@ impl Group {
 
         Ok(())
     }
+}
+
+/// Counts how many users and layers still reference `group_id`. Pure so it
+/// can be unit-tested without the global `Auth`/`Catalog` state that
+/// `Group::delete_group` reads it from.
+pub fn count_group_references(group_id: &str, users: &[User], layers: &[Layer]) -> (usize, usize) {
+    let user_count = users
+        .iter()
+        .filter(|user| user.groups.iter().any(|group| group.id == group_id))
+        .count();
+    let layer_count = layers
+        .iter()
+        .filter(|layer| {
+            layer
+                .groups
+                .as_ref()
+                .is_some_and(|groups| groups.iter().any(|group| group.id == group_id))
+        })
+        .count();
+    (user_count, layer_count)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
