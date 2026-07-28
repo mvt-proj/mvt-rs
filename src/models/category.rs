@@ -85,6 +85,8 @@ impl Category {
 
         categories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 
+        crate::reload_styles_cache().await?;
+
         Ok(category)
     }
 
