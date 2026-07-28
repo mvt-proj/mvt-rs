@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     config::categories::{create_category, delete_category, get_category_by_id, update_category},
-    error::AppResult,
+    error::{AppError, AppResult},
     get_catalog, get_categories,
 };
 
@@ -32,9 +32,13 @@ impl Category {
     }
 
     pub async fn from_id(id: &str) -> AppResult<Self> {
-        let category = get_category_by_id(None, id).await?;
-
-        Ok(category)
+        match get_category_by_id(None, id).await {
+            Ok(category) => Ok(category),
+            Err(sqlx::Error::RowNotFound) => {
+                Err(AppError::NotFound(format!("Category {id} not found")))
+            }
+            Err(e) => Err(e.into()),
+        }
     }
 
     pub async fn update_category(&self, name: String, description: String) -> AppResult<Self> {
@@ -85,5 +89,18 @@ impl Category {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::test_support::in_memory_pool;
+
+    #[tokio::test]
+    async fn get_category_by_id_returns_row_not_found_for_unknown_id() {
+        let pool = in_memory_pool().await;
+        let result = crate::config::categories::get_category_by_id(Some(&pool), "missing-id").await;
+        assert!(matches!(result, Err(sqlx::Error::RowNotFound)));
     }
 }
