@@ -55,9 +55,13 @@ impl Style {
     }
 
     pub async fn from_id(id: &str) -> AppResult<Self> {
-        let style = get_style(id, None).await?;
-
-        Ok(style)
+        match get_style(id, None).await {
+            Ok(style) => Ok(style),
+            Err(sqlx::Error::RowNotFound) => {
+                Err(AppError::NotFound(format!("Style {id} not found")))
+            }
+            Err(e) => Err(e.into()),
+        }
     }
 
     pub async fn from_category_and_name(category: &str, name: &str) -> AppResult<Self> {
@@ -139,5 +143,13 @@ mod tests {
         assert_eq!(find_style(&styles, "water", "blue").unwrap().id, "water-blue");
         assert!(find_style(&styles, "water", "default").is_none());
         assert!(find_style(&styles, "nope", "blue").is_none());
+    }
+
+    #[tokio::test]
+    async fn get_style_returns_row_not_found_for_unknown_id() {
+        use crate::config::test_support::in_memory_pool;
+        let pool = in_memory_pool().await;
+        let result = crate::config::styles::get_style("missing-id", Some(&pool)).await;
+        assert!(matches!(result, Err(sqlx::Error::RowNotFound)));
     }
 }
