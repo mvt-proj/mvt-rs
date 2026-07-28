@@ -35,6 +35,7 @@ impl Style {
         };
 
         create_style(style.clone(), None).await?;
+        crate::reload_styles_cache().await?;
 
         Ok(style)
     }
@@ -96,12 +97,14 @@ impl Style {
         };
 
         update_style(style.clone(), None).await?;
+        crate::reload_styles_cache().await?;
 
         Ok(style)
     }
 
     pub async fn delete_style(&self) -> AppResult<()> {
         delete_style(&self.id, None).await?;
+        crate::reload_styles_cache().await?;
         Ok(())
     }
 
