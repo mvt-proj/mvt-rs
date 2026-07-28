@@ -21,7 +21,15 @@ pub struct JwtClaims {
     pub id: String,
     pub username: String,
     pub email: String,
+    #[serde(default)]
+    pub groups: Vec<String>,
     pub exp: i64,
+}
+
+impl JwtClaims {
+    pub fn is_admin(&self) -> bool {
+        self.groups.iter().any(|g| g == "admin")
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -113,6 +121,7 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    #[serde(skip_serializing)]
     pub password: String,
     pub groups: Vec<Group>,
 }
@@ -177,6 +186,13 @@ impl Auth {
 
     pub fn find_group_by_name<'a>(&'a self, target_name: &'a str) -> Option<&'a Group> {
         self.groups.iter().find(|m| m.name == target_name)
+    }
+
+    pub fn resolve_groups_by_name(&self, names: &[String]) -> Vec<Group> {
+        names
+            .iter()
+            .filter_map(|name| self.find_group_by_name(name).cloned())
+            .collect()
     }
 
     pub fn get_encrypt_psw(&self, psw: String) -> Result<String, argon2::password_hash::Error> {
@@ -273,10 +289,12 @@ impl Auth {
         for user in self.users.clone().into_iter() {
             if email == user.email && self.validate_psw(user.clone(), psw)? {
                 let exp = OffsetDateTime::now_utc() + Duration::days(1);
+                let groups = user.groups_as_vec_string();
                 let claim = JwtClaims {
                     id: user.id,
                     username: user.username.to_owned(),
                     email: email.to_owned(),
+                    groups,
                     exp: exp.unix_timestamp(),
                 };
                 let token = jsonwebtoken::encode(

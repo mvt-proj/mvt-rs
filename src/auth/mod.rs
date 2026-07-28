@@ -7,7 +7,7 @@ pub mod utils;
 mod tests;
 
 pub use handlers::{
-    change_password, jwt_auth_handler, login, logout, require_user_admin, session_auth_handler,
-    validate_token,
+    change_password, jwt_auth_handler, login, logout, require_api_admin, require_user_admin,
+    session_auth_handler, validate_token,
 };
 pub use models::{Auth, AuthorizeState, DataToken, Group, JwtClaims, User};

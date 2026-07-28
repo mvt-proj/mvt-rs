@@ -217,14 +217,12 @@ fn build_admin_routes() -> Router {
 
 fn build_api_users_routes() -> Router {
     Router::with_path("users")
-        .hoop(auth::validate_token)
         .get(api::users::index)
         .post(api::users::create)
 }
 
 fn build_api_database_routes() -> Router {
     Router::with_path("database")
-        .hoop(auth::validate_token)
         .push(Router::with_path("schemas").get(api::database::schemas))
         .push(Router::with_path("tables/{schema}").get(api::database::tables))
         .push(Router::with_path("fields/{schema}/{table}").get(api::database::fields))
@@ -233,7 +231,6 @@ fn build_api_database_routes() -> Router {
 
 fn build_api_catalog_routes() -> Router {
     Router::with_path("catalog/layer")
-        .hoop(auth::validate_token)
         .get(api::catalog::list)
         .post(api::catalog::create_layer)
 }
@@ -250,6 +247,8 @@ fn build_api_routes() -> Router {
         .push(
             Router::with_path("admin")
                 .hoop(auth::jwt_auth_handler())
+                .hoop(auth::validate_token)
+                .hoop(auth::require_api_admin)
                 .push(build_api_users_routes())
                 .push(build_api_database_routes())
                 .push(build_api_catalog_routes()),

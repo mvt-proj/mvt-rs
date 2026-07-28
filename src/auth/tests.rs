@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use super::super::models::{Auth, Group, User};
+    use super::super::models::{Auth, Group, JwtClaims, User};
     use super::super::utils::decode_basic_auth;
     use base64::{Engine as _, engine::general_purpose};
 
@@ -380,5 +380,76 @@ mod tests {
 
         assert!(auth.validate_user("user1", password));
         assert!(auth.validate_user("user2", password));
+    }
+
+    #[test]
+    fn test_user_password_not_serialized() {
+        let user = User {
+            id: "1".to_string(),
+            username: "test".to_string(),
+            email: "test@test.com".to_string(),
+            first_name: None,
+            last_name: None,
+            password: "supersecrethash".to_string(),
+            groups: vec![],
+        };
+
+        let value = serde_json::to_value(&user).unwrap();
+        assert!(value.get("password").is_none());
+    }
+
+    #[test]
+    fn test_resolve_groups_by_name_matches_known_drops_unknown() {
+        let auth = create_test_auth();
+        let resolved = auth.resolve_groups_by_name(&[
+            "admin".to_string(),
+            "ghost".to_string(),
+            "users".to_string(),
+        ]);
+        let mut names: Vec<String> = resolved.iter().map(|g| g.name.clone()).collect();
+        names.sort();
+        assert_eq!(names, vec!["admin", "users"]);
+    }
+
+    #[test]
+    fn test_resolve_groups_by_name_empty_input() {
+        let auth = create_test_auth();
+        assert!(auth.resolve_groups_by_name(&[]).is_empty());
+    }
+
+    #[test]
+    fn test_jwtclaims_is_admin_true() {
+        let claims = JwtClaims {
+            id: "1".to_string(),
+            username: "admin".to_string(),
+            email: "admin@test.com".to_string(),
+            groups: vec!["admin".to_string()],
+            exp: 0,
+        };
+        assert!(claims.is_admin());
+    }
+
+    #[test]
+    fn test_jwtclaims_is_admin_false() {
+        let claims = JwtClaims {
+            id: "1".to_string(),
+            username: "regular".to_string(),
+            email: "regular@test.com".to_string(),
+            groups: vec!["users".to_string()],
+            exp: 0,
+        };
+        assert!(!claims.is_admin());
+    }
+
+    #[test]
+    fn test_jwtclaims_is_admin_empty_groups() {
+        let claims = JwtClaims {
+            id: "1".to_string(),
+            username: "nogroups".to_string(),
+            email: "nogroups@test.com".to_string(),
+            groups: vec![],
+            exp: 0,
+        };
+        assert!(!claims.is_admin());
     }
 }

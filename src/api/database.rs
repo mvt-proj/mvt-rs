@@ -3,86 +3,42 @@ use salvo::prelude::*;
 use crate::db::metadata::{
     Field, Schema, Srid, Table, query_fields, query_schemas, query_srid, query_tables,
 };
+use crate::error::AppResult;
 
 #[handler]
-pub async fn schemas(req: &mut Request) -> Result<Json<Vec<Schema>>, StatusError> {
+pub async fn schemas(req: &mut Request) -> AppResult<Json<Vec<Schema>>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
-    let rv = query_schemas(&db_id).await;
-    match rv {
-        Ok(data) => Ok(Json(data)),
-        Err(e) => {
-            tracing::error!("{}", e);
-            Err(StatusError::bad_request()
-                .brief("An error occurred while retrieving the data.")
-                .cause(format!(
-                    "An error occurred while retrieving the data. {e:?}"
-                )))
-        }
-    }
+    Ok(Json(query_schemas(&db_id).await?))
 }
 
 #[handler]
-pub async fn tables(req: &mut Request) -> Result<Json<Vec<Table>>, StatusError> {
+pub async fn tables(req: &mut Request) -> AppResult<Json<Vec<Table>>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
     let schema = req.query::<String>("schema").unwrap_or_default();
-    let rv = query_tables(&db_id, schema).await;
-
-    match rv {
-        Ok(data) => Ok(Json(data)),
-        Err(e) => {
-            tracing::error!("{}", e);
-            Err(StatusError::bad_request()
-                .brief("An error occurred while retrieving the data.")
-                .cause(format!(
-                    "An error occurred while retrieving the data. {e:?}"
-                )))
-        }
-    }
+    Ok(Json(query_tables(&db_id, schema).await?))
 }
 
 #[handler]
-pub async fn fields(req: &mut Request) -> Result<Json<Vec<Field>>, StatusError> {
+pub async fn fields(req: &mut Request) -> AppResult<Json<Vec<Field>>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
     let schema = req.query::<String>("schema").unwrap_or_default();
     let table = req.query::<String>("table").unwrap_or_default();
-    let rv = query_fields(&db_id, schema, table).await;
-    match rv {
-        Ok(data) => Ok(Json(data)),
-        Err(e) => {
-            tracing::error!("{}", e);
-            Err(StatusError::bad_request()
-                .brief("An error occurred while retrieving the data.")
-                .cause(format!(
-                    "An error occurred while retrieving the data. {e:?}"
-                )))
-        }
-    }
+    Ok(Json(query_fields(&db_id, schema, table).await?))
 }
 
 #[handler]
-pub async fn srid(req: &mut Request) -> Result<Json<Srid>, StatusError> {
+pub async fn srid(req: &mut Request) -> AppResult<Json<Srid>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
     let schema = req.query::<String>("schema").unwrap_or_default();
     let table = req.query::<String>("table").unwrap_or_default();
     let geometry = req.query::<String>("geometry").unwrap_or_default();
-    let rv = query_srid(&db_id, schema, table, geometry).await;
-    match rv {
-        Ok(data) => Ok(Json(data)),
-        Err(e) => {
-            tracing::error!("{}", e);
-            Err(StatusError::bad_request()
-                .brief("An error occurred while retrieving the data.")
-                .cause(format!(
-                    "An error occurred while retrieving the data. {e:?}"
-                )))
-        }
-    }
+    Ok(Json(query_srid(&db_id, schema, table, geometry).await?))
 }

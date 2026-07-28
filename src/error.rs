@@ -80,6 +80,9 @@ pub enum AppError {
     #[error("Unauthorized access")]
     UnauthorizedAccess,
 
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+
     #[error("Invalid email or password")]
     InvalidCredentials,
 
@@ -115,6 +118,7 @@ impl AppError {
         match self {
             // Self::UnauthorizedAccess => StatusCode::UNAUTHORIZED,
             Self::UnauthorizedAccess | Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
+            Self::Forbidden(_) => StatusCode::FORBIDDEN,
             Self::UserNotFound
             | Self::UserNotFoundError(_)
             | Self::NotFound(_)
@@ -135,6 +139,8 @@ impl Writer for AppError {
         let status = self.status_code();
         let error_message = self.to_string();
 
+        tracing::error!(error = %self, status = status.as_u16(), "request failed");
+
         let prefers_html = req
             .headers()
             .get("accept")
@@ -151,10 +157,16 @@ impl Writer for AppError {
             };
             res.render(Text::Html(template.render_or_fallback()));
         } else {
+            let error_type = if cfg!(debug_assertions) {
+                format!("{:?}", self)
+            } else {
+                status.canonical_reason().unwrap_or("error").to_string()
+            };
+
             res.render(Json(serde_json::json!({
                 "status": status.as_u16(),
                 "error": error_message,
-                "type": format!("{:?}", self)
+                "type": error_type
             })));
         }
     }

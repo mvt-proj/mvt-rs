@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    auth::{AuthorizeState, DataToken, Group, User},
+    auth::{AuthorizeState, DataToken, User},
     error::{AppError, AppResult},
     get_auth,
 };
@@ -18,7 +18,7 @@ struct NewUser<'a> {
     first_name: Option<String>,
     last_name: Option<String>,
     password: String,
-    groups: Vec<Option<Group>>,
+    groups: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug)]
@@ -65,6 +65,12 @@ pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) -> AppResult<()> 
         .get_encrypt_psw(data.password.to_string())
         .map_err(AppError::PasswordHashError)?;
 
+    let groups = data
+        .groups
+        .as_ref()
+        .map(|names| auth.resolve_groups_by_name(names))
+        .unwrap_or_default();
+
     let user = User {
         id: Uuid::new_v4().to_string(),
         username: data.username.to_string(),
@@ -72,7 +78,7 @@ pub async fn create<'a>(res: &mut Response, data: NewUser<'a>) -> AppResult<()> 
         first_name: data.first_name,
         last_name: data.last_name,
         password: encrypt_psw,
-        groups: Vec::new(),
+        groups,
     };
 
     auth.create_user(user.clone()).await?;
