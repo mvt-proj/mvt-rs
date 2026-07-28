@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use super::super::models::{Auth, Group, User};
+    use super::super::models::{Auth, Group, JwtClaims, User};
     use super::super::utils::decode_basic_auth;
     use base64::{Engine as _, engine::general_purpose};
 
@@ -415,5 +415,41 @@ mod tests {
     fn test_resolve_groups_by_name_empty_input() {
         let auth = create_test_auth();
         assert!(auth.resolve_groups_by_name(&[]).is_empty());
+    }
+
+    #[test]
+    fn test_jwtclaims_is_admin_true() {
+        let claims = JwtClaims {
+            id: "1".to_string(),
+            username: "admin".to_string(),
+            email: "admin@test.com".to_string(),
+            groups: vec!["admin".to_string()],
+            exp: 0,
+        };
+        assert!(claims.is_admin());
+    }
+
+    #[test]
+    fn test_jwtclaims_is_admin_false() {
+        let claims = JwtClaims {
+            id: "1".to_string(),
+            username: "regular".to_string(),
+            email: "regular@test.com".to_string(),
+            groups: vec!["users".to_string()],
+            exp: 0,
+        };
+        assert!(!claims.is_admin());
+    }
+
+    #[test]
+    fn test_jwtclaims_is_admin_empty_groups() {
+        let claims = JwtClaims {
+            id: "1".to_string(),
+            username: "nogroups".to_string(),
+            email: "nogroups@test.com".to_string(),
+            groups: vec![],
+            exp: 0,
+        };
+        assert!(!claims.is_admin());
     }
 }

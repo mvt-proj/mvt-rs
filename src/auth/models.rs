@@ -21,7 +21,14 @@ pub struct JwtClaims {
     pub id: String,
     pub username: String,
     pub email: String,
+    pub groups: Vec<String>,
     pub exp: i64,
+}
+
+impl JwtClaims {
+    pub fn is_admin(&self) -> bool {
+        self.groups.iter().any(|g| g == "admin")
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -281,10 +288,12 @@ impl Auth {
         for user in self.users.clone().into_iter() {
             if email == user.email && self.validate_psw(user.clone(), psw)? {
                 let exp = OffsetDateTime::now_utc() + Duration::days(1);
+                let groups = user.groups_as_vec_string();
                 let claim = JwtClaims {
                     id: user.id,
                     username: user.username.to_owned(),
                     email: email.to_owned(),
+                    groups,
                     exp: exp.unix_timestamp(),
                 };
                 let token = jsonwebtoken::encode(
