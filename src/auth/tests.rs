@@ -397,4 +397,23 @@ mod tests {
         let value = serde_json::to_value(&user).unwrap();
         assert!(value.get("password").is_none());
     }
+
+    #[test]
+    fn test_resolve_groups_by_name_matches_known_drops_unknown() {
+        let auth = create_test_auth();
+        let resolved = auth.resolve_groups_by_name(&[
+            "admin".to_string(),
+            "ghost".to_string(),
+            "users".to_string(),
+        ]);
+        let mut names: Vec<String> = resolved.iter().map(|g| g.name.clone()).collect();
+        names.sort();
+        assert_eq!(names, vec!["admin", "users"]);
+    }
+
+    #[test]
+    fn test_resolve_groups_by_name_empty_input() {
+        let auth = create_test_auth();
+        assert!(auth.resolve_groups_by_name(&[]).is_empty());
+    }
 }

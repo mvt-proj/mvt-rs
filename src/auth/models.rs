@@ -180,6 +180,13 @@ impl Auth {
         self.groups.iter().find(|m| m.name == target_name)
     }
 
+    pub fn resolve_groups_by_name(&self, names: &[String]) -> Vec<Group> {
+        names
+            .iter()
+            .filter_map(|name| self.find_group_by_name(name).cloned())
+            .collect()
+    }
+
     pub fn get_encrypt_psw(&self, psw: String) -> Result<String, argon2::password_hash::Error> {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
