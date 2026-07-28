@@ -83,6 +83,9 @@ pub enum AppError {
     #[error("Forbidden: {0}")]
     Forbidden(String),
 
+    #[error("Conflict: {0}")]
+    Conflict(String),
+
     #[error("Invalid email or password")]
     InvalidCredentials,
 
@@ -119,6 +122,7 @@ impl AppError {
             // Self::UnauthorizedAccess => StatusCode::UNAUTHORIZED,
             Self::UnauthorizedAccess | Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::Forbidden(_) => StatusCode::FORBIDDEN,
+            Self::Conflict(_) => StatusCode::CONFLICT,
             Self::UserNotFound
             | Self::UserNotFoundError(_)
             | Self::NotFound(_)
