@@ -94,7 +94,6 @@ impl Category {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::config::test_support::in_memory_pool;
 
     #[tokio::test]

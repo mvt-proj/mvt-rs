@@ -21,6 +21,7 @@ pub struct JwtClaims {
     pub id: String,
     pub username: String,
     pub email: String,
+    #[serde(default)]
     pub groups: Vec<String>,
     pub exp: i64,
 }
