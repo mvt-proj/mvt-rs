@@ -243,6 +243,17 @@ fn build_api_categories_routes() -> Router {
         )
 }
 
+fn build_api_styles_routes() -> Router {
+    Router::with_path("styles")
+        .get(api::styles::list)
+        .post(api::styles::create)
+        .push(
+            Router::with_path("{id}")
+                .put(api::styles::update)
+                .delete(api::styles::delete),
+        )
+}
+
 fn build_api_database_routes() -> Router {
     Router::with_path("database")
         .push(Router::with_path("schemas").get(api::database::schemas))
@@ -274,6 +285,7 @@ fn build_api_routes() -> Router {
                 .push(build_api_users_routes())
                 .push(build_api_groups_routes())
                 .push(build_api_categories_routes())
+                .push(build_api_styles_routes())
                 .push(build_api_database_routes())
                 .push(build_api_catalog_routes()),
         )
