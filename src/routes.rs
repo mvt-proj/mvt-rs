@@ -221,6 +221,17 @@ fn build_api_users_routes() -> Router {
         .post(api::users::create)
 }
 
+fn build_api_groups_routes() -> Router {
+    Router::with_path("groups")
+        .get(api::groups::list)
+        .post(api::groups::create)
+        .push(
+            Router::with_path("{id}")
+                .put(api::groups::update)
+                .delete(api::groups::delete),
+        )
+}
+
 fn build_api_database_routes() -> Router {
     Router::with_path("database")
         .push(Router::with_path("schemas").get(api::database::schemas))
@@ -250,6 +261,7 @@ fn build_api_routes() -> Router {
                 .hoop(auth::validate_token)
                 .hoop(auth::require_api_admin)
                 .push(build_api_users_routes())
+                .push(build_api_groups_routes())
                 .push(build_api_database_routes())
                 .push(build_api_catalog_routes()),
         )
