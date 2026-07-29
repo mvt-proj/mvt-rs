@@ -271,7 +271,13 @@ fn build_api_catalog_routes() -> Router {
     Router::with_path("catalog/layer")
         .get(api::catalog::list)
         .post(api::catalog::create_layer)
-        .push(Router::with_path("{id}").put(api::catalog::update_layer))
+        .push(
+            Router::with_path("{id}")
+                .put(api::catalog::update_layer)
+                .delete(api::catalog::delete_layer)
+                .push(Router::with_path("publish").patch(api::catalog::toggle_published))
+                .push(Router::with_path("cache").delete(api::catalog::delete_layer_cache)),
+        )
 }
 
 fn build_api_routes() -> Router {

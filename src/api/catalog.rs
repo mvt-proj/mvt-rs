@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::Group,
     error::{AppError, AppResult},
-    get_auth, get_catalog,
+    get_auth, get_cache_wrapper, get_catalog,
     models::{
         catalog::{Layer, StateLayer},
         category::Category,
@@ -213,5 +213,60 @@ pub async fn update_layer(res: &mut Response, layer_form: UpdateLayerRequest) ->
     crate::invalidate_layer_tile_cache(&layer_key).await?;
 
     res.render(Json(&layer));
+    Ok(())
+}
+
+#[handler]
+pub async fn delete_layer(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+
+    let mut catalog = get_catalog().await.write().await;
+    if catalog.find_layer_by_id(&id, StateLayer::Any).is_none() {
+        return Err(AppError::NotFound(format!("Layer {id} not found")));
+    }
+
+    catalog.delete_layer(id).await?;
+    res.render(Json(serde_json::json!({ "deleted": true })));
+    Ok(())
+}
+
+#[handler]
+pub async fn toggle_published(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+
+    let mut catalog = get_catalog().await.write().await;
+    if catalog.find_layer_by_id(&id, StateLayer::Any).is_none() {
+        return Err(AppError::NotFound(format!("Layer {id} not found")));
+    }
+
+    catalog.swich_layer_published(&id).await?;
+
+    let layer = catalog
+        .find_layer_by_id(&id, StateLayer::Any)
+        .ok_or_else(|| AppError::NotFound(format!("Layer {id} not found")))?;
+    res.render(Json(layer));
+    Ok(())
+}
+
+#[handler]
+pub async fn delete_layer_cache(req: &mut Request, res: &mut Response) -> AppResult<()> {
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
+
+    let layer_name = {
+        let catalog = get_catalog().await.read().await;
+        let layer = catalog
+            .find_layer_by_id(&id, StateLayer::Any)
+            .ok_or_else(|| AppError::CacheNotFound(id.to_string()))?;
+        format!("{}_{}", layer.category.name, layer.name)
+    };
+
+    get_cache_wrapper().delete_layer_cache(&layer_name).await?;
+    res.render(Json(serde_json::json!({ "deleted": true })));
     Ok(())
 }
