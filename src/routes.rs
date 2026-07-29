@@ -271,6 +271,7 @@ fn build_api_catalog_routes() -> Router {
     Router::with_path("catalog/layer")
         .get(api::catalog::list)
         .post(api::catalog::create_layer)
+        .push(Router::with_path("{id}").put(api::catalog::update_layer))
 }
 
 fn build_api_routes() -> Router {
