@@ -262,7 +262,7 @@ pub async fn delete_layer_cache(req: &mut Request, res: &mut Response) -> AppRes
         let catalog = get_catalog().await.read().await;
         let layer = catalog
             .find_layer_by_id(&id, StateLayer::Any)
-            .ok_or_else(|| AppError::CacheNotFound(id.to_string()))?;
+            .ok_or_else(|| AppError::NotFound(format!("Layer {id} not found")))?;
         format!("{}_{}", layer.category.name, layer.name)
     };
 

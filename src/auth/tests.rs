@@ -4,6 +4,7 @@ mod tests {
         Auth, Group, JwtClaims, User, count_group_references, resolve_updated_password,
     };
     use super::super::utils::decode_basic_auth;
+    use argon2::{Argon2, PasswordHash, PasswordVerifier};
     use base64::{Engine as _, engine::general_purpose};
     use crate::models::catalog::Layer;
     use crate::models::category::Category;
@@ -61,6 +62,13 @@ mod tests {
                 .unwrap();
         assert_ne!(result, "existing-hash");
         assert_ne!(result, "new-password"); // stored as an argon2 hash, not plaintext
+
+        let parsed_hash = PasswordHash::new(&result).unwrap();
+        assert!(
+            Argon2::default()
+                .verify_password(b"new-password", &parsed_hash)
+                .is_ok()
+        );
     }
 
     fn test_layer(id: &str, groups: Option<Vec<Group>>) -> Layer {

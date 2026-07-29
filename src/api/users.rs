@@ -111,11 +111,10 @@ pub async fn update<'a>(res: &mut Response, data: UpdateUser<'a>) -> AppResult<(
     let password =
         crate::auth::models::resolve_updated_password(&auth, &existing.password, data.password)?;
 
-    let groups = data
-        .groups
-        .as_ref()
-        .map(|names| auth.resolve_groups_by_name(names))
-        .unwrap_or_default();
+    let groups = match data.groups {
+        Some(names) => auth.resolve_groups_by_name(&names),
+        None => existing.groups.clone(),
+    };
 
     let user = User {
         id: data.id,
