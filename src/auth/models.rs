@@ -148,6 +148,23 @@ pub fn count_group_references(group_id: &str, users: &[User], layers: &[Layer]) 
     (user_count, layer_count)
 }
 
+/// Resolves the password hash to persist on a user update. `None` (the
+/// password field omitted from the request) keeps the existing hash;
+/// `Some(pw)` hashes the new password. Takes `&Auth` (rather than being an
+/// `Auth` method) purely so call sites read naturally next to
+/// `auth.get_encrypt_psw`; it doesn't touch any `Auth` field, which is what
+/// makes it unit-testable with any `Auth` value, no global state needed.
+pub fn resolve_updated_password(
+    auth: &Auth,
+    existing_password: &str,
+    new_password: Option<String>,
+) -> AppResult<String> {
+    match new_password {
+        Some(pw) => auth.get_encrypt_psw(pw).map_err(AppError::PasswordHashError),
+        None => Ok(existing_password.to_string()),
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     pub id: String,

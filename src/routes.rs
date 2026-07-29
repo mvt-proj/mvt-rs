@@ -219,6 +219,11 @@ fn build_api_users_routes() -> Router {
     Router::with_path("users")
         .get(api::users::index)
         .post(api::users::create)
+        .push(
+            Router::with_path("{id}")
+                .put(api::users::update)
+                .delete(api::users::delete),
+        )
 }
 
 fn build_api_groups_routes() -> Router {

@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use super::super::models::{Auth, Group, JwtClaims, User, count_group_references};
+    use super::super::models::{
+        Auth, Group, JwtClaims, User, count_group_references, resolve_updated_password,
+    };
     use super::super::utils::decode_basic_auth;
     use base64::{Engine as _, engine::general_purpose};
     use crate::models::catalog::Layer;
@@ -42,6 +44,23 @@ mod tests {
             password: encrypted_password,
             groups,
         }
+    }
+
+    #[test]
+    fn test_resolve_updated_password_none_keeps_existing_hash() {
+        let auth = create_test_auth();
+        let result = resolve_updated_password(&auth, "existing-hash", None).unwrap();
+        assert_eq!(result, "existing-hash");
+    }
+
+    #[test]
+    fn test_resolve_updated_password_some_hashes_the_new_password() {
+        let auth = create_test_auth();
+        let result =
+            resolve_updated_password(&auth, "existing-hash", Some("new-password".to_string()))
+                .unwrap();
+        assert_ne!(result, "existing-hash");
+        assert_ne!(result, "new-password"); // stored as an argon2 hash, not plaintext
     }
 
     fn test_layer(id: &str, groups: Option<Vec<Group>>) -> Layer {
