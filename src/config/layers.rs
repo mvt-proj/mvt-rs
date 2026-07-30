@@ -171,7 +171,7 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(layer.clip_geom)
     .bind(layer.delete_cache_on_start)
     .bind(layer.max_cache_age.map(|v| v as i64))
-    .bind(layer.max_records.map(|v| v as i64))
+    .bind(layer.max_records.unwrap_or(0) as i64)
     .bind(layer.published)
     .bind(&layer.database_id)
     .bind(&layer.url)
@@ -242,7 +242,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(layer.clip_geom)
     .bind(layer.delete_cache_on_start)
     .bind(layer.max_cache_age.map(|v| v as i64))
-    .bind(layer.max_records.map(|v| v as i64))
+    .bind(layer.max_records.unwrap_or(0) as i64)
     .bind(layer.published)
     .bind(&layer.database_id)
     .bind(&layer.url)
@@ -298,11 +298,75 @@ mod tests {
     use super::*;
     use crate::config::system_settings::get_config_version;
     use crate::config::test_support::in_memory_pool;
+    use crate::models::category::Category;
 
     #[tokio::test]
     async fn delete_layer_bumps_version() {
         let pool = in_memory_pool().await;
         delete_layer(Some(&pool), "nonexistent").await.unwrap();
         assert_eq!(get_config_version(&pool).await.unwrap(), 1);
+    }
+
+    fn test_layer(id: &str) -> Layer {
+        Layer {
+            id: id.to_string(),
+            category: Category {
+                id: "cat-1".to_string(),
+                name: "public".to_string(),
+                description: String::new(),
+            },
+            geometry: "polygons".to_string(),
+            name: "layer".to_string(),
+            alias: "Layer".to_string(),
+            description: String::new(),
+            database_id: "default".to_string(),
+            schema: "public".to_string(),
+            table_name: "t".to_string(),
+            fields: vec![],
+            filter: None,
+            srid: None,
+            geom: None,
+            sql_mode: None,
+            buffer: None,
+            extent: None,
+            zmin: None,
+            zmax: None,
+            zmax_do_not_simplify: None,
+            buffer_do_not_simplify: None,
+            extent_do_not_simplify: None,
+            clip_geom: None,
+            delete_cache_on_start: None,
+            max_cache_age: None,
+            max_records: None,
+            published: true,
+            url: None,
+            groups: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn create_layer_with_no_max_records_defaults_to_zero() {
+        let pool = in_memory_pool().await;
+        create_layer(Some(&pool), test_layer("l1"))
+            .await
+            .expect("max_records: None must not violate the NOT NULL DEFAULT 0 column");
+
+        let layers = get_layers(Some(&pool)).await.unwrap();
+        assert_eq!(layers[0].max_records, Some(0));
+    }
+
+    #[tokio::test]
+    async fn update_layer_with_no_max_records_defaults_to_zero() {
+        let pool = in_memory_pool().await;
+        create_layer(Some(&pool), test_layer("l1")).await.unwrap();
+
+        let mut layer = test_layer("l1");
+        layer.alias = "Updated".to_string();
+        update_layer(Some(&pool), layer)
+            .await
+            .expect("max_records: None must not violate the NOT NULL DEFAULT 0 column");
+
+        let layers = get_layers(Some(&pool)).await.unwrap();
+        assert_eq!(layers[0].max_records, Some(0));
     }
 }
