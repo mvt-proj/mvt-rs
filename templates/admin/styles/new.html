@@ -5,6 +5,7 @@
    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.2.0/jsoneditor.min.js" integrity="sha512-QL8qeB9ctAtMXXILiMcO83THPl+1UB2N8CBGSNexHL5AQ/PVl14364HO56l2Ct6P8UEKkOS3xkD28FPqPHshBQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.2.0/jsoneditor.min.css" integrity="sha512-8G+Vb2+10BSrSo+wupdzJIylDLpGtEYniQhp0rsbTigPG7Onn2S08Ai/KEGlxN2Ncx9fGqVHtRehMuOjPb9f8g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script type="module" src="/static/js/style-validator.js"></script>
+  <script type="module" src="/static/js/qml-import.js"></script>
 
 {% endblock %}
 
@@ -77,6 +78,53 @@
           <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
           <input type="hidden" id="jsonInput" name="style">
         </div>
+      </div>
+
+      <!-- QML import -->
+      <div class="mb-4 border-t pt-4 mt-4">
+        <label class="label">{{ base.translate["qml-import-title"] }}</label>
+        <div class="mt-1 flex flex-wrap gap-3 items-end" id="qmlImportPanel"
+             data-msg-generic-error="{{ base.translate["qml-import-error-generic"] }}"
+             data-msg-warnings-title="{{ base.translate["qml-import-warnings-title"] }}">
+          <div>
+            <label class="label text-xs">{{ base.translate["qml-import-file-label"] }}</label>
+            <input type="file" id="qmlFileInput" accept=".qml" class="input">
+          </div>
+          <div>
+            <label class="label text-xs">{{ base.translate["qml-import-source-layer-label"] }}</label>
+            <select id="qmlSourceLayer" class="input">
+              {% for layer in layers %}
+                <option value="{{ layer.name }}">{{ layer.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="label text-xs">{{ base.translate["qml-import-mode-label"] }}</label>
+            <select id="qmlOutputMode" class="input">
+              <option value="compact">{{ base.translate["qml-import-mode-compact"] }}</option>
+              <option value="qgis">{{ base.translate["qml-import-mode-qgis"] }}</option>
+            </select>
+          </div>
+          <div>
+            <span class="label text-xs">{{ base.translate["qml-import-merge-label"] }}</span>
+            <label class="flex items-center gap-1">
+              <input type="radio" name="qmlMergeMode" value="concat" checked>
+              {{ base.translate["qml-import-merge-concat"] }}
+            </label>
+            <label class="flex items-center gap-1">
+              <input type="radio" name="qmlMergeMode" value="replace">
+              {{ base.translate["qml-import-merge-replace"] }}
+            </label>
+          </div>
+          <button type="button" id="btnImportQml" class="button">
+            <span class="icon__small mr-2">
+              <i class="fas fa-file-import"></i>
+            </span>
+            {{ base.translate["qml-import-button"] }}
+          </button>
+        </div>
+        <div id="qmlImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
+        <div id="qmlImportWarnings" class="mt-2" style="display: none;"></div>
       </div>
 
       <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">
