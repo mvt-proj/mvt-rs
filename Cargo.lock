@@ -2349,6 +2349,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "maplibre-ir"
+version = "0.1.0"
+dependencies = [
+ "quick-xml",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "maplibre-legend"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2554,6 +2564,7 @@ dependencies = [
  "mime_guess",
  "mlua",
  "prometheus",
+ "qml2maplibre",
  "redis",
  "regex",
  "reqwest",
@@ -3190,6 +3201,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
 
 [[package]]
+name = "qml2maplibre"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "maplibre-ir",
+ "quick-xml",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "qoi"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3203,6 +3225,15 @@ name = "quick-error"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
+
+[[package]]
+name = "quick-xml"
+version = "0.36.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7649a7b4df05aed9ea7ec6f628c67c9953a43869b8bc50929569b2999d443fe"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "quinn"
