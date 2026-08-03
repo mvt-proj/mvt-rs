@@ -229,6 +229,12 @@ fn parse_output_mode(mode: &str) -> AppResult<qml2maplibre::OutputMode> {
 
 #[handler]
 pub async fn convert_qml(res: &mut Response, data: ConvertQmlRequest) -> AppResult<()> {
+    if data.source_layer.trim().is_empty() {
+        return Err(AppError::InvalidInput(
+            "source_layer must not be empty".to_string(),
+        ));
+    }
+
     let mode = parse_output_mode(&data.mode)?;
     let result = qml2maplibre::convert(&data.qml, &data.source_layer, mode)
         .map_err(|e| AppError::InvalidInput(e.to_string()))?;
@@ -346,5 +352,109 @@ mod tests {
             .await;
 
         assert_eq!(resp.status_code.unwrap(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn convert_qml_rejects_empty_source_layer() {
+        use salvo::test::TestClient;
+
+        let service = Service::new(Router::with_path("convert-qml").post(convert_qml));
+        let body = serde_json::json!({
+            "qml": SINGLESYMBOL_LINE_QML,
+            "source_layer": "",
+            "mode": "qgis",
+        });
+        let resp = TestClient::post("http://127.0.0.1:5800/convert-qml")
+            .json(&body)
+            .send(&service)
+            .await;
+
+        assert_eq!(resp.status_code.unwrap(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn convert_qml_rejects_whitespace_only_source_layer() {
+        use salvo::test::TestClient;
+
+        let service = Service::new(Router::with_path("convert-qml").post(convert_qml));
+        let body = serde_json::json!({
+            "qml": SINGLESYMBOL_LINE_QML,
+            "source_layer": "   ",
+            "mode": "qgis",
+        });
+        let resp = TestClient::post("http://127.0.0.1:5800/convert-qml")
+            .json(&body)
+            .send(&service)
+            .await;
+
+        assert_eq!(resp.status_code.unwrap(), StatusCode::BAD_REQUEST);
+    }
+
+    // Regression coverage for the route-level `SecureMaxSize` hoop added in
+    // src/routes.rs: without it, a request body over Salvo's global 64 KB
+    // default is rejected before the handler ever runs (real QML files with
+    // categorized/graduated renderers routinely exceed that). With the hoop
+    // in place, the same oversized-relative-to-64KB body is accepted.
+    #[tokio::test]
+    async fn convert_qml_with_secure_max_size_hoop_accepts_body_over_default_limit() {
+        use salvo::http::request::SecureMaxSize;
+        use salvo::test::TestClient;
+
+        // Padding pushes the JSON body well past Salvo's 64 KB default.
+        let big_qml = format!("{SINGLESYMBOL_LINE_QML}{}", " ".repeat(200_000));
+        let service = Service::new(
+            Router::with_path("convert-qml")
+                .hoop(SecureMaxSize::new(8 * 1024 * 1024))
+                .post(convert_qml),
+        );
+        let body = serde_json::json!({
+            "qml": big_qml,
+            "source_layer": "test_layer",
+            "mode": "qgis",
+        });
+        let resp = TestClient::post("http://127.0.0.1:5800/convert-qml")
+            .json(&body)
+            .send(&service)
+            .await;
+
+        assert_eq!(resp.status_code.unwrap(), StatusCode::OK);
+    }
+
+    // Without the route-level hoop, Salvo silently discards the
+    // oversized-body error internally (see `Request::payload()` /
+    // `from_request()` in salvo_core): the request doesn't come back as a
+    // 413, it surfaces as a 400 because the handler's required fields are
+    // never populated. It also isn't rendered as JSON (mvt-rs's default
+    // error catcher renders an HTML page for it since it never reaches our
+    // `AppError` JSON `Writer`) — that combination (error status + non-JSON
+    // body) is exactly what static/js/qml-import.js's error handling keys
+    // off of for its "file too large" hint.
+    #[tokio::test]
+    async fn convert_qml_without_secure_max_size_hoop_rejects_body_over_default_limit() {
+        use salvo::test::TestClient;
+
+        let big_qml = format!("{SINGLESYMBOL_LINE_QML}{}", " ".repeat(200_000));
+        let service = Service::new(Router::with_path("convert-qml").post(convert_qml));
+        let body = serde_json::json!({
+            "qml": big_qml,
+            "source_layer": "test_layer",
+            "mode": "qgis",
+        });
+        let resp = TestClient::post("http://127.0.0.1:5800/convert-qml")
+            .json(&body)
+            .send(&service)
+            .await;
+
+        assert!(resp.status_code.unwrap().is_client_error());
+        let content_type = resp
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or_default()
+            .to_string();
+        assert!(
+            !content_type.contains("application/json"),
+            "expected a non-JSON error body, got content-type: {content_type}"
+        );
     }
 }
