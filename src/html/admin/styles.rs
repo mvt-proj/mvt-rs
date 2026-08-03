@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::User,
     error::{AppError, AppResult},
-    get_categories,
+    get_categories, get_catalog,
     html::utils::{BaseTemplateData, make_base},
-    models::{category::Category, styles::Style},
+    models::{category::Category, catalog::Layer, styles::Style},
 };
 
 #[derive(Template)]
@@ -21,6 +21,7 @@ struct ListStylesTemplate<'a> {
 #[template(path = "admin/styles/new.html")]
 struct NewStyleTemplate {
     categories: Vec<Category>,
+    layers: Vec<Layer>,
     base: BaseTemplateData,
 }
 
@@ -30,6 +31,7 @@ struct EditStyleTemplate {
     style: Style,
     style_json_safe: String,
     categories: Vec<Category>,
+    layers: Vec<Layer>,
     base: BaseTemplateData,
 }
 
@@ -72,8 +74,11 @@ pub async fn new_style_page(res: &mut Response, depot: &mut Depot) -> AppResult<
     let (base, _) = make_base(depot).await;
 
     let categories = get_categories().await.read().await;
+    let mut layers = get_catalog().await.read().await.layers.clone();
+    Layer::sort_by_category_and_name(&mut layers);
     let template = NewStyleTemplate {
         categories: (categories).to_vec(),
+        layers,
         base,
     };
     res.render(Text::Html(template.render()?));
@@ -88,6 +93,8 @@ pub async fn edit_style_page(req: &mut Request, res: &mut Response, depot: &mut 
         .ok_or(AppError::RequestParamError("id".to_string()))?;
     let style = Style::from_id(&id).await?;
     let categories = get_categories().await.read().await;
+    let mut layers = get_catalog().await.read().await.layers.clone();
+    Layer::sort_by_category_and_name(&mut layers);
     // Escape "</" so the JSON can't break out of the <script type="application/json">
     // block it's embedded in (e.g. a style value containing "</script>"); JSON.parse
     // unescapes "\/" back to "/" so the parsed value is unaffected.
@@ -96,6 +103,7 @@ pub async fn edit_style_page(req: &mut Request, res: &mut Response, depot: &mut 
         style: style.clone(),
         style_json_safe,
         categories: (categories).to_vec(),
+        layers,
         base,
     };
     res.render(Text::Html(template.render()?));
