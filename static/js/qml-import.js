@@ -130,7 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       currentJson = editorRef.get();
     } catch (e) {
-      currentJson = {};
+      // The editor currently holds invalid/unparseable JSON (e.g. mid-manual-edit).
+      // Abort rather than silently discarding the user's in-progress edits by
+      // merging into an empty object.
+      showError(genericErrorMsg);
+      return;
     }
 
     editorRef.set(mergeLayers(currentJson, result.layers, mergeMode));
