@@ -66,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const errorSlot = document.getElementById('qmlImportError');
   const warningsPanel = document.getElementById('qmlImportWarnings');
   const genericErrorMsg = importPanel.dataset.msgGenericError || 'Could not convert the QML file';
+  const tooLargeErrorMsg = importPanel.dataset.msgTooLarge || genericErrorMsg;
+  const noFileErrorMsg = importPanel.dataset.msgNoFile || genericErrorMsg;
 
   function showError(message) {
     errorSlot.textContent = message;
@@ -76,12 +78,32 @@ document.addEventListener('DOMContentLoaded', () => {
     errorSlot.style.display = 'none';
   }
 
-  button.addEventListener('click', async () => {
+  function hideStalePanels() {
     clearError();
     warningsPanel.style.display = 'none';
+  }
+
+  // The warnings panel (and, by the same logic, the error panel) must only
+  // ever reflect the *latest* conversion: it should appear right after an
+  // import and disappear again the moment the editor content is next
+  // touched manually (JSONEditor keystroke, or the page's own "load
+  // full/partial style" buttons — anything that dispatches
+  // `style-editor-changed`). This listener is the single place that hides
+  // both panels. Our own successful-import path below also dispatches
+  // `style-editor-changed`, which runs this listener synchronously *before*
+  // `renderWarnings()` is called, so the fresh warnings for that import are
+  // shown right after being cleared, not clobbered by it.
+  document.addEventListener('style-editor-changed', hideStalePanels);
+
+  button.addEventListener('click', async () => {
+    hideStalePanels();
 
     const file = fileInput.files[0];
-    if (!file || !editorRef) {
+    if (!file) {
+      showError(noFileErrorMsg);
+      return;
+    }
+    if (!editorRef) {
       return;
     }
 
@@ -95,50 +117,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mergeMode = document.querySelector('input[name="qmlMergeMode"]:checked').value;
 
-    let response;
+    button.disabled = true;
     try {
-      response = await fetch('/admin/styles/convert-qml', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          qml: qmlText,
-          source_layer: sourceLayerSelect.value,
-          mode: modeSelect.value,
-        }),
-      });
-    } catch (e) {
-      showError(genericErrorMsg);
-      return;
-    }
-
-    if (!response.ok) {
-      let message = genericErrorMsg;
+      let response;
       try {
-        const errJson = await response.json();
-        if (errJson.error) {
-          message = errJson.error;
-        }
+        response = await fetch('/admin/styles/convert-qml', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            qml: qmlText,
+            source_layer: sourceLayerSelect.value,
+            mode: modeSelect.value,
+          }),
+        });
       } catch (e) {
-        // Non-JSON error body: keep the generic message.
+        showError(genericErrorMsg);
+        return;
       }
-      showError(message);
-      return;
-    }
 
-    const result = await response.json();
-    let currentJson;
-    try {
-      currentJson = editorRef.get();
-    } catch (e) {
-      // The editor currently holds invalid/unparseable JSON (e.g. mid-manual-edit).
-      // Abort rather than silently discarding the user's in-progress edits by
-      // merging into an empty object.
-      showError(genericErrorMsg);
-      return;
-    }
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
 
-    editorRef.set(mergeLayers(currentJson, result.layers, mergeMode));
-    document.dispatchEvent(new Event('style-editor-changed'));
-    renderWarnings(warningsPanel, result.warnings);
+      if (!response.ok) {
+        // Validation failures raised by our own handler (bad mode, empty
+        // source_layer, malformed QML, etc.) always come back as JSON with
+        // an `error` field, because this endpoint only ever receives
+        // fetch's default `Accept: */*` and our error Writer renders JSON
+        // unless the client explicitly asked for `text/html`.
+        //
+        // A non-JSON error body on this endpoint therefore isn't one of
+        // those — it's Salvo's own request-parsing layer rejecting the
+        // request before our handler ever runs. In practice that almost
+        // always means the body was too large for the server's request
+        // size limit (oversized QML file): Salvo silently discards the
+        // body in that case, which then surfaces as a plain 400 "missing
+        // field" parse error rendered as an HTML page by mvt-rs's default
+        // error catcher, not as a 413. Whatever the exact status code, key
+        // off "non-JSON body" to give the more actionable hint here.
+        let message = isJson ? genericErrorMsg : tooLargeErrorMsg;
+        if (isJson) {
+          try {
+            const errJson = await response.json();
+            if (errJson.error) {
+              message = errJson.error;
+            }
+          } catch (e) {
+            // Malformed JSON error body: keep the generic message.
+          }
+        }
+        showError(message);
+        return;
+      }
+
+      // response.ok is also true for a transparently-followed redirect to
+      // /login on session expiry (session_auth_handler), whose body is the
+      // login page's HTML, not JSON. Guard the parse so that case shows a
+      // clear error instead of an unhandled promise rejection.
+      let result;
+      try {
+        if (!isJson) {
+          throw new Error('non-JSON response body');
+        }
+        result = await response.json();
+      } catch (e) {
+        showError(genericErrorMsg);
+        return;
+      }
+
+      if (!Array.isArray(result.layers)) {
+        showError(genericErrorMsg);
+        return;
+      }
+
+      let currentJson;
+      try {
+        currentJson = editorRef.get();
+      } catch (e) {
+        // The editor currently holds invalid/unparseable JSON (e.g. mid-manual-edit).
+        // Abort rather than silently discarding the user's in-progress edits by
+        // merging into an empty object.
+        showError(genericErrorMsg);
+        return;
+      }
+
+      editorRef.set(mergeLayers(currentJson, result.layers, mergeMode));
+      document.dispatchEvent(new Event('style-editor-changed'));
+      renderWarnings(warningsPanel, result.warnings);
+    } finally {
+      button.disabled = false;
+    }
   });
 });
