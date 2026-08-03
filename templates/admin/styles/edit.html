@@ -70,6 +70,67 @@
             </div>
           </div>
 
+          <!-- QML import -->
+          <div class="mb-4 border-t pt-4 mt-4">
+            <div class="flex items-center justify-between">
+              <label class="label">{{ base.translate["qml-import-title"] }}</label>
+              <button type="button" id="btnToggleQmlImport" class="button__outline gap-2" aria-expanded="false">
+                <i class="fas fa-chevron-down"></i>
+                <span>{{ base.translate["qml-import-toggle"] }}</span>
+              </button>
+            </div>
+            <div id="qmlImportCollapse" style="display: none;">
+              <div class="mt-1 flex flex-wrap gap-3 items-end" id="qmlImportPanel"
+                   data-msg-generic-error="{{ base.translate["qml-import-error-generic"] }}"
+                   data-msg-too-large="{{ base.translate["qml-import-error-too-large"] }}"
+                   data-msg-no-file="{{ base.translate["qml-import-error-no-file"] }}"
+                   data-msg-warnings-title="{{ base.translate["qml-import-warnings-title"] }}">
+                <div>
+                  <label class="label text-xs">{{ base.translate["qml-import-file-label"] }}</label>
+                  <input type="file" id="qmlFileInput" accept=".qml" class="input">
+                </div>
+                <div>
+                  <label class="label text-xs">{{ base.translate["qml-import-source-layer-label"] }}</label>
+                  <select id="qmlSourceLayer" class="input" {% if layers.is_empty() %}disabled{% endif %}>
+                    {% if layers.is_empty() %}
+                      <option value="" disabled selected>{{ base.translate["qml-import-no-layers"] }}</option>
+                    {% else %}
+                      {% for layer in layers %}
+                        <option value="{{ layer.name }}">{{ layer.name }}</option>
+                      {% endfor %}
+                    {% endif %}
+                  </select>
+                </div>
+                <div>
+                  <label class="label text-xs">{{ base.translate["qml-import-mode-label"] }}</label>
+                  <select id="qmlOutputMode" class="input">
+                    <option value="compact">{{ base.translate["qml-import-mode-compact"] }}</option>
+                    <option value="qgis">{{ base.translate["qml-import-mode-qgis"] }}</option>
+                  </select>
+                </div>
+                <div>
+                  <span class="label text-xs">{{ base.translate["qml-import-merge-label"] }}</span>
+                  <label class="flex items-center gap-1">
+                    <input type="radio" name="qmlMergeMode" value="concat" checked>
+                    {{ base.translate["qml-import-merge-concat"] }}
+                  </label>
+                  <label class="flex items-center gap-1">
+                    <input type="radio" name="qmlMergeMode" value="replace">
+                    {{ base.translate["qml-import-merge-replace"] }}
+                  </label>
+                </div>
+                <button type="button" id="btnImportQml" class="button" {% if layers.is_empty() %}disabled{% endif %}>
+                  <span class="icon__small mr-2">
+                    <i class="fas fa-file-import"></i>
+                  </span>
+                  {{ base.translate["qml-import-button"] }}
+                </button>
+              </div>
+              <div id="qmlImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
+              <div id="qmlImportWarnings" class="mt-2" style="display: none;"></div>
+            </div>
+          </div>
+
           <!-- JSON Editor for Style -->
           <div class="mb-4">
             <label class="label">{{ base.translate["style"] }}</label>
@@ -77,59 +138,6 @@
               <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
               <input type="hidden" id="jsonInput" name="style">
             </div>
-          </div>
-
-          <!-- QML import -->
-          <div class="mb-4 border-t pt-4 mt-4">
-            <label class="label">{{ base.translate["qml-import-title"] }}</label>
-            <div class="mt-1 flex flex-wrap gap-3 items-end" id="qmlImportPanel"
-                 data-msg-generic-error="{{ base.translate["qml-import-error-generic"] }}"
-                 data-msg-too-large="{{ base.translate["qml-import-error-too-large"] }}"
-                 data-msg-no-file="{{ base.translate["qml-import-error-no-file"] }}"
-                 data-msg-warnings-title="{{ base.translate["qml-import-warnings-title"] }}">
-              <div>
-                <label class="label text-xs">{{ base.translate["qml-import-file-label"] }}</label>
-                <input type="file" id="qmlFileInput" accept=".qml" class="input">
-              </div>
-              <div>
-                <label class="label text-xs">{{ base.translate["qml-import-source-layer-label"] }}</label>
-                <select id="qmlSourceLayer" class="input" {% if layers.is_empty() %}disabled{% endif %}>
-                  {% if layers.is_empty() %}
-                    <option value="" disabled selected>{{ base.translate["qml-import-no-layers"] }}</option>
-                  {% else %}
-                    {% for layer in layers %}
-                      <option value="{{ layer.name }}">{{ layer.name }}</option>
-                    {% endfor %}
-                  {% endif %}
-                </select>
-              </div>
-              <div>
-                <label class="label text-xs">{{ base.translate["qml-import-mode-label"] }}</label>
-                <select id="qmlOutputMode" class="input">
-                  <option value="compact">{{ base.translate["qml-import-mode-compact"] }}</option>
-                  <option value="qgis">{{ base.translate["qml-import-mode-qgis"] }}</option>
-                </select>
-              </div>
-              <div>
-                <span class="label text-xs">{{ base.translate["qml-import-merge-label"] }}</span>
-                <label class="flex items-center gap-1">
-                  <input type="radio" name="qmlMergeMode" value="concat" checked>
-                  {{ base.translate["qml-import-merge-concat"] }}
-                </label>
-                <label class="flex items-center gap-1">
-                  <input type="radio" name="qmlMergeMode" value="replace">
-                  {{ base.translate["qml-import-merge-replace"] }}
-                </label>
-              </div>
-              <button type="button" id="btnImportQml" class="button" {% if layers.is_empty() %}disabled{% endif %}>
-                <span class="icon__small mr-2">
-                  <i class="fas fa-file-import"></i>
-                </span>
-                {{ base.translate["qml-import-button"] }}
-              </button>
-            </div>
-            <div id="qmlImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
-            <div id="qmlImportWarnings" class="mt-2" style="display: none;"></div>
           </div>
 
           <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">

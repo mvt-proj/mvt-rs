@@ -54,6 +54,21 @@ function renderWarnings(panel, warnings) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const toggleButton = document.getElementById('btnToggleQmlImport');
+  const collapse = document.getElementById('qmlImportCollapse');
+  if (toggleButton && collapse) {
+    const icon = toggleButton.querySelector('i');
+    toggleButton.addEventListener('click', () => {
+      const isHidden = collapse.style.display === 'none';
+      collapse.style.display = isHidden ? '' : 'none';
+      toggleButton.setAttribute('aria-expanded', String(isHidden));
+      if (icon) {
+        icon.classList.toggle('fa-chevron-down', !isHidden);
+        icon.classList.toggle('fa-chevron-up', isHidden);
+      }
+    });
+  }
+
   const button = document.getElementById('btnImportQml');
   const importPanel = document.getElementById('qmlImportPanel');
   if (!button || !importPanel) {

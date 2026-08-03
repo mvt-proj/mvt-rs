@@ -1,0 +1,16 @@
+<!doctype html>
+<html><body>
+<button id="btn">toggle</button>
+<div id="target" style="display:none">hello</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn').addEventListener('click', () => {
+    const t = document.getElementById('target');
+    t.style.display = t.style.display === 'none' ? '' : 'none';
+  });
+  if (location.search.includes('open=1')) {
+    document.getElementById('btn').click();
+  }
+});
+</script>
+</body></html>

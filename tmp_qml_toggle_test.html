@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="http://127.0.0.1:8123/static/css/tailwind.css" onerror="this.remove()">
+<style>
+  body { font-family: sans-serif; padding: 2rem; }
+  .button, .button__outline { padding: 6px 12px; border: 1px solid #888; border-radius: 4px; cursor: pointer; background: #eee; }
+  .label { font-weight: bold; display:block; margin-bottom:4px; }
+  .input { border: 1px solid #ccc; padding: 4px; }
+  .flex { display:flex; } .items-center{align-items:center;} .justify-between{justify-content:space-between;}
+  .flex-wrap{flex-wrap:wrap;} .gap-3{gap:12px;} .gap-2{gap:8px;} .items-end{align-items:flex-end;}
+  .mt-1{margin-top:4px;} .mb-4{margin-bottom:16px;} .border-t{border-top:1px solid #ccc;} .pt-4{padding-top:16px;} .mt-4{margin-top:16px;}
+</style>
+</head>
+<body>
+
+<div class="mb-4 border-t pt-4 mt-4">
+  <div class="flex items-center justify-between">
+    <label class="label">Import from QML</label>
+    <button type="button" id="btnToggleQmlImport" class="button__outline gap-2" aria-expanded="false">
+      <i class="fas fa-chevron-down">v</i>
+      <span>Show / hide</span>
+    </button>
+  </div>
+  <div id="qmlImportCollapse" style="display: none;">
+    <div class="mt-1 flex flex-wrap gap-3 items-end" id="qmlImportPanel"
+         data-msg-generic-error="Could not convert"
+         data-msg-too-large="Too large"
+         data-msg-no-file="No file"
+         data-msg-warnings-title="Warnings">
+      <div>
+        <label class="label text-xs">QML file</label>
+        <input type="file" id="qmlFileInput" accept=".qml" class="input">
+      </div>
+      <div>
+        <label class="label text-xs">Layer</label>
+        <select id="qmlSourceLayer" class="input">
+          <option value="" disabled selected>No layers</option>
+        </select>
+      </div>
+      <div>
+        <label class="label text-xs">Mode</label>
+        <select id="qmlOutputMode" class="input">
+          <option value="compact">MapLibre only</option>
+          <option value="qgis">QGIS-compatible</option>
+        </select>
+      </div>
+      <div>
+        <span class="label text-xs">Merge mode</span>
+        <label class="flex items-center gap-1"><input type="radio" name="qmlMergeMode" value="concat" checked> Concat</label>
+        <label class="flex items-center gap-1"><input type="radio" name="qmlMergeMode" value="replace"> Replace</label>
+      </div>
+      <button type="button" id="btnImportQml" class="button">Import QML</button>
+    </div>
+    <div id="qmlImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
+    <div id="qmlImportWarnings" class="mt-2" style="display: none;"></div>
+  </div>
+</div>
+
+<div id="debugLog"></div>
+<script>window.addEventListener("error", e => { document.getElementById("debugLog").textContent += "ERR:"+e.message+"|"; });</script>
+<script type="module" src="/static/js/qml-import.js"></script>
+</body>
+</html>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (location.search.includes('open=1')) {
+    document.getElementById('btnToggleQmlImport').click();
+  }
+});
+</script>

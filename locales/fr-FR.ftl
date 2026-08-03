@@ -122,6 +122,7 @@ style-lint-valid = Le style est valide selon la spécification MapLibre
 style-lint-errors = Erreurs de la spécification MapLibre
 
 qml-import-title = Importer depuis QML
+qml-import-toggle = Afficher / masquer
 qml-import-file-label = Fichier QML
 qml-import-source-layer-label = Couche
 qml-import-mode-label = Mode de conversion
