@@ -200,3 +200,39 @@ pub async fn delete_style(req: &mut Request, res: &mut Response) -> AppResult<()
     res.render(Redirect::other("/admin/styles"));
     Ok(())
 }
+
+fn parse_output_mode(mode: &str) -> AppResult<qml2maplibre::OutputMode> {
+    match mode {
+        "compact" => Ok(qml2maplibre::OutputMode::Compact),
+        "qgis" => Ok(qml2maplibre::OutputMode::QgisCompatible),
+        other => Err(AppError::InvalidInput(format!(
+            "unknown conversion mode '{other}'"
+        ))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_output_mode_accepts_compact() {
+        assert_eq!(
+            parse_output_mode("compact").unwrap(),
+            qml2maplibre::OutputMode::Compact
+        );
+    }
+
+    #[test]
+    fn parse_output_mode_accepts_qgis() {
+        assert_eq!(
+            parse_output_mode("qgis").unwrap(),
+            qml2maplibre::OutputMode::QgisCompatible
+        );
+    }
+
+    #[test]
+    fn parse_output_mode_rejects_unknown_value() {
+        assert!(parse_output_mode("bogus").is_err());
+    }
+}
