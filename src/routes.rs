@@ -155,6 +155,7 @@ fn build_admin_styles_routes() -> Router {
         .push(Router::with_path("edit/{id}").get(html::admin::styles::edit_style_page))
         .push(Router::with_path("update").post(html::admin::styles::update_style))
         .push(Router::with_path("delete/{id}").get(html::admin::styles::delete_style))
+        .push(Router::with_path("convert-qml").post(html::admin::styles::convert_qml))
 }
 
 fn build_admin_groups_routes() -> Router {

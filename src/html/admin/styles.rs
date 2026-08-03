@@ -43,6 +43,14 @@ struct NewStyle<'a> {
     style: String,
 }
 
+#[derive(Serialize, Deserialize, Extractible, Debug)]
+#[salvo(extract(default_source(from = "body")))]
+struct ConvertQmlRequest {
+    qml: String,
+    source_layer: String,
+    mode: String,
+}
+
 #[handler]
 pub async fn list_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (base, user) = make_base(depot).await;
@@ -211,6 +219,19 @@ fn parse_output_mode(mode: &str) -> AppResult<qml2maplibre::OutputMode> {
     }
 }
 
+#[handler]
+pub async fn convert_qml(res: &mut Response, data: ConvertQmlRequest) -> AppResult<()> {
+    let mode = parse_output_mode(&data.mode)?;
+    let result = qml2maplibre::convert(&data.qml, &data.source_layer, mode)
+        .map_err(|e| AppError::InvalidInput(e.to_string()))?;
+
+    res.render(Json(serde_json::json!({
+        "layers": result.layers,
+        "warnings": result.warnings,
+    })));
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -234,5 +255,88 @@ mod tests {
     #[test]
     fn parse_output_mode_rejects_unknown_value() {
         assert!(parse_output_mode("bogus").is_err());
+    }
+
+    const SINGLESYMBOL_LINE_QML: &str = r#"<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis>
+  <renderer-v2 enableorderby="0" type="singleSymbol" symbollevels="0" forceraster="0">
+    <symbols>
+      <symbol type="line" alpha="1" force_rhr="0" name="0" clip_to_extent="1">
+        <layer locked="0" pass="0" enabled="1" class="SimpleLine">
+          <prop v="square" k="capstyle"/>
+          <prop v="bevel" k="joinstyle"/>
+          <prop v="9,113,185,255" k="line_color"/>
+          <prop v="solid" k="line_style"/>
+          <prop v="2" k="line_width"/>
+          <prop v="Pixel" k="line_width_unit"/>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" value="" name="name"/>
+            </Option>
+          </data_defined_properties>
+        </layer>
+      </symbol>
+    </symbols>
+  </renderer-v2>
+</qgis>
+"#;
+
+    #[tokio::test]
+    async fn convert_qml_returns_layers_for_valid_qml() {
+        use salvo::test::{ResponseExt, TestClient};
+
+        let service = Service::new(Router::with_path("convert-qml").post(convert_qml));
+        let body = serde_json::json!({
+            "qml": SINGLESYMBOL_LINE_QML,
+            "source_layer": "test_layer",
+            "mode": "qgis",
+        });
+        let mut resp = TestClient::post("http://127.0.0.1:5800/convert-qml")
+            .json(&body)
+            .send(&service)
+            .await;
+
+        assert_eq!(resp.status_code.unwrap(), StatusCode::OK);
+        let json: serde_json::Value = resp.take_json().await.unwrap();
+        let layers = json["layers"].as_array().unwrap();
+        assert_eq!(layers.len(), 1);
+        assert_eq!(layers[0]["type"], "line");
+        assert_eq!(layers[0]["source-layer"], "test_layer");
+    }
+
+    #[tokio::test]
+    async fn convert_qml_rejects_malformed_xml() {
+        use salvo::test::TestClient;
+
+        let service = Service::new(Router::with_path("convert-qml").post(convert_qml));
+        let body = serde_json::json!({
+            "qml": "<not valid xml",
+            "source_layer": "test_layer",
+            "mode": "qgis",
+        });
+        let resp = TestClient::post("http://127.0.0.1:5800/convert-qml")
+            .json(&body)
+            .send(&service)
+            .await;
+
+        assert_eq!(resp.status_code.unwrap(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn convert_qml_rejects_unknown_mode() {
+        use salvo::test::TestClient;
+
+        let service = Service::new(Router::with_path("convert-qml").post(convert_qml));
+        let body = serde_json::json!({
+            "qml": SINGLESYMBOL_LINE_QML,
+            "source_layer": "test_layer",
+            "mode": "bogus",
+        });
+        let resp = TestClient::post("http://127.0.0.1:5800/convert-qml")
+            .json(&body)
+            .send(&service)
+            .await;
+
+        assert_eq!(resp.status_code.unwrap(), StatusCode::BAD_REQUEST);
     }
 }
