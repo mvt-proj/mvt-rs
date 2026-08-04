@@ -5,7 +5,6 @@
         <th scope="col">{{ translate["category"] }}</th>
         <th scope="col">{{ translate["name"] }}</th>
         <th scope="col">{{ translate["description"] }}</th>
-        <th scope="col">Url</th>
         <th scope="col"></th>
       </tr>
     </thead>
@@ -17,12 +16,6 @@
         </td>
         <td>{{ style.name }}</td>
         <td>{{ style.description }}</td>
-        <td class="text-blue-500">
-          <span id="url-{{ style.category.name }}:{{ style.name }}">
-            <span class="server"></span>/services/styles/{{ style.category.name
-            }}:{{ style.name }}
-          </span>
-        </td>
 
         <td class="text-right relative">
           <div class="flex justify-end">
@@ -48,13 +41,30 @@
                     <button
                       type="button"
                       class="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-2"
-                      onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}'); closeDropdown('{{ style.id }}')"
+                      onclick="copyToClipboard('url-{{ style.category.name }}:{{ style.name }}', this, '{{ style.id }}')"
                       role="menuitem"
                     >
                       <span class="w-5"><i class="fas fa-copy"></i></span>
                       <span>{{ translate["copy"] }}</span>
                     </button>
                   </li>
+
+                  {% if let Some(current_user) = self.current_user %}
+                    {% if current_user.is_admin() %}
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-2"
+                      title='{{ translate["info"] }}'
+                      onclick="openModal(document.getElementById('cfg-{{ style.id }}').innerHTML); closeDropdown('{{ style.id }}')"
+                      role="menuitem"
+                    >
+                      <span class="w-5"><i class="fas fa-cog"></i></span>
+                      <span>{{ translate["info"] }}</span>
+                    </button>
+                  </li>
+                    {% endif %}
+                  {% endif %}
 
                   <li>
                     <a
@@ -126,4 +136,15 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+
+<!-- Style url + config stored as inert HTML, read by copyToClipboard()/openModal() via innerHTML -->
+<div hidden>
+  {% for style in styles %}
+  <span id="url-{{ style.category.name }}:{{ style.name }}">
+    <span class="server"></span>/services/styles/{{ style.category.name
+    }}:{{ style.name }}
+  </span>
+  <div id="cfg-{{ style.id }}">{{ style.info_html()|safe }}</div>
+  {% endfor %}
 </div>

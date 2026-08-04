@@ -1,6 +1,25 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
 <h1 class="title text-center mb-4">{{ base.translate["list-of-styles"] }}</h1>
 
+<div id="modal-configuration" class="modal">
+  <div class="modal-card max-w-2xl w-full mx-4 flex flex-col max-h-[calc(100vh-4rem)]">
+    <header class="modal-header shrink-0">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+          <i class="fas fa-cog text-sm"></i>
+        </span>
+        <h2 class="text-base font-semibold">{{ base.translate["configuration"] }}</h2>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+    <section class="overflow-y-auto flex-1">
+      <div id="data-json"></div>
+    </section>
+  </div>
+</div>
+
 <div class="flex justify-between items-center">
   <div class="flex space-x-3">
     <input
@@ -59,6 +78,17 @@
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("htmx:afterOnLoad", initializePage);
+
+  const openModal = (data) => {
+    document.getElementById("data-json").innerHTML = data;
+    document.getElementById("modal-configuration").classList.add("is-active");
+  };
+
+  const closeModal = () => {
+    document
+      .getElementById("modal-configuration")
+      .classList.remove("is-active");
+  };
 
   const filter = document.getElementById("filter");
   filter.addEventListener("input", () => {

@@ -11,7 +11,6 @@
         {% if !is_guest_or_non_admin %}
           <th scope="col">{{ translate["table"] }}</th>
         {% endif %}
-        <th scope="col">Source</th>
         <th scope="col"></th>
       </tr>
     </thead>
@@ -36,12 +35,6 @@
         {% if !is_guest_or_non_admin %}
           <td>{{ layer.schema }}.{{ layer.table_name }}</td>
         {% endif %}
-        <td class="text-blue-500">
-          <span id="url-{{ layer.category.name }}:{{ layer.name }}">
-            <span class="server"></span>/services/tiles/{{ layer.category.name
-            }}:{{ layer.name }}/{z}/{x}/{y}.pbf
-          </span>
-        </td>
 
         <td class="text-right relative">
           <div class="flex justify-end">
@@ -68,7 +61,7 @@
                     <button
                       type="button"
                       class="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-2"
-                      onclick='copyToClipboard("url-{{ layer.category.name }}:{{ layer.name }}"); closeDropdown("{{ layer.id }}")'
+                      onclick='copyToClipboard("url-{{ layer.category.name }}:{{ layer.name }}", this, "{{ layer.id }}")'
                       role="menuitem"
                       title='{{ translate["copy"] }}'
                     >
@@ -225,6 +218,10 @@
 <!-- Layer config stored as inert HTML, read by openModal() via innerHTML -->
 <div hidden>
   {% for layer in layers %}
+  <span id="url-{{ layer.category.name }}:{{ layer.name }}">
+    <span class="server"></span>/services/tiles/{{ layer.category.name
+    }}:{{ layer.name }}/{z}/{x}/{y}.pbf
+  </span>
   <div id="cfg-{{ layer.id }}">{{ layer.info_html()|safe }}</div>
   {% endfor %}
 </div>

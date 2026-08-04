@@ -17,14 +17,56 @@ function initializePage() {
   }
 }
 
-function copyToClipboard(id) {
+function copyToClipboard(id, buttonEl, dropdownId) {
   const urlElement = document.getElementById(id);
-  const urlText = urlElement.innerText || urlElement.textContent;
-  navigator.clipboard
-    .writeText(urlText)
-    .catch((err) => {
-      console.error("Error to copy: ", err);
-    });
+  const urlText = (urlElement.innerText || urlElement.textContent).trim();
+
+  const finish = (success, err) => {
+    if (!success) console.error("Error to copy: ", err);
+    flashCopyFeedback(buttonEl, success);
+    // Keep the menu open long enough for the feedback to be readable.
+    setTimeout(() => { if (dropdownId) closeDropdown(dropdownId); }, 900);
+  };
+
+  if (window.isSecureContext && navigator.clipboard) {
+    navigator.clipboard
+      .writeText(urlText)
+      .then(() => finish(true))
+      .catch(() => fallbackCopy(urlText, () => finish(true), (err) => finish(false, err)));
+  } else {
+    fallbackCopy(urlText, () => finish(true), (err) => finish(false, err));
+  }
+}
+
+// Clipboard API requires a secure context (HTTPS or localhost); this covers
+// plain-HTTP deployments where navigator.clipboard is unavailable.
+function fallbackCopy(text, onCopied, onFailed) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  try {
+    const ok = document.execCommand("copy");
+    ok ? onCopied() : onFailed(new Error("execCommand('copy') returned false"));
+  } catch (err) {
+    onFailed(err);
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+function flashCopyFeedback(buttonEl, success) {
+  if (!buttonEl) return;
+  const label = buttonEl.querySelector("span:last-child");
+  if (!label) return;
+  const original = label.textContent;
+  label.textContent = success ? "✓ Copiado" : "No se pudo copiar";
+  setTimeout(() => {
+    label.textContent = original;
+  }, 1500);
 }
 
 function moveUp() {

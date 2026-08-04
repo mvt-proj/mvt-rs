@@ -6,6 +6,7 @@ use crate::{
     error::{AppError, AppResult},
     models::category::Category,
 };
+use html_escape::encode_safe;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -47,6 +48,30 @@ impl Style {
     pub fn is_map(&self) -> bool {
         let json_value = self.to_json();
         json_value.get("version").is_some()
+    }
+
+    pub fn info_html(&self) -> String {
+        fn row(label: &str, value: &str) -> String {
+            format!(
+                r#"<div class="cfg-row"><dt class="cfg-label">{label}</dt><dd class="cfg-value">{value}</dd></div>"#
+            )
+        }
+
+        let mut rows = String::new();
+        rows += &row("ID", &self.id.to_string());
+        rows += &row(
+            "Source",
+            &format!(
+                r#"<span class="server"></span>/services/styles/{}:{}"#,
+                encode_safe(&self.category.name),
+                encode_safe(&self.name)
+            ),
+        );
+        rows += &row("Name", &encode_safe(&self.name));
+        rows += &row("Category", &encode_safe(&self.category.name));
+        rows += &row("Description", &encode_safe(&self.description));
+
+        format!(r#"<dl class="cfg-table">{rows}</dl>"#)
     }
 
     pub async fn get_all_styles() -> AppResult<Vec<Self>> {

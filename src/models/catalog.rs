@@ -135,6 +135,14 @@ impl Layer {
 
         let mut rows = String::new();
         rows += &row("ID", &self.id.to_string());
+        rows += &row(
+            "Source",
+            &format!(
+                r#"<span class="server"></span>/services/tiles/{}:{}/{{z}}/{{x}}/{{y}}.pbf"#,
+                encode_safe(&self.category.name),
+                encode_safe(&self.name)
+            ),
+        );
         rows += &row("Name", &encode_safe(&self.name));
         rows += &row("Alias", &encode_safe(&self.alias));
         rows += &row("Database", &encode_safe(&self.database_id));
