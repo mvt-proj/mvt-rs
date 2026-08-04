@@ -3,10 +3,19 @@
 @source "../templates/**/*.{html,js}";
 @tailwind utilities;
 
+/* Accent extracted from the MVT Server logo (static/images/fondo_azul.webp) */
+@theme {
+  --color-petrol-950: #03344a;
+  --color-petrol-700: #0b3d54;
+  --color-petrol-600: #0e4c68;
+  --color-petrol-500: #146a8f;
+  --color-petrol-100: #e7eff3;
+}
+
 /* ── Navbar ──────────────────────────────────────────────────────── */
 .navbar {
   @apply p-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 justify-between items-center;
-  @apply bg-zinc-800 text-white shadow-lg;
+  @apply bg-zinc-800 text-white shadow-sm;
 }
 
 /* Buttons inside the always-dark navbar need light colors regardless of color scheme */
@@ -63,7 +72,7 @@
 }
 
 .sidebar-link--active {
-  @apply bg-zinc-700 text-white;
+  @apply bg-petrol-600 text-white;
 }
 
 .sidebar-icon {
@@ -140,9 +149,9 @@
 
 /* ── Box / Card ──────────────────────────────────────────────────── */
 .box {
-  @apply p-6 rounded-lg shadow-lg;
+  @apply p-6 rounded-xl shadow-sm border border-zinc-200;
   @apply bg-white text-gray-800;
-  @apply dark:bg-zinc-800 dark:text-white;
+  @apply dark:bg-zinc-800 dark:text-white dark:border-zinc-700;
 }
 
 /* ── Form controls ───────────────────────────────────────────────── */
@@ -152,28 +161,28 @@
 }
 
 .input {
-  @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2;
-  @apply bg-zinc-100 text-zinc-800 focus:ring-zinc-800;
-  @apply dark:bg-zinc-700 dark:text-white dark:focus:ring-zinc-500;
+  @apply w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2;
+  @apply bg-zinc-100 text-zinc-800 focus:ring-petrol-600;
+  @apply dark:bg-zinc-700 dark:text-white dark:focus:ring-petrol-500;
 }
 
 .textarea {
-  @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2;
-  @apply bg-zinc-100 text-zinc-800 focus:ring-zinc-800;
-  @apply dark:bg-zinc-700 dark:text-white dark:focus:ring-zinc-500;
+  @apply w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2;
+  @apply bg-zinc-100 text-zinc-800 focus:ring-petrol-600;
+  @apply dark:bg-zinc-700 dark:text-white dark:focus:ring-petrol-500;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .button {
-  @apply flex items-center px-4 py-2;
+  @apply flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium;
   @apply disabled:opacity-50;
-  @apply rounded-lg bg-zinc-800 text-white hover:bg-zinc-700 transition-colors;
+  @apply rounded-md bg-petrol-600 text-white shadow-sm hover:bg-petrol-700 transition-colors;
 }
 
 .button__outline {
-  @apply flex items-center px-4 py-2 rounded-lg border-2 transition-colors;
+  @apply flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-md border transition-colors;
   @apply disabled:opacity-50;
-  @apply border-gray-500 text-gray-700 hover:bg-gray-500 hover:text-white;
+  @apply border-zinc-400 text-zinc-700 hover:bg-zinc-600 hover:text-white;
   @apply dark:border-zinc-500 dark:text-zinc-300 dark:hover:bg-zinc-600 dark:hover:text-white;
 }
 
@@ -197,15 +206,15 @@
 
 /* ── Table ───────────────────────────────────────────────────────── */
 .table {
-  @apply w-full border-collapse border overflow-hidden rounded-lg shadow-md;
+  @apply w-full border-collapse border overflow-hidden rounded-lg shadow-sm;
   @apply border-zinc-300 bg-zinc-100 text-zinc-700;
   @apply dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300;
 }
 
 .table thead th {
-  @apply font-bold uppercase text-sm tracking-wide px-4 py-3 text-left;
-  @apply bg-zinc-800 text-zinc-200;
-  @apply dark:bg-zinc-900 dark:text-zinc-200;
+  @apply font-semibold text-xs tracking-wide px-4 py-3 text-left;
+  @apply bg-zinc-200/60 text-zinc-600 border-b border-zinc-300;
+  @apply dark:bg-zinc-900/60 dark:text-zinc-400 dark:border-zinc-700;
 }
 
 .table tbody td {
@@ -214,8 +223,8 @@
 
 .table tbody tr {
   @apply border-b transition-colors;
-  @apply border-zinc-200 hover:bg-zinc-50;
-  @apply dark:border-zinc-700 dark:hover:bg-zinc-700/50;
+  @apply border-zinc-200 hover:bg-petrol-100/60;
+  @apply dark:border-zinc-700 dark:hover:bg-petrol-500/10;
 }
 
 .table tbody tr:last-child {
@@ -257,9 +266,9 @@
 }
 
 .select select {
-  @apply w-full rounded-lg border border-zinc-300 focus:outline-none focus:ring-2;
-  @apply bg-zinc-100 text-zinc-800 focus:ring-zinc-800;
-  @apply dark:bg-zinc-700 dark:text-white dark:border-zinc-500 dark:focus:ring-zinc-500;
+  @apply w-full rounded-md border border-zinc-300 focus:outline-none focus:ring-2;
+  @apply bg-zinc-100 text-zinc-800 focus:ring-petrol-600;
+  @apply dark:bg-zinc-700 dark:text-white dark:border-zinc-500 dark:focus:ring-petrol-500;
 }
 
 .select option {
