@@ -2573,6 +2573,7 @@ dependencies = [
  "salvo",
  "serde",
  "serde_json",
+ "sld2maplibre",
  "sqlx",
  "sysinfo",
  "thiserror 2.0.18",
@@ -4342,6 +4343,19 @@ name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+
+[[package]]
+name = "sld2maplibre"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7847076c36695027b7c3639d37c4ffcbb24655a37a682a4a8d78fee3c408f199"
+dependencies = [
+ "clap",
+ "maplibre-ir",
+ "quick-xml",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "smallvec"

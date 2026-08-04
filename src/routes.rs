@@ -146,11 +146,11 @@ fn build_admin_categories_routes() -> Router {
         .push(Router::with_path("delete/{id}").get(html::admin::categories::delete_category))
 }
 
-// QML files (categorized/graduated renderers, label-heavy styles) routinely
+// QML/SLD files (categorized/graduated renderers, label-heavy styles) routinely
 // exceed Salvo's global 64 KB secure-max-size default; real-world samples run
-// 70-400 KB. Only this route gets a raised limit — the global default is left
+// 70-400 KB. Only these routes get a raised limit — the global default is left
 // untouched for every other endpoint.
-const QML_IMPORT_MAX_BODY_SIZE: usize = 8 * 1024 * 1024;
+const STYLE_IMPORT_MAX_BODY_SIZE: usize = 8 * 1024 * 1024;
 
 fn build_admin_styles_routes() -> Router {
     Router::with_path("styles")
@@ -164,9 +164,16 @@ fn build_admin_styles_routes() -> Router {
         .push(
             Router::with_path("convert-qml")
                 .hoop(salvo::http::request::SecureMaxSize::new(
-                    QML_IMPORT_MAX_BODY_SIZE,
+                    STYLE_IMPORT_MAX_BODY_SIZE,
                 ))
                 .post(html::admin::styles::convert_qml),
+        )
+        .push(
+            Router::with_path("convert-sld")
+                .hoop(salvo::http::request::SecureMaxSize::new(
+                    STYLE_IMPORT_MAX_BODY_SIZE,
+                ))
+                .post(html::admin::styles::convert_sld),
         )
 }
 

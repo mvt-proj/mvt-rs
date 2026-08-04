@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.2.0/jsoneditor.min.css" integrity="sha512-8G+Vb2+10BSrSo+wupdzJIylDLpGtEYniQhp0rsbTigPG7Onn2S08Ai/KEGlxN2Ncx9fGqVHtRehMuOjPb9f8g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script type="module" src="/static/js/style-validator.js"></script>
   <script type="module" src="/static/js/qml-import.js"></script>
+  <script type="module" src="/static/js/sld-import.js"></script>
 
 {% endblock %}
 
@@ -115,6 +116,67 @@
           </div>
           <div id="qmlImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
           <div id="qmlImportWarnings" class="mt-2" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- SLD import -->
+      <div class="mb-4 border-t pt-4 mt-4">
+        <div class="flex items-center justify-between">
+          <label class="label">{{ base.translate["sld-import-title"] }}</label>
+          <button type="button" id="btnToggleSldImport" class="button__outline gap-2" aria-expanded="false">
+            <i class="fas fa-chevron-down"></i>
+            <span>{{ base.translate["sld-import-toggle"] }}</span>
+          </button>
+        </div>
+        <div id="sldImportCollapse" style="display: none;">
+          <div class="mt-1 flex flex-wrap gap-3 items-end" id="sldImportPanel"
+               data-msg-generic-error="{{ base.translate["sld-import-error-generic"] }}"
+               data-msg-too-large="{{ base.translate["sld-import-error-too-large"] }}"
+               data-msg-no-file="{{ base.translate["sld-import-error-no-file"] }}"
+               data-msg-warnings-title="{{ base.translate["sld-import-warnings-title"] }}">
+            <div>
+              <label class="label text-xs">{{ base.translate["sld-import-file-label"] }}</label>
+              <input type="file" id="sldFileInput" accept=".sld" class="input">
+            </div>
+            <div>
+              <label class="label text-xs">{{ base.translate["sld-import-source-layer-label"] }}</label>
+              <select id="sldSourceLayer" class="input" {% if layers.is_empty() %}disabled{% endif %}>
+                {% if layers.is_empty() %}
+                  <option value="" disabled selected>{{ base.translate["sld-import-no-layers"] }}</option>
+                {% else %}
+                  {% for layer in layers %}
+                    <option value="{{ layer.name }}">{{ layer.name }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+            <div>
+              <label class="label text-xs">{{ base.translate["sld-import-mode-label"] }}</label>
+              <select id="sldOutputMode" class="input">
+                <option value="compact">{{ base.translate["sld-import-mode-compact"] }}</option>
+                <option value="qgis">{{ base.translate["sld-import-mode-qgis"] }}</option>
+              </select>
+            </div>
+            <div>
+              <span class="label text-xs">{{ base.translate["sld-import-merge-label"] }}</span>
+              <label class="flex items-center gap-1">
+                <input type="radio" name="sldMergeMode" value="concat" checked>
+                {{ base.translate["sld-import-merge-concat"] }}
+              </label>
+              <label class="flex items-center gap-1">
+                <input type="radio" name="sldMergeMode" value="replace">
+                {{ base.translate["sld-import-merge-replace"] }}
+              </label>
+            </div>
+            <button type="button" id="btnImportSld" class="button" {% if layers.is_empty() %}disabled{% endif %}>
+              <span class="icon__small mr-2">
+                <i class="fas fa-file-import"></i>
+              </span>
+              {{ base.translate["sld-import-button"] }}
+            </button>
+          </div>
+          <div id="sldImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
+          <div id="sldImportWarnings" class="mt-2" style="display: none;"></div>
         </div>
       </div>
 
