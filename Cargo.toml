@@ -1,6 +1,6 @@
 [package]
 name = "mvt-server"
-version = "0.20.5"
+version = "0.21.0"
 edition = "2024"
 authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 
@@ -39,11 +39,12 @@ intl-memoizer = "0.5.3"
 unic-langid = "0.9"
 accept-language = "3.1"
 
-qml2maplibre = "0.1.0"
 # qml2maplibre = { path = "../any2maplibre/qml2maplibre" }
+# sld2maplibre = { path = "../any2maplibre/sld2maplibre" }
+# maplibre-legend = { path = "../maplibre-legend"}
+qml2maplibre = "0.1.0"
 sld2maplibre = "0.1.0"
 maplibre-legend = "0.5.0"
-# maplibre-legend = { path = "../maplibre-legend"}
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-native-certs"] }
 
 tokio-stream = { version = "0.1", features = ["net"] }
