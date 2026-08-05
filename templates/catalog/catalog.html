@@ -22,7 +22,7 @@
     <input
       id="filter"
       type="text"
-      class="input"
+      class="input input--sm"
       placeholder="{{ base.translate["filter"] }}..."
       hx-get="/catalogtable"
       hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
@@ -35,7 +35,7 @@
       hx-target="#table-catalog"
       hx-vals='js:{"filter": document.getElementById("filter").value}'
     >
-      <span class="icon__small">
+      <span>
         <i class="fas fa-search"></i>
       </span>
     </button>
@@ -46,7 +46,7 @@
       hx-target="#table-catalog"
       hx-on:click="document.getElementById('filter').value=''"
     >
-      <span class="icon__small">
+      <span>
         <i class="fas fa-backspace"></i>
       </span>
     </button>

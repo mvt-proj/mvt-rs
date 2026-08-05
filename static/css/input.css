@@ -166,6 +166,11 @@
   @apply dark:bg-zinc-700 dark:text-white dark:focus:ring-petrol-500;
 }
 
+/* Matches the .button vertical rhythm/font-size, for inputs sitting next to buttons (e.g. table filters) */
+.input--sm {
+  @apply px-3.5 py-1.5 text-sm;
+}
+
 .textarea {
   @apply w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2;
   @apply bg-zinc-100 text-zinc-800 focus:ring-petrol-600;
