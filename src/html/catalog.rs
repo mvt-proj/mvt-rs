@@ -22,7 +22,15 @@ struct CatalogTableTemplate<'a> {
 
 #[handler]
 pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
-    let (base, _) = make_base(depot).await;
+    let (base, user) = make_base(depot).await;
+
+    // Admins have their own catalog page with management actions; keep them
+    // off the read-only public one so they don't land on it by habit.
+    if user.is_some_and(|u| u.is_admin()) {
+        res.render(Redirect::other("/admin/catalog"));
+        res.status_code(StatusCode::FOUND);
+        return Ok(());
+    }
 
     let template = CatalogTemplate { base };
     res.render(Text::Html(template.render()?));
