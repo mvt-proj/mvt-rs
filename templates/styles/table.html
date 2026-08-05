@@ -49,8 +49,7 @@
                     </button>
                   </li>
 
-                  {% if let Some(current_user) = self.current_user %}
-                    {% if current_user.is_admin() %}
+                  {% if is_admin_context %}
                   <li>
                     <button
                       type="button"
@@ -63,7 +62,6 @@
                       <span>{{ translate["info"] }}</span>
                     </button>
                   </li>
-                    {% endif %}
                   {% endif %}
 
                   <li>
@@ -99,8 +97,7 @@
                     {% endif %}
                   </li>
 
-                  {% if let Some(current_user) = self.current_user %}
-                    {% if current_user.is_admin() %}
+                  {% if is_admin_context %}
                   <li>
                     <a
                       class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
@@ -124,7 +121,6 @@
                       <span>{{ translate["delete"] }}</span>
                     </a>
                   </li>
-                    {% endif %}
                   {% endif %}
                 </ul>
               </div>

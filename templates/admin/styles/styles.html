@@ -27,14 +27,14 @@
       type="text"
       class="input"
       placeholder="{{ base.translate["filter"] }}..."
-      hx-get="/styletable"
+      hx-get="/admin/styles/table"
       hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
       hx-target="#table-style"
       hx-vals='js:{"filter": document.getElementById("filter").value}'
     />
     <button
       class="button"
-      hx-get="/styletable"
+      hx-get="/admin/styles/table"
       hx-target="#table-style"
       hx-vals='js:{"filter": document.getElementById("filter").value}'
     >
@@ -45,7 +45,7 @@
     <button
       id="clear-filter"
       class="button"
-      hx-get="/styletable"
+      hx-get="/admin/styles/table"
       hx-target="#table-style"
       hx-on:click="document.getElementById('filter').value=''"
     >
@@ -69,7 +69,7 @@
 
 <div
   id="table-style"
-  hx-get="/styletable"
+  hx-get="/admin/styles/table"
   hx-swap="innerHTML"
   hx-trigger="load"
   class="mt-4"

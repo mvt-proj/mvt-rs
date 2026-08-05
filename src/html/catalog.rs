@@ -1,5 +1,4 @@
 use super::utils::{BaseTemplateData, make_base};
-use crate::auth::User;
 use crate::error::AppResult;
 use crate::get_catalog;
 use crate::models::catalog::Layer;
@@ -17,8 +16,7 @@ struct CatalogTemplate {
 #[template(path = "catalog/table.html")]
 struct CatalogTableTemplate<'a> {
     layers: &'a Vec<Layer>,
-    current_user: &'a Option<User>,
-    is_guest_or_non_admin: bool,
+    is_admin_context: bool,
     translate: HashMap<String, String>,
 }
 
@@ -31,15 +29,19 @@ pub async fn page_catalog(res: &mut Response, depot: &mut Depot) -> AppResult<()
     Ok(())
 }
 
-#[handler]
-pub async fn table_catalog(
+/// Renders the catalog table fragment shared by the public `/catalog` page and
+/// the `/admin/catalog` page. `is_admin_context` must reflect which route
+/// served the request, not the viewer's role: the public page has no
+/// `openModal`/management JS loaded, so it must stay read-only even for an
+/// admin who lands on it directly.
+async fn render_catalog_table(
     req: &mut Request,
     res: &mut Response,
     depot: &mut Depot,
+    is_admin_context: bool,
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
     let catalog = get_catalog().await.read().await;
-    let (_, user) = make_base(depot).await;
 
     let mut layers: Vec<Layer> = if let Some(filter) = filter {
         catalog
@@ -60,7 +62,6 @@ pub async fn table_catalog(
         catalog.layers.clone()
     };
 
-    let is_guest_or_non_admin = user.is_none() || user.as_ref().is_none_or(|usr| !usr.is_admin());
     let translate = depot
         .get::<HashMap<String, String>>("translate")
         .cloned()
@@ -69,10 +70,27 @@ pub async fn table_catalog(
     Layer::sort_by_category_and_name(&mut layers);
     let template = CatalogTableTemplate {
         layers: &layers,
-        current_user: &user,
-        is_guest_or_non_admin,
+        is_admin_context,
         translate,
     };
     res.render(Text::Html(template.render()?));
     Ok(())
+}
+
+#[handler]
+pub async fn table_catalog(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    render_catalog_table(req, res, depot, false).await
+}
+
+#[handler]
+pub async fn table_catalog_admin(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    render_catalog_table(req, res, depot, true).await
 }

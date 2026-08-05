@@ -8,7 +8,7 @@
         <th scope="col">{{ translate["layer-name"] }}</th>
         <th scope="col">{{ translate["alias"] }}</th>
 
-        {% if !is_guest_or_non_admin %}
+        {% if is_admin_context %}
           <th scope="col">{{ translate["table"] }}</th>
         {% endif %}
         <th scope="col"></th>
@@ -32,7 +32,7 @@
         <td>{{ layer.database_id_capitalized() }}</td>
         <td>{{ layer.name }}</td>
         <td>{{ layer.alias }}</td>
-        {% if !is_guest_or_non_admin %}
+        {% if is_admin_context %}
           <td>{{ layer.schema }}.{{ layer.table_name }}</td>
         {% endif %}
 
@@ -70,8 +70,8 @@
                     </button>
                   </li>
 
-                  <!-- Map para guest / non-admin -->
-                  {% if is_guest_or_non_admin %}
+                  <!-- Map para la vista pública (read-only) -->
+                  {% if !is_admin_context %}
                     <li>
                       {% if layer.published %}
                         <a
@@ -100,8 +100,7 @@
                   {% endif %}
 
                   <!-- Admin actions -->
-                  {% if let Some(current_user) = self.current_user %}
-                    {% if current_user.is_admin() %}
+                  {% if is_admin_context %}
                       <li>
                         <button
                           class="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center space-x-2"
@@ -202,7 +201,6 @@
                           <span>{{ translate["delete"] }}</span>
                         </a>
                       </li>
-                    {% endif %}
                   {% endif %}
                 </ul>
               </div>

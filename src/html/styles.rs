@@ -1,5 +1,4 @@
 use super::utils::{BaseTemplateData, make_base};
-use crate::auth::User;
 use crate::error::AppResult;
 use crate::models::styles::Style;
 use askama::Template;
@@ -16,7 +15,7 @@ struct StylesTemplate {
 #[template(path = "styles/table.html")]
 struct StylesTableTemplate<'a> {
     styles: &'a Vec<Style>,
-    current_user: &'a Option<User>,
+    is_admin_context: bool,
     translate: HashMap<String, String>,
 }
 
@@ -29,14 +28,18 @@ pub async fn page_styles(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     Ok(())
 }
 
-#[handler]
-pub async fn table_styles(
+/// Renders the styles table fragment shared by the public `/styles` page and
+/// the `/admin/styles` page. `is_admin_context` must reflect which route
+/// served the request, not the viewer's role: the public page has no
+/// `openModal`/management JS loaded, so it must stay read-only even for an
+/// admin who lands on it directly.
+async fn render_styles_table(
     req: &mut Request,
     res: &mut Response,
     depot: &mut Depot,
+    is_admin_context: bool,
 ) -> AppResult<()> {
     let filter = req.query::<String>("filter");
-    let (_, user) = make_base(depot).await;
     let mut styles = Style::get_all_styles().await?;
 
     if let Some(filter) = filter {
@@ -61,9 +64,27 @@ pub async fn table_styles(
     Style::sort_by_category_and_name(&mut styles);
     let template = StylesTableTemplate {
         styles: &styles,
-        current_user: &user,
+        is_admin_context,
         translate,
     };
     res.render(Text::Html(template.render()?));
     Ok(())
+}
+
+#[handler]
+pub async fn table_styles(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    render_styles_table(req, res, depot, false).await
+}
+
+#[handler]
+pub async fn table_styles_admin(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
+    render_styles_table(req, res, depot, true).await
 }
