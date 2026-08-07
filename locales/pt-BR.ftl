@@ -92,6 +92,7 @@ help = Ajuda
 configuration = Configuração
 copy = Copiar
 map = Mapa
+inspect-layer = Inspecionar camada
 legends = Legendas
 info = Informações
 edit = Editar
