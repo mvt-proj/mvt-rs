@@ -8,5 +8,6 @@
 /plugins
 .env
 node_modules
+.atl
 /Dockerfile
 /docker-compose.yml
