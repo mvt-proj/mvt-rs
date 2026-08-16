@@ -2516,7 +2516,7 @@ dependencies = [
 
 [[package]]
 name = "mvt-server"
-version = "0.21.2"
+version = "0.21.3"
 dependencies = [
  "accept-language",
  "argon2",
