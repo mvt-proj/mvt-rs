@@ -34,6 +34,7 @@ database:
 
 # ─── Security ─────────────────────────────────────────────────────────────────
 # Both secrets must be at least 32 characters long. Use strong random values.
+# Example: openssl rand -base64 64 | tr -d '=+/' | cut -c1-64
 security:
   jwt_secret: "change-me-to-a-random-secret-at-least-32-chars-long"
   session_secret: "change-me-to-another-random-secret-value-that-is-at-least-64-characters-long"
