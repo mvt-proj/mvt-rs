@@ -1,0 +1,130 @@
+<script>
+  var protocol = window.location.protocol;
+  var host = window.location.hostname;
+  var port = window.location.port;
+
+  if (port === '') {
+    port = protocol === 'https:' ? '443' : '80';
+  }
+
+  var paint;
+  if ('{{ geometry }}' === 'circle') {
+    paint = {
+      'circle-radius': 5,
+      'circle-color': '#8108ff'
+    };
+  } else if ('{{ geometry }}'  === 'line') {
+    paint = {
+      'line-width': 2,
+      'line-color': '#8108ff'
+    };
+  } else if ('{{ geometry }}'  === 'fill') {
+    paint = {
+      'fill-opacity': 0.5,
+      'fill-color': '#8108ff'
+    };
+  }
+
+  var map = new maplibregl.Map({
+    container: 'map',
+    style: {
+      "version": 8,
+      "sources": {
+        "osm": {
+          "type": "raster",
+          "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          "tileSize": 256,
+          "attribution": "&copy; OpenStreetMap Contributors",
+          "maxzoom": 22
+        },
+      },
+      "layers": [
+        {
+          "id": "osm",
+          "type": "raster",
+          "source": "osm"
+        }
+      ]
+    },
+    center: [0, 0],
+    zoom: 1
+  });
+
+  let zoomLevelElement = document.getElementById('zoom-level');
+  zoomLevelElement.innerText = 1;
+
+  let bounds = [[{{ extent.xmin}}, {{ extent.ymin}}], [{{ extent.xmax}}, {{ extent.ymax}}]];
+  try {
+    map.fitBounds(bounds, {
+      padding: 20,
+      maxZoom: 16
+    });
+  } catch (error) {
+    console.error("Error:", error);
+  }
+
+  map.on('load', function () {
+    map.addLayer({
+      id: '{{ layer.name }}',
+      type: '{{ geometry }}',
+      source: {
+        type: 'vector',
+        tiles: [`${protocol}//${host}:${port}/services/tiles/{{ layer.category.name }}:{{ layer.name }}/{z}/{x}/{y}.pbf`],
+        minzoom: 0,
+        maxzoom: 22
+      },
+      'source-layer': '{{ layer.name }}',
+      paint: paint
+    });
+
+    map.addControl(
+      new maplibregl.NavigationControl({
+      visualizePitch: true,
+      showZoom: true,
+      showCompass: true
+      })
+    );
+
+    map.on('zoom', function () {
+      var currentZoom = map.getZoom().toFixed(1);
+      zoomLevelElement.innerText = currentZoom;
+    });
+  });
+
+
+  map.on('click', '{{ layer.name }}', (e) => {
+    let features = map.queryRenderedFeatures(e.point, { layers: ['{{ layer.name }}'] });
+
+    if (!features.length) {
+      return;
+    }
+
+    let feature = features[0];
+    let popupContent = `
+      <div style="
+        max-height: 200px;
+        overflow-y: auto;
+        color: black;"
+      >
+        <h5 style="font-size: 1.25rem; line-height: 1.75rem;">{{ layer.alias }}</h5>
+        ${Object.entries(feature.properties)
+          .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
+          .join('')}
+      </div>`;
+
+    new maplibregl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML(popupContent)
+      .setMaxWidth("600px")
+      .addTo(map);
+  });
+
+  map.on('mouseenter', '{{ layer.name }}', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', '{{ layer.name }}', () => {
+    map.getCanvas().style.cursor = '';
+  });
+
+</script>

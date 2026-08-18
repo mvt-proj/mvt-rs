@@ -25,8 +25,31 @@ body {
   min-height: 80vh;
 }
 
+/* Used by the map preview modals that embed /mapview and /maplayer pages in
+   an iframe (templates/admin/styles/edit.html, templates/catalog/catalog.html,
+   templates/admin/catalog/catalog.html) to make #map fill exactly the
+   iframe's available height instead of overflowing/underflowing it. The
+   pages' default `#map` sizing (vh/calc-based) doesn't account for the
+   zoom/center text above #map or for the surrounding `<main class="p-4">`
+   padding, so sizing it off `main`'s content box was consistently off by
+   that padding. `position: fixed; inset: 0` pins it to the iframe's own
+   viewport directly, sidestepping `main`/`body` sizing entirely. */
+.map2-wrap {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: white !important;
+}
+
+.map2-wrap > .columns {
+  flex: none !important;
+}
+
 .map2 {
-  min-height: 95vh !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
 }
 
 .jsoneditor-menu {

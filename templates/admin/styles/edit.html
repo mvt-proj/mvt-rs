@@ -20,230 +20,241 @@
     <i class="fas fa-question-circle"></i>
     <span>{{ base.translate["help"] }}</span>
   </a>
+  {% if style.is_map() %}
+    <button type="button" id="btnViewMap" class="button__outline gap-2" onclick="openMapModal()">
+      <i class="fas fa-map"></i>
+      <span>{{ base.translate["view-map"] }}</span>
+    </button>
+  {% endif %}
 </div>
 
-<div class="flex flex-row gap-6 h-full justify-center">
-  {%if style.is_map() %}
-    <div class="flex-1">
-  {% else %}
-    <div class="flex-1 max-w-3xl">
-  {% endif %}
-    <!-- form -->
-    <div class="w-full h-full px-6">
-      <div class="box">
-        <h1 class="title mb-6 text-center">{{ base.translate["edit-style"] }}: {{ style.name }}</h1>
-
-        <form action="/admin/styles/update" method="post">
-
-          <!-- ID (readonly) -->
-          <div class="mb-4">
-            <label class="label">ID</label>
-            <div class="mt-1">
-              <input class="input" name="id" type="text" placeholder="ID" value="{{ style.id }}" readonly>
-            </div>
-          </div>
-
-          <!-- Category -->
-          <div class="mb-4">
-            <label class="label">{{ base.translate["category"] }}</label>
-            <div class="mt-1">
-              <select name="category" id="category" class="input">
-                {% for category in categories %}
-                  <option value="{{ category.id }}" {% if category.id == style.category.id %}selected{% endif %}>{{ category.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-
-          <!-- Name -->
-          <div class="mb-4">
-            <label class="label">{{ base.translate["name"] }}</label>
-            <div class="mt-1">
-              <input class="input" name="name" type="text" placeholder="{{ base.translate["name"] }}" value="{{ style.name }}" data-normalize-name pattern="[a-z0-9_]+" required>
-            </div>
-            <p class="help is-info">{{ base.translate["info-name-format"] }}</p>
-          </div>
-
-          <!-- Description -->
-          <div class="mb-4">
-            <label class="label">{{ base.translate["description"] }}</label>
-            <div class="mt-1">
-              <input class="input" name="description" type="text" placeholder="{{ base.translate["description"] }}" value="{{ style.description }}" required>
-            </div>
-          </div>
-
-          <!-- QML import -->
-          <div class="mb-4 border-t pt-4 mt-4">
-            <div class="flex items-center justify-between">
-              <label class="label">{{ base.translate["qml-import-title"] }}</label>
-              <button type="button" id="btnToggleQmlImport" class="button__outline gap-2" aria-expanded="false">
-                <i class="fas fa-chevron-down"></i>
-                <span>{{ base.translate["qml-import-toggle"] }}</span>
-              </button>
-            </div>
-            <div id="qmlImportCollapse" style="display: none;">
-              <div class="mt-1 flex flex-wrap gap-3 items-end" id="qmlImportPanel"
-                   data-msg-generic-error="{{ base.translate["qml-import-error-generic"] }}"
-                   data-msg-too-large="{{ base.translate["qml-import-error-too-large"] }}"
-                   data-msg-no-file="{{ base.translate["qml-import-error-no-file"] }}"
-                   data-msg-warnings-title="{{ base.translate["qml-import-warnings-title"] }}">
-                <div>
-                  <label class="label text-xs">{{ base.translate["qml-import-file-label"] }}</label>
-                  <input type="file" id="qmlFileInput" accept=".qml" class="input">
-                </div>
-                <div>
-                  <label class="label text-xs">{{ base.translate["qml-import-source-layer-label"] }}</label>
-                  <select id="qmlSourceLayer" class="input" {% if layers.is_empty() %}disabled{% endif %}>
-                    {% if layers.is_empty() %}
-                      <option value="" disabled selected>{{ base.translate["qml-import-no-layers"] }}</option>
-                    {% else %}
-                      {% for layer in layers %}
-                        <option value="{{ layer.name }}">{{ layer.name }}</option>
-                      {% endfor %}
-                    {% endif %}
-                  </select>
-                </div>
-                <div>
-                  <label class="label text-xs">{{ base.translate["qml-import-mode-label"] }}</label>
-                  <select id="qmlOutputMode" class="input">
-                    <option value="compact">{{ base.translate["qml-import-mode-compact"] }}</option>
-                    <option value="qgis">{{ base.translate["qml-import-mode-qgis"] }}</option>
-                  </select>
-                </div>
-                <div>
-                  <span class="label text-xs">{{ base.translate["qml-import-merge-label"] }}</span>
-                  <label class="flex items-center gap-1">
-                    <input type="radio" name="qmlMergeMode" value="concat" checked>
-                    {{ base.translate["qml-import-merge-concat"] }}
-                  </label>
-                  <label class="flex items-center gap-1">
-                    <input type="radio" name="qmlMergeMode" value="replace">
-                    {{ base.translate["qml-import-merge-replace"] }}
-                  </label>
-                </div>
-                <button type="button" id="btnImportQml" class="button" {% if layers.is_empty() %}disabled{% endif %}>
-                  <span class="icon is-small mr-2">
-                    <i class="fas fa-file-import"></i>
-                  </span>
-                  {{ base.translate["qml-import-button"] }}
-                </button>
-              </div>
-              <div id="qmlImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
-              <div id="qmlImportWarnings" class="mt-2" style="display: none;"></div>
-            </div>
-          </div>
-
-          <!-- SLD import -->
-          <div class="mb-4 border-t pt-4 mt-4">
-            <div class="flex items-center justify-between">
-              <label class="label">{{ base.translate["sld-import-title"] }}</label>
-              <button type="button" id="btnToggleSldImport" class="button__outline gap-2" aria-expanded="false">
-                <i class="fas fa-chevron-down"></i>
-                <span>{{ base.translate["sld-import-toggle"] }}</span>
-              </button>
-            </div>
-            <div id="sldImportCollapse" style="display: none;">
-              <div class="mt-1 flex flex-wrap gap-3 items-end" id="sldImportPanel"
-                   data-msg-generic-error="{{ base.translate["sld-import-error-generic"] }}"
-                   data-msg-too-large="{{ base.translate["sld-import-error-too-large"] }}"
-                   data-msg-no-file="{{ base.translate["sld-import-error-no-file"] }}"
-                   data-msg-warnings-title="{{ base.translate["sld-import-warnings-title"] }}">
-                <div>
-                  <label class="label text-xs">{{ base.translate["sld-import-file-label"] }}</label>
-                  <input type="file" id="sldFileInput" accept=".sld" class="input">
-                </div>
-                <div>
-                  <label class="label text-xs">{{ base.translate["sld-import-source-layer-label"] }}</label>
-                  <select id="sldSourceLayer" class="input" {% if layers.is_empty() %}disabled{% endif %}>
-                    {% if layers.is_empty() %}
-                      <option value="" disabled selected>{{ base.translate["sld-import-no-layers"] }}</option>
-                    {% else %}
-                      {% for layer in layers %}
-                        <option value="{{ layer.name }}">{{ layer.name }}</option>
-                      {% endfor %}
-                    {% endif %}
-                  </select>
-                </div>
-                <div>
-                  <label class="label text-xs">{{ base.translate["sld-import-mode-label"] }}</label>
-                  <select id="sldOutputMode" class="input">
-                    <option value="compact">{{ base.translate["sld-import-mode-compact"] }}</option>
-                    <option value="qgis">{{ base.translate["sld-import-mode-qgis"] }}</option>
-                  </select>
-                </div>
-                <div>
-                  <span class="label text-xs">{{ base.translate["sld-import-merge-label"] }}</span>
-                  <label class="flex items-center gap-1">
-                    <input type="radio" name="sldMergeMode" value="concat" checked>
-                    {{ base.translate["sld-import-merge-concat"] }}
-                  </label>
-                  <label class="flex items-center gap-1">
-                    <input type="radio" name="sldMergeMode" value="replace">
-                    {{ base.translate["sld-import-merge-replace"] }}
-                  </label>
-                </div>
-                <button type="button" id="btnImportSld" class="button" {% if layers.is_empty() %}disabled{% endif %}>
-                  <span class="icon is-small mr-2">
-                    <i class="fas fa-file-import"></i>
-                  </span>
-                  {{ base.translate["sld-import-button"] }}
-                </button>
-              </div>
-              <div id="sldImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
-              <div id="sldImportWarnings" class="mt-2" style="display: none;"></div>
-            </div>
-          </div>
-
-          <!-- JSON Editor for Style -->
-          <div class="mb-4">
-            <label class="label">{{ base.translate["style"] }}</label>
-            <div class="mt-1">
-              <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
-              <input type="hidden" id="jsonInput" name="style">
-            </div>
-          </div>
-
-          <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">
-            {{ base.translate["invalid-json"] }}
-          </div>
-
-          <div id="styleLintPanel" class="mb-4" style="display: none;"
-               data-msg-valid="{{ base.translate["style-lint-valid"] }}"
-               data-msg-errors="{{ base.translate["style-lint-errors"] }}"></div>
-
-          <script id="style-data" type="application/json">{{ style_json_safe|safe }}</script>
-
-          <!-- Buttons -->
-          <div class="flex justify-center items-center gap-3">
-            <button
-            id="applyButton"
-            type="button"
-            class="button__outline"
-            hx-post="/admin/styles/update"
-            hx-include="form"
-            hx-target="this"
-            hx-swap="none"
-            onclick="beforeHtmxPost()"
-            >
-              {{ base.translate["apply-style"] }}
-            </button>
-            <button class="button">{{ base.translate["update-style"] }}</button>
-          </div>
-        </form>
-      </div>
+{% if style.is_map() %}
+  <div id="modal-map" class="modal">
+    <div class="modal-card max-w-4xl w-full h-[85vh] my-8 mx-4 flex flex-col">
+      <header class="modal-header shrink-0">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+            <i class="fas fa-map text-sm"></i>
+          </span>
+          <h2 class="text-base font-semibold">{{ base.translate["map-preview-title"] }}</h2>
+        </div>
+        <button class="modal-close" onclick="closeMapModal()" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </header>
+      <section class="flex-1 min-h-0 px-6 pb-6">
+        <iframe
+          id="mapIframe"
+          data-src="/mapview/{{ style.id }}?minimal=true"
+          class="w-full h-full border-0"
+        ></iframe>
+      </section>
     </div>
   </div>
+{% endif %}
 
-  {%if style.is_map() %}
-    <div class="flex-1">
-      <!-- mapview -->
-      <iframe
-        id="mapIframe"
-        src="/mapview/{{ style.id }}?minimal=true"
-        class="w-full h-full border border-gray-300 rounded"
-      ></iframe>
-    </div>
-  {% endif %}
+<div class="max-w-5xl w-full mx-auto px-6">
+  <div class="box">
+    <h1 class="title mb-6 text-center">{{ base.translate["edit-style"] }}: {{ style.name }}</h1>
+
+    <form action="/admin/styles/update" method="post">
+
+      <!-- ID (readonly) -->
+      <div class="mb-4">
+        <label class="label">ID</label>
+        <div class="mt-1">
+          <input class="input" name="id" type="text" placeholder="ID" value="{{ style.id }}" readonly>
+        </div>
+      </div>
+
+      <!-- Category -->
+      <div class="mb-4">
+        <label class="label">{{ base.translate["category"] }}</label>
+        <div class="mt-1">
+          <select name="category" id="category" class="input">
+            {% for category in categories %}
+              <option value="{{ category.id }}" {% if category.id == style.category.id %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Name -->
+      <div class="mb-4">
+        <label class="label">{{ base.translate["name"] }}</label>
+        <div class="mt-1">
+          <input class="input" name="name" type="text" placeholder="{{ base.translate["name"] }}" value="{{ style.name }}" data-normalize-name pattern="[a-z0-9_]+" required>
+        </div>
+        <p class="help is-info">{{ base.translate["info-name-format"] }}</p>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-4">
+        <label class="label">{{ base.translate["description"] }}</label>
+        <div class="mt-1">
+          <input class="input" name="description" type="text" placeholder="{{ base.translate["description"] }}" value="{{ style.description }}" required>
+        </div>
+      </div>
+
+      <!-- QML import -->
+      <div class="mb-4 border-t pt-4 mt-4">
+        <div class="flex items-center justify-between">
+          <label class="label">{{ base.translate["qml-import-title"] }}</label>
+          <button type="button" id="btnToggleQmlImport" class="button__outline gap-2" aria-expanded="false">
+            <i class="fas fa-chevron-down"></i>
+            <span>{{ base.translate["qml-import-toggle"] }}</span>
+          </button>
+        </div>
+        <div id="qmlImportCollapse" style="display: none;">
+          <div class="mt-1 flex flex-wrap gap-3 items-end" id="qmlImportPanel"
+               data-msg-generic-error="{{ base.translate["qml-import-error-generic"] }}"
+               data-msg-too-large="{{ base.translate["qml-import-error-too-large"] }}"
+               data-msg-no-file="{{ base.translate["qml-import-error-no-file"] }}"
+               data-msg-warnings-title="{{ base.translate["qml-import-warnings-title"] }}">
+            <div>
+              <label class="label text-xs">{{ base.translate["qml-import-file-label"] }}</label>
+              <input type="file" id="qmlFileInput" accept=".qml" class="input">
+            </div>
+            <div>
+              <label class="label text-xs">{{ base.translate["qml-import-source-layer-label"] }}</label>
+              <select id="qmlSourceLayer" class="input" {% if layers.is_empty() %}disabled{% endif %}>
+                {% if layers.is_empty() %}
+                  <option value="" disabled selected>{{ base.translate["qml-import-no-layers"] }}</option>
+                {% else %}
+                  {% for layer in layers %}
+                    <option value="{{ layer.name }}">{{ layer.name }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+            <div>
+              <label class="label text-xs">{{ base.translate["qml-import-mode-label"] }}</label>
+              <select id="qmlOutputMode" class="input">
+                <option value="compact">{{ base.translate["qml-import-mode-compact"] }}</option>
+                <option value="qgis">{{ base.translate["qml-import-mode-qgis"] }}</option>
+              </select>
+            </div>
+            <div>
+              <span class="label text-xs">{{ base.translate["qml-import-merge-label"] }}</span>
+              <label class="flex items-center gap-1">
+                <input type="radio" name="qmlMergeMode" value="concat" checked>
+                {{ base.translate["qml-import-merge-concat"] }}
+              </label>
+              <label class="flex items-center gap-1">
+                <input type="radio" name="qmlMergeMode" value="replace">
+                {{ base.translate["qml-import-merge-replace"] }}
+              </label>
+            </div>
+            <button type="button" id="btnImportQml" class="button" {% if layers.is_empty() %}disabled{% endif %}>
+              <span class="icon is-small mr-2">
+                <i class="fas fa-file-import"></i>
+              </span>
+              {{ base.translate["qml-import-button"] }}
+            </button>
+          </div>
+          <div id="qmlImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
+          <div id="qmlImportWarnings" class="mt-2" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- SLD import -->
+      <div class="mb-4 border-t pt-4 mt-4">
+        <div class="flex items-center justify-between">
+          <label class="label">{{ base.translate["sld-import-title"] }}</label>
+          <button type="button" id="btnToggleSldImport" class="button__outline gap-2" aria-expanded="false">
+            <i class="fas fa-chevron-down"></i>
+            <span>{{ base.translate["sld-import-toggle"] }}</span>
+          </button>
+        </div>
+        <div id="sldImportCollapse" style="display: none;">
+          <div class="mt-1 flex flex-wrap gap-3 items-end" id="sldImportPanel"
+               data-msg-generic-error="{{ base.translate["sld-import-error-generic"] }}"
+               data-msg-too-large="{{ base.translate["sld-import-error-too-large"] }}"
+               data-msg-no-file="{{ base.translate["sld-import-error-no-file"] }}"
+               data-msg-warnings-title="{{ base.translate["sld-import-warnings-title"] }}">
+            <div>
+              <label class="label text-xs">{{ base.translate["sld-import-file-label"] }}</label>
+              <input type="file" id="sldFileInput" accept=".sld" class="input">
+            </div>
+            <div>
+              <label class="label text-xs">{{ base.translate["sld-import-source-layer-label"] }}</label>
+              <select id="sldSourceLayer" class="input" {% if layers.is_empty() %}disabled{% endif %}>
+                {% if layers.is_empty() %}
+                  <option value="" disabled selected>{{ base.translate["sld-import-no-layers"] }}</option>
+                {% else %}
+                  {% for layer in layers %}
+                    <option value="{{ layer.name }}">{{ layer.name }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+            <div>
+              <label class="label text-xs">{{ base.translate["sld-import-mode-label"] }}</label>
+              <select id="sldOutputMode" class="input">
+                <option value="compact">{{ base.translate["sld-import-mode-compact"] }}</option>
+                <option value="qgis">{{ base.translate["sld-import-mode-qgis"] }}</option>
+              </select>
+            </div>
+            <div>
+              <span class="label text-xs">{{ base.translate["sld-import-merge-label"] }}</span>
+              <label class="flex items-center gap-1">
+                <input type="radio" name="sldMergeMode" value="concat" checked>
+                {{ base.translate["sld-import-merge-concat"] }}
+              </label>
+              <label class="flex items-center gap-1">
+                <input type="radio" name="sldMergeMode" value="replace">
+                {{ base.translate["sld-import-merge-replace"] }}
+              </label>
+            </div>
+            <button type="button" id="btnImportSld" class="button" {% if layers.is_empty() %}disabled{% endif %}>
+              <span class="icon is-small mr-2">
+                <i class="fas fa-file-import"></i>
+              </span>
+              {{ base.translate["sld-import-button"] }}
+            </button>
+          </div>
+          <div id="sldImportError" class="text-red-500 text-sm mt-2" style="display: none;"></div>
+          <div id="sldImportWarnings" class="mt-2" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- JSON Editor for Style -->
+      <div class="mb-4">
+        <label class="label">{{ base.translate["style"] }}</label>
+        <div class="mt-1">
+          <div id="jsoneditor" style="height: 800px; border: 1px solid #ddd;"></div>
+          <input type="hidden" id="jsonInput" name="style">
+        </div>
+      </div>
+
+      <div id="jsonError" class="text-red-500 text-sm mb-4" style="display: none;">
+        {{ base.translate["invalid-json"] }}
+      </div>
+
+      <div id="styleLintPanel" class="mb-4" style="display: none;"
+           data-msg-valid="{{ base.translate["style-lint-valid"] }}"
+           data-msg-errors="{{ base.translate["style-lint-errors"] }}"></div>
+
+      <script id="style-data" type="application/json">{{ style_json_safe|safe }}</script>
+
+      <!-- Buttons -->
+      <div class="flex justify-center items-center gap-3">
+        <button
+        id="applyButton"
+        type="button"
+        class="button__outline"
+        hx-post="/admin/styles/update"
+        hx-include="form"
+        hx-target="this"
+        hx-swap="none"
+        onclick="beforeHtmxPost()"
+        >
+          {{ base.translate["apply-style"] }}
+        </button>
+        <button class="button">{{ base.translate["update-style"] }}</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -296,15 +307,49 @@
       }
     });
 
-    let iframe = document.getElementById('mapIframe');
+    const iframe = document.getElementById('mapIframe');
 
-    iframe.addEventListener('load', function() {
-      setTimeout(() => {
-        iframe.contentDocument.getElementById("map").classList.add("map2");
-      }, 200);
-    });
+    if (iframe) {
+      iframe.addEventListener('load', function() {
+        setTimeout(() => {
+          const mapEl = iframe.contentDocument.getElementById("map");
+          if (mapEl) {
+            mapEl.classList.add("map2");
+            if (mapEl.parentElement) {
+              mapEl.parentElement.classList.add("map2-wrap");
+            }
+          }
+          // MapLibre measures its container once at construction time, before
+          // our classes above resize it, so its canvas is left at the old
+          // size. Force it to remeasure now that the layout is final.
+          const mapInstance = iframe.contentWindow && iframe.contentWindow.map;
+          if (mapInstance && typeof mapInstance.resize === 'function') {
+            mapInstance.resize();
+          }
+        }, 200);
+      });
+    }
 
   });
+
+  function reloadMapIframe() {
+    const iframe = document.getElementById('mapIframe');
+    if (iframe) {
+      // (Re)loading it here, while the modal is already visible, ensures the map
+      // library measures a properly sized container instead of the display:none
+      // 0x0 box it would see if the iframe loaded before the modal ever opened.
+      iframe.src = iframe.dataset.src;
+    }
+  }
+
+  function openMapModal() {
+    document.getElementById('modal-map').classList.add('is-active');
+    reloadMapIframe();
+  }
+
+  function closeMapModal() {
+    document.getElementById('modal-map').classList.remove('is-active');
+  }
 
   function beforeHtmxPost() {
     try {
@@ -318,9 +363,8 @@
   }
 
   document.body.addEventListener('htmx:afterRequest', function (evt) {
-    if (evt.target.id === 'applyButton') {
-      const iframe = document.getElementById('mapIframe');
-      iframe.src = iframe.src;
+    if (evt.target.id === 'applyButton' && document.getElementById('mapIframe')) {
+      openMapModal();
     }
   });
 </script>

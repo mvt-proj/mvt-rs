@@ -74,6 +74,8 @@ update-style = Atualizar Estilo
 edit-style = Editar Estilo
 confirm-delete-style = Tem certeza de que deseja excluir este estilo?
 apply-style = Aplicar
+view-map = Ver Mapa
+map-preview-title = Pré-visualização do Mapa
 full-style-button = Inserir exemplo completo
 partial-style-button = Inserir exemplo de camada
 

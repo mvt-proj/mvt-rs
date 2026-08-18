@@ -17,6 +17,25 @@
   </div>
 </div>
 
+<div id="modal-map-layer" class="modal">
+  <div class="modal-card max-w-4xl w-full h-[85vh] my-8 mx-4 flex flex-col">
+    <header class="modal-header shrink-0">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+          <i class="fas fa-map text-sm"></i>
+        </span>
+        <h2 class="text-base font-semibold" id="mapLayerModalTitle">{{ base.translate["map-preview-title"] }}</h2>
+      </div>
+      <button class="modal-close" onclick="closeLayerMapModal()" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+    <section class="flex-1 min-h-0 px-6 pb-6">
+      <iframe id="mapLayerIframe" class="w-full h-full border-0"></iframe>
+    </section>
+  </div>
+</div>
+
 <div class="flex justify-between items-center">
   <div class="flex space-x-3">
     <input
@@ -70,6 +89,51 @@
       .getElementById("modal-configuration")
       .classList.remove("is-active");
   };
+
+  function reloadMapLayerIframe() {
+    const iframe = document.getElementById('mapLayerIframe');
+    if (iframe && iframe.dataset.src) {
+      iframe.src = iframe.dataset.src;
+    }
+  }
+
+  function openLayerMapModal(layerKey, layerAlias) {
+    const iframe = document.getElementById('mapLayerIframe');
+    if (iframe) {
+      iframe.dataset.src = `/maplayer/${layerKey}?minimal=true`;
+    }
+    const title = document.getElementById('mapLayerModalTitle');
+    if (title) {
+      title.textContent = layerAlias || '{{ base.translate["map-preview-title"] }}';
+    }
+    document.getElementById('modal-map-layer').classList.add('is-active');
+    reloadMapLayerIframe();
+  }
+
+  function closeLayerMapModal() {
+    document.getElementById('modal-map-layer').classList.remove('is-active');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const layerIframe = document.getElementById('mapLayerIframe');
+    if (layerIframe) {
+      layerIframe.addEventListener('load', function () {
+        setTimeout(() => {
+          const mapEl = layerIframe.contentDocument.getElementById('map');
+          if (mapEl) {
+            mapEl.classList.add('map2');
+            if (mapEl.parentElement) {
+              mapEl.parentElement.classList.add('map2-wrap');
+            }
+          }
+          const mapInstance = layerIframe.contentWindow && layerIframe.contentWindow.map;
+          if (mapInstance && typeof mapInstance.resize === 'function') {
+            mapInstance.resize();
+          }
+        }, 200);
+      });
+    }
+  });
 
   const filter = document.getElementById("filter");
   filter.addEventListener("input", () => {

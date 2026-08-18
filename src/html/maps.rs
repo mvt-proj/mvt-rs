@@ -16,6 +16,29 @@ struct MapLayerTemplate<'a> {
 }
 
 #[derive(Template)]
+#[template(path = "maplayer_minimal.html")]
+struct MapLayerMinimalTemplate<'a> {
+    geometry: &'a str,
+    layer: Layer,
+    extent: Extent,
+    base: BaseTemplateData,
+}
+
+enum MapLayerTemplateKind<'a> {
+    Minimal(MapLayerMinimalTemplate<'a>),
+    Full(MapLayerTemplate<'a>),
+}
+
+impl MapLayerTemplateKind<'_> {
+    fn render(&self) -> Result<String, askama::Error> {
+        match self {
+            MapLayerTemplateKind::Minimal(tpl) => tpl.render(),
+            MapLayerTemplateKind::Full(tpl) => tpl.render(),
+        }
+    }
+}
+
+#[derive(Template)]
 #[template(path = "mapview.html")]
 struct MapViewTemplate {
     base: BaseTemplateData,
@@ -52,6 +75,7 @@ pub async fn page_map_layer(
     let layer_name = req
         .param::<String>("layer_name")
         .ok_or_else(|| StatusError::bad_request().brief("Missing layer_name parameter"))?;
+    let is_minimal = req.query::<bool>("minimal").unwrap_or_default();
     let parts: Vec<&str> = layer_name.split(':').collect();
     let category = parts.first().unwrap_or(&"").to_string();
     let name = parts.get(1).unwrap_or(&"").to_string();
@@ -89,11 +113,20 @@ pub async fn page_map_layer(
         }
     });
 
-    let template = MapLayerTemplate {
-        geometry: &geometry,
-        layer: lyr,
-        extent,
-        base,
+    let template = if is_minimal {
+        MapLayerTemplateKind::Minimal(MapLayerMinimalTemplate {
+            geometry: &geometry,
+            layer: lyr,
+            extent,
+            base,
+        })
+    } else {
+        MapLayerTemplateKind::Full(MapLayerTemplate {
+            geometry: &geometry,
+            layer: lyr,
+            extent,
+            base,
+        })
     };
 
     res.render(Text::Html(

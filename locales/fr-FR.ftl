@@ -74,6 +74,8 @@ update-style = Mettre à Jour le Style
 edit-style = Modifier le Style
 confirm-delete-style = Êtes-vous sûr de vouloir supprimer ce style ?
 apply-style = Appliquer
+view-map = Voir la Carte
+map-preview-title = Aperçu de la Carte
 full-style-button = Insérer l'exemple complet
 partial-style-button = Insérer l'exemple de couche
 

@@ -74,6 +74,8 @@ update-style = Update Style
 edit-style = Edit Style
 confirm-delete-style = Are you sure you want to delete this style?
 apply-style = Apply
+view-map = View Map
+map-preview-title = Map Preview
 full-style-button = Insert full example
 partial-style-button = Insert layer example
 

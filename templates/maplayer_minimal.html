@@ -1,11 +1,10 @@
-{% extends "layout.html" %}
+{% extends "layout_minimal.html" %}
 
 {% block head %}
   {% include "maplayer/_maplayer_content_head.html" %}
 {% endblock %}
 
 {% block content %}
-  <h1 class="title">{{ layer.alias }}</h1>
   {% include "maplayer/_maplayer_content_body.html" %}
 {% endblock %}
 

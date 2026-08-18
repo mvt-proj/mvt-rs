@@ -2325,6 +2325,8 @@ dependencies = [
 [[package]]
 name = "maplibre-ir"
 version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee77b5cf7d63d58878c5db9708570e9c34ef020574c552bc10faa20b1d447bb4"
 dependencies = [
  "quick-xml",
  "serde",
@@ -3188,6 +3190,8 @@ checksum = "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
 [[package]]
 name = "qml2maplibre"
 version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3eedc0d45ad6a9dd4c4ef54eac4404e3f4739e9e1bbdf361a1d8b234cb0145fb"
 dependencies = [
  "clap",
  "maplibre-ir",
@@ -4327,6 +4331,8 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 [[package]]
 name = "sld2maplibre"
 version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a47ea6da29e4334845b6e8bf54294b6bba414bfc6b41ce52afbcc9b29094739"
 dependencies = [
  "clap",
  "maplibre-ir",
