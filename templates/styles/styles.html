@@ -1,6 +1,25 @@
 {% extends "layout.html" %} {% block content %}
 <h1 class="title text-center mb-4">{{ base.translate["list-of-styles"] }}</h1>
 
+<div id="modal-map-style" class="modal">
+  <div class="modal-card max-w-6xl w-full h-[85vh] my-8 mx-4 flex flex-col">
+    <header class="modal-header shrink-0">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+          <i class="fas fa-map text-sm"></i>
+        </span>
+        <h2 class="text-base font-semibold" id="mapStyleModalTitle">{{ base.translate["map-preview-title"] }}</h2>
+      </div>
+      <button class="modal-close" onclick="closeStyleMapModal()" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+    <section class="flex-1 min-h-0 px-6 pb-6">
+      <iframe id="mapStyleIframe" class="w-full h-full border-0"></iframe>
+    </section>
+  </div>
+</div>
+
 <div class="flex justify-between items-center">
   <div class="flex space-x-3">
     <input
@@ -48,6 +67,51 @@
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("htmx:afterOnLoad", initializePage);
+
+  function reloadMapStyleIframe() {
+    const iframe = document.getElementById('mapStyleIframe');
+    if (iframe && iframe.dataset.src) {
+      iframe.src = iframe.dataset.src;
+    }
+  }
+
+  function openStyleMapModal(styleId, styleLabel) {
+    const iframe = document.getElementById('mapStyleIframe');
+    if (iframe) {
+      iframe.dataset.src = `/mapview/${styleId}?minimal=true`;
+    }
+    const title = document.getElementById('mapStyleModalTitle');
+    if (title) {
+      title.textContent = styleLabel || '{{ base.translate["map-preview-title"] }}';
+    }
+    document.getElementById('modal-map-style').classList.add('is-active');
+    reloadMapStyleIframe();
+  }
+
+  function closeStyleMapModal() {
+    document.getElementById('modal-map-style').classList.remove('is-active');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const styleIframe = document.getElementById('mapStyleIframe');
+    if (styleIframe) {
+      styleIframe.addEventListener('load', function () {
+        setTimeout(() => {
+          const mapEl = styleIframe.contentDocument.getElementById('map');
+          if (mapEl) {
+            mapEl.classList.add('map2');
+            if (mapEl.parentElement) {
+              mapEl.parentElement.classList.add('map2-wrap');
+            }
+          }
+          const mapInstance = styleIframe.contentWindow && styleIframe.contentWindow.map;
+          if (mapInstance && typeof mapInstance.resize === 'function') {
+            mapInstance.resize();
+          }
+        }, 200);
+      });
+    }
+  });
 
   const filter = document.getElementById("filter");
   filter.addEventListener("input", () => {
