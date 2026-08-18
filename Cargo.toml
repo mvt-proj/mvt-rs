@@ -39,11 +39,11 @@ intl-memoizer = "0.5.3"
 unic-langid = "0.9"
 accept-language = "3.1"
 
-# qml2maplibre = { path = "../any2maplibre/qml2maplibre" }
-# sld2maplibre = { path = "../any2maplibre/sld2maplibre" }
+qml2maplibre = { path = "../any2maplibre/qml2maplibre" }
+sld2maplibre = { path = "../any2maplibre/sld2maplibre" }
 # maplibre-legend = { path = "../maplibre-legend"}
-qml2maplibre = "0.2.2"
-sld2maplibre = "0.2.2"
+# qml2maplibre = "0.2.2"
+# sld2maplibre = "0.2.2"
 maplibre-legend = "0.5.2"
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-native-certs"] }
 

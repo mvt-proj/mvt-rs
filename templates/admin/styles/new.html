@@ -4,6 +4,7 @@
   <!-- Include JSONEditor library -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.2.0/jsoneditor.min.js" integrity="sha512-QL8qeB9ctAtMXXILiMcO83THPl+1UB2N8CBGSNexHL5AQ/PVl14364HO56l2Ct6P8UEKkOS3xkD28FPqPHshBQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.2.0/jsoneditor.min.css" integrity="sha512-8G+Vb2+10BSrSo+wupdzJIylDLpGtEYniQhp0rsbTigPG7Onn2S08Ai/KEGlxN2Ncx9fGqVHtRehMuOjPb9f8g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="/static/js/pretty-compact-stringify.js"></script>
   <script type="module" src="/static/js/style-validator.js"></script>
   <script type="module" src="/static/js/qml-import.js"></script>
   <script type="module" src="/static/js/sld-import.js"></script>
@@ -228,8 +229,16 @@
     const editor = new JSONEditor(container, {
       modes: ['code', 'tree', 'text', 'preview'],
       mode: 'code',
+      indentation: 2,
       onChangeText: () => document.dispatchEvent(new Event('style-editor-changed')),
+      onModeChange: (newMode) => {
+        if (newMode === 'code' || newMode === 'text') {
+          applyCompactJsonEditorFormat(editor);
+          editor.format();
+        }
+      },
     });
+    applyCompactJsonEditorFormat(editor);
 
     const fullStyle = {
       "version": 8,
