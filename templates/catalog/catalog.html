@@ -130,6 +130,9 @@
           if (mapInstance && typeof mapInstance.resize === 'function') {
             mapInstance.resize();
           }
+          if (layerIframe.contentWindow && typeof layerIframe.contentWindow.fitToLayerExtent === 'function') {
+            layerIframe.contentWindow.fitToLayerExtent();
+          }
         }, 200);
       });
     }

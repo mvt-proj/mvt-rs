@@ -54,14 +54,24 @@
   zoomLevelElement.innerText = 1;
 
   let bounds = [[{{ extent.xmin}}, {{ extent.ymin}}], [{{ extent.xmax}}, {{ extent.ymax}}]];
-  try {
-    map.fitBounds(bounds, {
-      padding: 20,
-      maxZoom: 16
-    });
-  } catch (error) {
-    console.error("Error:", error);
+
+  function fitToLayerExtent() {
+    try {
+      map.fitBounds(bounds, {
+        padding: 20,
+        maxZoom: 16,
+        duration: 0
+      });
+    } catch (error) {
+      console.error("Error:", error);
+    }
   }
+
+  fitToLayerExtent();
+  // Re-fit once the embedding page finishes resizing the map container
+  // (see openLayerMapModal's iframe load handler), since fitBounds computed
+  // above is only correct for the container's size at this point in time.
+  window.fitToLayerExtent = fitToLayerExtent;
 
   map.on('load', function () {
     map.addLayer({
