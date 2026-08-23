@@ -35,13 +35,29 @@
           <label class="label" for="geometry">{{ base.translate["geometry"] }}</label>
           <div class="mt-1">
             <div class="select">
-              <select name="geometry" id="geometry" class="input">
+              <select name="geometry" id="geometry" class="input" onchange="toggleLabelLayer()">
                 <option value="points" {% if layer.geometry == "points" %}selected{% endif %}>{{ base.translate["points"] }}</option>
                 <option value="lines" {% if layer.geometry == "lines" %}selected{% endif %}>{{ base.translate["lines"] }}</option>
                 <option value="polygons" {% if layer.geometry == "polygons" %}selected{% endif %}>{{ base.translate["polygons"] }}</option>
               </select>
             </div>
           </div>
+        </div>
+
+        <!-- label_layer -->
+        <div class="mb-4">
+          <label class="label" for="label_layer">{{ base.translate["label-layer"] }}</label>
+          <div class="mt-1">
+            <label class="radio">
+              <input type="radio" name="label_layer" id="label_layer_true" value="true" {% if layer.label_layer %}checked{% endif %}>
+              {{ base.translate["yes"] }}
+            </label>
+            <label class="radio">
+              <input type="radio" name="label_layer" id="label_layer_false" value="false" {% if !layer.label_layer %}checked{% endif %}>
+              {{ base.translate["no"] }}
+            </label>
+          </div>
+          <p class="help is-info">{{ base.translate["info-label-layer"] }}</p>
         </div>
 
         <!-- name -->
@@ -338,6 +354,18 @@
       document.getElementById('fields').innerHTML = '';
       document.querySelector('[name="srid"]').value = '4326';
   }
+
+  function toggleLabelLayer() {
+    var isPoints = document.getElementById('geometry').value === 'points';
+    var radios = document.querySelectorAll('input[name="label_layer"]');
+    radios.forEach(function (radio) {
+      radio.disabled = isPoints;
+    });
+    if (isPoints) {
+      document.getElementById('label_layer_false').checked = true;
+    }
+  }
+  toggleLabelLayer();
 
   document.body.addEventListener('htmx:afterSwap', function(event) {
     if (event.detail.target.id === 'schema-select-container') {

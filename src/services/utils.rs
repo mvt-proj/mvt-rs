@@ -11,6 +11,17 @@ use crate::{
     models::catalog::Layer,
 };
 
+/// A `_labels` sub-layer (ST_PointOnSurface) only makes sense for polygons
+/// and lines; a "points" layer is already a single point per feature.
+pub fn validate_label_layer(layer: &Layer) -> AppResult<()> {
+    if layer.label_layer && layer.geometry == "points" {
+        return Err(AppError::RequestParamError(
+            "label_layer is not applicable to a \"points\" geometry layer".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 fn regex_numeric_comparison() -> &'static Regex {
     static CELL: OnceLock<Regex> = OnceLock::new();
     CELL.get_or_init(|| Regex::new(r"(?i)\b(\d+)\s*=\s*(\d+)\b").unwrap())

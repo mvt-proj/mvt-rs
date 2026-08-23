@@ -90,6 +90,7 @@ mod tests {
             filter: None,
             srid: None,
             geom: None,
+            label_layer: false,
             sql_mode: None,
             buffer: None,
             extent: None,

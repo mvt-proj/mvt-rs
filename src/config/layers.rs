@@ -52,6 +52,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
         let filter: Option<String> = row.get("filter");
         let srid: Option<i32> = row.get("srid");
         let geom: Option<String> = row.get("geom");
+        let label_layer: bool = row.get("label_layer");
         let sql_mode: Option<String> = row.get("sql_mode");
         let buffer: Option<i32> = row.get("buffer");
         let extent: Option<i32> = row.get("extent");
@@ -111,6 +112,7 @@ pub async fn get_layers(pool: Option<&SqlitePool>) -> Result<Vec<Layer>, sqlx::E
             filter,
             srid: srid.map(|v| v as u32),
             geom,
+            label_layer,
             sql_mode,
             buffer: buffer.map(|v| v as u32),
             extent: extent.map(|v| v as u32),
@@ -141,11 +143,11 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     sqlx::query(
         "INSERT INTO layers (
             id, category, geometry, name, alias, description, schema, table_name, fields, filter, srid, geom,
-            sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify,
+            label_layer, sql_mode, buffer, extent, zmin, zmax, zmax_do_not_simplify,
             buffer_do_not_simplify, extent_do_not_simplify, clip_geom,
             delete_cache_on_start, max_cache_age, max_records, published, database_id, url, groups
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )",
     )
     .bind(&layer.id)
@@ -160,6 +162,7 @@ pub async fn create_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(&layer.filter)
     .bind(layer.srid)
     .bind(&layer.geom)
+    .bind(layer.label_layer)
     .bind(&layer.sql_mode)
     .bind(layer.buffer)
     .bind(layer.extent)
@@ -215,7 +218,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     sqlx::query(
         "UPDATE layers SET
             category = ?, geometry = ?, name = ?, alias = ?, description = ?, schema = ?, table_name = ?, fields = ?,
-            filter = ?, srid = ?, geom = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?,
+            filter = ?, srid = ?, geom = ?, label_layer = ?, sql_mode = ?, buffer = ?, extent = ?, zmin = ?,
             zmax = ?, zmax_do_not_simplify = ?, buffer_do_not_simplify = ?,
             extent_do_not_simplify = ?, clip_geom = ?, delete_cache_on_start = ?,
             max_cache_age = ?, max_records = ?, published = ?, database_id = ?, url = ?, groups = ? WHERE id = ?",
@@ -231,6 +234,7 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
     .bind(&layer.filter)
     .bind(layer.srid)
     .bind(&layer.geom)
+    .bind(layer.label_layer)
     .bind(&layer.sql_mode)
     .bind(layer.buffer)
     .bind(layer.extent)
@@ -326,6 +330,7 @@ mod tests {
             filter: None,
             srid: None,
             geom: None,
+            label_layer: false,
             sql_mode: None,
             buffer: None,
             extent: None,

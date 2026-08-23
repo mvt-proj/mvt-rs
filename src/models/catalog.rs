@@ -29,6 +29,10 @@ pub struct Layer {
     pub filter: Option<String>,
     pub srid: Option<u32>,
     pub geom: Option<String>,
+    /// label_layer: when true, tiles for this layer also carry a `{name}_labels`
+    /// MVT layer with one point per feature (ST_PointOnSurface), so labels
+    /// don't repeat across the tiles a polygon/line spans.
+    pub label_layer: bool,
     pub sql_mode: Option<String>,
     pub buffer: Option<u32>,
     pub extent: Option<u32>,
@@ -151,6 +155,7 @@ impl Layer {
         rows += &row("Table", &encode_safe(&self.table_name));
         rows += &row("Fields", &encode_safe(&self.fields.join(", ")));
         rows += &row("Geom field", &encode_safe(&self.get_geom()));
+        rows += &row("Label layer", &badge(&self.label_layer.to_string()));
         rows += &row("SQL Mode", &encode_safe(&self.get_sql_mode()));
         rows += &row("SRID", &self.get_srid().to_string());
         rows += &row("Filter", &encode_safe(&self.get_filter()));
@@ -320,6 +325,7 @@ impl Catalog {
 
     pub async fn add_layer(&mut self, mut layer: Layer) -> AppResult<()> {
         layer.name = crate::services::utils::normalize_name(&layer.name)?;
+        crate::services::utils::validate_label_layer(&layer)?;
         create_layer(None, layer.clone()).await?;
         self.layers.push(layer);
         Ok(())
@@ -327,6 +333,7 @@ impl Catalog {
 
     pub async fn update_layer(&mut self, mut layer: Layer) -> AppResult<()> {
         layer.name = crate::services::utils::normalize_name(&layer.name)?;
+        crate::services::utils::validate_label_layer(&layer)?;
         update_layer(None, layer.clone()).await?;
         let position = self.layers.iter().position(|lyr| lyr.id == layer.id);
         match position {

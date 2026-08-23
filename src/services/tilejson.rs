@@ -106,19 +106,31 @@ pub fn build_tilejson(
         ((minzoom + maxzoom) / 2) as f64,
     ];
 
+    let mut vector_layers = vec![VectorLayer {
+        id: layer.name.clone(),
+        description: description.clone(),
+        minzoom,
+        maxzoom,
+        fields: fields.clone(),
+    }];
+
+    if layer.label_layer && matches!(layer.geometry.as_str(), "polygons" | "lines") {
+        vector_layers.push(VectorLayer {
+            id: format!("{}_labels", layer.name),
+            description: description.clone(),
+            minzoom,
+            maxzoom,
+            fields,
+        });
+    }
+
     TileJson {
         tilejson: "3.0.0".to_string(),
         tiles: vec![format!(
             "{base_url}/services/tiles/{}:{}/{{z}}/{{x}}/{{y}}.pbf",
             layer.category.name, layer.name
         )],
-        vector_layers: vec![VectorLayer {
-            id: layer.name.clone(),
-            description: description.clone(),
-            minzoom,
-            maxzoom,
-            fields,
-        }],
+        vector_layers,
         name: Some(name),
         description,
         scheme: "xyz".to_string(),
@@ -296,6 +308,7 @@ mod tests {
             filter: None,
             srid: None,
             geom: None,
+            label_layer: false,
             sql_mode: None,
             buffer: None,
             extent: None,
@@ -389,6 +402,29 @@ mod tests {
         assert_eq!(vl.minzoom, 4);
         assert_eq!(vl.maxzoom, 14);
         assert_eq!(vl.fields.get("owner").map(String::as_str), Some("Owner full name"));
+    }
+
+    #[test]
+    fn build_tilejson_adds_labels_sublayer_when_enabled() {
+        let mut layer = test_layer();
+        layer.label_layer = true;
+
+        let doc = build_tilejson(&layer, [-60.0, -40.0, -50.0, -30.0], BTreeMap::new(), "http://h");
+
+        assert_eq!(doc.vector_layers.len(), 2);
+        assert_eq!(doc.vector_layers[0].id, "parcels");
+        assert_eq!(doc.vector_layers[1].id, "parcels_labels");
+    }
+
+    #[test]
+    fn build_tilejson_omits_labels_sublayer_for_points() {
+        let mut layer = test_layer();
+        layer.geometry = "points".to_string();
+        layer.label_layer = true;
+
+        let doc = build_tilejson(&layer, [-60.0, -40.0, -50.0, -30.0], BTreeMap::new(), "http://h");
+
+        assert_eq!(doc.vector_layers.len(), 1);
     }
 
     #[test]

@@ -60,6 +60,71 @@ pub fn build_sql_template(sql_mode: &str) -> &'static str {
     }
 }
 
+/// Point on which a `_labels` MVT layer can anchor a symbol, so a feature
+/// that spans several tiles only gets one label instead of one per fragment.
+/// `None` for "points" geometries, where a label sub-layer wouldn't add anything.
+fn label_geometry_expr(geometry: &str, geom: &str) -> Option<String> {
+    match geometry {
+        "polygons" | "lines" => Some(format!("ST_PointOnSurface({geom})")),
+        _ => None,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn run_layer_query(
+    pg_pool: &PgPool,
+    sql_template: &str,
+    fields: &str,
+    schema: &str,
+    table: &str,
+    geom_expr: &str,
+    query_placeholder: Option<&str>,
+    limit_clause: &str,
+    x: u32,
+    y: u32,
+    z: u32,
+    extent: u32,
+    buffer: u32,
+    clip_geom: bool,
+    srid: u32,
+    mvt_layer_name: &str,
+    where_clause: &str,
+    bindings: &[String],
+) -> AppResult<Vec<u8>> {
+    let sql_query = sql_template
+        .replace("{fields}", fields)
+        .replace("{schema}", schema)
+        .replace("{table}", table)
+        .replace("{geom}", geom_expr)
+        .replace("{query_placeholder}", query_placeholder.unwrap_or(""))
+        .replace("{limit_placeholder}", limit_clause);
+
+    let mut query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(sqlx::AssertSqlSafe(sql_query))
+        .bind(z as i32)
+        .bind(x as i32)
+        .bind(y as i32)
+        .bind(extent as i32)
+        .bind(buffer as i32)
+        .bind(clip_geom)
+        .bind(srid as i32)
+        .bind(mvt_layer_name.to_string());
+
+    if !where_clause.is_empty() {
+        for binding in bindings {
+            if let Ok(num) = binding.parse::<i64>() {
+                query_builder = query_builder.bind(num);
+            } else if let Ok(num) = binding.parse::<f64>() {
+                query_builder = query_builder.bind(num);
+            } else {
+                query_builder = query_builder.bind(binding.clone());
+            }
+        }
+    }
+
+    let rec = query_builder.fetch_one(pg_pool).await?;
+    Ok(rec.0.unwrap_or_default())
+}
+
 pub async fn query_database(
     pg_pool: PgPool,
     layer_conf: Layer,
@@ -108,41 +173,62 @@ pub async fn query_database(
         .map_or_else(String::new, |max| format!("ORDER BY RANDOM() LIMIT {max}"));
 
     let sql_template = build_sql_template(&sql_mode);
-    let sql_query = sql_template
-        .replace("{fields}", &fields)
-        .replace("{schema}", &schema)
-        .replace("{table}", &table)
-        .replace("{geom}", &geom)
-        .replace(
-            "{query_placeholder}",
-            query_placeholder.as_deref().unwrap_or(""),
-        )
-        .replace("{limit_placeholder}", &limit_clause);
 
-    let mut query_builder = sqlx::query_as::<_, (Option<Vec<u8>>,)>(sqlx::AssertSqlSafe(sql_query))
-        .bind(z as i32)
-        .bind(x as i32)
-        .bind(y as i32)
-        .bind(extent as i32)
-        .bind(buffer as i32)
-        .bind(clip_geom)
-        .bind(srid as i32)
-        .bind(name);
+    let main_query = run_layer_query(
+        &pg_pool,
+        sql_template,
+        &fields,
+        &schema,
+        &table,
+        &geom,
+        query_placeholder.as_deref(),
+        &limit_clause,
+        x,
+        y,
+        z,
+        extent,
+        buffer,
+        clip_geom,
+        srid,
+        &name,
+        &where_clause,
+        &bindings,
+    );
 
-    if !where_clause.is_empty() {
-        for binding in bindings {
-            if let Ok(num) = binding.parse::<i64>() {
-                query_builder = query_builder.bind(num);
-            } else if let Ok(num) = binding.parse::<f64>() {
-                query_builder = query_builder.bind(num);
-            } else {
-                query_builder = query_builder.bind(binding);
-            }
+    let label_expr = layer_conf
+        .label_layer
+        .then(|| label_geometry_expr(&layer_conf.geometry, &geom))
+        .flatten();
+
+    let tile = match &label_expr {
+        Some(expr) => {
+            let label_name = format!("{name}_labels");
+            let label_query = run_layer_query(
+                &pg_pool,
+                sql_template,
+                &fields,
+                &schema,
+                &table,
+                expr,
+                query_placeholder.as_deref(),
+                &limit_clause,
+                x,
+                y,
+                z,
+                extent,
+                buffer,
+                clip_geom,
+                srid,
+                &label_name,
+                &where_clause,
+                &bindings,
+            );
+            let (mut main_tile, label_tile) = tokio::try_join!(main_query, label_query)?;
+            main_tile.extend_from_slice(&label_tile);
+            main_tile
         }
-    }
-
-    let rec = query_builder.fetch_one(&pg_pool).await?;
-    let tile = rec.0.unwrap_or_default();
+        None => main_query.await?,
+    };
 
     Ok(tile.into())
 }
@@ -229,4 +315,26 @@ pub async fn get_tile(
     }
 
     Ok((tile, Via::Database))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn label_geometry_expr_polygons_and_lines_use_point_on_surface() {
+        assert_eq!(
+            label_geometry_expr("polygons", "geom"),
+            Some("ST_PointOnSurface(geom)".to_string())
+        );
+        assert_eq!(
+            label_geometry_expr("lines", "the_geom"),
+            Some("ST_PointOnSurface(the_geom)".to_string())
+        );
+    }
+
+    #[test]
+    fn label_geometry_expr_none_for_points() {
+        assert_eq!(label_geometry_expr("points", "geom"), None);
+    }
 }
