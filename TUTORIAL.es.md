@@ -213,6 +213,8 @@ Para usarla:
 
 El punto de la etiqueta se calcula una sola vez por feature (no por tile), así que un polígono grande que atraviesa muchos tiles solo tiene etiqueta en el único tile que contiene su punto `ST_PointOnSurface` — no sigue el mapa mientras paneás sobre el feature.
 
+**Label layer** es una alternativa cómoda a crear una vista dedicada en la base de datos con solo la geometría de punto y el/los campo(s) de etiqueta. Una vista hecha a mano generalmente rinde mejor, porque solo lleva lo que la etiqueta necesita (el punto y el campo de etiqueta), mientras que **Label layer** reutiliza la query de la capa base y por lo tanto inyecta todos los campos publicados de la capa base también en la sub-capa `_labels`. Preferí **Label layer** cuando querés una configuración rápida sin tocar la base de datos; preferí una vista cuando la capa base publica muchos campos y querés minimizar el tamaño del tile de etiquetas.
+
 Editar la configuración de una capa (incluido activar/desactivar **Label layer**) invalida automáticamente su caché de tiles del lado del servidor, así que la próxima solicitud regenera los tiles con la nueva sub-capa. Si un cliente (QGIS, un editor de estilos basado en navegador, etc.) sigue sin mostrar las etiquetas después de eso, revisá primero la caché de red propia del cliente — puede estar reutilizando un tile o una respuesta de TileJSON que ya había descargado antes.
 
 ## Consumiendo Tiles

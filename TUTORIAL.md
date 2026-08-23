@@ -213,6 +213,8 @@ To use it:
 
 The label point is computed once per feature (not per tile), so a large polygon that spans many tiles is only labeled in the single tile that contains its `ST_PointOnSurface` point — it does not follow the map as you pan across the feature.
 
+**Label layer** is a convenience alternative to creating a dedicated database view with just the point geometry and the label field(s). A hand-made view will generally perform better, since it carries only what the label needs (the point and the label field), while **Label layer** reuses the base layer's query and therefore injects every field published on the base layer into the `_labels` sub-layer too. Prefer **Label layer** when you want a quick setup without touching the database; prefer a view when the base layer publishes many fields and you want to minimize the size of the label tile payload.
+
 Editing a layer's configuration (including toggling **Label layer**) automatically invalidates its server-side tile cache, so the next request regenerates tiles with the new sub-layer. If a client (QGIS, a browser-based style editor, etc.) still doesn't show the labels after that, check the client's own network cache first — it may be reusing a previously fetched tile or TileJSON response.
 
 ## Consuming Tiles
