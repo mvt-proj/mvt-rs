@@ -201,6 +201,20 @@ Use the **Map** button to check that the parameters entered in the form are corr
 
 ![Testing Layer](docs/testing_layer.png)
 
+### Label Layers (Avoiding Duplicate Labels)
+
+When a polygon or line feature crosses several tiles, a naive `symbol-placement: "point"` style label repeats once per tile fragment. The **Label layer** option (available for `polygons` and `lines` geometries, not `points`) avoids this without requiring a database view: when enabled, the server automatically publishes a second MVT sub-layer named `{layer_name}_labels`, containing one point per feature (`ST_PointOnSurface`) instead of the full geometry.
+
+To use it:
+
+1. Enable **Label layer** when creating or editing the layer.
+2. In your style, add a `symbol` layer whose `source-layer` is `{layer_name}_labels` (e.g. `parcels_labels`), and set `text-field` to the attribute you want to display.
+3. Keep your existing `fill`/`line` styling layers pointed at the original `source-layer` (`{layer_name}`) — the two sub-layers coexist in the same tile.
+
+The label point is computed once per feature (not per tile), so a large polygon that spans many tiles is only labeled in the single tile that contains its `ST_PointOnSurface` point — it does not follow the map as you pan across the feature.
+
+Editing a layer's configuration (including toggling **Label layer**) automatically invalidates its server-side tile cache, so the next request regenerates tiles with the new sub-layer. If a client (QGIS, a browser-based style editor, etc.) still doesn't show the labels after that, check the client's own network cache first — it may be reusing a previously fetched tile or TileJSON response.
+
 ## Consuming Tiles
 
 Your layer is published — now let's consume it from clients. MVT Server exposes *vector tiles* through three types of *sources*, plus a TileJSON document per layer so clients can configure themselves automatically.

@@ -133,6 +133,7 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 - Fuentes de una sola capa, multi-capa y basadas en categoría.
 - Composición de capas.
 - Control detallado por capa: campos publicados y su orden, filtro SQL, rango de zoom, caché, límites de registros, grupos permitidos.
+- Sub-capa de etiquetas opcional por capa de polígonos/líneas, para evitar etiquetas duplicadas entre tiles.
 
 ### Administración
 

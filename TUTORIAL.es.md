@@ -201,6 +201,20 @@ Usá el botón **Map** para verificar que los parámetros ingresados en el formu
 
 ![Testing Layer](docs/testing_layer.png)
 
+### Capas de Etiquetas (Evitando Etiquetas Duplicadas)
+
+Cuando un polígono o línea cruza varios tiles, un estilo de etiqueta simple con `symbol-placement: "point"` repite la etiqueta una vez por cada fragmento del tile. La opción **Label layer** (disponible para geometrías `polygons` y `lines`, no para `points`) evita esto sin necesitar una vista en la base de datos: al activarla, el servidor publica automáticamente una segunda sub-capa MVT llamada `{nombre_de_capa}_labels`, que contiene un punto por feature (`ST_PointOnSurface`) en vez de la geometría completa.
+
+Para usarla:
+
+1. Activá **Label layer** al crear o editar la capa.
+2. En tu estilo, agregá una capa `symbol` cuyo `source-layer` sea `{nombre_de_capa}_labels` (por ejemplo, `parcelas_labels`), y configurá `text-field` con el atributo que querés mostrar.
+3. Dejá tus capas de estilo `fill`/`line` existentes apuntando al `source-layer` original (`{nombre_de_capa}`) — las dos sub-capas conviven en el mismo tile.
+
+El punto de la etiqueta se calcula una sola vez por feature (no por tile), así que un polígono grande que atraviesa muchos tiles solo tiene etiqueta en el único tile que contiene su punto `ST_PointOnSurface` — no sigue el mapa mientras paneás sobre el feature.
+
+Editar la configuración de una capa (incluido activar/desactivar **Label layer**) invalida automáticamente su caché de tiles del lado del servidor, así que la próxima solicitud regenera los tiles con la nueva sub-capa. Si un cliente (QGIS, un editor de estilos basado en navegador, etc.) sigue sin mostrar las etiquetas después de eso, revisá primero la caché de red propia del cliente — puede estar reutilizando un tile o una respuesta de TileJSON que ya había descargado antes.
+
 ## Consumiendo Tiles
 
 Tu capa está publicada — ahora vamos a consumirla desde distintos clientes. MVT Server expone *vector tiles* a través de tres tipos de *fuentes*, además de un documento TileJSON por capa para que los clientes se configuren automáticamente.

@@ -133,6 +133,7 @@ Beyond *what* MVT Server publishes (see the table above), this is *how* it opera
 - Single-layer, multi-layer and category-based sources.
 - Layer composition.
 - Fine-grained control per layer: published fields and their order, SQL filter, zoom range, cache, record limits, allowed groups.
+- Optional label sub-layer per polygon/line layer, to avoid duplicate labels across tiles.
 
 ### Administration
 
