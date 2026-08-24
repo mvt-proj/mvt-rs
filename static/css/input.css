@@ -367,6 +367,29 @@
   @apply p-2 my-2 bg-amber-50 text-amber-900 border-l-4 border-amber-400 rounded-md;
 }
 
+/* ── Toasts ──────────────────────────────────────────────────────── */
+.toast-container {
+  @apply fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none;
+}
+
+.toast {
+  @apply pointer-events-auto px-4 py-3 rounded-md shadow-lg text-sm font-medium text-white;
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast-success {
+  @apply bg-emerald-600;
+}
+
+.toast-error {
+  @apply bg-red-600;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Scrollbars ──────────────────────────────────────────────────── */
 @media (prefers-color-scheme: light) {
   ::-webkit-scrollbar { width: 8px; height: 8px; }

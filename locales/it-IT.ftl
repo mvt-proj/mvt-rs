@@ -101,6 +101,9 @@ edit = Modifica
 switch-published = Pubblica / Spubblica
 delete-cache = Elimina Cache
 delete = Elimina
+toast-saved = Salvato
+toast-save-failed = Impossibile salvare.
+toast-required-fields = Compila i campi obbligatori.
 open-json = Apri JSON
 open-png = Apri PNG
 

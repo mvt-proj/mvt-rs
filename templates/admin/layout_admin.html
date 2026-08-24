@@ -82,6 +82,81 @@
     if (!el.matches || !el.matches('input[data-normalize-name]')) return;
     applyNameNormalization(el);
   });
+
+  // Toasts
+  function ensureToastContainer() {
+    var c = document.getElementById('toast-container');
+    if (!c) {
+      c = document.createElement('div');
+      c.id = 'toast-container';
+      c.className = 'toast-container';
+      document.body.appendChild(c);
+    }
+    return c;
+  }
+
+  window.showToast = function (message, type) {
+    var container = ensureToastContainer();
+    var el = document.createElement('div');
+    el.className = 'toast toast-' + (type || 'success');
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(function () {
+      el.remove();
+    }, 4000);
+  };
+
+  // Confirms a save/apply/delete: any POST form navigates normally (no
+  // fetch/htmx involved), so the confirmation has to survive that reload —
+  // stash it in sessionStorage before navigating, consume it on next load.
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (form.tagName === 'FORM' && form.method && form.method.toLowerCase() === 'post') {
+      try {
+        sessionStorage.setItem('mvt-toast-pending', '1');
+      } catch (err) {}
+    }
+  });
+
+  var pendingToast;
+  try {
+    pendingToast = sessionStorage.getItem('mvt-toast-pending');
+  } catch (err) {
+    pendingToast = null;
+  }
+  if (pendingToast) {
+    try {
+      sessionStorage.removeItem('mvt-toast-pending');
+    } catch (err) {}
+    window.showToast('{{ base.translate["toast-saved"] }}', 'success');
+  }
+
+  // Required-field validation: the browser already shows a bubble on the
+  // field, this just adds a toast so it's not missed. "invalid" doesn't
+  // bubble, so this has to listen on the capture phase; one submit attempt
+  // can fire it once per empty field, so it's debounced to a single toast.
+  var invalidToastShown = false;
+  document.addEventListener('invalid', function () {
+    if (invalidToastShown) return;
+    invalidToastShown = true;
+    window.showToast('{{ base.translate["toast-required-fields"] }}', 'error');
+    setTimeout(function () {
+      invalidToastShown = false;
+    }, 300);
+  }, true);
+
+  // Buttons that save via htmx instead of a native form submit (no page
+  // reload, so the sessionStorage trick above never applies to them) opt in
+  // with data-toast="save" and get their result reported here instead.
+  document.body.addEventListener('htmx:afterRequest', function (evt) {
+    var el = evt.detail.elt;
+    if (!el || !el.matches || !el.matches('[data-toast="save"]')) return;
+    if (evt.detail.successful) {
+      window.showToast('{{ base.translate["toast-saved"] }}', 'success');
+    } else {
+      window.showToast('{{ base.translate["toast-save-failed"] }}', 'error');
+    }
+  });
 })();
 </script>
 {% endblock %}
