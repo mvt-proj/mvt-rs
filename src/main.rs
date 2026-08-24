@@ -1,4 +1,5 @@
 use config::{categories::get_categories as get_cf_categories, settings::Settings};
+use mimalloc::MiMalloc;
 use salvo::prelude::*;
 use salvo::server::ServerHandle;
 use sqlx::SqlitePool;
@@ -31,6 +32,9 @@ use auth::Auth;
 use cache::cachewrapper::CacheWrapper;
 use models::{catalog::Catalog, category::Category, styles::Style};
 use monitor::start_system_monitor;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
