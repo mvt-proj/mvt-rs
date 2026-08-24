@@ -215,6 +215,7 @@ fn build_admin_database_routes() -> Router {
         .push(Router::with_path("tables").get(html::admin::database::tables))
         .push(Router::with_path("fields").get(html::admin::database::fields))
         .push(Router::with_path("srid").get(html::admin::database::srid))
+        .push(Router::with_path("spatial_index").get(html::admin::database::spatial_index))
 }
 
 fn build_admin_monitor_routes() -> Router {
@@ -287,6 +288,10 @@ fn build_api_database_routes() -> Router {
         .push(Router::with_path("tables/{schema}").get(api::database::tables))
         .push(Router::with_path("fields/{schema}/{table}").get(api::database::fields))
         .push(Router::with_path("srid/{schema}/{table}/{geometry}").get(api::database::srid))
+        .push(
+            Router::with_path("spatial_index/{schema}/{table}/{geometry}")
+                .get(api::database::spatial_index),
+        )
 }
 
 fn build_api_catalog_routes() -> Router {

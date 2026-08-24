@@ -43,6 +43,12 @@ pub struct Extent {
     pub ymax: f64,
 }
 
+#[derive(FromRow, Serialize, Debug)]
+pub struct SpatialIndex {
+    pub has_index: bool,
+    pub is_view: bool,
+}
+
 fn escape_identifier(ident: &str) -> String {
     format!("\"{}\"", ident.replace('"', "\"\""))
 }
@@ -240,4 +246,85 @@ pub async fn query_extent(layer: &Layer) -> AppResult<Extent> {
         .await?;
 
     Ok(extent)
+}
+
+/// Checks whether `geometry` on `schema.table` is covered by a spatial index
+/// (GiST, SP-GiST or BRIN). Advisory only: if the relation can't be found in
+/// the catalog, defaults to `has_index: true` so a lookup edge case doesn't
+/// surface a misleading warning.
+pub async fn query_has_spatial_index(
+    database_id: &str,
+    schema: String,
+    table: String,
+    geometry: String,
+) -> AppResult<SpatialIndex> {
+    let pg_pool: PgPool = get_db_registry()
+        .get_pool(database_id)
+        .ok_or(AppError::DatabaseError("DB not found".to_string()))?
+        .clone();
+
+    let sql = r#"
+        SELECT
+            (c.relkind = 'v') AS is_view,
+            EXISTS (
+                SELECT 1
+                FROM pg_index i
+                JOIN pg_class ic ON ic.oid = i.indexrelid
+                JOIN pg_am am ON am.oid = ic.relam
+                JOIN pg_attribute a
+                    ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+                WHERE i.indrelid = c.oid
+                  AND a.attname = $3
+                  AND am.amname IN ('gist', 'spgist', 'brin')
+            ) AS has_index
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = $1
+          AND c.relname = $2
+    "#;
+
+    let data: Option<SpatialIndex> = sqlx::query_as::<_, SpatialIndex>(sql)
+        .bind(schema)
+        .bind(table)
+        .bind(geometry)
+        .fetch_optional(&pg_pool)
+        .await?;
+
+    Ok(data.unwrap_or(SpatialIndex {
+        has_index: true,
+        is_view: false,
+    }))
+}
+
+/// `CREATE INDEX` suggestion for a missing spatial index, with identifiers
+/// escaped the same way as the rest of this module.
+pub fn suggested_spatial_index_sql(schema: &str, table: &str, geometry: &str) -> String {
+    format!(
+        "CREATE INDEX {} ON {}.{} USING GIST ({});",
+        escape_identifier(&format!("idx_{table}_{geometry}")),
+        escape_identifier(schema),
+        escape_identifier(table),
+        escape_identifier(geometry),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn suggested_spatial_index_sql_escapes_identifiers() {
+        assert_eq!(
+            suggested_spatial_index_sql("public", "parcels", "geom"),
+            r#"CREATE INDEX "idx_parcels_geom" ON "public"."parcels" USING GIST ("geom");"#
+        );
+    }
+
+    #[test]
+    fn suggested_spatial_index_sql_escapes_quotes_in_identifiers() {
+        assert_eq!(
+            suggested_spatial_index_sql("public", r#"weird"table"#, "geom"),
+            "CREATE INDEX \"idx_weird\"\"table_geom\" ON \"public\".\"weird\"\"table\" USING GIST (\"geom\");"
+        );
+    }
 }

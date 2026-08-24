@@ -4,9 +4,11 @@ use salvo::prelude::*;
 
 use crate::{
     db::metadata::{
-        Field, Schema, Srid, Table, query_fields, query_schemas, query_srid, query_tables,
+        Field, Schema, SpatialIndex, Srid, Table, query_fields, query_has_spatial_index,
+        query_schemas, query_srid, query_tables, suggested_spatial_index_sql,
     },
     error::{AppError, AppResult},
+    html::utils::{BaseTemplateData, make_base},
 };
 
 #[derive(Template)]
@@ -34,6 +36,14 @@ struct FieldTemplate<'a> {
 #[template(path = "admin/database/srid.html")]
 struct SRIDTemplate<'a> {
     srid: &'a Srid,
+}
+
+#[derive(Template)]
+#[template(path = "admin/database/spatial_index.html")]
+struct SpatialIndexTemplate<'a> {
+    base: BaseTemplateData,
+    spatial_index: &'a SpatialIndex,
+    suggested_sql: String,
 }
 
 #[handler]
@@ -137,6 +147,35 @@ pub async fn srid(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let rv = query_srid(&db_id, schema, table, geometry).await?;
 
     let template = SRIDTemplate { srid: &rv };
+    let html_render = template.render()?;
+    res.render(Text::Html(html_render));
+    Ok(())
+}
+
+#[handler]
+pub async fn spatial_index(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    let db_id = req
+        .query::<String>("database_id")
+        .unwrap_or_else(|| "default".to_string());
+    let schema = req
+        .query::<String>("schema")
+        .ok_or(AppError::RequestParamError("schema".to_string()))?;
+    let table = req
+        .query::<String>("table")
+        .ok_or(AppError::RequestParamError("table".to_string()))?;
+    let geometry = req
+        .query::<String>("geometry")
+        .ok_or(AppError::RequestParamError("geometry".to_string()))?;
+
+    let suggested_sql = suggested_spatial_index_sql(&schema, &table, &geometry);
+    let rv = query_has_spatial_index(&db_id, schema, table, geometry).await?;
+
+    let (base, _) = make_base(depot).await;
+    let template = SpatialIndexTemplate {
+        base,
+        spatial_index: &rv,
+        suggested_sql,
+    };
     let html_render = template.render()?;
     res.render(Text::Html(html_render));
     Ok(())

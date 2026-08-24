@@ -1,0 +1,10 @@
+{% block admin_content %}
+  {% if spatial_index.is_view %}
+    <p class="help is-warning">{{ base.translate["spatial-index-view-notice"] }}</p>
+  {% else if !spatial_index.has_index %}
+    <div class="is-warning">
+      <p>{{ base.translate["spatial-index-missing-warning"] }}</p>
+      <pre><code>{{ suggested_sql }}</code></pre>
+    </div>
+  {% endif %}
+{% endblock %}

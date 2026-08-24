@@ -363,6 +363,10 @@
   @apply p-2 my-2 bg-blue-50 text-blue-900 border-l-4 border-blue-400 rounded-md;
 }
 
+.is-warning {
+  @apply p-2 my-2 bg-amber-50 text-amber-900 border-l-4 border-amber-400 rounded-md;
+}
+
 /* ── Scrollbars ──────────────────────────────────────────────────── */
 @media (prefers-color-scheme: light) {
   ::-webkit-scrollbar { width: 8px; height: 8px; }

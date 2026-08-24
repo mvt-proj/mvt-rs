@@ -195,6 +195,9 @@
         </div>
       </div>
 
+      <!-- spatial index warning -->
+      <div id="spatial-index-warning" class="mb-4"></div>
+
       <!-- sql_mode -->
       <div class="mb-4">
         <label class="label" for="sql_mode">{{ base.translate["sql-mode"] }}</label>
@@ -512,6 +515,26 @@
         })
         .then((data) => {
           document.querySelector('[name="srid"]').value = data;
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+
+      var spatialIndexUrl =
+        "/admin/database/spatial_index?database_id=" + encodeURIComponent(dbId) +
+        "&schema=" + encodeURIComponent(schemaValue) +
+        "&table=" + encodeURIComponent(tableValue) +
+        "&geometry=" + encodeURIComponent(geomValue);
+
+      fetch(spatialIndexUrl)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Error al verificar el índice espacial");
+          }
+          return response.text();
+        })
+        .then((html) => {
+          document.getElementById("spatial-index-warning").innerHTML = html;
         })
         .catch((error) => {
           console.error("Error:", error);
