@@ -121,6 +121,14 @@ impl CacheWrapper {
         }
     }
 
+    /// Removes expired tiles from disk. No-op for Redis (TTL-based expiry)
+    /// and disabled modes. Meant to be called periodically in the background.
+    pub async fn cleanup_expired_disk_cache(&self, catalog: &Catalog) {
+        if let CacheMode::Disk(disk_cache) = &self.mode {
+            disk_cache.cleanup_expired(catalog).await;
+        }
+    }
+
     pub async fn get_tile(
         &self,
         name: &str,

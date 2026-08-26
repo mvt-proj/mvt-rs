@@ -363,6 +363,19 @@ async fn main() -> AppResult<()> {
         }
     }
 
+    // Periodically sweeps expired tiles off disk in the background so a
+    // request never blocks on deleting stale files (see `DiskCache::get_cache`).
+    // A no-op when the cache backend is Redis or disabled.
+    tokio::spawn(async {
+        let mut ticker = tokio::time::interval(Duration::from_secs(15 * 60));
+        ticker.tick().await; // first tick fires immediately; skip it
+        loop {
+            ticker.tick().await;
+            let catalog = get_catalog().await.read().await.clone();
+            get_cache_wrapper().cleanup_expired_disk_cache(&catalog).await;
+        }
+    });
+
     let i18n_service = Arc::new(i18n::I18n::new());
 
     let acceptor = TcpListener::new(format!("{}:{}", settings.server.host, settings.server.port))
