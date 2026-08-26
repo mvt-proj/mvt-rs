@@ -810,7 +810,12 @@ mvt_server_cache_hits_total
 mvt_server_cache_misses_total
 mvt_server_last_request_latency_seconds
 mvt_server_avg_request_latency_seconds
+mvt_server_tile_request_duration_seconds_bucket{layer="...",via="cache|database"}
+mvt_server_tile_request_duration_seconds_sum{layer="...",via="cache|database"}
+mvt_server_tile_request_duration_seconds_count{layer="...",via="cache|database"}
 ```
+
+`tile_request_duration_seconds` is a histogram broken down per layer and per path (`via="cache"` or `via="database"`), unlike the single running average above — use `histogram_quantile()` in Prometheus/Grafana to get real p50/p95/p99 latency per layer and to see how much of it is spent hitting the database versus served from cache.
 
 These can be scraped by Prometheus or any compatible monitoring system for long-term storage and alerting.
 

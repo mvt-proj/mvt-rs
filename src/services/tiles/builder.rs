@@ -1,5 +1,6 @@
 use bytes::Bytes;
 use sqlx::PgPool;
+use std::time::Instant;
 // use tracing::{error, warn};
 
 use crate::services::utils::{convert_fields, validate_filter};
@@ -9,7 +10,7 @@ use crate::{
     get_cache_wrapper,
     get_plugin_registry,
     models::catalog::Layer,
-    monitor::{record_cache_hit, record_cache_miss, record_request},
+    monitor::{record_cache_hit, record_cache_miss, record_request, record_tile_latency},
     plugins::PluginContext,
 };
 
@@ -244,6 +245,7 @@ pub async fn get_tile(
     user: Option<String>,
     groups: Option<Vec<String>>,
 ) -> AppResult<(Bytes, Via)> {
+    let start = Instant::now();
     let name_owned = format!("{}_{}", layer_conf.category.name, layer_conf.name);
     let name = &name_owned;
     let max_cache_age = layer_conf.max_cache_age.unwrap_or(0);
@@ -264,6 +266,7 @@ pub async fn get_tile(
         && let Some(tile) = cache_wrapper.get_tile(name, z, x, y, max_cache_age).await
     {
         record_cache_hit();
+        record_tile_latency(name, "cache", start.elapsed().as_secs_f64());
         return Ok((tile, Via::Cache));
     }
     record_cache_miss();
@@ -314,6 +317,7 @@ pub async fn get_tile(
             .await?;
     }
 
+    record_tile_latency(name, "database", start.elapsed().as_secs_f64());
     Ok((tile, Via::Database))
 }
 

@@ -811,7 +811,12 @@ mvt_server_cache_hits_total
 mvt_server_cache_misses_total
 mvt_server_last_request_latency_seconds
 mvt_server_avg_request_latency_seconds
+mvt_server_tile_request_duration_seconds_bucket{layer="...",via="cache|database"}
+mvt_server_tile_request_duration_seconds_sum{layer="...",via="cache|database"}
+mvt_server_tile_request_duration_seconds_count{layer="...",via="cache|database"}
 ```
+
+`tile_request_duration_seconds` es un histograma desglosado por capa y por vía (`via="cache"` o `via="database"`), a diferencia del promedio móvil de arriba — usá `histogram_quantile()` en Prometheus/Grafana para obtener percentiles reales (p50/p95/p99) de latencia por capa y ver cuánto tiempo se va en la base de datos versus en caché.
 
 Estas métricas pueden ser recolectadas por Prometheus o cualquier sistema de monitoreo compatible para almacenamiento a largo plazo y alertas.
 
