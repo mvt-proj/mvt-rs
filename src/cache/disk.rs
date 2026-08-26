@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use std::future::Future;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
 
 use crate::{
@@ -11,14 +13,21 @@ use bytes::Bytes;
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
+/// `DiskCache` is only used in `standalone` mode (any clustering mode requires
+/// Redis instead), so a single process always owns a given `cache_dir` — an
+/// in-memory version cache is safe here without cross-instance invalidation.
 #[derive(Debug, Clone)]
 pub struct DiskCache {
     pub cache_dir: PathBuf,
+    version_cache: Arc<RwLock<HashMap<String, u64>>>,
 }
 
 impl DiskCache {
     pub fn new(cache_dir: PathBuf) -> Self {
-        DiskCache { cache_dir }
+        DiskCache {
+            cache_dir,
+            version_cache: Arc::new(RwLock::new(HashMap::new())),
+        }
     }
 
     pub async fn delete_cache_dir(&self, catalog: Catalog) {
@@ -96,34 +105,51 @@ impl DiskCache {
         Ok(())
     }
 
-    /// Returns the current version counter for a layer.
-    /// Stored at `{cache_dir}/.versions/{layer_name}` — outside the tile directory
-    /// so it survives tile cache deletion.
+    /// Returns the current version counter for a layer, served from an
+    /// in-memory cache after the first read so a version lookup (done on
+    /// every tile request for its ETag) doesn't hit disk each time.
+    /// Persisted at `{cache_dir}/.versions/{layer_name}` — outside the tile
+    /// directory so it survives tile cache deletion.
     pub async fn get_layer_version(&self, layer_name: &str) -> u64 {
-        let path = self.cache_dir.join(".versions").join(layer_name);
-        match fs::read_to_string(&path).await {
-            Ok(s) => s.trim().parse().unwrap_or(0),
-            Err(_) => 0,
+        let cached = self.version_cache.read().unwrap().get(layer_name).copied();
+        if let Some(v) = cached {
+            return v;
         }
-    }
 
-    /// Increments the version counter for a layer.
-    pub async fn increment_layer_version(&self, layer_name: &str) {
-        let dir = self.cache_dir.join(".versions");
-        if fs::metadata(&dir).await.is_err() {
-            if let Err(e) = fs::create_dir_all(&dir).await {
-                tracing::warn!("Failed to create versions dir: {e}");
-                return;
-            }
-        }
-        let path = dir.join(layer_name);
-        let current: u64 = match fs::read_to_string(&path).await {
+        let path = self.cache_dir.join(".versions").join(layer_name);
+        let version = match fs::read_to_string(&path).await {
             Ok(s) => s.trim().parse().unwrap_or(0),
             Err(_) => 0,
         };
-        if let Err(e) = fs::write(&path, (current + 1).to_string()).await {
-            tracing::warn!("Failed to write version for layer {layer_name}: {e}");
+        self.version_cache
+            .write()
+            .unwrap()
+            .insert(layer_name.to_string(), version);
+        version
+    }
+
+    /// Increments the version counter for a layer. Updates the in-memory
+    /// cache only after the write to disk succeeds, so a failed write never
+    /// leaves memory and disk disagreeing about the current version.
+    pub async fn increment_layer_version(&self, layer_name: &str) {
+        let dir = self.cache_dir.join(".versions");
+        if fs::metadata(&dir).await.is_err()
+            && let Err(e) = fs::create_dir_all(&dir).await
+        {
+            tracing::warn!("Failed to create versions dir: {e}");
+            return;
         }
+
+        let new_version = self.get_layer_version(layer_name).await + 1;
+        let path = dir.join(layer_name);
+        if let Err(e) = fs::write(&path, new_version.to_string()).await {
+            tracing::warn!("Failed to write version for layer {layer_name}: {e}");
+            return;
+        }
+        self.version_cache
+            .write()
+            .unwrap()
+            .insert(layer_name.to_string(), new_version);
     }
 
     /// Removes cached tiles older than each layer's `max_cache_age`. Layers with
@@ -303,5 +329,42 @@ mod tests {
         };
 
         cache.cleanup_expired(&catalog).await;
+    }
+
+    #[tokio::test]
+    async fn get_layer_version_serves_from_memory_after_first_read() {
+        let dir = temp_dir("version-cache");
+        let cache = DiskCache::new(dir.clone());
+
+        cache.increment_layer_version("layer1").await;
+        assert_eq!(cache.get_layer_version("layer1").await, 1);
+
+        // Corrupt the on-disk file directly. If get_layer_version still read
+        // from disk, this would surface as 0 (parse falls back on error)
+        // instead of the cached value.
+        let version_path = dir.join(".versions").join("layer1");
+        fs::write(&version_path, "not-a-number").await.unwrap();
+
+        assert_eq!(
+            cache.get_layer_version("layer1").await,
+            1,
+            "cached version must be served without re-reading the file"
+        );
+
+        fs::remove_dir_all(&dir).await.ok();
+    }
+
+    #[tokio::test]
+    async fn increment_layer_version_updates_cache_immediately() {
+        let dir = temp_dir("version-increment");
+        let cache = DiskCache::new(dir.clone());
+
+        assert_eq!(cache.get_layer_version("layer2").await, 0);
+        cache.increment_layer_version("layer2").await;
+        assert_eq!(cache.get_layer_version("layer2").await, 1);
+        cache.increment_layer_version("layer2").await;
+        assert_eq!(cache.get_layer_version("layer2").await, 2);
+
+        fs::remove_dir_all(&dir).await.ok();
     }
 }
