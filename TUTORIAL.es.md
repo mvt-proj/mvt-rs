@@ -742,6 +742,30 @@ server {
     gzip_proxied any;
     gzip_vary on;
 
+    # Las métricas de Prometheus no tienen autenticación propia en la app —
+    # nunca rutees esta ruta hacia internet. Bloqueala acá y recolectala
+    # desde dentro de tu red (Prometheus en el mismo host o en un segmento
+    # de red privado, contra la app directamente o mediante un server block
+    # de nginx solo interno).
+    location /api/monitor/metrics {
+        deny all;
+        return 403;
+    }
+
+    # El panel de monitoreo transmite actualizaciones en vivo mediante
+    # Server-Sent Events (SSE). Sin estas directivas, Nginx bufferea la
+    # respuesta y los gráficos del panel se congelan o se actualizan en
+    # ráfagas en vez de cada 5 segundos.
+    location /admin/monitor/ssemetrics {
+        proxy_pass http://localhost:5887;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        chunked_transfer_encoding off;
+        proxy_read_timeout 1h;
+    }
+
     location / {
         proxy_pass http://localhost:5887;
         proxy_set_header Host $host;
@@ -789,5 +813,7 @@ mvt_server_avg_request_latency_seconds
 ```
 
 Estas métricas pueden ser recolectadas por Prometheus o cualquier sistema de monitoreo compatible para almacenamiento a largo plazo y alertas.
+
+**Nota de seguridad**: este endpoint no tiene autenticación propia — cualquiera que pueda alcanzarlo puede leer las métricas internas de tu servidor. Nunca expongas `/api/monitor/metrics` en internet; bloqueala en el proxy inverso (ver [Proxy inverso Nginx](#proxy-inverso-nginx)) y recolectala solo desde dentro de tu red.
 
 **Nota**: en entornos restringidos como jails de FreeBSD, las métricas de CPU recurren automáticamente a `getrusage()` cuando `sysinfo` no está disponible.

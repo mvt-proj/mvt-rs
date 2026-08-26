@@ -242,6 +242,40 @@ The `/internal/config/snapshot` response contains the full serialized config,
 
 ---
 
+## Monitoring limitations
+
+Metrics and the admin dashboard are **per-process and in-memory** (a static
+Prometheus registry inside each instance) — there is no shared, Redis-backed
+aggregation across a cluster. This has two consequences you should plan for
+rather than expect the app to solve:
+
+1. **Client instances expose no monitoring at all.** `cluster.mode = client`
+   mounts the [reduced router](#reduced-client-router), which does not include
+   `/admin/monitor/dashboard` or `/api/monitor/metrics` — those routes simply
+   don't exist on a client. Only `standalone` and `owner` instances have them.
+2. **The owner's dashboard only reflects the owner's own traffic.** In the
+   [load balancer example](#load-balancer-nginx) above, tile/style/legend
+   reads are sent to the `mvt_tiles` pool (the client instances), not to the
+   owner — so the one instance with a dashboard is typically the one seeing
+   the least tile traffic.
+
+There is currently no built-in way to get a single, cluster-wide view of
+RPS/latency/cache hit-rate. If you need that, monitor each instance
+individually from outside the app:
+
+- `standalone` and `owner` instances can be scraped directly on
+  `/api/monitor/metrics` over your private network; aggregate per-instance
+  in your own Prometheus/Grafana with a label per host. Never route this
+  path through the public load balancer — see the
+  [security note in the TUTORIAL](../TUTORIAL.md#prometheus-metrics) on why
+  it must stay off the public internet.
+- `client` instances have no per-app metrics endpoint at all. If you need
+  visibility into what they're actually serving, fall back to host-level
+  signals (CPU, memory, network, request logs) via standard OS-level tools
+  (e.g. `node_exporter`, your web server's access log) per instance.
+
+---
+
 ## Verification
 
 The following two-instance smoke test verifies the end-to-end sync path:

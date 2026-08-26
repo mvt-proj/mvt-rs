@@ -742,6 +742,29 @@ server {
     gzip_proxied any;
     gzip_vary on;
 
+    # Prometheus metrics have no built-in authentication in the app — never
+    # route this path to the public internet. Block it here and scrape it
+    # from inside your network instead (Prometheus on the same host or on a
+    # private network segment, hitting the app directly or through an
+    # internal-only nginx server block).
+    location /api/monitor/metrics {
+        deny all;
+        return 403;
+    }
+
+    # The admin monitoring dashboard streams live updates over Server-Sent
+    # Events (SSE). Without these directives, Nginx buffers the response and
+    # the dashboard charts freeze or update in bursts instead of every 5s.
+    location /admin/monitor/ssemetrics {
+        proxy_pass http://localhost:5887;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        chunked_transfer_encoding off;
+        proxy_read_timeout 1h;
+    }
+
     location / {
         proxy_pass http://localhost:5887;
         proxy_set_header Host $host;
@@ -789,5 +812,7 @@ mvt_server_avg_request_latency_seconds
 ```
 
 These can be scraped by Prometheus or any compatible monitoring system for long-term storage and alerting.
+
+**Security note**: this endpoint has no built-in authentication — anyone who can reach it can read your server's internal metrics. Never expose `/api/monitor/metrics` on the public internet; block it at the reverse proxy (see [Nginx reverse proxy](#nginx-reverse-proxy)) and scrape it only from inside your network.
 
 **Note**: In restricted environments like FreeBSD jails, CPU metrics automatically fall back to `getrusage()` when `sysinfo` is unavailable.
