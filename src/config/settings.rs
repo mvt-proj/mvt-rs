@@ -68,8 +68,8 @@ pub struct PostgresDatabasesConfig {
 }
 
 fn default_sqlite() -> String { "mvtrs.db".to_string() }
-fn default_pool_min() -> u32 { 2 }
-fn default_pool_max() -> u32 { 5 }
+fn default_pool_min() -> u32 { 5 }
+fn default_pool_max() -> u32 { 20 }
 
 fn default_session_duration() -> u64 { 20 }
 
@@ -116,8 +116,8 @@ impl Settings {
             .set_default("server.host", "0.0.0.0")?
             .set_default("server.port", 5887)?
             .set_default("database.sqlite_path", "mvtrs.db")?
-            .set_default("postgres_databases.pool_min", 2)?
-            .set_default("postgres_databases.pool_max", 5)?
+            .set_default("postgres_databases.pool_min", 5)?
+            .set_default("postgres_databases.pool_max", 20)?
             .set_default("paths.config", "config")?
             .set_default("paths.cache", "cache")?
             .set_default("paths.assets", "map_assets")?

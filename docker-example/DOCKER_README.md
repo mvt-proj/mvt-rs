@@ -96,10 +96,10 @@ server:
 database:
   sqlite_path: "/app/config/mvtrs.db"
   redis_url: "redis://redis:6379"
-  pool_min: 5
-  pool_max: 20
 
 postgres_databases:
+  pool_min: 5
+  pool_max: 20
   default: "postgres://mvtuser:mvtpass@postgres:5432/mvtdb"
 
 security:

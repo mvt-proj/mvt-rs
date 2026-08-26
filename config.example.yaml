@@ -22,8 +22,14 @@ server:
 # At least one entry named "default" is required.
 # Additional named databases can be added with different keys.
 postgres_databases:
-  pool_min: 2
-  pool_max: 5
+  # A composite/category tile fires one query per underlying layer in
+  # parallel, so pool_max needs headroom for several concurrent pans, not
+  # just one query at a time. Defaults below (5/20) fit a single instance
+  # against Postgres' default max_connections (100). In cluster mode, every
+  # instance opens its own pool — keep (instances × pool_max) comfortably
+  # under Postgres' max_connections.
+  pool_min: 5
+  pool_max: 20
   default: "postgres://user:password@host:5432/dbname"
   # secondary: "postgres://user:password@host2:5432/dbname2"
 

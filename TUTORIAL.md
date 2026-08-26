@@ -72,8 +72,8 @@ server:
 
 # At least one entry named "default" is required.
 postgres_databases:
-  pool_min: 2
-  pool_max: 5
+  pool_min: 5
+  pool_max: 20
   default: "postgres://user:password@host:5432/database"
   # foo: "postgres://user:password@host:5432/database_foo"
 
@@ -106,6 +106,7 @@ cluster:
 Some notes:
 
 - `postgres_databases` can hold several named connections; each layer chooses which one it reads from. The `default` entry is mandatory.
+- `pool_min`/`pool_max` size the connection pool per named database. A composite or category tile queries every underlying layer in parallel, so `pool_max` needs headroom for several concurrent pans, not just one query at a time. In cluster mode, each instance opens its own pool — keep `instances × pool_max` comfortably under Postgres' `max_connections`.
 - `database.sqlite_path` is the internal SQLite file where MVT Server stores its own configuration (users, groups, catalog, styles). The path is relative to `paths.config` and the file is created automatically on first run.
 - `database.redis_url` switches the tile cache from disk to Redis — see [Caching](#caching).
 - `paths.plugins` points to the Lua plugins directory — see [docs/plugins.md](docs/plugins.md).
