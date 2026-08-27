@@ -7,7 +7,7 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uuid = { version = "1.24", features = ["v4", "fast-rng"] }
+uuid = { version = "1.26", features = ["v4", "fast-rng"] }
 bytes = "1.12"
 argon2 = { version = "0.5", features = ["std"] }
 askama = "0.16"
@@ -16,7 +16,7 @@ base64 = "0.23"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = { version = "11.0", features = ["rust_crypto"] }
 
-salvo = { version = "0.95", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session", "rate-limiter", "test"] }
+salvo = { version = "0.96", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session", "rate-limiter", "test"] }
 tokio = { version = "1", features = ["macros", "signal"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
@@ -24,7 +24,7 @@ serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.9", features = [ "runtime-tokio", "tls-rustls-aws-lc-rs", "postgres", "sqlite", "migrate" ] }
 
-redis = { version = "1.5", features = ["tokio-comp"] }
+redis = { version = "1.6", features = ["tokio-comp"] }
 bb8 = "0.9"
 bb8-redis = "0.26"
 include_dir = {version = "0.7.4", features = ["glob"] }
