@@ -165,6 +165,16 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 
 ## Primeros pasos
 
+Descargá un binario precompilado desde el [último release](https://github.com/mvt-proj/mvt-rs/releases/latest) (Linux, macOS, Windows, FreeBSD):
+
+```sh
+curl -LO https://github.com/mvt-proj/mvt-rs/releases/latest/download/mvt-server-linux-gnu-x86_64.zip
+unzip mvt-server-linux-gnu-x86_64.zip
+./mvt-server --config config/config.yaml
+```
+
+O compilalo desde el código fuente:
+
 ```sh
 git clone https://github.com/mvt-proj/mvt-rs.git
 cd mvt-rs

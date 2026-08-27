@@ -165,6 +165,16 @@ Beyond *what* MVT Server publishes (see the table above), this is *how* it opera
 
 ## Getting Started
 
+Download a prebuilt binary from the [latest release](https://github.com/mvt-proj/mvt-rs/releases/latest) (Linux, macOS, Windows, FreeBSD):
+
+```sh
+curl -LO https://github.com/mvt-proj/mvt-rs/releases/latest/download/mvt-server-linux-gnu-x86_64.zip
+unzip mvt-server-linux-gnu-x86_64.zip
+./mvt-server --config config/config.yaml
+```
+
+Or build from source:
+
 ```sh
 git clone https://github.com/mvt-proj/mvt-rs.git
 cd mvt-rs

@@ -41,7 +41,16 @@ It is an open source platform designed to publish vector maps directly from Post
 
 ## Installation
 
-For now, the only option is to download the code and compile it manually; binaries for different operating systems will be provided in the future. To compile the server, make sure [Rust is installed](https://www.rust-lang.org/tools/install) on your system.
+**Download a prebuilt binary** for Linux, macOS, Windows or FreeBSD from the [latest release](https://github.com/mvt-proj/mvt-rs/releases/latest):
+
+```sh
+curl -LO https://github.com/mvt-proj/mvt-rs/releases/latest/download/mvt-server-linux-gnu-x86_64.zip
+unzip mvt-server-linux-gnu-x86_64.zip
+```
+
+Replace the filename with `mvt-server-darwin-x86_64.zip`, `mvt-server-windows-x86_64.zip` or `mvt-server-freebsd-x86_64.zip` for other platforms.
+
+**Or build from source**, if you'd rather compile it yourself. Make sure [Rust is installed](https://www.rust-lang.org/tools/install) on your system.
 
 ```sh
 # Clone the repository
@@ -52,7 +61,7 @@ cd mvt-rs
 cargo build --release
 ```
 
-The binary is generated at `target/release/mvt-server`. You can move it anywhere you like — just make sure it can find its configuration file (next section).
+Either way, you end up with an `mvt-server` binary. You can move it anywhere you like — just make sure it can find its configuration file (next section).
 
 > **Prefer containers?** The repository ships a complete Docker setup (MVT Server + PostGIS + Redis) in [`docker-example/`](docker-example/DOCKER_README.md).
 
