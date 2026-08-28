@@ -114,6 +114,22 @@
                         </button>
                       </li>
 
+                      <!-- Metadata form link, published layers only -->
+                      {% if layer.published %}
+                      <li>
+                        <a
+                          class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 items-center space-x-2"
+                          href='/admin/metadata/edit/{{ layer.id }}'
+                          role="menuitem"
+                          onclick='closeDropdown("{{ layer.id }}")'
+                          title="Metadatos"
+                        >
+                          <span class="w-5"><i class="fas fa-file-alt"></i></span>
+                          <span>Metadatos</span>
+                        </a>
+                      </li>
+                      {% endif %}
+
                       <!-- Map para admin -->
                       <li>
                         {% if layer.published %}

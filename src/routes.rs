@@ -189,6 +189,24 @@ fn build_admin_groups_routes() -> Router {
         .push(Router::with_path("delete/{id}").get(html::admin::groups::delete_group))
 }
 
+/// Metadata is keyed by `layer_id` (1:1 with a `Layer`, design decision #1),
+/// not a freestanding entity id — `new`/`edit` both take `{layer_id}`; see
+/// `html::admin::metadata` for how the two pages redirect into each other
+/// when a record does/doesn't exist yet. Gated by
+/// `require_user_metadata_admin` (accepts `admin` or `admin_metadata`,
+/// design decision #8), not the stricter `require_user_admin`.
+fn build_admin_metadata_routes() -> Router {
+    Router::with_path("metadata")
+        .hoop(auth::handlers::require_user_metadata_admin)
+        .get(html::admin::metadata::list_metadata)
+        .push(Router::with_path("table").get(html::admin::metadata::table_metadata))
+        .push(Router::with_path("new/{layer_id}").get(html::admin::metadata::new_metadata_page))
+        .push(Router::with_path("create").post(html::admin::metadata::create_metadata))
+        .push(Router::with_path("edit/{layer_id}").get(html::admin::metadata::edit_metadata_page))
+        .push(Router::with_path("update").post(html::admin::metadata::update_metadata))
+        .push(Router::with_path("delete/{layer_id}").get(html::admin::metadata::delete_metadata))
+}
+
 fn build_admin_catalog_routes() -> Router {
     Router::with_path("catalog")
         .hoop(auth::require_user_admin)
@@ -232,6 +250,7 @@ fn build_admin_routes() -> Router {
         .push(build_admin_categories_routes())
         .push(build_admin_styles_routes())
         .push(build_admin_groups_routes())
+        .push(build_admin_metadata_routes())
         .push(build_admin_catalog_routes())
         .push(build_admin_database_routes())
         .push(build_admin_monitor_routes())
@@ -307,6 +326,22 @@ fn build_api_catalog_routes() -> Router {
         )
 }
 
+/// Admin CRUD JSON for a layer's metadata record (Phase 3 handlers, wired
+/// here). Deliberately NOT nested under the `admin` group below: that group
+/// hoops the stricter `require_api_admin` (accepts only `admin`), while
+/// metadata write ops must also accept `admin_metadata` (design decision
+/// #8) — hence its own sibling hoop chain with `require_api_metadata_admin`.
+fn build_api_metadata_routes() -> Router {
+    Router::with_path("metadata/{layer_id}")
+        .hoop(auth::jwt_auth_handler())
+        .hoop(auth::validate_token)
+        .hoop(auth::handlers::require_api_metadata_admin)
+        .get(api::metadata::get)
+        .post(api::metadata::create)
+        .put(api::metadata::update)
+        .delete(api::metadata::delete)
+}
+
 fn build_api_routes() -> Router {
     Router::with_path("api")
         .push(
@@ -316,6 +351,7 @@ fn build_api_routes() -> Router {
         )
         .push(Router::with_path("monitor/metrics").get(monitor::handlers::metrics))
         .push(Router::with_path("catalog/layer").get(api::catalog::list))
+        .push(build_api_metadata_routes())
         .push(
             Router::with_path("admin")
                 .hoop(auth::jwt_auth_handler())
@@ -346,10 +382,27 @@ fn build_tiles_routes() -> Router {
         )
 }
 
+/// OGC API - Records discovery (Phase 3 handlers, design decision #11:
+/// `/services/records` is mvt-rs's public read surface, mirroring the rest
+/// of `/services/*`; deliberately NOT behind the metadata-admin hoop —
+/// visibility is enforced per-item by `api::metadata::items` itself
+/// (published + `validate_user_groups`, spec "Discovery respects visibility
+/// rules"), the same pattern `tilejson_index` already uses.
+fn build_records_routes() -> Router {
+    Router::with_path("records")
+        .get(api::metadata::landing)
+        .push(Router::with_path("conformance").get(api::metadata::conformance))
+        .push(Router::with_path("collections").get(api::metadata::collections))
+        .push(Router::with_path("collections/{collection_id}").get(api::metadata::collection))
+        .push(Router::with_path("collections/{collection_id}/items").get(api::metadata::items))
+        .push(Router::with_path("collections/{collection_id}/items/{id}").get(api::metadata::item))
+}
+
 fn build_services_routes(settings: &Settings, cache: impl Handler) -> Router {
     Router::with_path("services")
         .hoop(cache)
         .push(build_tiles_routes())
+        .push(build_records_routes())
         .push(Router::with_path("styles/{style_name}").get(styles::index))
         .push(Router::with_path("legends/{style_name}").get(legends::index))
         .push(Router::with_path("tilejson").get(tilejson::tilejson_index))

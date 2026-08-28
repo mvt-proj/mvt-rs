@@ -1,0 +1,89 @@
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
+<div class="flex justify-between items-center mb-6">
+  <h1 class="title">Metadatos</h1>
+</div>
+
+<div class="flex justify-between items-center bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 py-4 px-5 mb-8 space-x-2">
+  <span id="url-records" class="text-blue-500">
+    <span class="server"></span>/services/records/collections/layers
+  </span>
+
+  <button
+    class="flex items-center justify-center w-10 h-10 rounded text-zinc-900 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
+    title="{{ base.translate["copy"] }}"
+    onclick="copyToClipboard('url-records')"
+  >
+    <span class="icon">
+      <i class="fas fa-copy"></i>
+    </span>
+  </button>
+</div>
+
+<div class="flex justify-between items-center">
+  <div class="flex space-x-3">
+    <input
+      id="filter"
+      type="text"
+      class="input input--sm"
+      placeholder="{{ base.translate["filter"] }}..."
+      hx-get="/admin/metadata/table"
+      hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
+      hx-target="#table-metadata"
+      hx-vals='js:{"filter": document.getElementById("filter").value}'
+    />
+    <button
+      class="button"
+      hx-get="/admin/metadata/table"
+      hx-target="#table-metadata"
+      hx-vals='js:{"filter": document.getElementById("filter").value}'
+    >
+      <span>
+        <i class="fas fa-search"></i>
+      </span>
+    </button>
+    <button
+      id="clear-filter"
+      class="button"
+      hx-get="/admin/metadata/table"
+      hx-target="#table-metadata"
+      hx-on:click="document.getElementById('filter').value=''"
+    >
+      <span>
+        <i class="fas fa-backspace"></i>
+      </span>
+    </button>
+  </div>
+</div>
+
+<div
+  id="table-metadata"
+  hx-get="/admin/metadata/table"
+  hx-swap="innerHTML"
+  hx-trigger="load"
+  class="mt-4"
+></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("htmx:afterOnLoad", initializePage);
+
+  const filter = document.getElementById("filter");
+  filter.addEventListener("input", () => {
+    sessionStorage.setItem("filterMetadata", filter.value);
+  });
+
+  const buttonClearFilter = document.getElementById("clear-filter");
+  buttonClearFilter.addEventListener("click", () => {
+    sessionStorage.removeItem("filterMetadata");
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const savedFilter = sessionStorage.getItem("filterMetadata");
+    if (savedFilter) {
+      filter.value = savedFilter;
+      filter.dispatchEvent(new Event("input"));
+    }
+  });
+</script>
+{% endblock %}

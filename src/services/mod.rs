@@ -1,5 +1,6 @@
 pub mod health;
 pub mod legends;
+pub mod metadata;
 pub mod styles;
 #[cfg(test)]
 mod tests;

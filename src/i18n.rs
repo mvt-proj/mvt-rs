@@ -15,6 +15,28 @@ const DEFAULT_LANG: &str = "en-US";
 
 type SafeBundle = FluentBundle<FluentResource, IntlLangMemoizer>;
 
+/// Parse `.ftl` source and collect every top-level Fluent message id.
+///
+/// Extracted from `I18n::new()`'s loading loop so that other code (in
+/// particular the metadata-codelist i18n completeness check, Phase 2.5)
+/// can determine "does this key exist in this locale?" using the exact
+/// same parse logic production uses, instead of a fragile regex/string
+/// scan of the raw `.ftl` text.
+pub fn extract_message_keys(ftl_content: &str) -> HashSet<String> {
+    let resource = match FluentResource::try_new(ftl_content.to_string()) {
+        Ok(res) => res,
+        Err((res, _)) => res,
+    };
+
+    let mut message_keys = HashSet::new();
+    for entry in resource.entries() {
+        if let ast::Entry::Message(msg) = entry {
+            message_keys.insert(msg.id.name.to_string());
+        }
+    }
+    message_keys
+}
+
 #[derive(Clone)]
 pub struct I18n {
     bundles: Arc<HashMap<String, (SafeBundle, HashSet<String>)>>,
@@ -62,12 +84,7 @@ impl I18n {
                 }
             };
 
-            let mut message_keys = HashSet::new();
-            for entry in resource.entries() {
-                if let ast::Entry::Message(msg) = entry {
-                    message_keys.insert(msg.id.name.to_string());
-                }
-            }
+            let message_keys = extract_message_keys(ftl_content);
 
             let mut bundle = FluentBundle::new_concurrent(vec![lang_id]);
             bundle.set_use_isolating(false);

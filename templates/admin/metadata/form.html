@@ -1,0 +1,272 @@
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
+
+<div class="flex justify-start items-center mb-6">
+  <a href="/admin/metadata" class="button__outline gap-2">
+    <i class="fas fa-arrow-left"></i>
+    <span>{{ base.translate["back"] }}</span>
+  </a>
+</div>
+
+<div class="max-w-5xl w-full mx-auto px-6">
+  <div class="box">
+    <h1 class="title mb-2 text-center">
+      {% if is_new %}Nuevo registro de metadatos{% else %}Editar registro de metadatos{% endif %}
+    </h1>
+    <p class="subtitle mb-6 text-center">{{ layer.category.name }}:{{ layer.name }} ({{ layer.alias }})</p>
+
+    <form action="/admin/metadata/{% if is_new %}create{% else %}update{% endif %}" method="post">
+      <input type="hidden" name="layer_id" value="{{ layer.id }}" />
+
+      <!-- language -->
+      <div class="mb-4">
+        <label class="label" for="language">Idioma</label>
+        <div class="control">
+          <input class="input" type="text" name="language" id="language" value="{{ record.language }}" required />
+        </div>
+        <p class="help is-info">Código de idioma ISO 639-2 (por ejemplo: spa, eng).</p>
+      </div>
+
+      <!-- character_set -->
+      <div class="mb-4">
+        <label class="label" for="character_set">Codificación de caracteres</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="character_set"
+            id="character_set"
+            value="{{ record.character_set.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- topic_category -->
+      <div class="mb-4">
+        <label class="label" for="topic_category">Categoría temática</label>
+        <div class="mt-1">
+          <div class="select">
+            <select name="topic_category" id="topic_category" class="input">
+              <option value="">-</option>
+              {% for entry in topic_categories %}
+              <option value="{{ entry.code }}" {% if record.topic_category.as_deref().unwrap_or_default() == entry.code %}selected{% endif %}>
+                {{ entry.label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- keywords -->
+      <div class="mb-4">
+        <label class="label" for="keywords">Palabras clave</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="keywords"
+            id="keywords"
+            value="{{ record.keywords.join(", ") }}"
+            placeholder="catastro, limites, parcelas"
+          />
+        </div>
+        <p class="help is-info">Separadas por comas.</p>
+      </div>
+
+      <!-- data_creator_contact -->
+      <div class="mb-4">
+        <label class="label" for="data_creator_contact">Contacto del creador de los datos</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="data_creator_contact"
+            id="data_creator_contact"
+            value="{{ record.data_creator_contact.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- metadata_contact -->
+      <div class="mb-4">
+        <label class="label" for="metadata_contact">Contacto de metadatos</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="metadata_contact"
+            id="metadata_contact"
+            value="{{ record.metadata_contact.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- maintenance_frequency -->
+      <div class="mb-4">
+        <label class="label" for="maintenance_frequency">Frecuencia de mantenimiento</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="maintenance_frequency"
+            id="maintenance_frequency"
+            value="{{ record.maintenance_frequency.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- restrictions -->
+      <div class="mb-4">
+        <label class="label" for="restrictions">Restricciones de uso</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="restrictions"
+            id="restrictions"
+            value="{{ record.restrictions.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- lineage -->
+      <div class="mb-4">
+        <label class="label" for="lineage">Linaje</label>
+        <div class="control">
+          <textarea class="textarea" name="lineage" id="lineage" rows="3">{{ record.lineage.as_deref().unwrap_or_default() }}</textarea>
+        </div>
+      </div>
+
+      <!-- scale -->
+      <div class="mb-4">
+        <label class="label" for="scale">Escala</label>
+        <div class="control">
+          <input class="input" type="text" name="scale" id="scale" value="{{ record.scale.as_deref().unwrap_or_default() }}" />
+        </div>
+      </div>
+
+      <!-- spatial_resolution -->
+      <div class="mb-4">
+        <label class="label" for="spatial_resolution">Resolución espacial</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="spatial_resolution"
+            id="spatial_resolution"
+            value="{{ record.spatial_resolution.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- projection (derived read-only from layer.srid, design decision #3) -->
+      <div class="mb-4">
+        <label class="label">Proyección</label>
+        <div class="control">
+          <input class="input" type="text" value="{{ projection }}" disabled />
+        </div>
+        <p class="help is-info">Derivada automáticamente del SRID configurado en la capa.</p>
+      </div>
+
+      <!-- status -->
+      <div class="mb-4">
+        <label class="label" for="status">Estado</label>
+        <div class="mt-1">
+          <div class="select">
+            <select name="status" id="status" class="input">
+              <option value="">-</option>
+              {% for entry in progress_codes %}
+              <option value="{{ entry.code }}" {% if record.status.as_deref().unwrap_or_default() == entry.code %}selected{% endif %}>
+                {{ entry.label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- edition -->
+      <div class="mb-4">
+        <label class="label" for="edition">Edición</label>
+        <div class="control">
+          <input class="input" type="text" name="edition" id="edition" value="{{ record.edition.as_deref().unwrap_or_default() }}" />
+        </div>
+      </div>
+
+      <!-- reference_date -->
+      <div class="mb-4">
+        <label class="label" for="reference_date">Fecha de referencia</label>
+        <div class="control">
+          <input class="input" type="date" name="reference_date" id="reference_date" value="{{ reference_date_value }}" />
+        </div>
+      </div>
+
+      <!-- external links -->
+      <div class="mb-4">
+        <label class="label">Enlaces externos (OGC)</label>
+        <p class="help is-info mb-2">
+          Servicios externos relacionados con esta capa (WMS, WFS, WCS u otro enlace web). No se realizan
+          verificaciones automáticas de estas URLs.
+        </p>
+        <div id="links-container">
+          {% for link in record.links %}
+          <div class="flex flex-wrap gap-2 items-center mb-2 link-row">
+            <div class="select">
+              <select name="link_protocol" class="input">
+                {% for protocol in protocols %}
+                <option value="{{ protocol }}" {% if link.protocol == *protocol %}selected{% endif %}>{{ protocol }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <input class="input flex-1" type="url" name="link_url" placeholder="https://" value="{{ link.url }}" />
+            <input class="input flex-1" type="text" name="link_label" placeholder="Etiqueta" value="{{ link.label.as_deref().unwrap_or_default() }}" />
+            <button type="button" class="button__outline" onclick="this.closest('.link-row').remove()">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="button__outline gap-2" onclick="addLinkRow()">
+          <i class="fas fa-plus"></i>
+          <span>Agregar enlace</span>
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <div class="flex justify-center items-center">
+          <button class="button">
+            {% if is_new %}Crear registro{% else %}Guardar cambios{% endif %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Hidden template row cloned by addLinkRow() -->
+<template id="link-row-template">
+  <div class="flex flex-wrap gap-2 items-center mb-2 link-row">
+    <div class="select">
+      <select name="link_protocol" class="input">
+        {% for protocol in protocols %}
+        <option value="{{ protocol }}">{{ protocol }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <input class="input flex-1" type="url" name="link_url" placeholder="https://" />
+    <input class="input flex-1" type="text" name="link_label" placeholder="Etiqueta" />
+    <button type="button" class="button__outline" onclick="this.closest('.link-row').remove()">
+      <i class="fas fa-trash"></i>
+    </button>
+  </div>
+</template>
+
+{% endblock %} {% block scripts %}
+<script>
+  function addLinkRow() {
+    var template = document.getElementById('link-row-template');
+    var container = document.getElementById('links-container');
+    container.appendChild(template.content.cloneNode(true));
+  }
+</script>
+{% endblock %}

@@ -31,6 +31,22 @@ impl JwtClaims {
     pub fn is_admin(&self) -> bool {
         self.groups.iter().any(|g| g == "admin")
     }
+
+    /// Metadata write access: members of `admin` (full admin) OR
+    /// `admin_metadata` (metadata-scoped admin) may write metadata records.
+    // Called from `require_api_metadata_admin` via a closure argument to
+    // `Option::is_some_and`; rustc's dead-code liveness analysis does not
+    // reliably trace calls made inside that closure shape back to this
+    // method (unlike the sibling `User::is_metadata_admin`, called directly,
+    // which is correctly detected as live). Covered end-to-end by
+    // `require_api_metadata_admin_allows_admin_metadata_group` in
+    // `auth::handlers::tests`.
+    #[allow(dead_code)]
+    pub fn is_metadata_admin(&self) -> bool {
+        self.groups
+            .iter()
+            .any(|g| g == "admin" || g == "admin_metadata")
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -195,6 +211,13 @@ impl User {
 
     pub fn is_admin(&self) -> bool {
         self.groups_as_vec_string().contains(&"admin".to_string())
+    }
+
+    /// Metadata write access: members of `admin` (full admin) OR
+    /// `admin_metadata` (metadata-scoped admin) may write metadata records.
+    pub fn is_metadata_admin(&self) -> bool {
+        let groups = self.groups_as_vec_string();
+        groups.contains(&"admin".to_string()) || groups.contains(&"admin_metadata".to_string())
     }
 }
 

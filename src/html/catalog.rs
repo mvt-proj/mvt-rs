@@ -102,3 +102,115 @@ pub async fn table_catalog_admin(
 ) -> AppResult<()> {
     render_catalog_table(req, res, depot, true).await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::category::Category;
+
+    /// Every `translate[...]` key `catalog/table.html` looks up. Missing a
+    /// key here panics at render time (`HashMap::index` on absent key), so
+    /// this must track the template's real usages, not just the ones this
+    /// test cares about.
+    fn full_translate() -> HashMap<String, String> {
+        [
+            "category",
+            "database",
+            "layer-name",
+            "alias",
+            "table",
+            "copy",
+            "inspect-layer",
+            "info",
+            "switch-published",
+            "confirm-delete-cache",
+            "delete-cache",
+            "edit",
+            "confirm-delete-layer",
+            "delete",
+        ]
+        .into_iter()
+        .map(|k| (k.to_string(), k.to_string()))
+        .collect()
+    }
+
+    fn test_layer(id: &str, published: bool) -> Layer {
+        Layer {
+            id: id.to_string(),
+            category: Category {
+                id: "cat-1".to_string(),
+                name: "public".to_string(),
+                description: String::new(),
+            },
+            geometry: "polygons".to_string(),
+            name: "parcels".to_string(),
+            alias: "Parcels".to_string(),
+            description: "Cadastral parcels".to_string(),
+            database_id: "default".to_string(),
+            schema: "public".to_string(),
+            table_name: "parcels".to_string(),
+            fields: vec!["gid".to_string()],
+            filter: None,
+            srid: None,
+            geom: None,
+            label_layer: false,
+            sql_mode: None,
+            buffer: None,
+            extent: None,
+            zmin: None,
+            zmax: None,
+            zmax_do_not_simplify: None,
+            buffer_do_not_simplify: None,
+            extent_do_not_simplify: None,
+            clip_geom: None,
+            delete_cache_on_start: None,
+            max_cache_age: None,
+            max_records: None,
+            published,
+            url: None,
+            groups: None,
+        }
+    }
+
+    /// Spec "Metadata entry in catalog row actions": the admin dropdown
+    /// shows a "Metadatos" entry only for rows whose layer is `published`.
+    #[test]
+    fn admin_dropdown_shows_metadata_entry_only_for_published_layer() {
+        let layers = vec![test_layer("layer-published", true), test_layer("layer-unpublished", false)];
+        let template = CatalogTableTemplate {
+            layers: &layers,
+            is_admin_context: true,
+            translate: full_translate(),
+        };
+        let html = template.render().unwrap();
+
+        assert_eq!(
+            html.matches(">Metadatos<").count(),
+            1,
+            "must show exactly one rendered Metadatos entry"
+        );
+        assert!(
+            html.contains("/admin/metadata/edit/layer-published"),
+            "must link to the published layer's metadata form"
+        );
+        assert!(
+            !html.contains("/admin/metadata/edit/layer-unpublished"),
+            "must not link to the unpublished layer's metadata form"
+        );
+    }
+
+    /// The public (non-admin) catalog view never shows management actions,
+    /// including this one — it is scoped to the admin dropdown only.
+    #[test]
+    fn public_context_never_shows_metadata_entry() {
+        let layers = vec![test_layer("layer-published", true)];
+        let template = CatalogTableTemplate {
+            layers: &layers,
+            is_admin_context: false,
+            translate: full_translate(),
+        };
+        let html = template.render().unwrap();
+
+        assert!(!html.contains("Metadatos"));
+    }
+}

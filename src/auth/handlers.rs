@@ -63,6 +63,38 @@ pub async fn require_api_admin(depot: &mut Depot) -> AppResult<()> {
     }
 }
 
+#[handler]
+pub async fn require_user_metadata_admin(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+    if let Some(session) = depot.session_mut()
+        && let Some(userid) = session.get::<String>("userid")
+    {
+        let auth = get_auth().await.read().await;
+        if let Some(user) = auth.get_user_by_id(&userid)
+            && !user.is_metadata_admin()
+        {
+            res.render(Redirect::other("/admin"));
+            return Ok(());
+        }
+    }
+
+    Ok(())
+}
+
+#[handler]
+pub async fn require_api_metadata_admin(depot: &mut Depot) -> AppResult<()> {
+    let is_metadata_admin = depot
+        .jwt_auth_data::<JwtClaims>()
+        .is_some_and(|data| data.claims.is_metadata_admin());
+
+    if is_metadata_admin {
+        Ok(())
+    } else {
+        Err(AppError::Forbidden(
+            "Metadata admin privileges required".to_string(),
+        ))
+    }
+}
+
 pub fn jwt_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
     let jwt_secret = get_jwt_secret();
 
@@ -226,5 +258,120 @@ mod tests {
         let service = Service::new(protected_router());
         let res = TestClient::get("http://127.0.0.1:5800/").send(&service).await;
         assert_eq!(res.status_code.unwrap(), StatusCode::FORBIDDEN);
+    }
+
+    fn metadata_protected_router() -> Router {
+        #[handler]
+        async fn ok(res: &mut Response) {
+            res.render("ok");
+        }
+
+        Router::new()
+            .hoop(jwt_auth_handler())
+            .hoop(require_api_metadata_admin)
+            .get(ok)
+    }
+
+    #[tokio::test]
+    async fn require_api_metadata_admin_allows_admin_group() {
+        let token = sign_token(vec!["admin".to_string()]);
+        let service = Service::new(metadata_protected_router());
+        let res = TestClient::get("http://127.0.0.1:5800/")
+            .bearer_auth(token)
+            .send(&service)
+            .await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn require_api_metadata_admin_allows_admin_metadata_group() {
+        let token = sign_token(vec!["admin_metadata".to_string()]);
+        let service = Service::new(metadata_protected_router());
+        let res = TestClient::get("http://127.0.0.1:5800/")
+            .bearer_auth(token)
+            .send(&service)
+            .await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn require_api_metadata_admin_rejects_other_group() {
+        let token = sign_token(vec!["users".to_string()]);
+        let service = Service::new(metadata_protected_router());
+        let res = TestClient::get("http://127.0.0.1:5800/")
+            .bearer_auth(token)
+            .send(&service)
+            .await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn require_api_metadata_admin_rejects_missing_token() {
+        ensure_jwt_secret();
+        let service = Service::new(metadata_protected_router());
+        let res = TestClient::get("http://127.0.0.1:5800/").send(&service).await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::FORBIDDEN);
+    }
+
+    // `require_user_metadata_admin` mirrors `require_user_admin`: both read
+    // the session then consult the process-global `get_auth()` singleton,
+    // which is never initialized in this test binary (only `main.rs` calls
+    // `AUTH.set(...)` once at startup) — same reason `require_user_admin`
+    // itself has no direct TestClient coverage above. The group-membership
+    // logic the hoop delegates to IS covered directly and exhaustively via
+    // `User::is_metadata_admin()`, mirroring the existing `is_admin()` unit
+    // coverage pattern on the same struct.
+    #[test]
+    fn is_metadata_admin_true_for_admin_group() {
+        let user = crate::auth::models::User {
+            id: "u1".to_string(),
+            username: "tester".to_string(),
+            email: "tester@test.com".to_string(),
+            first_name: None,
+            last_name: None,
+            password: "hash".to_string(),
+            groups: vec![crate::auth::models::Group {
+                id: "admin".to_string(),
+                name: "admin".to_string(),
+                description: String::new(),
+            }],
+        };
+        assert!(user.is_metadata_admin());
+    }
+
+    #[test]
+    fn is_metadata_admin_true_for_admin_metadata_group() {
+        let user = crate::auth::models::User {
+            id: "u1".to_string(),
+            username: "tester".to_string(),
+            email: "tester@test.com".to_string(),
+            first_name: None,
+            last_name: None,
+            password: "hash".to_string(),
+            groups: vec![crate::auth::models::Group {
+                id: "admin_metadata".to_string(),
+                name: "admin_metadata".to_string(),
+                description: String::new(),
+            }],
+        };
+        assert!(user.is_metadata_admin());
+    }
+
+    #[test]
+    fn is_metadata_admin_false_for_other_group() {
+        let user = crate::auth::models::User {
+            id: "u1".to_string(),
+            username: "tester".to_string(),
+            email: "tester@test.com".to_string(),
+            first_name: None,
+            last_name: None,
+            password: "hash".to_string(),
+            groups: vec![crate::auth::models::Group {
+                id: "users".to_string(),
+                name: "users".to_string(),
+                description: String::new(),
+            }],
+        };
+        assert!(!user.is_metadata_admin());
     }
 }

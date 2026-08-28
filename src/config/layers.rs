@@ -263,6 +263,12 @@ pub async fn update_layer(pool: Option<&SqlitePool>, layer: Layer) -> Result<(),
 pub async fn delete_layer(pool: Option<&SqlitePool>, layer_id: &str) -> Result<(), sqlx::Error> {
     let pool = pool.unwrap_or_else(|| get_cf_pool());
 
+    // Cascade first: config DB declares no SQL FKs (see config/db.rs), so the
+    // metadata record/links for this layer must be removed explicitly before
+    // (or regardless of) the layer row itself. No separate version bump here
+    // — the bump below covers the whole delete_layer operation.
+    crate::config::metadata::delete_metadata_for_layer(pool, layer_id).await?;
+
     sqlx::query("DELETE FROM layers WHERE id = ?")
         .bind(layer_id)
         .execute(pool)
@@ -309,6 +315,61 @@ mod tests {
         let pool = in_memory_pool().await;
         delete_layer(Some(&pool), "nonexistent").await.unwrap();
         assert_eq!(get_config_version(&pool).await.unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn delete_layer_cascades_to_metadata_record_and_links() {
+        use crate::config::metadata::{create_metadata_record, get_metadata_record_by_layer_id};
+        use crate::models::metadata::{MetadataLink, MetadataRecord};
+        use time::macros::datetime;
+
+        let pool = in_memory_pool().await;
+        create_layer(Some(&pool), test_layer("l1")).await.unwrap();
+
+        let record = MetadataRecord {
+            id: "rec-1".to_string(),
+            layer_id: "l1".to_string(),
+            file_identifier: "file-1".to_string(),
+            language: "spa".to_string(),
+            character_set: None,
+            topic_category: None,
+            keywords: vec![],
+            data_creator_contact: None,
+            metadata_contact: None,
+            maintenance_frequency: None,
+            restrictions: None,
+            lineage: None,
+            scale: None,
+            spatial_resolution: None,
+            status: None,
+            edition: None,
+            reference_date: None,
+            metadata_date: datetime!(2026-08-27 12:00:00 UTC),
+            links: vec![MetadataLink {
+                id: "link-1".to_string(),
+                protocol: "OGC:WMS".to_string(),
+                url: "https://example.com/wms".to_string(),
+                label: None,
+            }],
+        };
+        create_metadata_record(Some(&pool), &record).await.unwrap();
+
+        delete_layer(Some(&pool), "l1").await.unwrap();
+
+        let found = get_metadata_record_by_layer_id(Some(&pool), "l1")
+            .await
+            .unwrap();
+        assert!(
+            found.is_none(),
+            "deleting the layer must cascade-delete its metadata record and links"
+        );
+
+        let orphan_links: i64 = sqlx::query("SELECT COUNT(*) AS c FROM metadata_links")
+            .fetch_one(&pool)
+            .await
+            .unwrap()
+            .get("c");
+        assert_eq!(orphan_links, 0, "no orphan metadata_links rows may remain");
     }
 
     fn test_layer(id: &str) -> Layer {

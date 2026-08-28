@@ -145,7 +145,10 @@ pub fn build_tilejson(
 /// extent query fails so the document is still valid.
 const WORLD_BOUNDS: [f64; 4] = [-180.0, -85.05112877980659, 180.0, 85.05112877980659];
 
-fn base_url_from_request(req: &Request) -> String {
+/// `pub(crate)` (design decision #11) so `api::metadata` can reuse this
+/// request-header wrapper instead of duplicating it (closes the Work Unit 3
+/// disclosed deviation — see `sdd/iso19115-metadata-integration/apply-progress`).
+pub(crate) fn base_url_from_request(req: &Request) -> String {
     let header = |name: &str| {
         req.headers()
             .get(name)
