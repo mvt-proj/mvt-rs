@@ -389,13 +389,26 @@ fn build_tiles_routes() -> Router {
 /// (published + `validate_user_groups`, spec "Discovery respects visibility
 /// rules"), the same pattern `tilejson_index` already uses.
 fn build_records_routes() -> Router {
-    Router::with_path("records")
+    let router = Router::with_path("records")
         .get(api::metadata::landing)
         .push(Router::with_path("conformance").get(api::metadata::conformance))
         .push(Router::with_path("collections").get(api::metadata::collections))
         .push(Router::with_path("collections/{collection_id}").get(api::metadata::collection))
         .push(Router::with_path("collections/{collection_id}/items").get(api::metadata::items))
-        .push(Router::with_path("collections/{collection_id}/items/{id}").get(api::metadata::item))
+        .push(Router::with_path("collections/{collection_id}/items/{id}").get(api::metadata::item));
+
+    // `merge_router` walks `router`'s own tree, which already starts at the
+    // "records" segment — base "/services" (not "/services/records") is
+    // what makes the generated document's `paths` match the real mount
+    // point under `build_services_routes`. Closes the Geonovum
+    // `[unrecognized-format]` gap: `landing`'s `service-desc` link
+    // (`api::metadata::build_landing`) points at this route.
+    let openapi = OpenApi::new("MVT Server — OGC API - Records", env!("CARGO_PKG_VERSION"))
+        .merge_router_with_base(&router, "/services");
+
+    router
+        .push(openapi.into_router("openapi"))
+        .push(Scalar::new("/services/records/openapi").title("MVT Server — OGC API - Records").into_router("scalar"))
 }
 
 fn build_services_routes(settings: &Settings, cache: impl Handler) -> Router {
@@ -499,4 +512,93 @@ pub fn app_router(settings: &Settings, i18n_service: Arc<I18n>) -> Service {
         .hoop(strip_tile_cookie) // outermost: after-phase runs after session_handler
         .hoop(cors_handler)
         .catcher(Catcher::default().hoop(html::errors::handle_errors))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use salvo::test::{ResponseExt, TestClient};
+
+    // `build_records_routes()` is exercised standalone here (no `/services`
+    // prefix), same as the discovery-route tests in `api::metadata` — the
+    // OpenAPI document itself is built with base path `/services` (see
+    // `build_records_routes`) so its `paths` keys already carry the full
+    // public path even though this test hits the router at its own root.
+    #[tokio::test]
+    async fn records_openapi_route_returns_a_valid_document_with_expected_paths() {
+        let service = Service::new(build_records_routes());
+        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi").send(&service).await;
+        assert_eq!(res.status_code.unwrap(), StatusCode::OK);
+
+        let body: serde_json::Value = res.take_json().await.unwrap();
+        assert!(body["openapi"].is_string(), "must be a real OpenAPI document");
+
+        let paths = body["paths"].as_object().expect("paths must be an object");
+        for expected in [
+            "/services/records",
+            "/services/records/conformance",
+            "/services/records/collections",
+            "/services/records/collections/{collection_id}",
+            "/services/records/collections/{collection_id}/items",
+            "/services/records/collections/{collection_id}/items/{id}",
+        ] {
+            assert!(paths.contains_key(expected), "expected path '{expected}' in the OpenAPI document");
+        }
+    }
+
+    // Guards against `salvo_oapi`'s "parameters information not provided"
+    // startup warning: every `{placeholder}` in a path must be echoed back
+    // in that operation's declared `parameters`, or the generated document
+    // is spec-incomplete (OpenAPI requires path params to be documented).
+    #[tokio::test]
+    async fn records_openapi_route_documents_every_path_parameter() {
+        let service = Service::new(build_records_routes());
+        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi").send(&service).await;
+        let body: serde_json::Value = res.take_json().await.unwrap();
+        let paths = body["paths"].as_object().expect("paths must be an object");
+
+        let cases: &[(&str, &[&str])] = &[
+            ("/services/records/collections/{collection_id}", &["collection_id"]),
+            ("/services/records/collections/{collection_id}/items", &["collection_id"]),
+            ("/services/records/collections/{collection_id}/items/{id}", &["collection_id", "id"]),
+        ];
+
+        for (path, expected_params) in cases {
+            let get_op = &paths[*path]["get"];
+            let declared: Vec<&str> = get_op["parameters"]
+                .as_array()
+                .map(|params| params.iter().filter_map(|p| p["name"].as_str()).collect())
+                .unwrap_or_default();
+
+            for expected in *expected_params {
+                assert!(
+                    declared.contains(expected),
+                    "path '{path}' must declare parameter '{expected}', got {declared:?}"
+                );
+            }
+        }
+    }
+
+    // Guards against `salvo_oapi`'s companion "information for not exist
+    // parameters" warning: a declared parameter whose `in` defaults to
+    // `path` but whose name is NOT one of the path's `{placeholder}`s is
+    // flagged as bogus. `items`' filters (`q`, `bbox`, `datetime`, `limit`,
+    // `offset`) are query params and must say so explicitly.
+    #[tokio::test]
+    async fn items_query_filters_are_declared_as_query_parameters() {
+        let service = Service::new(build_records_routes());
+        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi").send(&service).await;
+        let body: serde_json::Value = res.take_json().await.unwrap();
+
+        let get_op = &body["paths"]["/services/records/collections/{collection_id}/items"]["get"];
+        let params = get_op["parameters"].as_array().expect("parameters must be an array");
+
+        for name in ["q", "bbox", "datetime", "limit", "offset"] {
+            let param = params
+                .iter()
+                .find(|p| p["name"] == name)
+                .unwrap_or_else(|| panic!("expected declared parameter '{name}'"));
+            assert_eq!(param["in"], "query", "parameter '{name}' must be declared `in: query`, got {param}");
+        }
+    }
 }

@@ -322,7 +322,7 @@ pub async fn delete(req: &mut Request, res: &mut Response) -> AppResult<()> {
 // OGC API - Records discovery (tasks 3.3-3.8)
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct Landing {
     title: String,
     description: String,
@@ -347,11 +347,22 @@ fn build_landing(base_url: &str) -> Landing {
                 "application/json",
                 None,
             ),
+            // Root cause of the Geonovum `[unrecognized-format]` conformance
+            // warning: the landing page advertised no machine-readable API
+            // definition. Version is 3.1 (not 3.0) — see the `oas30` doc
+            // comment on `CONFORMANCE_CLASSES` for why that class isn't
+            // declared yet.
+            generic_link(
+                "service-desc",
+                format!("{base_url}{RECORDS_BASE_PATH}/openapi"),
+                "application/vnd.oai.openapi+json;version=3.1",
+                Some("OpenAPI 3.1 document for this service"),
+            ),
         ],
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct Conformance {
     #[serde(rename = "conformsTo")]
     conforms_to: Vec<String>,
@@ -363,7 +374,7 @@ fn build_conformance() -> Conformance {
     }
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, ToSchema, Clone)]
 struct CollectionDescription {
     id: String,
     title: String,
@@ -396,7 +407,7 @@ fn build_collection_description(base_url: &str) -> CollectionDescription {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct CollectionsResponse {
     collections: Vec<CollectionDescription>,
     links: Vec<FeatureLink>,
@@ -414,24 +425,36 @@ fn build_collections(base_url: &str) -> CollectionsResponse {
     }
 }
 
-#[handler]
+/// OGC API - Records landing page: entry point advertising the
+/// conformance, collections, and OpenAPI document links.
+#[endpoint(responses((status_code = 200, description = "OGC API - Records landing page.", body = Landing)))]
 pub async fn landing(req: &mut Request, res: &mut Response) {
     let base_url = base_url_from_request(req);
     res.render(Json(build_landing(&base_url)));
 }
 
-#[handler]
+/// Conformance classes implemented by this OGC API - Records service.
+#[endpoint(responses((status_code = 200, description = "Conformance classes implemented by this service.", body = Conformance)))]
 pub async fn conformance(res: &mut Response) {
     res.render(Json(build_conformance()));
 }
 
-#[handler]
+/// Lists the OGC API - Records collections exposed by this service (a
+/// single fixed `layers` collection).
+#[endpoint(responses((status_code = 200, description = "Available collections.", body = CollectionsResponse)))]
 pub async fn collections(req: &mut Request, res: &mut Response) {
     let base_url = base_url_from_request(req);
     res.render(Json(build_collections(&base_url)));
 }
 
-#[handler]
+/// Describes a single OGC API - Records collection.
+#[endpoint(
+    parameters(("collection_id", description = "The collection identifier (only `layers` exists).")),
+    responses(
+        (status_code = 200, description = "Collection description.", body = CollectionDescription),
+        (status_code = 404, description = "Unknown collection id.")
+    )
+)]
 pub async fn collection(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let collection_id = req.param::<String>("collection_id").unwrap_or_default();
     require_known_collection(&collection_id)?;
@@ -441,7 +464,7 @@ pub async fn collection(req: &mut Request, res: &mut Response) -> AppResult<()> 
     Ok(())
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct FeatureCollectionResponse {
     #[serde(rename = "type")]
     type_: String,
@@ -578,7 +601,22 @@ fn build_items_links(
     links
 }
 
-#[handler]
+/// Lists metadata records (as GeoJSON `Feature`s) for the `layers`
+/// collection, filterable by `q`, `bbox`, and `datetime`.
+#[endpoint(
+    parameters(
+        ("collection_id", description = "The collection identifier (only `layers` exists)."),
+        ("q", Query, description = "Free-text filter over title, description, and keywords."),
+        ("bbox", Query, description = "Bounding box filter as `xmin,ymin,xmax,ymax`."),
+        ("datetime", Query, description = "RFC 3339 instant or interval filter."),
+        ("limit", Query, description = "Max records per page (1-1000, default 10)."),
+        ("offset", Query, description = "Number of records to skip (default 0)."),
+    ),
+    responses(
+        (status_code = 200, description = "Matching records, as a GeoJSON FeatureCollection.", body = FeatureCollectionResponse),
+        (status_code = 400, description = "Malformed `q`, `bbox`, or `datetime` filter value.")
+    )
+)]
 pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let collection_id = req.param::<String>("collection_id").unwrap_or_default();
     if let Err(e) = require_known_collection(&collection_id) {
@@ -693,7 +731,18 @@ pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> 
     Ok(())
 }
 
-#[handler]
+/// Fetches a single metadata record (as a GeoJSON `Feature`) by its
+/// `{category}:{layer}` id.
+#[endpoint(
+    parameters(
+        ("collection_id", description = "The collection identifier (only `layers` exists)."),
+        ("id", description = "The record id, as `{category}:{layer}`."),
+    ),
+    responses(
+        (status_code = 200, description = "The matching record.", body = Feature),
+        (status_code = 404, description = "No such record, or the caller cannot see it.")
+    )
+)]
 pub async fn item(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let collection_id = req.param::<String>("collection_id").unwrap_or_default();
     require_known_collection(&collection_id)?;
@@ -1261,10 +1310,22 @@ mod tests {
     #[test]
     fn build_landing_includes_self_conformance_and_data_links() {
         let landing_body = build_landing("http://localhost:5887");
-        assert_eq!(landing_body.links.len(), 3);
+        assert_eq!(landing_body.links.len(), 4);
         assert!(landing_body.links.iter().any(|l| l.rel == "self"));
         assert!(landing_body.links.iter().any(|l| l.rel == "conformance"));
         assert!(landing_body.links.iter().any(|l| l.rel == "data"));
+    }
+
+    #[test]
+    fn build_landing_includes_a_service_desc_link_to_the_openapi_document() {
+        let landing_body = build_landing("http://localhost:5887");
+        let service_desc = landing_body
+            .links
+            .iter()
+            .find(|l| l.rel == "service-desc")
+            .expect("landing page must advertise a machine-readable API definition");
+        assert_eq!(service_desc.href, "http://localhost:5887/services/records/openapi");
+        assert_eq!(service_desc.media_type, "application/vnd.oai.openapi+json;version=3.1");
     }
 
     #[test]
@@ -1435,7 +1496,7 @@ mod tests {
         assert_eq!(res.status_code.unwrap(), StatusCode::OK);
         let body: serde_json::Value = res.take_json().await.unwrap();
         assert_eq!(body["title"], "MVT Server metadata catalog");
-        assert!(body["links"].as_array().unwrap().len() == 3);
+        assert!(body["links"].as_array().unwrap().len() == 4);
     }
 
     #[tokio::test]

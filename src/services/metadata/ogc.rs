@@ -24,6 +24,7 @@ pub fn is_known_protocol(protocol: &str) -> bool {
     KNOWN_PROTOCOLS.contains(&protocol)
 }
 
+use salvo::oapi::ToSchema;
 use serde::Serialize;
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
@@ -126,12 +127,22 @@ pub fn parse_datetime(raw: &str) -> AppResult<DatetimeFilter> {
 /// OGC API - Records (Part 1: Core) conformance class URIs. Public spec
 /// identifiers, retyped verbatim — not sourced from any proprietary
 /// implementation.
+///
+/// Deliberately NOT declaring `.../conf/oas30` here even though
+/// `/services/records/openapi` (`routes::build_records_routes`) now exists:
+/// that conformance class asserts the served document is OpenAPI **3.0**,
+/// but the pinned `salvo-oapi` 0.96.0 only emits 3.1.0 (see
+/// `salvo_oapi::openapi::OpenApiVersion`, which has no 3.0 variant) —
+/// claiming `oas30` while serving 3.1 would fail conformance harder than
+/// the missing-API-definition warning it was meant to fix. Add it back once
+/// either the document can be generated as true OAS 3.0, or the OGC
+/// checker's `oas30` test is confirmed to accept 3.1.
 pub const CONFORMANCE_CLASSES: [&str; 2] = [
     "http://www.opengis.net/spec/ogcapi-records-1/1.0/conf/core",
     "http://www.opengis.net/spec/ogcapi-records-1/1.0/conf/json",
 ];
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, ToSchema, PartialEq)]
 pub struct FeatureLink {
     pub rel: String,
     pub href: String,
@@ -141,7 +152,7 @@ pub struct FeatureLink {
     pub title: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, ToSchema, PartialEq)]
 #[serde(tag = "type")]
 pub enum Geometry {
     Polygon { coordinates: Vec<Vec<[f64; 2]>> },
@@ -150,7 +161,7 @@ pub enum Geometry {
 /// A single email/phone value on an OGC API - Records contact object
 /// (design decision #5: `{value}` wrapper, not a bare string, per the
 /// OGC API - Records contact schema).
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, ToSchema, PartialEq)]
 pub struct ContactValue {
     pub value: String,
 }
@@ -160,7 +171,7 @@ pub struct ContactValue {
 /// (`models::metadata::MetadataContact`) — this shape exists only at the
 /// discovery boundary. Blank optional fields are skipped (`null`-free
 /// output), not serialized as `null`.
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, ToSchema, PartialEq)]
 pub struct FeatureContact {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
@@ -175,7 +186,7 @@ pub struct FeatureContact {
     pub phones: Vec<ContactValue>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, ToSchema, PartialEq)]
 pub struct FeatureProperties {
     pub title: String,
     pub description: String,
@@ -210,7 +221,7 @@ pub struct FeatureProperties {
     pub supplemental_information: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct Feature {
     #[serde(rename = "type")]
     pub type_: String,
@@ -806,5 +817,14 @@ mod tests {
             assert!(is_known_protocol(protocol));
         }
         assert!(!is_known_protocol("OGC:CSW"));
+    }
+
+    #[test]
+    fn conformance_classes_omit_oas30_until_the_openapi_document_is_actually_3_0() {
+        assert!(
+            !CONFORMANCE_CLASSES.contains(&"http://www.opengis.net/spec/ogcapi-records-1/1.0/conf/oas30"),
+            "oas30 asserts an OpenAPI 3.0 document; the served document is 3.1 (salvo-oapi 0.96.0 \
+             has no 3.0 output mode) — declaring it now would fail conformance, not fix it"
+        );
     }
 }
