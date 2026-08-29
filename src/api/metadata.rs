@@ -717,6 +717,7 @@ mod tests {
                 language: "spa".to_string(),
                 external_ids: vec![],
                 projection: "EPSG:4326".to_string(),
+                contacts: vec![],
             },
             links: vec![],
         }

@@ -13,6 +13,9 @@
 // convention in `config/metadata.rs`.
 #![allow(dead_code)]
 
+use crate::error::{AppError, AppResult};
+use crate::models::metadata::MetadataContact;
+
 /// One entry of an ISO 19115 codelist: the machine `code` (used verbatim
 /// as the stored/exchanged value). Display labels are resolved at render
 /// time via Fluent i18n — see `topic_category_translate_key` /
@@ -91,6 +94,48 @@ pub fn is_valid_progress_code(code: &str) -> bool {
     is_valid_in(PROGRESS_CODES, code)
 }
 
+/// `CI_RoleCode` (closed subset) — the six responsible-party roles a
+/// `MetadataContact` may declare (spec "Closed role vocabulary
+/// enforcement", Work Unit 2).
+pub const ROLE_CODES: &[CodelistEntry] = &[
+    CodelistEntry { code: "originator" },
+    CodelistEntry { code: "pointOfContact" },
+    CodelistEntry { code: "metadataAuthor" },
+    CodelistEntry { code: "custodian" },
+    CodelistEntry { code: "publisher" },
+    CodelistEntry { code: "processor" },
+];
+
+/// Fluent translate key (`role-code-{code}`) for a `CI_RoleCode` value, or
+/// `None` if unknown.
+pub fn role_code_translate_key(code: &str) -> Option<String> {
+    translate_key_for(ROLE_CODES, "role-code", code)
+}
+
+/// Whether `code` is one of the six closed `ROLE_CODES` values.
+pub fn is_valid_role_code(code: &str) -> bool {
+    is_valid_in(ROLE_CODES, code)
+}
+
+/// Validates every contact's `role` against [`ROLE_CODES`] (spec "Closed
+/// role vocabulary enforcement"). Rejects with a typed
+/// [`AppError::InvalidInput`] on the first invalid role found — mirrors the
+/// `guard_layer_published` boundary-validation pattern (design decision #4):
+/// the check lives at the application layer, not in `config::metadata` or a
+/// SQL CHECK constraint.
+pub fn validate_contacts(contacts: &[MetadataContact]) -> AppResult<()> {
+    for contact in contacts {
+        if !is_valid_role_code(&contact.role) {
+            let valid = ROLE_CODES.iter().map(|entry| entry.code).collect::<Vec<_>>().join(", ");
+            return Err(AppError::InvalidInput(format!(
+                "invalid contact role '{}': must be one of {valid}",
+                contact.role
+            )));
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -142,6 +187,80 @@ mod tests {
         assert!(!is_valid_progress_code("bogus"));
     }
 
+    #[test]
+    fn role_codes_table_has_the_six_closed_values() {
+        assert_eq!(ROLE_CODES.len(), 6);
+        let codes: Vec<&str> = ROLE_CODES.iter().map(|e| e.code).collect();
+        assert_eq!(
+            codes,
+            vec![
+                "originator",
+                "pointOfContact",
+                "metadataAuthor",
+                "custodian",
+                "publisher",
+                "processor",
+            ]
+        );
+    }
+
+    #[test]
+    fn role_code_translate_key_returns_key_for_known_code() {
+        assert_eq!(
+            role_code_translate_key("pointOfContact"),
+            Some("role-code-pointOfContact".to_string())
+        );
+    }
+
+    #[test]
+    fn role_code_translate_key_returns_none_for_unknown_code() {
+        assert_eq!(role_code_translate_key("reviewer"), None);
+    }
+
+    #[test]
+    fn is_valid_role_code_accepts_every_code_in_the_table_and_rejects_unknown() {
+        for entry in ROLE_CODES {
+            assert!(is_valid_role_code(entry.code));
+        }
+        assert!(!is_valid_role_code("reviewer"));
+    }
+
+    fn contact_with_role(role: &str) -> MetadataContact {
+        MetadataContact {
+            id: "contact-1".to_string(),
+            individual_name: Some("Ana Perez".to_string()),
+            organisation_name: None,
+            position_name: None,
+            email: None,
+            phone: None,
+            role: role.to_string(),
+        }
+    }
+
+    #[test]
+    fn validate_contacts_accepts_empty_list() {
+        assert!(validate_contacts(&[]).is_ok());
+    }
+
+    #[test]
+    fn validate_contacts_accepts_every_closed_role() {
+        let contacts: Vec<MetadataContact> =
+            ROLE_CODES.iter().map(|entry| contact_with_role(entry.code)).collect();
+        assert!(validate_contacts(&contacts).is_ok());
+    }
+
+    #[test]
+    fn validate_contacts_rejects_unknown_role_with_invalid_input_and_persists_nothing() {
+        let contacts = vec![contact_with_role("pointOfContact"), contact_with_role("reviewer")];
+        let err = validate_contacts(&contacts).expect_err("role 'reviewer' is not in ROLE_CODES");
+        match err {
+            AppError::InvalidInput(message) => {
+                assert!(message.contains("reviewer"), "error must name the offending role: {message}");
+            }
+            other => panic!("expected AppError::InvalidInput, got {other:?}"),
+        }
+    }
+
     /// Every `.ftl` locale bundle this project ships must define a
     /// `topic-category-<code>` / `progress-code-<code>` message for every
     /// code in the two codelist tables above. Askama's `translate[...]`
@@ -172,6 +291,14 @@ mod tests {
 
             for entry in PROGRESS_CODES {
                 let key = format!("progress-code-{}", entry.code);
+                assert!(
+                    keys.contains(&key),
+                    "locale {locale} is missing Fluent key `{key}`"
+                );
+            }
+
+            for entry in ROLE_CODES {
+                let key = format!("role-code-{}", entry.code);
                 assert!(
                     keys.contains(&key),
                     "locale {locale} is missing Fluent key `{key}`"

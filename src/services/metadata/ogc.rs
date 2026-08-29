@@ -30,7 +30,7 @@ use time::format_description::well_known::Rfc3339;
 
 use crate::error::{AppError, AppResult};
 use crate::models::catalog::Layer;
-use crate::models::metadata::{MetadataLink, MetadataRecord};
+use crate::models::metadata::{MetadataContact, MetadataLink, MetadataRecord};
 use crate::services::metadata::rules::derive_autofill;
 
 /// Maximum accepted length of the `q` free-text filter (defense in depth —
@@ -147,6 +147,34 @@ pub enum Geometry {
     Polygon { coordinates: Vec<Vec<[f64; 2]>> },
 }
 
+/// A single email/phone value on an OGC API - Records contact object
+/// (design decision #5: `{value}` wrapper, not a bare string, per the
+/// OGC API - Records contact schema).
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct ContactValue {
+    pub value: String,
+}
+
+/// A responsible-party contact mapped to the OGC API - Records contact
+/// object shape (design decision #5). Storage stays flat
+/// (`models::metadata::MetadataContact`) — this shape exists only at the
+/// discovery boundary. Blank optional fields are skipped (`null`-free
+/// output), not serialized as `null`.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct FeatureContact {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub organization: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub position: Option<String>,
+    pub roles: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub emails: Vec<ContactValue>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub phones: Vec<ContactValue>,
+}
+
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct FeatureProperties {
     pub title: String,
@@ -164,6 +192,10 @@ pub struct FeatureProperties {
     /// `EPSG:{srid}`, derived at read time from `layer.get_srid()` — never a
     /// stored/admin-entered value (design decision #3, Phase 1.13 amendment).
     pub projection: String,
+    /// Responsible-party contacts (spec "Contacts included in discovery
+    /// output", Work Unit 2). Always present, empty array when the record
+    /// has no contacts.
+    pub contacts: Vec<FeatureContact>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -223,6 +255,41 @@ fn metadata_link_to_feature_link(link: &MetadataLink) -> FeatureLink {
     }
 }
 
+/// `properties.created` fallback (spec "Temporal properties reflect typed
+/// dates"): `creation_date` when present, else `metadata_date`.
+fn created_at(record: &MetadataRecord) -> OffsetDateTime {
+    record.creation_date.unwrap_or(record.metadata_date)
+}
+
+/// `properties.updated` fallback (spec "Temporal properties reflect typed
+/// dates"): `revision_date` when present, else `metadata_date`.
+fn updated_at(record: &MetadataRecord) -> OffsetDateTime {
+    record.revision_date.unwrap_or(record.metadata_date)
+}
+
+/// Maps one stored `MetadataContact` to the OGC API - Records contact
+/// object shape (design decision #5): a single `role` becomes a one-element
+/// `roles` array, and `email`/`phone` become zero-or-one-element `{value}`
+/// arrays so blank contact fields are omitted rather than serialized null.
+fn metadata_contact_to_feature_contact(contact: &MetadataContact) -> FeatureContact {
+    FeatureContact {
+        name: contact.individual_name.clone(),
+        organization: contact.organisation_name.clone(),
+        position: contact.position_name.clone(),
+        roles: vec![contact.role.clone()],
+        emails: contact
+            .email
+            .clone()
+            .map(|value| vec![ContactValue { value }])
+            .unwrap_or_default(),
+        phones: contact
+            .phone
+            .clone()
+            .map(|value| vec![ContactValue { value }])
+            .unwrap_or_default(),
+    }
+}
+
 /// Maps a `MetadataRecord` + its `Layer` to an OGC API - Records GeoJSON
 /// `Feature` (design's item shape). `bbox` is resolved separately (see
 /// `rules::bbox_for_layer`, I/O) so this function stays pure; `base_url`
@@ -265,12 +332,13 @@ pub fn record_to_feature(
             title: autofill.title,
             description: autofill.abstract_text,
             type_: "dataset".to_string(),
-            created: record.metadata_date,
-            updated: record.metadata_date,
+            created: created_at(record),
+            updated: updated_at(record),
             keywords: record.keywords.clone(),
             language: record.language.clone(),
             external_ids: vec![record.file_identifier.clone()],
             projection: autofill.projection,
+            contacts: record.contacts.iter().map(metadata_contact_to_feature_contact).collect(),
         },
         links,
     }
@@ -282,7 +350,7 @@ mod tests {
     use crate::error::AppError;
     use crate::models::catalog::Layer;
     use crate::models::category::Category;
-    use crate::models::metadata::{MetadataLink, MetadataRecord};
+    use crate::models::metadata::{MetadataContact, MetadataLink, MetadataRecord};
     use time::macros::datetime;
 
     fn test_layer() -> Layer {
@@ -431,6 +499,117 @@ mod tests {
             }
             None => panic!("geometry must be Some when bbox is Some"),
         }
+    }
+
+    #[test]
+    fn record_to_feature_created_and_updated_fall_back_to_metadata_date_when_neither_set() {
+        let feature = record_to_feature(
+            &test_record(),
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
+        assert_eq!(feature.properties.created, datetime!(2026-08-27 12:00:00 UTC));
+        assert_eq!(feature.properties.updated, datetime!(2026-08-27 12:00:00 UTC));
+    }
+
+    #[test]
+    fn record_to_feature_created_uses_creation_date_when_set() {
+        let mut record = test_record();
+        record.creation_date = Some(datetime!(2026-01-10 00:00:00 UTC));
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        assert_eq!(feature.properties.created, datetime!(2026-01-10 00:00:00 UTC));
+        // updated still falls back — revision_date was not set on this record
+        assert_eq!(feature.properties.updated, datetime!(2026-08-27 12:00:00 UTC));
+    }
+
+    #[test]
+    fn record_to_feature_updated_uses_revision_date_when_set() {
+        let mut record = test_record();
+        record.revision_date = Some(datetime!(2026-02-01 00:00:00 UTC));
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        assert_eq!(feature.properties.updated, datetime!(2026-02-01 00:00:00 UTC));
+        // created still falls back — creation_date was not set on this record
+        assert_eq!(feature.properties.created, datetime!(2026-08-27 12:00:00 UTC));
+    }
+
+    #[test]
+    fn record_to_feature_created_and_updated_prefer_typed_dates_over_metadata_date() {
+        let mut record = test_record();
+        record.creation_date = Some(datetime!(2026-01-10 00:00:00 UTC));
+        record.revision_date = Some(datetime!(2026-02-01 00:00:00 UTC));
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        assert_eq!(feature.properties.created, datetime!(2026-01-10 00:00:00 UTC));
+        assert_eq!(feature.properties.updated, datetime!(2026-02-01 00:00:00 UTC));
+    }
+
+    #[test]
+    fn record_to_feature_empty_contacts_yields_empty_array() {
+        let feature = record_to_feature(
+            &test_record(),
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
+        assert_eq!(feature.properties.contacts, Vec::<FeatureContact>::new());
+    }
+
+    #[test]
+    fn record_to_feature_maps_contacts_to_ogc_shape_with_nulls_skipped() {
+        let mut record = test_record();
+        record.contacts = vec![
+            MetadataContact {
+                id: "contact-1".to_string(),
+                individual_name: Some("Ana Perez".to_string()),
+                organisation_name: Some("IGN".to_string()),
+                position_name: Some("GIS Analyst".to_string()),
+                email: Some("ana@example.com".to_string()),
+                phone: None,
+                role: "pointOfContact".to_string(),
+            },
+            MetadataContact {
+                id: "contact-2".to_string(),
+                individual_name: None,
+                organisation_name: Some("IGN".to_string()),
+                position_name: None,
+                email: None,
+                phone: Some("+54 11 5555-5555".to_string()),
+                role: "custodian".to_string(),
+            },
+        ];
+
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+
+        assert_eq!(feature.properties.contacts.len(), 2);
+
+        let first = &feature.properties.contacts[0];
+        assert_eq!(first.name, Some("Ana Perez".to_string()));
+        assert_eq!(first.organization, Some("IGN".to_string()));
+        assert_eq!(first.position, Some("GIS Analyst".to_string()));
+        assert_eq!(first.roles, vec!["pointOfContact".to_string()]);
+        assert_eq!(first.emails, vec![ContactValue { value: "ana@example.com".to_string() }]);
+        assert_eq!(first.phones, Vec::<ContactValue>::new());
+
+        let second = &feature.properties.contacts[1];
+        assert_eq!(second.name, None);
+        assert_eq!(second.organization, Some("IGN".to_string()));
+        assert_eq!(second.position, None);
+        assert_eq!(second.roles, vec!["custodian".to_string()]);
+        assert_eq!(second.emails, Vec::<ContactValue>::new());
+        assert_eq!(second.phones, vec![ContactValue { value: "+54 11 5555-5555".to_string() }]);
+
+        // nulls skipped in JSON, not serialized as `null`
+        let json = serde_json::to_value(&feature).unwrap();
+        let second_json = &json["properties"]["contacts"][1];
+        assert!(second_json.get("name").is_none(), "None name must be omitted, not null");
+        assert!(second_json.get("position").is_none(), "None position must be omitted, not null");
+        assert!(second_json.get("emails").is_none(), "empty emails must be omitted, not null");
     }
 
     #[test]
