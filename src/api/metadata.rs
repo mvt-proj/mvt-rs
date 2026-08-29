@@ -834,6 +834,12 @@ mod tests {
                 external_ids: vec![],
                 projection: "EPSG:4326".to_string(),
                 contacts: vec![],
+                purpose: None,
+                publication_date: None,
+                temporal_extent_start: None,
+                temporal_extent_end: None,
+                credits: None,
+                supplemental_information: None,
             },
             links: vec![],
         }

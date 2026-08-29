@@ -196,6 +196,18 @@ pub struct FeatureProperties {
     /// output", Work Unit 2). Always present, empty array when the record
     /// has no contacts.
     pub contacts: Vec<FeatureContact>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub purpose: Option<String>,
+    #[serde(rename = "publicationDate", skip_serializing_if = "Option::is_none", with = "time::serde::rfc3339::option")]
+    pub publication_date: Option<OffsetDateTime>,
+    #[serde(rename = "temporalExtentStart", skip_serializing_if = "Option::is_none", with = "time::serde::rfc3339::option")]
+    pub temporal_extent_start: Option<OffsetDateTime>,
+    #[serde(rename = "temporalExtentEnd", skip_serializing_if = "Option::is_none", with = "time::serde::rfc3339::option")]
+    pub temporal_extent_end: Option<OffsetDateTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credits: Option<String>,
+    #[serde(rename = "supplementalInformation", skip_serializing_if = "Option::is_none")]
+    pub supplemental_information: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -339,6 +351,12 @@ pub fn record_to_feature(
             external_ids: vec![record.file_identifier.clone()],
             projection: autofill.projection,
             contacts: record.contacts.iter().map(metadata_contact_to_feature_contact).collect(),
+            purpose: record.purpose.clone(),
+            publication_date: record.publication_date,
+            temporal_extent_start: record.temporal_extent_start,
+            temporal_extent_end: record.temporal_extent_end,
+            credits: record.credits.clone(),
+            supplemental_information: record.supplemental_information.clone(),
         },
         links,
     }
@@ -557,6 +575,53 @@ mod tests {
             "http://localhost:5887",
         );
         assert_eq!(feature.properties.contacts, Vec::<FeatureContact>::new());
+    }
+
+    // -- descriptive/temporal properties (purpose, credits, etc.) ----------
+
+    #[test]
+    fn record_to_feature_includes_descriptive_properties_when_set() {
+        let mut record = test_record();
+        record.purpose = Some("Zoning reference".to_string());
+        record.credits = Some("Municipality of Example".to_string());
+        record.supplemental_information = Some("Updated annually.".to_string());
+        record.publication_date = Some(datetime!(2026-03-01 00:00:00 UTC));
+        record.temporal_extent_start = Some(datetime!(2020-01-01 00:00:00 UTC));
+        record.temporal_extent_end = Some(datetime!(2026-01-01 00:00:00 UTC));
+
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let json = serde_json::to_value(&feature.properties).unwrap();
+
+        assert_eq!(json["purpose"], "Zoning reference");
+        assert_eq!(json["credits"], "Municipality of Example");
+        assert_eq!(json["supplementalInformation"], "Updated annually.");
+        assert_eq!(json["publicationDate"], "2026-03-01T00:00:00Z");
+        assert_eq!(json["temporalExtentStart"], "2020-01-01T00:00:00Z");
+        assert_eq!(json["temporalExtentEnd"], "2026-01-01T00:00:00Z");
+    }
+
+    #[test]
+    fn record_to_feature_omits_unset_descriptive_properties() {
+        let feature = record_to_feature(
+            &test_record(),
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
+        let json = serde_json::to_value(&feature.properties).unwrap();
+
+        for key in [
+            "purpose",
+            "credits",
+            "supplementalInformation",
+            "publicationDate",
+            "temporalExtentStart",
+            "temporalExtentEnd",
+        ] {
+            assert!(json.get(key).is_none(), "expected {key} to be omitted when unset");
+        }
     }
 
     #[test]
