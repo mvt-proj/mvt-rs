@@ -32,8 +32,8 @@ feature-4 = Múltiples Bases de Datos
 feature-4-desc = Conectá múltiples bases de datos PostGIS simultáneamente y serví capas de cada una de forma independiente.
 feature-5 = Plugins Lua
 feature-5-desc = Inyectá filtros SQL personalizados en tiempo de ejecución mediante scripts Lua — por capa o por categoría, con acceso al usuario, grupos y nivel de zoom.
-feature-6 = Metadatos (próximamente)
-feature-6-desc = Servidor de metadatos compatible con ISO 19115 para la documentación de datos espaciales.
+feature-6 = Metadatos
+feature-6-desc = Catálogo de metadatos basado en ISO 19115, accesible vía OGC API - Records.
 
 catalog-of-layers = Catálogo de capas publicadas
 list-of-styles = Listado de Estilos

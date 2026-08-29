@@ -32,8 +32,8 @@ feature-4 = Múltiplos Bancos de Dados
 feature-4-desc = Conecte vários bancos de dados PostGIS simultaneamente e sirva camadas de cada um de forma independente.
 feature-5 = Plugins Lua
 feature-5-desc = Injete filtros SQL personalizados em tempo de execução via scripts Lua — por camada ou por categoria, com acesso ao usuário, grupos e nível de zoom.
-feature-6 = Metadados (em breve)
-feature-6-desc = Servidor de metadados compatível com ISO 19115 para documentação de dados espaciais.
+feature-6 = Metadados
+feature-6-desc = Catálogo de metadados baseado na ISO 19115, acessível via OGC API - Records.
 
 catalog-of-layers = Catálogo de camadas publicadas
 list-of-styles = Lista de Estilos
