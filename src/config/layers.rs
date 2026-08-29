@@ -320,7 +320,7 @@ mod tests {
     #[tokio::test]
     async fn delete_layer_cascades_to_metadata_record_and_links() {
         use crate::config::metadata::{create_metadata_record, get_metadata_record_by_layer_id};
-        use crate::models::metadata::{MetadataLink, MetadataRecord};
+        use crate::models::metadata::{MetadataContact, MetadataLink, MetadataRecord};
         use time::macros::datetime;
 
         let pool = in_memory_pool().await;
@@ -334,8 +334,6 @@ mod tests {
             character_set: None,
             topic_category: None,
             keywords: vec![],
-            data_creator_contact: None,
-            metadata_contact: None,
             maintenance_frequency: None,
             restrictions: None,
             lineage: None,
@@ -343,7 +341,14 @@ mod tests {
             spatial_resolution: None,
             status: None,
             edition: None,
-            reference_date: None,
+            purpose: None,
+            creation_date: None,
+            publication_date: None,
+            revision_date: None,
+            temporal_extent_start: None,
+            temporal_extent_end: None,
+            credits: None,
+            supplemental_information: None,
             metadata_date: datetime!(2026-08-27 12:00:00 UTC),
             links: vec![MetadataLink {
                 id: "link-1".to_string(),
@@ -351,6 +356,26 @@ mod tests {
                 url: "https://example.com/wms".to_string(),
                 label: None,
             }],
+            contacts: vec![
+                MetadataContact {
+                    id: "contact-1".to_string(),
+                    individual_name: Some("Ana Perez".to_string()),
+                    organisation_name: None,
+                    position_name: None,
+                    email: None,
+                    phone: None,
+                    role: "pointOfContact".to_string(),
+                },
+                MetadataContact {
+                    id: "contact-2".to_string(),
+                    individual_name: None,
+                    organisation_name: Some("IGN".to_string()),
+                    position_name: None,
+                    email: None,
+                    phone: None,
+                    role: "custodian".to_string(),
+                },
+            ],
         };
         create_metadata_record(Some(&pool), &record).await.unwrap();
 
@@ -361,8 +386,15 @@ mod tests {
             .unwrap();
         assert!(
             found.is_none(),
-            "deleting the layer must cascade-delete its metadata record and links"
+            "deleting the layer must cascade-delete its metadata record, links, and contacts"
         );
+
+        let orphan_records: i64 = sqlx::query("SELECT COUNT(*) AS c FROM metadata_records")
+            .fetch_one(&pool)
+            .await
+            .unwrap()
+            .get("c");
+        assert_eq!(orphan_records, 0, "no orphan metadata_records rows may remain");
 
         let orphan_links: i64 = sqlx::query("SELECT COUNT(*) AS c FROM metadata_links")
             .fetch_one(&pool)
@@ -370,6 +402,13 @@ mod tests {
             .unwrap()
             .get("c");
         assert_eq!(orphan_links, 0, "no orphan metadata_links rows may remain");
+
+        let orphan_contacts: i64 = sqlx::query("SELECT COUNT(*) AS c FROM metadata_contacts")
+            .fetch_one(&pool)
+            .await
+            .unwrap()
+            .get("c");
+        assert_eq!(orphan_contacts, 0, "no orphan metadata_contacts rows may remain");
     }
 
     fn test_layer(id: &str) -> Layer {

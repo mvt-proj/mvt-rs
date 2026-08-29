@@ -73,33 +73,9 @@
         <p class="help is-info">Separadas por comas.</p>
       </div>
 
-      <!-- data_creator_contact -->
-      <div class="mb-4">
-        <label class="label" for="data_creator_contact">Contacto del creador de los datos</label>
-        <div class="control">
-          <input
-            class="input"
-            type="text"
-            name="data_creator_contact"
-            id="data_creator_contact"
-            value="{{ record.data_creator_contact.as_deref().unwrap_or_default() }}"
-          />
-        </div>
-      </div>
-
-      <!-- metadata_contact -->
-      <div class="mb-4">
-        <label class="label" for="metadata_contact">Contacto de metadatos</label>
-        <div class="control">
-          <input
-            class="input"
-            type="text"
-            name="metadata_contact"
-            id="metadata_contact"
-            value="{{ record.metadata_contact.as_deref().unwrap_or_default() }}"
-          />
-        </div>
-      </div>
+      <!-- data_creator_contact/metadata_contact removed (Phase 1.5): the
+           legacy flat contact strings are dropped by the migration. Work
+           Unit 3 (Phase 3) adds the structured repeatable contacts form. -->
 
       <!-- maintenance_frequency -->
       <div class="mb-4">
@@ -193,13 +169,9 @@
         </div>
       </div>
 
-      <!-- reference_date -->
-      <div class="mb-4">
-        <label class="label" for="reference_date">Fecha de referencia</label>
-        <div class="control">
-          <input class="input" type="date" name="reference_date" id="reference_date" value="{{ reference_date_value }}" />
-        </div>
-      </div>
+      <!-- reference_date removed (Phase 1.5): superseded by the typed
+           creation_date/publication_date/revision_date fields, added to the
+           form in Work Unit 3 (Phase 3). -->
 
       <!-- external links -->
       <div class="mb-4">

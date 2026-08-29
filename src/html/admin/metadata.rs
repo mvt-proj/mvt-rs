@@ -86,10 +86,6 @@ struct MetadataFormTemplate {
     layer: Layer,
     record: MetadataRecord,
     is_new: bool,
-    /// `record.reference_date` pre-formatted as `YYYY-MM-DD` for the HTML
-    /// `<input type="date">` `value` attribute (empty when unset). Askama
-    /// cannot format `OffsetDateTime` inline, so this is computed once here.
-    reference_date_value: String,
     /// `EPSG:{srid}`, derived at read time from `layer.get_srid()` (design
     /// decision #3) — read-only display, never a submittable form field
     /// (Phase 1.13 amendment).
@@ -156,8 +152,6 @@ struct MetadataForm {
     topic_category: Option<String>,
     /// Comma-separated free text; see [`parse_keywords`].
     keywords: Option<String>,
-    data_creator_contact: Option<String>,
-    metadata_contact: Option<String>,
     maintenance_frequency: Option<String>,
     restrictions: Option<String>,
     lineage: Option<String>,
@@ -165,9 +159,11 @@ struct MetadataForm {
     spatial_resolution: Option<String>,
     status: Option<String>,
     edition: Option<String>,
-    /// `YYYY-MM-DD` (HTML `<input type="date">`) or empty; see
-    /// [`parse_optional_date`].
-    reference_date: Option<String>,
+    // NOTE: the 8 new descriptive fields (purpose, typed dates, credits,
+    // supplemental_information) and contact rows are added to the form in
+    // Work Unit 3 (Phase 3, tasks 3.3-3.6); this Work Unit 1 change only
+    // keeps `MetadataForm`/`build_record` compiling against the updated
+    // `MetadataRecord` shape.
     #[serde(default)]
     link_protocol: Vec<String>,
     #[serde(default)]
@@ -188,8 +184,6 @@ fn blank_record(layer_id: &str) -> MetadataRecord {
         character_set: None,
         topic_category: None,
         keywords: Vec::new(),
-        data_creator_contact: None,
-        metadata_contact: None,
         maintenance_frequency: None,
         restrictions: None,
         lineage: None,
@@ -197,9 +191,17 @@ fn blank_record(layer_id: &str) -> MetadataRecord {
         spatial_resolution: None,
         status: None,
         edition: None,
-        reference_date: None,
+        purpose: None,
+        creation_date: None,
+        publication_date: None,
+        revision_date: None,
+        temporal_extent_start: None,
+        temporal_extent_end: None,
+        credits: None,
+        supplemental_information: None,
         metadata_date: OffsetDateTime::now_utc(),
         links: Vec::new(),
+        contacts: Vec::new(),
     }
 }
 
@@ -269,8 +271,6 @@ fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppR
         character_set: non_empty(form.character_set),
         topic_category: non_empty(form.topic_category),
         keywords: parse_keywords(form.keywords.as_deref()),
-        data_creator_contact: non_empty(form.data_creator_contact),
-        metadata_contact: non_empty(form.metadata_contact),
         maintenance_frequency: non_empty(form.maintenance_frequency),
         restrictions: non_empty(form.restrictions),
         lineage: non_empty(form.lineage),
@@ -278,9 +278,19 @@ fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppR
         spatial_resolution: non_empty(form.spatial_resolution),
         status: non_empty(form.status),
         edition: non_empty(form.edition),
-        reference_date: parse_optional_date(form.reference_date.as_deref())?,
+        // Work Unit 3 wires these from the form; Work Unit 1 defaults them
+        // so `MetadataRecord` compiles with its new fields.
+        purpose: None,
+        creation_date: None,
+        publication_date: None,
+        revision_date: None,
+        temporal_extent_start: None,
+        temporal_extent_end: None,
+        credits: None,
+        supplemental_information: None,
         metadata_date: OffsetDateTime::now_utc(),
         links: build_links(form.link_protocol, form.link_url, form.link_label),
+        contacts: Vec::new(),
     })
 }
 
@@ -398,7 +408,6 @@ pub async fn new_metadata_page(req: &mut Request, res: &mut Response, depot: &mu
         record: blank_record(&layer_id),
         layer,
         is_new: true,
-        reference_date_value: String::new(),
         projection,
         topic_categories,
         progress_codes,
@@ -426,7 +435,6 @@ pub async fn edit_metadata_page(req: &mut Request, res: &mut Response, depot: &m
         return Ok(());
     };
 
-    let reference_date_value = format_date_input(record.reference_date);
     let projection = derive_autofill(&layer, &base_url_from_request(req)).projection;
     let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &base.translate);
     let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
@@ -434,7 +442,6 @@ pub async fn edit_metadata_page(req: &mut Request, res: &mut Response, depot: &m
         record,
         layer,
         is_new: false,
-        reference_date_value,
         projection,
         topic_categories,
         progress_codes,
@@ -526,8 +533,6 @@ mod tests {
             character_set: Some("utf8".to_string()),
             topic_category: Some("boundaries".to_string()),
             keywords: Some(" catastro , limites ,,".to_string()),
-            data_creator_contact: Some("  ".to_string()),
-            metadata_contact: None,
             maintenance_frequency: Some("annually".to_string()),
             restrictions: None,
             lineage: None,
@@ -535,7 +540,6 @@ mod tests {
             spatial_resolution: None,
             status: Some("onGoing".to_string()),
             edition: None,
-            reference_date: Some("2026-01-15".to_string()),
             link_protocol: vec!["OGC:WMS".to_string(), "OGC:WFS".to_string()],
             link_url: vec!["https://example.com/wms".to_string(), String::new()],
             link_label: vec!["WMS service".to_string()],
@@ -612,23 +616,12 @@ mod tests {
         assert_eq!(record.file_identifier, "file-1");
         assert_eq!(record.layer_id, "layer-1");
         assert_eq!(record.character_set, Some("utf8".to_string()));
-        assert_eq!(record.data_creator_contact, None);
         assert_eq!(record.keywords, vec!["catastro".to_string(), "limites".to_string()]);
         assert_eq!(record.links.len(), 1);
         assert_eq!(record.links[0].protocol, "OGC:WMS");
-        assert_eq!(
-            record.reference_date,
-            OffsetDateTime::parse("2026-01-15T00:00:00Z", &Rfc3339).ok()
-        );
-    }
-
-    #[test]
-    fn build_record_propagates_malformed_date_error() {
-        let mut f = form("layer-1");
-        f.reference_date = Some("bogus".to_string());
-        let err = build_record("rec-1".to_string(), "file-1".to_string(), f)
-            .expect_err("must reject malformed reference_date");
-        assert!(matches!(err, AppError::InvalidInput(_)));
+        assert_eq!(record.purpose, None);
+        assert_eq!(record.creation_date, None);
+        assert!(record.contacts.is_empty());
     }
 
     #[test]
@@ -801,7 +794,6 @@ mod tests {
             layer: test_layer("layer-1"),
             record: blank_record("layer-1"),
             is_new: true,
-            reference_date_value: String::new(),
             projection: "EPSG:4326".to_string(),
             topic_categories,
             progress_codes,

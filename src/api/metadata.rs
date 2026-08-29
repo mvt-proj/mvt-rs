@@ -124,8 +124,6 @@ struct MetadataPayload {
     character_set: Option<String>,
     topic_category: Option<String>,
     keywords: Option<Vec<String>>,
-    data_creator_contact: Option<String>,
-    metadata_contact: Option<String>,
     maintenance_frequency: Option<String>,
     restrictions: Option<String>,
     lineage: Option<String>,
@@ -133,8 +131,11 @@ struct MetadataPayload {
     spatial_resolution: Option<String>,
     status: Option<String>,
     edition: Option<String>,
-    #[serde(default, with = "time::serde::rfc3339::option")]
-    reference_date: Option<OffsetDateTime>,
+    // NOTE: the 8 new descriptive fields (purpose, typed dates, credits,
+    // supplemental_information) and `contacts` are added to the wire
+    // payload in Work Unit 3 (Phase 3, tasks 3.1-3.2); this Work Unit 1
+    // change only keeps `MetadataPayload`/`build_record` compiling against
+    // the updated `MetadataRecord` shape.
     #[serde(default, with = "time::serde::rfc3339::option")]
     metadata_date: Option<OffsetDateTime>,
     #[serde(default)]
@@ -154,8 +155,6 @@ fn build_record(id: String, payload: MetadataPayload) -> MetadataRecord {
         character_set: payload.character_set,
         topic_category: payload.topic_category,
         keywords: payload.keywords.unwrap_or_default(),
-        data_creator_contact: payload.data_creator_contact,
-        metadata_contact: payload.metadata_contact,
         maintenance_frequency: payload.maintenance_frequency,
         restrictions: payload.restrictions,
         lineage: payload.lineage,
@@ -163,7 +162,16 @@ fn build_record(id: String, payload: MetadataPayload) -> MetadataRecord {
         spatial_resolution: payload.spatial_resolution,
         status: payload.status,
         edition: payload.edition,
-        reference_date: payload.reference_date,
+        // Work Unit 3 wires these from the payload; Work Unit 1 defaults
+        // them so `MetadataRecord` compiles with its new fields.
+        purpose: None,
+        creation_date: None,
+        publication_date: None,
+        revision_date: None,
+        temporal_extent_start: None,
+        temporal_extent_end: None,
+        credits: None,
+        supplemental_information: None,
         metadata_date: payload.metadata_date.unwrap_or_else(OffsetDateTime::now_utc),
         links: payload
             .links
@@ -175,6 +183,7 @@ fn build_record(id: String, payload: MetadataPayload) -> MetadataRecord {
                 label: l.label,
             })
             .collect(),
+        contacts: Vec::new(),
     }
 }
 
@@ -675,8 +684,6 @@ mod tests {
             character_set: None,
             topic_category: Some("boundaries".to_string()),
             keywords: Some(vec!["catastro".to_string()]),
-            data_creator_contact: None,
-            metadata_contact: None,
             maintenance_frequency: None,
             restrictions: None,
             lineage: None,
@@ -684,7 +691,6 @@ mod tests {
             spatial_resolution: None,
             status: None,
             edition: None,
-            reference_date: None,
             metadata_date: None,
             links: vec![LinkPayload {
                 protocol: "OGC:WMS".to_string(),
@@ -879,8 +885,6 @@ mod tests {
             character_set: None,
             topic_category: Some("boundaries".to_string()),
             keywords: vec!["catastro".to_string()],
-            data_creator_contact: None,
-            metadata_contact: None,
             maintenance_frequency: None,
             restrictions: None,
             lineage: None,
@@ -888,9 +892,17 @@ mod tests {
             spatial_resolution: None,
             status: None,
             edition: None,
-            reference_date: None,
+            purpose: None,
+            creation_date: None,
+            publication_date: None,
+            revision_date: None,
+            temporal_extent_start: None,
+            temporal_extent_end: None,
+            credits: None,
+            supplemental_information: None,
             metadata_date: datetime!(2026-08-27 12:00:00 UTC),
             links: vec![],
+            contacts: Vec::new(),
         }
     }
 

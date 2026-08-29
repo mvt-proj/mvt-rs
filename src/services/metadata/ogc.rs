@@ -332,8 +332,6 @@ mod tests {
             character_set: None,
             topic_category: Some("boundaries".to_string()),
             keywords: vec!["catastro".to_string()],
-            data_creator_contact: None,
-            metadata_contact: None,
             maintenance_frequency: None,
             restrictions: None,
             lineage: None,
@@ -341,7 +339,14 @@ mod tests {
             spatial_resolution: None,
             status: None,
             edition: None,
-            reference_date: None,
+            purpose: None,
+            creation_date: None,
+            publication_date: None,
+            revision_date: None,
+            temporal_extent_start: None,
+            temporal_extent_end: None,
+            credits: None,
+            supplemental_information: None,
             metadata_date: datetime!(2026-08-27 12:00:00 UTC),
             links: vec![MetadataLink {
                 id: "link-1".to_string(),
@@ -349,6 +354,7 @@ mod tests {
                 url: "https://example.com/wms".to_string(),
                 label: Some("WMS service".to_string()),
             }],
+            contacts: Vec::new(),
         }
     }
 
