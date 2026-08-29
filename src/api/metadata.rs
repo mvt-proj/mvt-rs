@@ -1,8 +1,5 @@
-// Admin CRUD JSON handlers + OGC API - Records discovery endpoints (Phase 3,
-// tasks 3.1-3.8). Handlers are written and tested here but NOT yet wired
-// into `routes.rs` (that is task 4.4, Phase 4/Work Unit 4) — mirrors the
-// `#[allow(dead_code)]` convention already used in Phase 1/2 for ahead-of-time
-// modules (`config/metadata.rs`, `services/metadata/*`).
+// Admin CRUD JSON handlers + OGC API - Records discovery endpoints. Wired
+// into `routes.rs` under `build_api_metadata_routes`/`build_records_routes`.
 //
 // Testing note (disclosed, not silent — mirrors the precedent already
 // documented for `services::metadata::rules::bbox_for_layer` and
@@ -14,10 +11,7 @@
 // extracted into a pool-injectable (`Option<&SqlitePool>`) or fully pure
 // helper function — the same pattern `config::metadata`'s own CRUD functions
 // already use. Full happy-path coverage of the catalog-dependent branches
-// (metadata-admin success responses, `/items` and `/items/{id}` against real
-// layers) is exercised by Phase 5 integration/manual verification once
-// `routes.rs` wires these handlers behind a live server.
-#![allow(dead_code)]
+// is exercised by integration/manual verification against a live server.
 
 use std::collections::HashSet;
 
