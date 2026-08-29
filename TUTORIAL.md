@@ -21,16 +21,17 @@ It is an open source platform designed to publish vector maps directly from Post
    - [TileJSON (Service Discovery)](#tilejson-service-discovery)
    - [QGIS](#qgis)
    - [Web Clients](#web-clients)
-8. [Styling](#styling)
+8. [Metadata & Discovery (OGC API - Records)](#metadata--discovery-ogc-api---records)
+9. [Styling](#styling)
    - [Serving Styles](#serving-styles)
    - [Sprites](#sprites)
    - [Glyphs](#glyphs)
    - [Legends](#legends)
-9. [Advanced Filtering](#advanced-filtering)
-10. [Caching](#caching)
+10. [Advanced Filtering](#advanced-filtering)
+11. [Caching](#caching)
     - [Disabling the Cache (Testing Only)](#disabling-the-cache-testing-only)
-11. [Production Deployment](#production-deployment)
-12. [Monitoring and Metrics](#monitoring-and-metrics)
+12. [Production Deployment](#production-deployment)
+13. [Monitoring and Metrics](#monitoring-and-metrics)
 ---
 
 ## Requirements
@@ -159,7 +160,7 @@ After logging in you land on the home page, from which the administration panel 
 
 ## The Admin Panel
 
-The administration panel is where the whole platform is managed. It is organized in five main sections:
+The administration panel is where the whole platform is managed. It is organized in six main sections:
 
 ### Groups (User Roles)
 
@@ -182,6 +183,14 @@ The central section of the panel: here you declare the geographic layers to publ
 ### Styles
 
 Define and manage rendering styles following the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/): colors, symbols, labels, color scales. Published styles can be consumed by clients such as QGIS and MapLibre — covered in [Styling](#styling).
+
+### Metadata
+
+For every published layer, the **Metadata** section (`/admin/metadata`) manages a single ISO 19115-inspired metadata record: language, topic category, keywords, purpose, lineage, scale, spatial resolution, status, creation/publication/revision dates, temporal extent, external service links (WMS/WFS/WCS/generic URL), and a repeatable list of responsible-party contacts (individual/organisation/position/email/phone/role).
+
+A layer must be **published** before a metadata record can be created or edited for it. Title, abstract and bounding box are never entered by hand — they are derived automatically from the layer itself (alias, description, computed extent), so they can't drift from the catalog; the same applies to **Projection**, which is read-only and derived from the layer's SRID.
+
+These records are what the OGC API - Records discovery endpoint serves — see [Metadata & Discovery (OGC API - Records)](#metadata--discovery-ogc-api---records).
 
 ## Publishing Your First Layer
 
@@ -406,6 +415,44 @@ http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
 for all three layers.
 
 These examples provide a starting point for integrating vector tiles into your web mapping applications.
+
+## Metadata & Discovery (OGC API - Records)
+
+Every published layer with a metadata record (see [Metadata](#metadata) in the Admin Panel) is exposed for discovery through [OGC API - Records](https://ogcapi.ogc.org/records/), a JSON-based standard for searching catalogs of geospatial resources. This is **not** an ISO 19139 XML or CSW service — the catalog content is ISO 19115-aligned, but the wire format is JSON only.
+
+**Endpoints**, all mounted under `/services/records`:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /services/records` | Landing page, with links to conformance and collections. |
+| `GET /services/records/conformance` | Declared OGC API - Records conformance classes. |
+| `GET /services/records/collections` | List of collections (a single `layers` collection). |
+| `GET /services/records/collections/layers` | Description of the `layers` collection. |
+| `GET /services/records/collections/layers/items` | Search records — supports `q`, `bbox`, `datetime`, `limit`, `offset`, with `self`/`next`/`prev` pagination links. |
+| `GET /services/records/collections/layers/items/{id}` | A single record, where `{id}` is `{category}:{layer}`. |
+
+> `/openapi` and `/queryables` are not implemented.
+
+Only published layers with a metadata record, visible to the requesting user, are returned — the same group-based visibility rules that gate tiles and TileJSON apply here too.
+
+**Example — searching records:**
+```sh
+curl "http://127.0.0.1:5887/services/records/collections/layers/items?q=parcels&limit=10"
+```
+
+**Example — a single record:**
+```sh
+curl "http://127.0.0.1:5887/services/records/collections/layers/items/mycategory:mylayer"
+```
+
+### Connecting from QGIS (MetaSearch)
+
+1. Enable the **MetaSearch** plugin (Plugins → Manage and Install Plugins).
+2. Open **Web → MetaSearch → MetaSearch**, then create a **New** connection.
+3. Set the connection URL to the landing page: `http://127.0.0.1:5887/services/records`.
+4. Use **Search** to browse and filter published layers by keyword or bounding box.
+
+> **Note:** QGIS MetaSearch's one-click **Load** action expects a WMS/WFS/WMTS service link on the record, and MVT Server only advertises a generic vector-tile link — so **Load** will not work for these records. Add the layer manually instead, as a **Vector Tile Layer**, using the tile URL from the record (or from its [TileJSON](#tilejson-service-discovery) document); see [QGIS](#qgis).
 
 ## Styling
 

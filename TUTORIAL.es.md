@@ -21,16 +21,17 @@ Es una plataforma de código abierto diseñada para publicar mapas vectoriales d
    - [TileJSON (Descubrimiento de Servicios)](#tilejson-descubrimiento-de-servicios)
    - [QGIS](#qgis)
    - [Clientes Web](#clientes-web)
-8. [Estilos](#estilos)
+8. [Metadatos y Descubrimiento (OGC API - Records)](#metadatos-y-descubrimiento-ogc-api---records)
+9. [Estilos](#estilos)
    - [Sirviendo Estilos](#sirviendo-estilos)
    - [Sprites](#sprites)
    - [Glifos](#glifos)
    - [Leyendas](#leyendas)
-9. [Filtrado Avanzado](#filtrado-avanzado)
-10. [Caché](#caché)
+10. [Filtrado Avanzado](#filtrado-avanzado)
+11. [Caché](#caché)
     - [Deshabilitar la Caché (Solo para Testing)](#deshabilitar-la-caché-solo-para-testing)
-11. [Despliegue en Producción](#despliegue-en-producción)
-12. [Monitoreo y Métricas](#monitoreo-y-métricas)
+12. [Despliegue en Producción](#despliegue-en-producción)
+13. [Monitoreo y Métricas](#monitoreo-y-métricas)
 ---
 
 ## Requisitos
@@ -159,7 +160,7 @@ Después de iniciar sesión llegás a la página principal, desde donde se acced
 
 ## El Panel de Administración
 
-El panel de administración es donde se gestiona toda la plataforma. Está organizado en cinco secciones principales:
+El panel de administración es donde se gestiona toda la plataforma. Está organizado en seis secciones principales:
 
 ### Grupos (Roles de Usuario)
 
@@ -182,6 +183,14 @@ La sección central del panel: aquí declarás las capas geográficas a publicar
 ### Estilos
 
 Definí y gestioná estilos de renderizado siguiendo la [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/): colores, símbolos, etiquetas, escalas de color. Los estilos publicados pueden ser consumidos por clientes como QGIS y MapLibre — cubierto en [Estilos](#estilos).
+
+### Metadatos
+
+Para cada capa publicada, la sección **Metadatos** (`/admin/metadata`) gestiona un único registro de metadatos inspirado en ISO 19115: idioma, categoría temática, palabras clave, propósito, linaje, escala, resolución espacial, estado, fechas de creación/publicación/revisión, extensión temporal, enlaces a servicios externos (WMS/WFS/WCS/URL genérica), y una lista repetible de contactos responsables (individuo/organización/cargo/email/teléfono/rol).
+
+Una capa debe estar **publicada** antes de poder crear o editar un registro de metadatos para ella. El título, el resumen y el bounding box nunca se ingresan a mano — se derivan automáticamente de la capa misma (alias, descripción, extensión calculada), de modo que nunca se desactualizan respecto del catálogo; lo mismo aplica a la **Proyección**, que es de solo lectura y se deriva del SRID de la capa.
+
+Estos registros son lo que sirve el endpoint de descubrimiento OGC API - Records — ver [Metadatos y Descubrimiento (OGC API - Records)](#metadatos-y-descubrimiento-ogc-api---records).
 
 ## Publicando Tu Primera Capa
 
@@ -406,6 +415,44 @@ http://127.0.0.1:5887/services/tiles/category/public/{z}/{x}/{y}.pbf
 para las tres capas.
 
 Estos ejemplos son un punto de partida para integrar vector tiles en tus aplicaciones de mapas web.
+
+## Metadatos y Descubrimiento (OGC API - Records)
+
+Cada capa publicada que tiene un registro de metadatos (ver [Metadatos](#metadatos) en el Panel de Administración) queda expuesta para su descubrimiento a través de [OGC API - Records](https://ogcapi.ogc.org/records/), un estándar basado en JSON para buscar catálogos de recursos geoespaciales. Esto **no** es un servicio ISO 19139 XML ni CSW — el contenido del catálogo está alineado con ISO 19115, pero el formato de intercambio es únicamente JSON.
+
+**Endpoints**, todos montados bajo `/services/records`:
+
+| Endpoint | Descripción |
+|----------|-------------|
+| `GET /services/records` | Página de aterrizaje, con enlaces a conformance y collections. |
+| `GET /services/records/conformance` | Clases de conformidad de OGC API - Records declaradas. |
+| `GET /services/records/collections` | Lista de colecciones (una única colección `layers`). |
+| `GET /services/records/collections/layers` | Descripción de la colección `layers`. |
+| `GET /services/records/collections/layers/items` | Búsqueda de registros — admite `q`, `bbox`, `datetime`, `limit`, `offset`, con enlaces de paginación `self`/`next`/`prev`. |
+| `GET /services/records/collections/layers/items/{id}` | Un registro individual, donde `{id}` es `{category}:{layer}`. |
+
+> `/openapi` y `/queryables` no están implementados.
+
+Solo se devuelven las capas publicadas con un registro de metadatos y visibles para el usuario que consulta — se aplican las mismas reglas de visibilidad por grupo que rigen los tiles y el TileJSON.
+
+**Ejemplo — buscando registros:**
+```sh
+curl "http://127.0.0.1:5887/services/records/collections/layers/items?q=parcels&limit=10"
+```
+
+**Ejemplo — un registro individual:**
+```sh
+curl "http://127.0.0.1:5887/services/records/collections/layers/items/mycategory:mylayer"
+```
+
+### Conectando desde QGIS (MetaSearch)
+
+1. Habilitá el plugin **MetaSearch** (Plugins → Administrar e instalar plugins).
+2. Abrí **Web → MetaSearch → MetaSearch** y creá una **nueva** conexión.
+3. Configurá la URL de conexión con la página de aterrizaje: `http://127.0.0.1:5887/services/records`.
+4. Usá **Search** para explorar y filtrar las capas publicadas por palabra clave o bounding box.
+
+> **Nota:** la acción de un clic **Load** de QGIS MetaSearch espera un enlace de servicio WMS/WFS/WMTS en el registro, y MVT Server solo publica un enlace genérico de vector tiles — por lo tanto **Load** no va a funcionar con estos registros. Agregá la capa manualmente en su lugar, como **Vector Tile Layer**, usando la URL de tiles del registro (o la de su documento [TileJSON](#tilejson-descubrimiento-de-servicios)); ver [QGIS](#qgis).
 
 ## Estilos
 

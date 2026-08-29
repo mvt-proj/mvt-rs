@@ -139,6 +139,7 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 
 - Interfaz de administración web moderna.
 - Catálogo de capas.
+- Catálogo de metadatos basado en ISO 19115 para las capas publicadas, disponible para descubrimiento vía OGC API - Records (JSON).
 - Categorías.
 - Gestión de usuarios y grupos.
 - Autenticación mediante JWT o Basic Auth.

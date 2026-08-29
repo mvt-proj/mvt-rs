@@ -139,6 +139,7 @@ Beyond *what* MVT Server publishes (see the table above), this is *how* it opera
 
 - Modern web administration interface.
 - Layer catalog.
+- ISO 19115-based metadata catalog for published layers, discoverable via OGC API - Records (JSON).
 - Categories.
 - User and group management.
 - Authentication using JWT or Basic Auth.
