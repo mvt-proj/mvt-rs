@@ -337,7 +337,7 @@ struct Landing {
 
 fn build_landing(base_url: &str) -> Landing {
     Landing {
-        title: "mvt-rs metadata catalog".to_string(),
+        title: "MVT Server metadata catalog".to_string(),
         description: "OGC API - Records discovery for published layer metadata".to_string(),
         links: vec![
             generic_link("self", format!("{base_url}{RECORDS_BASE_PATH}"), "application/json", None),
@@ -383,7 +383,7 @@ fn build_collection_description(base_url: &str) -> CollectionDescription {
     CollectionDescription {
         id: COLLECTION_ID.to_string(),
         title: "Published layers".to_string(),
-        description: "Metadata records for published mvt-rs layers".to_string(),
+        description: "Metadata records for published MVT Server layers".to_string(),
         item_type: "record".to_string(),
         links: vec![
             generic_link(
@@ -1434,7 +1434,7 @@ mod tests {
         let mut res = TestClient::get("http://127.0.0.1:5800/").send(&service).await;
         assert_eq!(res.status_code.unwrap(), StatusCode::OK);
         let body: serde_json::Value = res.take_json().await.unwrap();
-        assert_eq!(body["title"], "mvt-rs metadata catalog");
+        assert_eq!(body["title"], "MVT Server metadata catalog");
         assert!(body["links"].as_array().unwrap().len() == 3);
     }
 
