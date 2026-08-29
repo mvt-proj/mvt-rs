@@ -81,73 +81,6 @@
         </div>
       </div>
 
-      <!-- maintenance_frequency -->
-      <div class="mb-4">
-        <label class="label" for="maintenance_frequency">Frecuencia de mantenimiento</label>
-        <div class="control">
-          <input
-            class="input"
-            type="text"
-            name="maintenance_frequency"
-            id="maintenance_frequency"
-            value="{{ record.maintenance_frequency.as_deref().unwrap_or_default() }}"
-          />
-        </div>
-      </div>
-
-      <!-- restrictions -->
-      <div class="mb-4">
-        <label class="label" for="restrictions">Restricciones de uso</label>
-        <div class="control">
-          <input
-            class="input"
-            type="text"
-            name="restrictions"
-            id="restrictions"
-            value="{{ record.restrictions.as_deref().unwrap_or_default() }}"
-          />
-        </div>
-      </div>
-
-      <!-- lineage -->
-      <div class="mb-4">
-        <label class="label" for="lineage">Linaje</label>
-        <div class="control">
-          <textarea class="textarea" name="lineage" id="lineage" rows="3">{{ record.lineage.as_deref().unwrap_or_default() }}</textarea>
-        </div>
-      </div>
-
-      <!-- scale -->
-      <div class="mb-4">
-        <label class="label" for="scale">Escala</label>
-        <div class="control">
-          <input class="input" type="text" name="scale" id="scale" value="{{ record.scale.as_deref().unwrap_or_default() }}" />
-        </div>
-      </div>
-
-      <!-- spatial_resolution -->
-      <div class="mb-4">
-        <label class="label" for="spatial_resolution">Resolución espacial</label>
-        <div class="control">
-          <input
-            class="input"
-            type="text"
-            name="spatial_resolution"
-            id="spatial_resolution"
-            value="{{ record.spatial_resolution.as_deref().unwrap_or_default() }}"
-          />
-        </div>
-      </div>
-
-      <!-- projection (derived read-only from layer.srid, design decision #3) -->
-      <div class="mb-4">
-        <label class="label">Proyección</label>
-        <div class="control">
-          <input class="input" type="text" value="{{ projection }}" disabled />
-        </div>
-        <p class="help is-info">Derivada automáticamente del SRID configurado en la capa.</p>
-      </div>
-
       <!-- status -->
       <div class="mb-4">
         <label class="label" for="status">Estado</label>
@@ -170,6 +103,22 @@
         <label class="label" for="edition">Edición</label>
         <div class="control">
           <input class="input" type="text" name="edition" id="edition" value="{{ record.edition.as_deref().unwrap_or_default() }}" />
+        </div>
+      </div>
+
+      <!-- credits -->
+      <div class="mb-4">
+        <label class="label" for="credits">Créditos</label>
+        <div class="control">
+          <input class="input" type="text" name="credits" id="credits" value="{{ record.credits.as_deref().unwrap_or_default() }}" />
+        </div>
+      </div>
+
+      <!-- supplemental_information -->
+      <div class="mb-4">
+        <label class="label" for="supplemental_information">Información complementaria</label>
+        <div class="control">
+          <textarea class="textarea" name="supplemental_information" id="supplemental_information" rows="3">{{ record.supplemental_information.as_deref().unwrap_or_default() }}</textarea>
         </div>
       </div>
 
@@ -240,19 +189,70 @@
         </div>
       </div>
 
-      <!-- credits -->
+      <!-- scale -->
       <div class="mb-4">
-        <label class="label" for="credits">Créditos</label>
+        <label class="label" for="scale">Escala</label>
         <div class="control">
-          <input class="input" type="text" name="credits" id="credits" value="{{ record.credits.as_deref().unwrap_or_default() }}" />
+          <input class="input" type="text" name="scale" id="scale" value="{{ record.scale.as_deref().unwrap_or_default() }}" />
         </div>
       </div>
 
-      <!-- supplemental_information -->
+      <!-- spatial_resolution -->
       <div class="mb-4">
-        <label class="label" for="supplemental_information">Información complementaria</label>
+        <label class="label" for="spatial_resolution">Resolución espacial</label>
         <div class="control">
-          <textarea class="textarea" name="supplemental_information" id="supplemental_information" rows="3">{{ record.supplemental_information.as_deref().unwrap_or_default() }}</textarea>
+          <input
+            class="input"
+            type="text"
+            name="spatial_resolution"
+            id="spatial_resolution"
+            value="{{ record.spatial_resolution.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- projection (derived read-only from layer.srid, design decision #3) -->
+      <div class="mb-4">
+        <label class="label">Proyección</label>
+        <div class="control">
+          <input class="input" type="text" value="{{ projection }}" disabled />
+        </div>
+        <p class="help is-info">Derivada automáticamente del SRID configurado en la capa.</p>
+      </div>
+
+      <!-- lineage -->
+      <div class="mb-4">
+        <label class="label" for="lineage">Linaje</label>
+        <div class="control">
+          <textarea class="textarea" name="lineage" id="lineage" rows="3">{{ record.lineage.as_deref().unwrap_or_default() }}</textarea>
+        </div>
+      </div>
+
+      <!-- restrictions -->
+      <div class="mb-4">
+        <label class="label" for="restrictions">Restricciones de uso</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="restrictions"
+            id="restrictions"
+            value="{{ record.restrictions.as_deref().unwrap_or_default() }}"
+          />
+        </div>
+      </div>
+
+      <!-- maintenance_frequency -->
+      <div class="mb-4">
+        <label class="label" for="maintenance_frequency">Frecuencia de mantenimiento</label>
+        <div class="control">
+          <input
+            class="input"
+            type="text"
+            name="maintenance_frequency"
+            id="maintenance_frequency"
+            value="{{ record.maintenance_frequency.as_deref().unwrap_or_default() }}"
+          />
         </div>
       </div>
 
