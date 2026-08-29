@@ -1,14 +1,14 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
-<div class="flex justify-between items-center mb-6">
-  <h1 class="title">{{ base.translate["list-of-users"] }}</h1>
+<h1 class="title text-center mb-6">{{ base.translate["list-of-users"] }}</h1>
 
-  {% if current_user.is_admin() %}
+{% if current_user.is_admin() %}
+<div class="flex justify-end mb-4">
   <a href="/admin/users/new" class="button gap-2">
     <i class="fas fa-user-plus"></i>
     <span>{{ base.translate["add-user"] }}</span>
   </a>
-  {% endif %}
 </div>
+{% endif %}
 
 {% if users.is_empty() %}
 <div class="empty-state">
