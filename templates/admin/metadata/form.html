@@ -73,9 +73,13 @@
         <p class="help is-info">Separadas por comas.</p>
       </div>
 
-      <!-- data_creator_contact/metadata_contact removed (Phase 1.5): the
-           legacy flat contact strings are dropped by the migration. Work
-           Unit 3 (Phase 3) adds the structured repeatable contacts form. -->
+      <!-- purpose -->
+      <div class="mb-4">
+        <label class="label" for="purpose">Propósito</label>
+        <div class="control">
+          <textarea class="textarea" name="purpose" id="purpose" rows="3">{{ record.purpose.as_deref().unwrap_or_default() }}</textarea>
+        </div>
+      </div>
 
       <!-- maintenance_frequency -->
       <div class="mb-4">
@@ -169,9 +173,119 @@
         </div>
       </div>
 
-      <!-- reference_date removed (Phase 1.5): superseded by the typed
-           creation_date/publication_date/revision_date fields, added to the
-           form in Work Unit 3 (Phase 3). -->
+      <!-- creation_date / publication_date / revision_date -->
+      <div class="mb-4">
+        <label class="label" for="creation_date">Fecha de creación</label>
+        <div class="control">
+          <input
+            class="input"
+            type="date"
+            name="creation_date"
+            id="creation_date"
+            value="{{ creation_date_value }}"
+          />
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="label" for="publication_date">Fecha de publicación</label>
+        <div class="control">
+          <input
+            class="input"
+            type="date"
+            name="publication_date"
+            id="publication_date"
+            value="{{ publication_date_value }}"
+          />
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="label" for="revision_date">Fecha de revisión</label>
+        <div class="control">
+          <input
+            class="input"
+            type="date"
+            name="revision_date"
+            id="revision_date"
+            value="{{ revision_date_value }}"
+          />
+        </div>
+      </div>
+
+      <!-- temporal_extent_start / temporal_extent_end -->
+      <div class="mb-4">
+        <label class="label" for="temporal_extent_start">Extensión temporal (inicio)</label>
+        <div class="control">
+          <input
+            class="input"
+            type="date"
+            name="temporal_extent_start"
+            id="temporal_extent_start"
+            value="{{ temporal_extent_start_value }}"
+          />
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="label" for="temporal_extent_end">Extensión temporal (fin)</label>
+        <div class="control">
+          <input
+            class="input"
+            type="date"
+            name="temporal_extent_end"
+            id="temporal_extent_end"
+            value="{{ temporal_extent_end_value }}"
+          />
+        </div>
+      </div>
+
+      <!-- credits -->
+      <div class="mb-4">
+        <label class="label" for="credits">Créditos</label>
+        <div class="control">
+          <input class="input" type="text" name="credits" id="credits" value="{{ record.credits.as_deref().unwrap_or_default() }}" />
+        </div>
+      </div>
+
+      <!-- supplemental_information -->
+      <div class="mb-4">
+        <label class="label" for="supplemental_information">Información complementaria</label>
+        <div class="control">
+          <textarea class="textarea" name="supplemental_information" id="supplemental_information" rows="3">{{ record.supplemental_information.as_deref().unwrap_or_default() }}</textarea>
+        </div>
+      </div>
+
+      <!-- contacts -->
+      <div class="mb-4">
+        <label class="label">Contactos</label>
+        <p class="help is-info mb-2">Personas u organizaciones responsables de esta capa (ISO 19115 CI_ResponsibleParty).</p>
+        <div id="contacts-container">
+          {% for contact in record.contacts %}
+          <div class="flex flex-wrap gap-2 items-center mb-2 contact-row">
+            <input class="input flex-1" type="text" name="contact_individual_name" placeholder="Nombre" value="{{ contact.individual_name.as_deref().unwrap_or_default() }}" />
+            <input class="input flex-1" type="text" name="contact_organisation_name" placeholder="Organización" value="{{ contact.organisation_name.as_deref().unwrap_or_default() }}" />
+            <input class="input flex-1" type="text" name="contact_position_name" placeholder="Cargo" value="{{ contact.position_name.as_deref().unwrap_or_default() }}" />
+            <input class="input flex-1" type="email" name="contact_email" placeholder="Email" value="{{ contact.email.as_deref().unwrap_or_default() }}" />
+            <input class="input flex-1" type="text" name="contact_phone" placeholder="Teléfono" value="{{ contact.phone.as_deref().unwrap_or_default() }}" />
+            <div class="select">
+              <select name="contact_role" class="input">
+                {% for entry in role_codes %}
+                <option value="{{ entry.code }}" {% if contact.role == entry.code %}selected{% endif %}>{{ entry.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="button" class="button__outline" onclick="this.closest('.contact-row').remove()">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="button__outline gap-2" onclick="addContactRow()">
+          <i class="fas fa-plus"></i>
+          <span>Agregar contacto</span>
+        </button>
+      </div>
 
       <!-- external links -->
       <div class="mb-4">
@@ -233,11 +347,38 @@
   </div>
 </template>
 
+<!-- Hidden template row cloned by addContactRow() -->
+<template id="contact-row-template">
+  <div class="flex flex-wrap gap-2 items-center mb-2 contact-row">
+    <input class="input flex-1" type="text" name="contact_individual_name" placeholder="Nombre" />
+    <input class="input flex-1" type="text" name="contact_organisation_name" placeholder="Organización" />
+    <input class="input flex-1" type="text" name="contact_position_name" placeholder="Cargo" />
+    <input class="input flex-1" type="email" name="contact_email" placeholder="Email" />
+    <input class="input flex-1" type="text" name="contact_phone" placeholder="Teléfono" />
+    <div class="select">
+      <select name="contact_role" class="input">
+        {% for entry in role_codes %}
+        <option value="{{ entry.code }}">{{ entry.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="button" class="button__outline" onclick="this.closest('.contact-row').remove()">
+      <i class="fas fa-trash"></i>
+    </button>
+  </div>
+</template>
+
 {% endblock %} {% block scripts %}
 <script>
   function addLinkRow() {
     var template = document.getElementById('link-row-template');
     var container = document.getElementById('links-container');
+    container.appendChild(template.content.cloneNode(true));
+  }
+
+  function addContactRow() {
+    var template = document.getElementById('contact-row-template');
+    var container = document.getElementById('contacts-container');
     container.appendChild(template.content.cloneNode(true));
   }
 </script>

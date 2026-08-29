@@ -38,13 +38,14 @@ use crate::{
     html::utils::{BaseTemplateData, make_base},
     models::{
         catalog::{Layer, StateLayer},
-        metadata::{MetadataLink, MetadataRecord},
+        metadata::{MetadataContact, MetadataLink, MetadataRecord},
     },
     services::{
         metadata::{
             codelists::{
-                CodelistEntry, PROGRESS_CODES, TOPIC_CATEGORY_CODES, progress_code_translate_key,
-                topic_category_translate_key,
+                CodelistEntry, PROGRESS_CODES, ROLE_CODES, TOPIC_CATEGORY_CODES,
+                progress_code_translate_key, role_code_translate_key, topic_category_translate_key,
+                validate_contacts,
             },
             ogc::KNOWN_PROTOCOLS,
             rules::{derive_autofill, guard_layer_published},
@@ -92,6 +93,19 @@ struct MetadataFormTemplate {
     projection: String,
     topic_categories: Vec<CodelistOption>,
     progress_codes: Vec<CodelistOption>,
+    /// Options for the repeatable contact rows' `role` `<select>` (design
+    /// decision #4/#6): closed vocabulary, Fluent-translated labels, same
+    /// `codelist_options` helper as `topic_categories`/`progress_codes`.
+    role_codes: Vec<CodelistOption>,
+    /// `YYYY-MM-DD`-formatted values for the 5 typed date inputs (Key
+    /// Learning #11: precomputed here, not via an Askama filter, mirroring
+    /// `CodelistOption` above — Askama has no ergonomic way to call an
+    /// arbitrary Rust function inline on an `Option<OffsetDateTime>`).
+    creation_date_value: String,
+    publication_date_value: String,
+    revision_date_value: String,
+    temporal_extent_start_value: String,
+    temporal_extent_end_value: String,
     /// Owned `String`s (rather than `KNOWN_PROTOCOLS` directly) so the
     /// `link.protocol == *protocol` equality check in `form.html` compares
     /// `String == String`, avoiding an Askama-side `&str`/`&&str` deref
@@ -159,17 +173,39 @@ struct MetadataForm {
     spatial_resolution: Option<String>,
     status: Option<String>,
     edition: Option<String>,
-    // NOTE: the 8 new descriptive fields (purpose, typed dates, credits,
-    // supplemental_information) and contact rows are added to the form in
-    // Work Unit 3 (Phase 3, tasks 3.3-3.6); this Work Unit 1 change only
-    // keeps `MetadataForm`/`build_record` compiling against the updated
-    // `MetadataRecord` shape.
+    purpose: Option<String>,
+    /// `YYYY-MM-DD` from an `<input type="date">`; parsed via
+    /// [`parse_optional_date`] into midnight UTC RFC3339.
+    creation_date: Option<String>,
+    publication_date: Option<String>,
+    revision_date: Option<String>,
+    temporal_extent_start: Option<String>,
+    temporal_extent_end: Option<String>,
+    credits: Option<String>,
+    supplemental_information: Option<String>,
     #[serde(default)]
     link_protocol: Vec<String>,
     #[serde(default)]
     link_url: Vec<String>,
     #[serde(default)]
     link_label: Vec<String>,
+    /// Repeatable contact rows (design decision #6): parallel same-name
+    /// inputs zipped by position, mirroring `link_protocol`/`link_url`/
+    /// `link_label`. `contact_role` is a `<select>` so it always submits,
+    /// which is what keeps every vector's length aligned — [`build_contacts`]
+    /// drives the zip over `contact_role` and uses `.get(i)` for the rest.
+    #[serde(default)]
+    contact_individual_name: Vec<String>,
+    #[serde(default)]
+    contact_organisation_name: Vec<String>,
+    #[serde(default)]
+    contact_position_name: Vec<String>,
+    #[serde(default)]
+    contact_email: Vec<String>,
+    #[serde(default)]
+    contact_phone: Vec<String>,
+    #[serde(default)]
+    contact_role: Vec<String>,
 }
 
 /// A blank, autofilled-nothing record for the "new" form (no stored row yet
@@ -257,12 +293,71 @@ fn build_links(protocols: Vec<String>, urls: Vec<String>, labels: Vec<String>) -
         .collect()
 }
 
+/// Zips the six parallel contact-row vectors submitted by the repeatable
+/// contacts sub-form (design decision #6) into `MetadataContact`s. Driven by
+/// index over `roles` (a `<select>`, always submits, so its length is the
+/// authoritative row count) — the other five vectors are read via `.get(i)`
+/// so a shorter vector never panics, it just yields `None`/blank for that
+/// row. A row whose five identity fields (individual_name, organisation_name,
+/// position_name, email, phone) are ALL blank is dropped before validation
+/// (an admin can leave a trailing blank row), mirroring `build_links`'
+/// empty-`url` rule.
+fn build_contacts(
+    individual_names: Vec<String>,
+    organisation_names: Vec<String>,
+    position_names: Vec<String>,
+    emails: Vec<String>,
+    phones: Vec<String>,
+    roles: Vec<String>,
+) -> Vec<MetadataContact> {
+    roles
+        .into_iter()
+        .enumerate()
+        .map(|(i, role)| {
+            let individual_name = individual_names.get(i).cloned().filter(|s| !s.trim().is_empty());
+            let organisation_name = organisation_names.get(i).cloned().filter(|s| !s.trim().is_empty());
+            let position_name = position_names.get(i).cloned().filter(|s| !s.trim().is_empty());
+            let email = emails.get(i).cloned().filter(|s| !s.trim().is_empty());
+            let phone = phones.get(i).cloned().filter(|s| !s.trim().is_empty());
+            (individual_name, organisation_name, position_name, email, phone, role)
+        })
+        .filter(|(individual_name, organisation_name, position_name, email, phone, _)| {
+            individual_name.is_some()
+                || organisation_name.is_some()
+                || position_name.is_some()
+                || email.is_some()
+                || phone.is_some()
+        })
+        .map(
+            |(individual_name, organisation_name, position_name, email, phone, role)| MetadataContact {
+                id: Uuid::new_v4().to_string(),
+                individual_name,
+                organisation_name,
+                position_name,
+                email,
+                phone,
+                role,
+            },
+        )
+        .collect()
+}
+
 /// Pure mapping from the submitted form to a `MetadataRecord`. `id` and
 /// `file_identifier` are supplied by the caller: fresh UUIDs on create, the
 /// existing row's values on update (`file_identifier` is stable across
 /// edits per `models::metadata::MetadataRecord`'s own doc comment).
 /// `metadata_date` is always "now" — it tracks last edit, not user input.
 fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppResult<MetadataRecord> {
+    let contacts = build_contacts(
+        form.contact_individual_name,
+        form.contact_organisation_name,
+        form.contact_position_name,
+        form.contact_email,
+        form.contact_phone,
+        form.contact_role,
+    );
+    validate_contacts(&contacts)?;
+
     Ok(MetadataRecord {
         id,
         layer_id: form.layer_id,
@@ -278,19 +373,17 @@ fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppR
         spatial_resolution: non_empty(form.spatial_resolution),
         status: non_empty(form.status),
         edition: non_empty(form.edition),
-        // Work Unit 3 wires these from the form; Work Unit 1 defaults them
-        // so `MetadataRecord` compiles with its new fields.
-        purpose: None,
-        creation_date: None,
-        publication_date: None,
-        revision_date: None,
-        temporal_extent_start: None,
-        temporal_extent_end: None,
-        credits: None,
-        supplemental_information: None,
+        purpose: non_empty(form.purpose),
+        creation_date: parse_optional_date(form.creation_date.as_deref())?,
+        publication_date: parse_optional_date(form.publication_date.as_deref())?,
+        revision_date: parse_optional_date(form.revision_date.as_deref())?,
+        temporal_extent_start: parse_optional_date(form.temporal_extent_start.as_deref())?,
+        temporal_extent_end: parse_optional_date(form.temporal_extent_end.as_deref())?,
+        credits: non_empty(form.credits),
+        supplemental_information: non_empty(form.supplemental_information),
         metadata_date: OffsetDateTime::now_utc(),
         links: build_links(form.link_protocol, form.link_url, form.link_label),
-        contacts: Vec::new(),
+        contacts,
     })
 }
 
@@ -404,13 +497,21 @@ pub async fn new_metadata_page(req: &mut Request, res: &mut Response, depot: &mu
     let projection = derive_autofill(&layer, &base_url_from_request(req)).projection;
     let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &base.translate);
     let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
+    let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &base.translate);
+    let record = blank_record(&layer_id);
     let template = MetadataFormTemplate {
-        record: blank_record(&layer_id),
+        creation_date_value: format_date_input(record.creation_date),
+        publication_date_value: format_date_input(record.publication_date),
+        revision_date_value: format_date_input(record.revision_date),
+        temporal_extent_start_value: format_date_input(record.temporal_extent_start),
+        temporal_extent_end_value: format_date_input(record.temporal_extent_end),
+        record,
         layer,
         is_new: true,
         projection,
         topic_categories,
         progress_codes,
+        role_codes,
         protocols: known_protocols(),
         base,
     };
@@ -438,13 +539,20 @@ pub async fn edit_metadata_page(req: &mut Request, res: &mut Response, depot: &m
     let projection = derive_autofill(&layer, &base_url_from_request(req)).projection;
     let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &base.translate);
     let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
+    let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &base.translate);
     let template = MetadataFormTemplate {
+        creation_date_value: format_date_input(record.creation_date),
+        publication_date_value: format_date_input(record.publication_date),
+        revision_date_value: format_date_input(record.revision_date),
+        temporal_extent_start_value: format_date_input(record.temporal_extent_start),
+        temporal_extent_end_value: format_date_input(record.temporal_extent_end),
         record,
         layer,
         is_new: false,
         projection,
         topic_categories,
         progress_codes,
+        role_codes,
         protocols: known_protocols(),
         base,
     };
@@ -540,9 +648,23 @@ mod tests {
             spatial_resolution: None,
             status: Some("onGoing".to_string()),
             edition: None,
+            purpose: None,
+            creation_date: None,
+            publication_date: None,
+            revision_date: None,
+            temporal_extent_start: None,
+            temporal_extent_end: None,
+            credits: None,
+            supplemental_information: None,
             link_protocol: vec!["OGC:WMS".to_string(), "OGC:WFS".to_string()],
             link_url: vec!["https://example.com/wms".to_string(), String::new()],
             link_label: vec!["WMS service".to_string()],
+            contact_individual_name: Vec::new(),
+            contact_organisation_name: Vec::new(),
+            contact_position_name: Vec::new(),
+            contact_email: Vec::new(),
+            contact_phone: Vec::new(),
+            contact_role: Vec::new(),
         }
     }
 
@@ -609,6 +731,86 @@ mod tests {
         assert_eq!(links[0].label, None);
     }
 
+    // -- build_contacts (task 3.3) -----------------------------------------
+
+    #[test]
+    fn build_contacts_aligns_parallel_vectors_by_position() {
+        let contacts = build_contacts(
+            vec!["Ana Perez".to_string()],
+            vec!["IGN".to_string()],
+            vec!["GIS Analyst".to_string()],
+            vec!["ana@example.com".to_string()],
+            vec![String::new()],
+            vec!["pointOfContact".to_string()],
+        );
+        assert_eq!(contacts.len(), 1);
+        assert_eq!(contacts[0].individual_name, Some("Ana Perez".to_string()));
+        assert_eq!(contacts[0].organisation_name, Some("IGN".to_string()));
+        assert_eq!(contacts[0].position_name, Some("GIS Analyst".to_string()));
+        assert_eq!(contacts[0].email, Some("ana@example.com".to_string()));
+        assert_eq!(contacts[0].phone, None);
+        assert_eq!(contacts[0].role, "pointOfContact");
+        assert!(!contacts[0].id.is_empty(), "contact id must be generated");
+    }
+
+    #[test]
+    fn build_contacts_drops_a_row_whose_five_identity_fields_are_all_blank() {
+        let contacts = build_contacts(
+            vec![String::new()],
+            vec![String::new()],
+            vec![String::new()],
+            vec![String::new()],
+            vec![String::new()],
+            vec!["custodian".to_string()],
+        );
+        assert!(contacts.is_empty(), "an all-blank trailing row must be dropped");
+    }
+
+    #[test]
+    fn build_contacts_keeps_a_row_with_only_one_identity_field_set() {
+        let contacts = build_contacts(
+            vec![String::new()],
+            vec!["IGN".to_string()],
+            vec![String::new()],
+            vec![String::new()],
+            vec![String::new()],
+            vec!["custodian".to_string()],
+        );
+        assert_eq!(contacts.len(), 1, "a row with even one identity field set must survive");
+        assert_eq!(contacts[0].organisation_name, Some("IGN".to_string()));
+    }
+
+    #[test]
+    fn build_contacts_short_vectors_are_safe_and_yield_none_for_missing_positions() {
+        // `contact_role` (2 rows) is longer than the other five (0 rows) —
+        // `.get(i)` must not panic, and missing positions become `None`.
+        let contacts = build_contacts(
+            vec!["Ana Perez".to_string()],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec!["pointOfContact".to_string(), "custodian".to_string()],
+        );
+        assert_eq!(contacts.len(), 1, "only the row with a set identity field survives");
+        assert_eq!(contacts[0].individual_name, Some("Ana Perez".to_string()));
+        assert_eq!(contacts[0].role, "pointOfContact");
+    }
+
+    #[test]
+    fn build_contacts_preserves_multiple_contacts_sharing_one_role() {
+        let contacts = build_contacts(
+            vec!["Jose".to_string(), "Maria".to_string()],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec!["custodian".to_string(), "custodian".to_string()],
+        );
+        assert_eq!(contacts.len(), 2);
+        assert!(contacts.iter().all(|c| c.role == "custodian"));
+    }
+
     #[test]
     fn build_record_maps_form_and_preserves_supplied_id_and_file_identifier() {
         let record = build_record("rec-1".to_string(), "file-1".to_string(), form("layer-1")).unwrap();
@@ -622,6 +824,66 @@ mod tests {
         assert_eq!(record.purpose, None);
         assert_eq!(record.creation_date, None);
         assert!(record.contacts.is_empty());
+    }
+
+    #[test]
+    fn build_record_maps_new_descriptive_and_date_fields_from_form() {
+        let mut submitted = form("layer-1");
+        submitted.purpose = Some("Cadastral reference".to_string());
+        submitted.creation_date = Some("2026-01-10".to_string());
+        submitted.publication_date = Some("2026-01-15".to_string());
+        submitted.revision_date = Some("2026-02-01".to_string());
+        submitted.temporal_extent_start = Some("2020-01-01".to_string());
+        submitted.temporal_extent_end = Some("2026-01-01".to_string());
+        submitted.credits = Some("Instituto Geografico".to_string());
+        submitted.supplemental_information = Some("See appendix A".to_string());
+
+        let record = build_record("rec-1".to_string(), "file-1".to_string(), submitted).unwrap();
+
+        assert_eq!(record.purpose, Some("Cadastral reference".to_string()));
+        assert_eq!(
+            record.creation_date,
+            OffsetDateTime::parse("2026-01-10T00:00:00Z", &Rfc3339).ok()
+        );
+        assert_eq!(
+            record.revision_date,
+            OffsetDateTime::parse("2026-02-01T00:00:00Z", &Rfc3339).ok()
+        );
+        assert_eq!(record.credits, Some("Instituto Geografico".to_string()));
+        assert_eq!(record.supplemental_information, Some("See appendix A".to_string()));
+    }
+
+    #[test]
+    fn build_record_propagates_a_malformed_date_error() {
+        let mut submitted = form("layer-1");
+        submitted.creation_date = Some("not-a-date".to_string());
+
+        let err = build_record("rec-1".to_string(), "file-1".to_string(), submitted)
+            .expect_err("must reject a malformed date");
+        assert!(matches!(err, AppError::InvalidInput(_)));
+    }
+
+    #[test]
+    fn build_record_wires_contacts_and_rejects_invalid_role() {
+        let mut submitted = form("layer-1");
+        submitted.contact_individual_name = vec!["Ana Perez".to_string()];
+        submitted.contact_role = vec!["reviewer".to_string()];
+
+        let err = build_record("rec-1".to_string(), "file-1".to_string(), submitted)
+            .expect_err("role 'reviewer' is not in the closed vocabulary");
+        assert!(matches!(err, AppError::InvalidInput(_)));
+    }
+
+    #[test]
+    fn build_record_persists_valid_contacts() {
+        let mut submitted = form("layer-1");
+        submitted.contact_individual_name = vec!["Ana Perez".to_string()];
+        submitted.contact_role = vec!["pointOfContact".to_string()];
+
+        let record = build_record("rec-1".to_string(), "file-1".to_string(), submitted).unwrap();
+        assert_eq!(record.contacts.len(), 1);
+        assert_eq!(record.contacts[0].individual_name, Some("Ana Perez".to_string()));
+        assert_eq!(record.contacts[0].role, "pointOfContact");
     }
 
     #[test]
@@ -789,6 +1051,7 @@ mod tests {
         let translate = i18n.get_all_translations(lang);
         let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &translate);
         let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &translate);
+        let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &translate);
         let base = BaseTemplateData { is_auth: true, is_admin: true, translate, version: "0.0.0-test" };
         let template = MetadataFormTemplate {
             layer: test_layer("layer-1"),
@@ -797,6 +1060,12 @@ mod tests {
             projection: "EPSG:4326".to_string(),
             topic_categories,
             progress_codes,
+            role_codes,
+            creation_date_value: String::new(),
+            publication_date_value: String::new(),
+            revision_date_value: String::new(),
+            temporal_extent_start_value: String::new(),
+            temporal_extent_end_value: String::new(),
             protocols: known_protocols(),
             base,
         };

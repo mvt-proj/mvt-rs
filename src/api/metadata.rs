@@ -38,10 +38,11 @@ use crate::{
     get_catalog,
     models::{
         catalog::{Layer, StateLayer},
-        metadata::{MetadataLink, MetadataRecord},
+        metadata::{MetadataContact, MetadataLink, MetadataRecord},
     },
     services::{
         metadata::{
+            codelists::validate_contacts,
             ogc::{
                 CONFORMANCE_CLASSES, DatetimeFilter, Feature, FeatureLink, parse_bbox,
                 parse_datetime, parse_q, record_to_feature,
@@ -116,6 +117,17 @@ struct LinkPayload {
 
 #[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
 #[salvo(extract(default_source(from = "body")))]
+struct ContactPayload {
+    individual_name: Option<String>,
+    organisation_name: Option<String>,
+    position_name: Option<String>,
+    email: Option<String>,
+    phone: Option<String>,
+    role: String,
+}
+
+#[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
+#[salvo(extract(default_source(from = "body")))]
 struct MetadataPayload {
     #[salvo(extract(source(from = "param")))]
     layer_id: String,
@@ -131,23 +143,51 @@ struct MetadataPayload {
     spatial_resolution: Option<String>,
     status: Option<String>,
     edition: Option<String>,
-    // NOTE: the 8 new descriptive fields (purpose, typed dates, credits,
-    // supplemental_information) and `contacts` are added to the wire
-    // payload in Work Unit 3 (Phase 3, tasks 3.1-3.2); this Work Unit 1
-    // change only keeps `MetadataPayload`/`build_record` compiling against
-    // the updated `MetadataRecord` shape.
+    purpose: Option<String>,
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    creation_date: Option<OffsetDateTime>,
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    publication_date: Option<OffsetDateTime>,
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    revision_date: Option<OffsetDateTime>,
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    temporal_extent_start: Option<OffsetDateTime>,
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    temporal_extent_end: Option<OffsetDateTime>,
+    credits: Option<String>,
+    supplemental_information: Option<String>,
     #[serde(default, with = "time::serde::rfc3339::option")]
     metadata_date: Option<OffsetDateTime>,
     #[serde(default)]
     links: Vec<LinkPayload>,
+    #[serde(default)]
+    contacts: Vec<ContactPayload>,
 }
 
 /// Pure mapping from the wire payload to a stored `MetadataRecord`. `id` is
 /// supplied by the caller: a fresh UUID on create, the existing row's `id`
 /// on update (see `config::metadata::update_metadata_record`'s reliance on
-/// `record.id` to re-key `metadata_links`).
-fn build_record(id: String, payload: MetadataPayload) -> MetadataRecord {
-    MetadataRecord {
+/// `record.id` to re-key `metadata_links`). Validates every contact's `role`
+/// against the closed vocabulary (design decision #4, spec "Closed role
+/// vocabulary enforcement") before returning, rejecting the whole payload
+/// (nothing persisted by the caller) on the first invalid role found.
+fn build_record(id: String, payload: MetadataPayload) -> AppResult<MetadataRecord> {
+    let contacts: Vec<MetadataContact> = payload
+        .contacts
+        .into_iter()
+        .map(|c| MetadataContact {
+            id: Uuid::new_v4().to_string(),
+            individual_name: c.individual_name,
+            organisation_name: c.organisation_name,
+            position_name: c.position_name,
+            email: c.email,
+            phone: c.phone,
+            role: c.role,
+        })
+        .collect();
+    validate_contacts(&contacts)?;
+
+    Ok(MetadataRecord {
         id,
         layer_id: payload.layer_id,
         file_identifier: payload.file_identifier.unwrap_or_else(|| Uuid::new_v4().to_string()),
@@ -162,16 +202,14 @@ fn build_record(id: String, payload: MetadataPayload) -> MetadataRecord {
         spatial_resolution: payload.spatial_resolution,
         status: payload.status,
         edition: payload.edition,
-        // Work Unit 3 wires these from the payload; Work Unit 1 defaults
-        // them so `MetadataRecord` compiles with its new fields.
-        purpose: None,
-        creation_date: None,
-        publication_date: None,
-        revision_date: None,
-        temporal_extent_start: None,
-        temporal_extent_end: None,
-        credits: None,
-        supplemental_information: None,
+        purpose: payload.purpose,
+        creation_date: payload.creation_date,
+        publication_date: payload.publication_date,
+        revision_date: payload.revision_date,
+        temporal_extent_start: payload.temporal_extent_start,
+        temporal_extent_end: payload.temporal_extent_end,
+        credits: payload.credits,
+        supplemental_information: payload.supplemental_information,
         metadata_date: payload.metadata_date.unwrap_or_else(OffsetDateTime::now_utc),
         links: payload
             .links
@@ -183,8 +221,8 @@ fn build_record(id: String, payload: MetadataPayload) -> MetadataRecord {
                 label: l.label,
             })
             .collect(),
-        contacts: Vec::new(),
-    }
+        contacts,
+    })
 }
 
 /// Testable core of `create`: enforces the published guard (design decision
@@ -196,7 +234,7 @@ async fn create_record_for_layer(
     payload: MetadataPayload,
 ) -> AppResult<MetadataRecord> {
     guard_layer_published(layer)?;
-    let record = build_record(Uuid::new_v4().to_string(), payload);
+    let record = build_record(Uuid::new_v4().to_string(), payload)?;
     create_metadata_record(pool, &record).await?;
     Ok(record)
 }
@@ -214,7 +252,7 @@ async fn update_record_for_layer(
         .map_err(AppError::from)?
         .ok_or_else(|| AppError::NotFound(format!("No metadata record for layer '{}'", layer.id)))?;
 
-    let record = build_record(existing.id, payload);
+    let record = build_record(existing.id, payload)?;
     update_metadata_record(pool, &record).await?;
     Ok(record)
 }
@@ -691,12 +729,21 @@ mod tests {
             spatial_resolution: None,
             status: None,
             edition: None,
+            purpose: None,
+            creation_date: None,
+            publication_date: None,
+            revision_date: None,
+            temporal_extent_start: None,
+            temporal_extent_end: None,
+            credits: None,
+            supplemental_information: None,
             metadata_date: None,
             links: vec![LinkPayload {
                 protocol: "OGC:WMS".to_string(),
                 url: "https://example.com/wms".to_string(),
                 label: Some("WMS".to_string()),
             }],
+            contacts: Vec::new(),
         }
     }
 
@@ -733,7 +780,7 @@ mod tests {
         payload_no_id.metadata_date = None;
         payload_no_id.keywords = None;
 
-        let record = build_record("rec-1".to_string(), payload_no_id);
+        let record = build_record("rec-1".to_string(), payload_no_id).unwrap();
 
         assert_eq!(record.id, "rec-1");
         assert_eq!(record.layer_id, "layer-1");
@@ -751,13 +798,158 @@ mod tests {
         payload.file_identifier = Some("explicit-fid".to_string());
         payload.metadata_date = Some(datetime!(2026-01-01 00:00:00 UTC));
 
-        let record = build_record("rec-1".to_string(), payload);
+        let record = build_record("rec-1".to_string(), payload).unwrap();
 
         assert_eq!(record.file_identifier, "explicit-fid");
         assert_eq!(record.metadata_date, datetime!(2026-01-01 00:00:00 UTC));
         assert_eq!(record.links.len(), 1);
         assert!(!record.links[0].id.is_empty(), "link id must be generated");
         assert_eq!(record.links[0].protocol, "OGC:WMS");
+    }
+
+    #[test]
+    fn build_record_maps_new_descriptive_and_date_fields() {
+        let mut payload = test_payload("layer-1");
+        payload.purpose = Some("Cadastral reference".to_string());
+        payload.creation_date = Some(datetime!(2026-01-10 00:00:00 UTC));
+        payload.publication_date = Some(datetime!(2026-01-15 00:00:00 UTC));
+        payload.revision_date = Some(datetime!(2026-02-01 00:00:00 UTC));
+        payload.temporal_extent_start = Some(datetime!(2020-01-01 00:00:00 UTC));
+        payload.temporal_extent_end = Some(datetime!(2026-01-01 00:00:00 UTC));
+        payload.credits = Some("Instituto Geografico".to_string());
+        payload.supplemental_information = Some("See appendix A".to_string());
+
+        let record = build_record("rec-1".to_string(), payload).unwrap();
+
+        assert_eq!(record.purpose, Some("Cadastral reference".to_string()));
+        assert_eq!(record.creation_date, Some(datetime!(2026-01-10 00:00:00 UTC)));
+        assert_eq!(record.publication_date, Some(datetime!(2026-01-15 00:00:00 UTC)));
+        assert_eq!(record.revision_date, Some(datetime!(2026-02-01 00:00:00 UTC)));
+        assert_eq!(record.temporal_extent_start, Some(datetime!(2020-01-01 00:00:00 UTC)));
+        assert_eq!(record.temporal_extent_end, Some(datetime!(2026-01-01 00:00:00 UTC)));
+        assert_eq!(record.credits, Some("Instituto Geografico".to_string()));
+        assert_eq!(record.supplemental_information, Some("See appendix A".to_string()));
+    }
+
+    #[test]
+    fn build_record_accepts_zero_contacts() {
+        let payload = test_payload("layer-1");
+        let record = build_record("rec-1".to_string(), payload).unwrap();
+        assert!(record.contacts.is_empty());
+    }
+
+    #[test]
+    fn build_record_persists_many_contacts_including_duplicate_roles_and_generates_ids() {
+        let mut payload = test_payload("layer-1");
+        payload.contacts = vec![
+            ContactPayload {
+                individual_name: Some("Ana Perez".to_string()),
+                organisation_name: Some("IGN".to_string()),
+                position_name: None,
+                email: Some("ana@example.com".to_string()),
+                phone: None,
+                role: "pointOfContact".to_string(),
+            },
+            ContactPayload {
+                individual_name: Some("Jose".to_string()),
+                organisation_name: None,
+                position_name: None,
+                email: None,
+                phone: None,
+                role: "custodian".to_string(),
+            },
+            ContactPayload {
+                individual_name: Some("Maria".to_string()),
+                organisation_name: None,
+                position_name: None,
+                email: None,
+                phone: None,
+                role: "custodian".to_string(),
+            },
+        ];
+
+        let record = build_record("rec-1".to_string(), payload).unwrap();
+
+        assert_eq!(record.contacts.len(), 3);
+        assert!(record.contacts.iter().all(|c| !c.id.is_empty()), "every contact must get a generated id");
+        assert_eq!(
+            record.contacts.iter().filter(|c| c.role == "custodian").count(),
+            2,
+            "duplicate roles must both persist"
+        );
+    }
+
+    #[test]
+    fn build_record_rejects_invalid_contact_role_and_persists_nothing() {
+        let mut payload = test_payload("layer-1");
+        payload.contacts = vec![ContactPayload {
+            individual_name: Some("Ana Perez".to_string()),
+            organisation_name: None,
+            position_name: None,
+            email: None,
+            phone: None,
+            role: "reviewer".to_string(),
+        }];
+
+        let err = build_record("rec-1".to_string(), payload)
+            .expect_err("role 'reviewer' is not in the closed vocabulary");
+        assert!(matches!(err, AppError::InvalidInput(_)));
+    }
+
+    #[tokio::test]
+    async fn create_record_for_layer_rejects_invalid_contact_role_and_does_not_persist() {
+        let pool = in_memory_pool().await;
+        let layer = test_layer("layer-1", true);
+        let mut payload = test_payload("layer-1");
+        payload.contacts = vec![ContactPayload {
+            individual_name: Some("Ana Perez".to_string()),
+            organisation_name: None,
+            position_name: None,
+            email: None,
+            phone: None,
+            role: "reviewer".to_string(),
+        }];
+
+        let err = create_record_for_layer(Some(&pool), &layer, payload)
+            .await
+            .expect_err("must reject an invalid contact role");
+        assert!(matches!(err, AppError::InvalidInput(_)));
+
+        let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1").await.unwrap();
+        assert!(found.is_none(), "rejected create must not persist a row");
+    }
+
+    #[tokio::test]
+    async fn create_record_for_layer_persists_zero_one_and_many_contacts_round_trip() {
+        let pool = in_memory_pool().await;
+        let layer = test_layer("layer-1", true);
+        let mut payload = test_payload("layer-1");
+        payload.contacts = vec![
+            ContactPayload {
+                individual_name: Some("Ana Perez".to_string()),
+                organisation_name: Some("IGN".to_string()),
+                position_name: Some("GIS Analyst".to_string()),
+                email: Some("ana@example.com".to_string()),
+                phone: None,
+                role: "pointOfContact".to_string(),
+            },
+            ContactPayload {
+                individual_name: None,
+                organisation_name: Some("IGN".to_string()),
+                position_name: None,
+                email: None,
+                phone: Some("+54 11 5555-5555".to_string()),
+                role: "custodian".to_string(),
+            },
+        ];
+
+        create_record_for_layer(Some(&pool), &layer, payload).await.unwrap();
+
+        let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1")
+            .await
+            .unwrap()
+            .expect("record must be persisted");
+        assert_eq!(found.contacts.len(), 2);
     }
 
     // -- create_record_for_layer / update_record_for_layer --------------
