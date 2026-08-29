@@ -517,6 +517,73 @@ fn paginate(features: Vec<Feature>, limit: usize, offset: usize) -> (Vec<Feature
     (page, number_matched, number_returned)
 }
 
+/// `?q=&bbox=&datetime=&limit=&offset=` for one items-page href, omitting
+/// filters that weren't used. Query values are passed through as received
+/// (already URL-decoded by `req.query`) rather than re-encoded: `q`, `bbox`,
+/// and `datetime` only ever contain characters that are safe unencoded in a
+/// query string for this API (no `&`/`#`/spaces), so this stays a plain
+/// string builder instead of pulling in a percent-encoding dependency.
+fn items_query_string(q: &str, bbox: Option<&str>, datetime: Option<&str>, limit: usize, offset: usize) -> String {
+    let mut params = Vec::new();
+    if !q.is_empty() {
+        params.push(format!("q={q}"));
+    }
+    if let Some(bbox) = bbox {
+        params.push(format!("bbox={bbox}"));
+    }
+    if let Some(datetime) = datetime {
+        params.push(format!("datetime={datetime}"));
+    }
+    params.push(format!("limit={limit}"));
+    params.push(format!("offset={offset}"));
+    params.join("&")
+}
+
+/// `self`/`prev`/`next` links for an items page, per OGC API - Records/Features
+/// pagination: `self` echoes the exact query used, `prev`/`next` only appear
+/// when there is a page in that direction.
+#[allow(clippy::too_many_arguments)]
+fn build_items_links(
+    base_url: &str,
+    q: &str,
+    bbox: Option<&str>,
+    datetime: Option<&str>,
+    limit: usize,
+    offset: usize,
+    number_matched: usize,
+    number_returned: usize,
+) -> Vec<FeatureLink> {
+    let items_url = format!("{base_url}{RECORDS_BASE_PATH}/collections/{COLLECTION_ID}/items");
+
+    let mut links = vec![generic_link(
+        "self",
+        format!("{items_url}?{}", items_query_string(q, bbox, datetime, limit, offset)),
+        "application/geo+json",
+        None,
+    )];
+
+    if offset > 0 {
+        let prev_offset = offset.saturating_sub(limit);
+        links.push(generic_link(
+            "prev",
+            format!("{items_url}?{}", items_query_string(q, bbox, datetime, limit, prev_offset)),
+            "application/geo+json",
+            None,
+        ));
+    }
+
+    if offset + number_returned < number_matched {
+        links.push(generic_link(
+            "next",
+            format!("{items_url}?{}", items_query_string(q, bbox, datetime, limit, offset + limit)),
+            "application/geo+json",
+            None,
+        ));
+    }
+
+    links
+}
+
 #[handler]
 pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let collection_id = req.param::<String>("collection_id").unwrap_or_default();
@@ -538,8 +605,9 @@ pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> 
         }
     };
 
-    let bbox_filter = match req.query::<String>("bbox") {
-        Some(raw) => match parse_bbox(&raw) {
+    let bbox_raw = req.query::<String>("bbox");
+    let bbox_filter = match &bbox_raw {
+        Some(raw) => match parse_bbox(raw) {
             Ok(b) => Some(b),
             Err(e) => {
                 render_problem(res, StatusCode::BAD_REQUEST, e.to_string());
@@ -549,8 +617,9 @@ pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> 
         None => None,
     };
 
-    let datetime_filter = match req.query::<String>("datetime") {
-        Some(raw) => match parse_datetime(&raw) {
+    let datetime_raw = req.query::<String>("datetime");
+    let datetime_filter = match &datetime_raw {
+        Some(raw) => match parse_datetime(raw) {
             Ok(d) => Some(d),
             Err(e) => {
                 render_problem(res, StatusCode::BAD_REQUEST, e.to_string());
@@ -609,15 +678,21 @@ pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> 
 
     let (page, number_matched, number_returned) = paginate(features, limit, offset);
 
+    let links = build_items_links(
+        &base_url,
+        &q_raw,
+        bbox_raw.as_deref(),
+        datetime_raw.as_deref(),
+        limit,
+        offset,
+        number_matched,
+        number_returned,
+    );
+
     res.render(Json(FeatureCollectionResponse {
         type_: "FeatureCollection".to_string(),
         features: page,
-        links: vec![generic_link(
-            "self",
-            format!("{base_url}{RECORDS_BASE_PATH}/collections/{COLLECTION_ID}/items"),
-            "application/geo+json",
-            None,
-        )],
+        links,
         number_matched,
         number_returned,
     }));
@@ -1203,6 +1278,75 @@ mod tests {
         let collections_body = build_collections("http://localhost:5887");
         assert_eq!(collections_body.collections.len(), 1);
         assert_eq!(collections_body.collections[0].id, "layers");
+    }
+
+    // -- build_items_links -------------------------------------------------
+
+    #[test]
+    fn build_items_links_self_reflects_limit_and_offset() {
+        let links = build_items_links("http://localhost:5887", "", None, None, 1, 0, 2, 1);
+        let self_link = links.iter().find(|l| l.rel == "self").expect("self link must be present");
+        assert!(self_link.href.contains("limit=1"));
+        assert!(self_link.href.contains("offset=0"));
+    }
+
+    #[test]
+    fn build_items_links_includes_next_when_more_results_remain() {
+        let links = build_items_links("http://localhost:5887", "", None, None, 1, 0, 2, 1);
+        let next_link = links.iter().find(|l| l.rel == "next").expect("next link must be present when more results remain");
+        assert!(next_link.href.contains("limit=1"));
+        assert!(next_link.href.contains("offset=1"));
+    }
+
+    #[test]
+    fn build_items_links_omits_next_on_last_page() {
+        let links = build_items_links("http://localhost:5887", "", None, None, 1, 1, 2, 1);
+        assert!(!links.iter().any(|l| l.rel == "next"));
+    }
+
+    #[test]
+    fn build_items_links_includes_prev_when_offset_is_positive() {
+        let links = build_items_links("http://localhost:5887", "", None, None, 1, 1, 2, 1);
+        let prev_link = links.iter().find(|l| l.rel == "prev").expect("prev link must be present when offset > 0");
+        assert!(prev_link.href.contains("offset=0"));
+    }
+
+    #[test]
+    fn build_items_links_omits_prev_on_first_page() {
+        let links = build_items_links("http://localhost:5887", "", None, None, 1, 0, 2, 1);
+        assert!(!links.iter().any(|l| l.rel == "prev"));
+    }
+
+    #[test]
+    fn build_items_links_prev_offset_does_not_go_negative() {
+        let links = build_items_links("http://localhost:5887", "", None, None, 5, 2, 10, 5);
+        let prev_link = links.iter().find(|l| l.rel == "prev").expect("prev link must be present");
+        assert!(prev_link.href.contains("offset=0"));
+    }
+
+    #[test]
+    fn build_items_links_preserves_q_bbox_and_datetime_filters() {
+        let links = build_items_links(
+            "http://localhost:5887",
+            "catastro",
+            Some("-64.3,-31.2,-63.9,-30.9"),
+            Some("2026-01-01T00:00:00Z/2026-12-31T23:59:59Z"),
+            1,
+            0,
+            2,
+            1,
+        );
+        let self_link = links.iter().find(|l| l.rel == "self").unwrap();
+        assert!(self_link.href.contains("q=catastro"));
+        assert!(self_link.href.contains("bbox=-64.3,-31.2,-63.9,-30.9"));
+        assert!(self_link.href.contains("datetime=2026-01-01T00:00:00Z/2026-12-31T23:59:59Z"));
+    }
+
+    #[test]
+    fn build_items_links_omits_empty_q_from_query_string() {
+        let links = build_items_links("http://localhost:5887", "", None, None, 10, 0, 1, 1);
+        let self_link = links.iter().find(|l| l.rel == "self").unwrap();
+        assert!(!self_link.href.contains("q="));
     }
 
     // -- TestClient: admin CRUD hoop rejection (403, no catalog/pool touch) --
