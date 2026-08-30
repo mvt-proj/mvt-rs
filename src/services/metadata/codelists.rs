@@ -117,6 +117,38 @@ pub fn is_valid_role_code(code: &str) -> bool {
     is_valid_in(ROLE_CODES, code)
 }
 
+/// Catalog visibility state for a `MetadataRecord` — NOT an ISO 19115
+/// codelist (there's no `MD_...` class for this), but kept in the same
+/// closed-vocabulary shape as the codelists above for consistency with the
+/// admin form/validation pattern. Gates public OGC API - Records visibility;
+/// see `MetadataRecord::workflow_status`.
+pub const WORKFLOW_STATUS_CODES: &[CodelistEntry] =
+    &[CodelistEntry { code: "draft" }, CodelistEntry { code: "published" }];
+
+/// Fluent translate key (`workflow-status-{code}`) for a `workflow_status`
+/// value, or `None` if unknown.
+pub fn workflow_status_translate_key(code: &str) -> Option<String> {
+    translate_key_for(WORKFLOW_STATUS_CODES, "workflow-status", code)
+}
+
+/// Whether `code` is one of the two closed `WORKFLOW_STATUS_CODES` values.
+pub fn is_valid_workflow_status(code: &str) -> bool {
+    is_valid_in(WORKFLOW_STATUS_CODES, code)
+}
+
+/// Validates `workflow_status` against [`WORKFLOW_STATUS_CODES`], mirroring
+/// [`validate_contacts`]'s boundary-validation pattern (design decision #4).
+pub fn validate_workflow_status(workflow_status: &str) -> AppResult<()> {
+    if is_valid_workflow_status(workflow_status) {
+        Ok(())
+    } else {
+        let valid = WORKFLOW_STATUS_CODES.iter().map(|entry| entry.code).collect::<Vec<_>>().join(", ");
+        Err(AppError::InvalidInput(format!(
+            "invalid workflow_status '{workflow_status}': must be one of {valid}"
+        )))
+    }
+}
+
 /// Validates every contact's `role` against [`ROLE_CODES`] (spec "Closed
 /// role vocabulary enforcement"). Rejects with a typed
 /// [`AppError::InvalidInput`] on the first invalid role found — mirrors the
@@ -261,6 +293,51 @@ mod tests {
         }
     }
 
+    #[test]
+    fn workflow_status_codes_table_has_the_two_closed_values() {
+        assert_eq!(WORKFLOW_STATUS_CODES.len(), 2);
+        let codes: Vec<&str> = WORKFLOW_STATUS_CODES.iter().map(|e| e.code).collect();
+        assert_eq!(codes, vec!["draft", "published"]);
+    }
+
+    #[test]
+    fn workflow_status_translate_key_returns_key_for_known_code() {
+        assert_eq!(
+            workflow_status_translate_key("draft"),
+            Some("workflow-status-draft".to_string())
+        );
+    }
+
+    #[test]
+    fn workflow_status_translate_key_returns_none_for_unknown_code() {
+        assert_eq!(workflow_status_translate_key("archived"), None);
+    }
+
+    #[test]
+    fn is_valid_workflow_status_accepts_every_code_in_the_table_and_rejects_unknown() {
+        for entry in WORKFLOW_STATUS_CODES {
+            assert!(is_valid_workflow_status(entry.code));
+        }
+        assert!(!is_valid_workflow_status("archived"));
+    }
+
+    #[test]
+    fn validate_workflow_status_accepts_draft_and_published() {
+        assert!(validate_workflow_status("draft").is_ok());
+        assert!(validate_workflow_status("published").is_ok());
+    }
+
+    #[test]
+    fn validate_workflow_status_rejects_unknown_value() {
+        let err = validate_workflow_status("archived").expect_err("must reject unknown workflow_status");
+        match err {
+            AppError::InvalidInput(message) => {
+                assert!(message.contains("archived"), "error must name the offending value: {message}");
+            }
+            other => panic!("expected AppError::InvalidInput, got {other:?}"),
+        }
+    }
+
     /// Every `.ftl` locale bundle this project ships must define a
     /// `topic-category-<code>` / `progress-code-<code>` message for every
     /// code in the two codelist tables above. Askama's `translate[...]`
@@ -299,6 +376,14 @@ mod tests {
 
             for entry in ROLE_CODES {
                 let key = format!("role-code-{}", entry.code);
+                assert!(
+                    keys.contains(&key),
+                    "locale {locale} is missing Fluent key `{key}`"
+                );
+            }
+
+            for entry in WORKFLOW_STATUS_CODES {
+                let key = format!("workflow-status-{}", entry.code);
                 assert!(
                     keys.contains(&key),
                     "locale {locale} is missing Fluent key `{key}`"

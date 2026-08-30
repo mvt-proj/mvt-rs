@@ -240,3 +240,5 @@ role-code-metadataAuthor = Autore dei metadati
 role-code-custodian = Custode
 role-code-publisher = Editore
 role-code-processor = Elaboratore
+workflow-status-draft = Bozza
+workflow-status-published = Pubblicato

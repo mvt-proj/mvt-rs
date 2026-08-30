@@ -445,6 +445,7 @@ mod tests {
             credits: None,
             supplemental_information: None,
             metadata_date: datetime!(2026-08-27 12:00:00 UTC),
+            workflow_status: "published".to_string(),
             links: vec![MetadataLink {
                 id: "link-1".to_string(),
                 protocol: PROTOCOL_WMS.to_string(),

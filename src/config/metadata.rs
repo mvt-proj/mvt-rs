@@ -159,6 +159,7 @@ fn row_to_record(row: &sqlx::sqlite::SqliteRow) -> Result<MetadataRecord, sqlx::
         credits: row.get("credits"),
         supplemental_information: row.get("supplemental_information"),
         metadata_date: parse_rfc3339(&metadata_date)?,
+        workflow_status: row.get("workflow_status"),
         links: Vec::new(),
         contacts: Vec::new(),
     })
@@ -186,8 +187,8 @@ pub async fn create_metadata_record(
             id, layer_id, file_identifier, language, character_set, topic_category, keywords,
             maintenance_frequency, restrictions, lineage, scale, spatial_resolution, status, edition,
             purpose, creation_date, publication_date, revision_date, temporal_extent_start,
-            temporal_extent_end, credits, supplemental_information, metadata_date
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            temporal_extent_end, credits, supplemental_information, metadata_date, workflow_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&record.id)
     .bind(&record.layer_id)
@@ -212,6 +213,7 @@ pub async fn create_metadata_record(
     .bind(&record.credits)
     .bind(&record.supplemental_information)
     .bind(&metadata_date)
+    .bind(&record.workflow_status)
     .execute(pool)
     .await;
 
@@ -275,7 +277,7 @@ pub async fn update_metadata_record(
             maintenance_frequency = ?, restrictions = ?, lineage = ?, scale = ?, spatial_resolution = ?,
             status = ?, edition = ?, purpose = ?, creation_date = ?, publication_date = ?,
             revision_date = ?, temporal_extent_start = ?, temporal_extent_end = ?, credits = ?,
-            supplemental_information = ?, metadata_date = ? WHERE layer_id = ?",
+            supplemental_information = ?, metadata_date = ?, workflow_status = ? WHERE layer_id = ?",
     )
     .bind(&record.file_identifier)
     .bind(&record.language)
@@ -298,6 +300,7 @@ pub async fn update_metadata_record(
     .bind(&record.credits)
     .bind(&record.supplemental_information)
     .bind(&metadata_date)
+    .bind(&record.workflow_status)
     .bind(&record.layer_id)
     .execute(pool)
     .await?;
@@ -400,6 +403,7 @@ mod tests {
             credits: Some("Instituto Geografico".to_string()),
             supplemental_information: Some("See appendix A".to_string()),
             metadata_date: datetime!(2026-08-27 12:00:00 UTC),
+            workflow_status: "published".to_string(),
             links: vec![MetadataLink {
                 id: format!("link-{layer_id}"),
                 protocol: "OGC:WMS".to_string(),
@@ -535,6 +539,30 @@ mod tests {
         assert_eq!(found_after_update.credits, Some("Updated credits".to_string()));
         assert_eq!(found_after_update.contacts.len(), 2);
         assert!(found_after_update.contacts.iter().all(|c| c.role == "custodian"));
+    }
+
+    #[tokio::test]
+    async fn round_trip_persists_workflow_status_through_create_and_update() {
+        let pool = in_memory_pool().await;
+        let mut record = sample_record("layer-1");
+        record.workflow_status = "draft".to_string();
+        create_metadata_record(Some(&pool), &record).await.unwrap();
+
+        let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1")
+            .await
+            .unwrap()
+            .expect("record must be found");
+        assert_eq!(found.workflow_status, "draft");
+
+        let mut updated = found;
+        updated.workflow_status = "published".to_string();
+        update_metadata_record(Some(&pool), &updated).await.unwrap();
+
+        let found_after_update = get_metadata_record_by_layer_id(Some(&pool), "layer-1")
+            .await
+            .unwrap()
+            .expect("record must still exist");
+        assert_eq!(found_after_update.workflow_status, "published");
     }
 
     #[tokio::test]

@@ -36,7 +36,7 @@ use crate::{
     },
     services::{
         metadata::{
-            codelists::validate_contacts,
+            codelists::{validate_contacts, validate_workflow_status},
             ogc::{
                 CONFORMANCE_CLASSES, DatetimeFilter, Feature, FeatureLink, parse_bbox,
                 parse_datetime, parse_q, record_to_feature,
@@ -152,6 +152,10 @@ struct MetadataPayload {
     supplemental_information: Option<String>,
     #[serde(default, with = "time::serde::rfc3339::option")]
     metadata_date: Option<OffsetDateTime>,
+    /// Catalog visibility (`"draft"`/`"published"`); defaults to
+    /// `"published"` when absent or blank (design decision: safer default,
+    /// preserves pre-workflow always-visible behavior).
+    workflow_status: Option<String>,
     #[serde(default)]
     links: Vec<LinkPayload>,
     #[serde(default)]
@@ -181,6 +185,12 @@ fn build_record(id: String, payload: MetadataPayload) -> AppResult<MetadataRecor
         .collect();
     validate_contacts(&contacts)?;
 
+    let workflow_status = payload
+        .workflow_status
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or_else(|| "published".to_string());
+    validate_workflow_status(&workflow_status)?;
+
     Ok(MetadataRecord {
         id,
         layer_id: payload.layer_id,
@@ -205,6 +215,7 @@ fn build_record(id: String, payload: MetadataPayload) -> AppResult<MetadataRecor
         credits: payload.credits,
         supplemental_information: payload.supplemental_information,
         metadata_date: payload.metadata_date.unwrap_or_else(OffsetDateTime::now_utc),
+        workflow_status,
         links: payload
             .links
             .into_iter()
@@ -487,6 +498,14 @@ fn filter_visible_layers(layers: Vec<Layer>, mut is_visible: impl FnMut(&Layer) 
     layers.into_iter().filter(|l| l.published && is_visible(l)).collect()
 }
 
+/// Whether `record` may appear in the public OGC API - Records `items`/`item`
+/// endpoints — independent of `Layer.published`/group visibility, which are
+/// checked separately. A `"draft"` record is treated the same as if it did
+/// not exist to any caller of the public API; admin CRUD is unaffected.
+fn is_publicly_visible(record: &MetadataRecord) -> bool {
+    record.workflow_status == "published"
+}
+
 /// Whether `record`/`layer` match the free-text `q` filter (case-insensitive
 /// substring over the autofilled title/description plus the manually
 /// entered keywords/topic_category/file_identifier).
@@ -685,6 +704,10 @@ pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> 
             continue;
         };
 
+        if !is_publicly_visible(&record) {
+            continue;
+        }
+
         if let Some(q) = &q
             && !record_matches_q(&record, layer, q)
         {
@@ -774,6 +797,13 @@ pub async fn item(req: &mut Request, res: &mut Response, depot: &mut Depot) -> A
         .map_err(AppError::from)?
         .ok_or_else(|| AppError::NotFound(format!("Record '{id}' not found")))?;
 
+    // A draft record is not found to the public API, same as a
+    // group-restricted layer above (spec: "Discovery respects visibility
+    // rules") — never leak that a draft record exists.
+    if !is_publicly_visible(&record) {
+        return Err(AppError::NotFound(format!("Record '{id}' not found")));
+    }
+
     let bbox = bbox_for_layer(&layer).await;
     let base_url = base_url_from_request(req);
 
@@ -856,6 +886,7 @@ mod tests {
             credits: None,
             supplemental_information: None,
             metadata_date: None,
+            workflow_status: None,
             links: vec![LinkPayload {
                 protocol: "OGC:WMS".to_string(),
                 url: "https://example.com/wms".to_string(),
@@ -953,6 +984,30 @@ mod tests {
         assert_eq!(record.temporal_extent_end, Some(datetime!(2026-01-01 00:00:00 UTC)));
         assert_eq!(record.credits, Some("Instituto Geografico".to_string()));
         assert_eq!(record.supplemental_information, Some("See appendix A".to_string()));
+    }
+
+    #[test]
+    fn build_record_defaults_workflow_status_to_published_when_absent() {
+        let payload = test_payload("layer-1");
+        let record = build_record("rec-1".to_string(), payload).unwrap();
+        assert_eq!(record.workflow_status, "published");
+    }
+
+    #[test]
+    fn build_record_keeps_explicit_draft_workflow_status() {
+        let mut payload = test_payload("layer-1");
+        payload.workflow_status = Some("draft".to_string());
+        let record = build_record("rec-1".to_string(), payload).unwrap();
+        assert_eq!(record.workflow_status, "draft");
+    }
+
+    #[test]
+    fn build_record_rejects_invalid_workflow_status_and_persists_nothing() {
+        let mut payload = test_payload("layer-1");
+        payload.workflow_status = Some("archived".to_string());
+        let err = build_record("rec-1".to_string(), payload)
+            .expect_err("workflow_status 'archived' is not in the closed vocabulary");
+        assert!(matches!(err, AppError::InvalidInput(_)));
     }
 
     #[test]
@@ -1191,6 +1246,22 @@ mod tests {
         assert_eq!(result[0].id, "l-visible");
     }
 
+    // -- is_publicly_visible -----------------------------------------------
+
+    #[test]
+    fn is_publicly_visible_accepts_published_record() {
+        let mut record = test_record();
+        record.workflow_status = "published".to_string();
+        assert!(is_publicly_visible(&record));
+    }
+
+    #[test]
+    fn is_publicly_visible_rejects_draft_record() {
+        let mut record = test_record();
+        record.workflow_status = "draft".to_string();
+        assert!(!is_publicly_visible(&record));
+    }
+
     // -- record_matches_q --------------------------------------------------
 
     fn test_record() -> MetadataRecord {
@@ -1218,6 +1289,7 @@ mod tests {
             credits: None,
             supplemental_information: None,
             metadata_date: datetime!(2026-08-27 12:00:00 UTC),
+            workflow_status: "published".to_string(),
             links: vec![],
             contacts: Vec::new(),
         }

@@ -17,6 +17,23 @@
     <form action="/admin/metadata/{% if is_new %}create{% else %}update{% endif %}" method="post">
       <input type="hidden" name="layer_id" value="{{ layer.id }}" />
 
+      <!-- workflow_status -->
+      <div class="mb-4">
+        <label class="label" for="workflow_status">Visibilidad en el catálogo</label>
+        <div class="mt-1">
+          <div class="select">
+            <select name="workflow_status" id="workflow_status" class="input">
+              {% for entry in workflow_statuses %}
+              <option value="{{ entry.code }}" {% if record.workflow_status == entry.code %}selected{% endif %}>
+                {{ entry.label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <p class="help is-info">Un registro en borrador no aparece en la API pública de metadatos (OGC API - Records).</p>
+      </div>
+
       <!-- language -->
       <div class="mb-4">
         <label class="label" for="language">Idioma</label>

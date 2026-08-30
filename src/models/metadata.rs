@@ -42,6 +42,13 @@ pub struct MetadataRecord {
     pub supplemental_information: Option<String>,
     #[serde(with = "time::serde::rfc3339")]
     pub metadata_date: OffsetDateTime,
+    /// Catalog visibility state (`"draft"` / `"published"`), NOT to be
+    /// confused with `status` (`MD_ProgressCode`, the ISO resource-progress
+    /// value) above. Gates whether the record appears in the public OGC
+    /// API - Records `items`/`item` endpoints — see
+    /// `services::metadata::codelists::WORKFLOW_STATUS_CODES` for the closed
+    /// vocabulary and `api::metadata::is_publicly_visible` for the gate.
+    pub workflow_status: String,
     /// Admin-entered external OGC service links, distinct from the
     /// auto-derived own tile/TileJSON links.
     #[serde(default)]
@@ -107,6 +114,7 @@ mod tests {
             credits: Some("Instituto Geografico".to_string()),
             supplemental_information: Some("See appendix A".to_string()),
             metadata_date: datetime!(2026-08-27 12:00:00 UTC),
+            workflow_status: "published".to_string(),
             links: vec![MetadataLink {
                 id: "link-1".to_string(),
                 protocol: "OGC:WMS".to_string(),
@@ -171,6 +179,16 @@ mod tests {
         assert_eq!(parsed.revision_date, None);
         assert_eq!(parsed.temporal_extent_start, None);
         assert_eq!(parsed.temporal_extent_end, None);
+    }
+
+    #[test]
+    fn workflow_status_round_trips_and_defaults_are_not_assumed_by_serde() {
+        let mut record = sample_record();
+        record.workflow_status = "draft".to_string();
+        let json = serde_json::to_string(&record).unwrap();
+        assert!(json.contains("\"workflow_status\":\"draft\""));
+        let parsed: MetadataRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.workflow_status, "draft");
     }
 
     #[test]

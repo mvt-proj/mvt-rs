@@ -43,9 +43,9 @@ use crate::{
     services::{
         metadata::{
             codelists::{
-                CodelistEntry, PROGRESS_CODES, ROLE_CODES, TOPIC_CATEGORY_CODES,
+                CodelistEntry, PROGRESS_CODES, ROLE_CODES, TOPIC_CATEGORY_CODES, WORKFLOW_STATUS_CODES,
                 progress_code_translate_key, role_code_translate_key, topic_category_translate_key,
-                validate_contacts,
+                validate_contacts, validate_workflow_status, workflow_status_translate_key,
             },
             ogc::KNOWN_PROTOCOLS,
             rules::{derive_autofill, guard_layer_published},
@@ -97,6 +97,9 @@ struct MetadataFormTemplate {
     /// decision #4/#6): closed vocabulary, Fluent-translated labels, same
     /// `codelist_options` helper as `topic_categories`/`progress_codes`.
     role_codes: Vec<CodelistOption>,
+    /// Options for the `workflow_status` `<select>` (draft/published catalog
+    /// visibility) — same `codelist_options` helper as the others above.
+    workflow_statuses: Vec<CodelistOption>,
     /// `YYYY-MM-DD`-formatted values for the 5 typed date inputs (Key
     /// Learning #11: precomputed here, not via an Askama filter, mirroring
     /// `CodelistOption` above — Askama has no ergonomic way to call an
@@ -206,6 +209,7 @@ struct MetadataForm {
     contact_phone: Vec<String>,
     #[serde(default)]
     contact_role: Vec<String>,
+    workflow_status: Option<String>,
 }
 
 /// A blank, autofilled-nothing record for the "new" form (no stored row yet
@@ -236,6 +240,7 @@ fn blank_record(layer_id: &str) -> MetadataRecord {
         credits: None,
         supplemental_information: None,
         metadata_date: OffsetDateTime::now_utc(),
+        workflow_status: "published".to_string(),
         links: Vec::new(),
         contacts: Vec::new(),
     }
@@ -358,6 +363,9 @@ fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppR
     );
     validate_contacts(&contacts)?;
 
+    let workflow_status = non_empty(form.workflow_status).unwrap_or_else(|| "published".to_string());
+    validate_workflow_status(&workflow_status)?;
+
     Ok(MetadataRecord {
         id,
         layer_id: form.layer_id,
@@ -382,6 +390,7 @@ fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppR
         credits: non_empty(form.credits),
         supplemental_information: non_empty(form.supplemental_information),
         metadata_date: OffsetDateTime::now_utc(),
+        workflow_status,
         links: build_links(form.link_protocol, form.link_url, form.link_label),
         contacts,
     })
@@ -498,6 +507,7 @@ pub async fn new_metadata_page(req: &mut Request, res: &mut Response, depot: &mu
     let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &base.translate);
     let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
     let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &base.translate);
+    let workflow_statuses = codelist_options(WORKFLOW_STATUS_CODES, workflow_status_translate_key, &base.translate);
     let record = blank_record(&layer_id);
     let template = MetadataFormTemplate {
         creation_date_value: format_date_input(record.creation_date),
@@ -512,6 +522,7 @@ pub async fn new_metadata_page(req: &mut Request, res: &mut Response, depot: &mu
         topic_categories,
         progress_codes,
         role_codes,
+        workflow_statuses,
         protocols: known_protocols(),
         base,
     };
@@ -540,6 +551,7 @@ pub async fn edit_metadata_page(req: &mut Request, res: &mut Response, depot: &m
     let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &base.translate);
     let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
     let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &base.translate);
+    let workflow_statuses = codelist_options(WORKFLOW_STATUS_CODES, workflow_status_translate_key, &base.translate);
     let template = MetadataFormTemplate {
         creation_date_value: format_date_input(record.creation_date),
         publication_date_value: format_date_input(record.publication_date),
@@ -553,6 +565,7 @@ pub async fn edit_metadata_page(req: &mut Request, res: &mut Response, depot: &m
         topic_categories,
         progress_codes,
         role_codes,
+        workflow_statuses,
         protocols: known_protocols(),
         base,
     };
@@ -665,6 +678,7 @@ mod tests {
             contact_email: Vec::new(),
             contact_phone: Vec::new(),
             contact_role: Vec::new(),
+            workflow_status: Some("published".to_string()),
         }
     }
 
@@ -824,6 +838,31 @@ mod tests {
         assert_eq!(record.purpose, None);
         assert_eq!(record.creation_date, None);
         assert!(record.contacts.is_empty());
+    }
+
+    #[test]
+    fn build_record_defaults_workflow_status_to_published_when_form_field_is_blank() {
+        let mut submitted = form("layer-1");
+        submitted.workflow_status = None;
+        let record = build_record("rec-1".to_string(), "file-1".to_string(), submitted).unwrap();
+        assert_eq!(record.workflow_status, "published");
+    }
+
+    #[test]
+    fn build_record_keeps_explicit_draft_workflow_status_from_form() {
+        let mut submitted = form("layer-1");
+        submitted.workflow_status = Some("draft".to_string());
+        let record = build_record("rec-1".to_string(), "file-1".to_string(), submitted).unwrap();
+        assert_eq!(record.workflow_status, "draft");
+    }
+
+    #[test]
+    fn build_record_rejects_invalid_workflow_status_from_form() {
+        let mut submitted = form("layer-1");
+        submitted.workflow_status = Some("archived".to_string());
+        let err = build_record("rec-1".to_string(), "file-1".to_string(), submitted)
+            .expect_err("workflow_status 'archived' is not in the closed vocabulary");
+        assert!(matches!(err, AppError::InvalidInput(_)));
     }
 
     #[test]
@@ -1052,6 +1091,7 @@ mod tests {
         let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &translate);
         let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &translate);
         let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &translate);
+        let workflow_statuses = codelist_options(WORKFLOW_STATUS_CODES, workflow_status_translate_key, &translate);
         let base = BaseTemplateData { is_auth: true, is_admin: true, translate, version: "0.0.0-test" };
         let template = MetadataFormTemplate {
             layer: test_layer("layer-1"),
@@ -1061,6 +1101,7 @@ mod tests {
             topic_categories,
             progress_codes,
             role_codes,
+            workflow_statuses,
             creation_date_value: String::new(),
             publication_date_value: String::new(),
             revision_date_value: String::new(),
