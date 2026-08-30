@@ -1032,8 +1032,21 @@ mod tests {
     }
 
     fn full_table_translate() -> HashMap<String, String> {
-        [("category", "Category"), ("layer-name", "Layer"), ("alias", "Alias"), ("edit", "Edit"), ("delete", "Delete")]
-            .into_iter()
+        [
+            ("category", "Category"),
+            ("layer-name", "Layer"),
+            ("alias", "Alias"),
+            ("edit", "Edit"),
+            ("delete", "Delete"),
+            ("metadata-with-record", "With record"),
+            ("metadata-without-record", "Without record"),
+            ("metadata-status", "Status"),
+            ("add-metadata", "Add"),
+            ("confirm-delete-metadata", "Delete this layer's metadata?"),
+            ("metadata-empty-title", "No published layers."),
+            ("metadata-empty-subtitle", "Publish a layer in the catalog to add metadata to it."),
+        ]
+        .into_iter()
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect()
     }
@@ -1066,7 +1079,7 @@ mod tests {
     fn table_metadata_fragment_renders_empty_state_for_no_rows() {
         let template = MetadataTableTemplate { rows: vec![], translate: full_table_translate() };
         let html = template.render().expect("table.html fragment must render without panicking or erroring");
-        assert!(html.contains("No hay capas publicadas"));
+        assert!(html.contains("No published layers"));
     }
 
     /// Phase 4.7: the table fragment renders a row with an "edit" action
@@ -1078,6 +1091,73 @@ mod tests {
         let html = template.render().expect("table.html fragment must render without panicking or erroring");
         assert!(html.contains("Parcels"));
         assert!(html.contains("/admin/metadata/edit/layer-1"));
+    }
+
+    /// The "Con registro"/"Sin registro" row status labels must come from
+    /// `translate`, not be hardcoded Spanish — uses the real `I18n` loader
+    /// for two locales to prove the rendered text actually changes with
+    /// `lang` (a hand-picked stub map would pass even if the template still
+    /// hardcoded the Spanish literal).
+    #[test]
+    fn table_metadata_fragment_localizes_record_status_labels() {
+        fn rows() -> Vec<MetadataRow> {
+            vec![
+                MetadataRow { layer: test_layer("layer-1"), has_record: true },
+                MetadataRow { layer: test_layer("layer-2"), has_record: false },
+            ]
+        }
+        let i18n = I18n::new();
+
+        let en_html = MetadataTableTemplate { rows: rows(), translate: i18n.get_all_translations("en-US") }
+            .render()
+            .expect("table.html fragment must render without panicking or erroring");
+        assert!(en_html.contains("With record"), "en-US must show the English 'with record' label");
+        assert!(en_html.contains("Without record"), "en-US must show the English 'without record' label");
+        assert!(!en_html.contains("Con registro"), "en-US must not leak the hardcoded Spanish label");
+        assert!(!en_html.contains("Sin registro"), "en-US must not leak the hardcoded Spanish label");
+
+        let es_html = MetadataTableTemplate { rows: rows(), translate: i18n.get_all_translations("es-AR") }
+            .render()
+            .expect("table.html fragment must render without panicking or erroring");
+        assert!(es_html.contains("Con registro"));
+        assert!(es_html.contains("Sin registro"));
+    }
+
+    /// The empty state, the "Estado" column header, the "Agregar" dropdown
+    /// action, and the delete-confirmation message were also hardcoded
+    /// Spanish — same bug class as the record-status labels above, proven
+    /// the same way (real `I18n` loader, en-US vs es-AR).
+    #[test]
+    fn table_metadata_fragment_localizes_remaining_static_text() {
+        let i18n = I18n::new();
+
+        let en_empty = MetadataTableTemplate { rows: vec![], translate: i18n.get_all_translations("en-US") }
+            .render()
+            .expect("table.html fragment must render without panicking or erroring");
+        assert!(en_empty.contains("No published layers"), "en-US empty state title must be translated");
+        assert!(!en_empty.contains("No hay capas publicadas"), "en-US must not leak the hardcoded Spanish empty state");
+
+        let rows_without_record = vec![MetadataRow { layer: test_layer("layer-1"), has_record: false }];
+        let en_html = MetadataTableTemplate { rows: rows_without_record, translate: i18n.get_all_translations("en-US") }
+            .render()
+            .expect("table.html fragment must render without panicking or erroring");
+        assert!(en_html.contains("Status"), "en-US column header must be translated");
+        assert!(!en_html.contains(">Estado<"), "en-US must not leak the hardcoded Spanish column header");
+        assert!(en_html.contains(">Add<"), "en-US dropdown action must be translated");
+        assert!(!en_html.contains(">Agregar<"), "en-US must not leak the hardcoded Spanish dropdown action");
+
+        let rows_with_record = vec![MetadataRow { layer: test_layer("layer-1"), has_record: true }];
+        let en_delete_html = MetadataTableTemplate { rows: rows_with_record, translate: i18n.get_all_translations("en-US") }
+            .render()
+            .expect("table.html fragment must render without panicking or erroring");
+        assert!(
+            en_delete_html.contains("Are you sure you want to delete the metadata for this layer?"),
+            "en-US delete confirmation must be translated"
+        );
+        assert!(
+            !en_delete_html.contains("eliminar los metadatos de esta capa"),
+            "en-US must not leak the hardcoded Spanish delete confirmation"
+        );
     }
 
     /// Renders the real `admin/metadata/form.html` template with the exact

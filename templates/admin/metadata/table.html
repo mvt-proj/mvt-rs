@@ -1,8 +1,8 @@
 {% if rows.is_empty() %}
 <div class="empty-state">
   <i class="fas fa-file-alt text-5xl mb-4"></i>
-  <p class="subtitle mb-1">No hay capas publicadas.</p>
-  <p class="text-sm">Publica una capa en el catálogo para poder agregarle metadatos.</p>
+  <p class="subtitle mb-1">{{ translate["metadata-empty-title"] }}</p>
+  <p class="text-sm">{{ translate["metadata-empty-subtitle"] }}</p>
 </div>
 {% else %}
 <div class="overflow-auto rounded-lg">
@@ -12,7 +12,7 @@
         <th scope="col">{{ translate["category"] }}</th>
         <th scope="col">{{ translate["layer-name"] }}</th>
         <th scope="col">{{ translate["alias"] }}</th>
-        <th scope="col">Estado</th>
+        <th scope="col">{{ translate["metadata-status"] }}</th>
         <th scope="col" class="w-12"></th>
       </tr>
     </thead>
@@ -24,9 +24,9 @@
         <td>{{ row.layer.alias }}</td>
         <td>
           {% if row.has_record %}
-          <span class="text-green-600 dark:text-green-400"><i class="fas fa-check-circle"></i> Con registro</span>
+          <span class="text-green-600 dark:text-green-400"><i class="fas fa-check-circle"></i> {{ translate["metadata-with-record"] }}</span>
           {% else %}
-          <span class="text-zinc-400 dark:text-zinc-500"><i class="far fa-circle"></i> Sin registro</span>
+          <span class="text-zinc-400 dark:text-zinc-500"><i class="far fa-circle"></i> {{ translate["metadata-without-record"] }}</span>
           {% endif %}
         </td>
         <td class="text-right relative">
@@ -67,7 +67,7 @@
                       onclick="closeDropdown('{{ row.layer.id }}')"
                     >
                       <i class="fas fa-plus w-4 text-center"></i>
-                      <span>Agregar</span>
+                      <span>{{ translate["add-metadata"] }}</span>
                     </a>
                     {% endif %}
                   </li>
@@ -77,7 +77,7 @@
                       class="flex w-full items-center px-3 py-2 gap-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 transition-colors"
                       href="/admin/metadata/delete/{{ row.layer.id }}"
                       role="menuitem"
-                      onclick="event.preventDefault(); openDeleteModal(this.href, '¿Eliminar los metadatos de esta capa?'); closeDropdown('{{ row.layer.id }}');"
+                      onclick="event.preventDefault(); openDeleteModal(this.href, '{{ translate["confirm-delete-metadata"] }}'); closeDropdown('{{ row.layer.id }}');"
                     >
                       <i class="fas fa-trash w-4 text-center"></i>
                       <span>{{ translate["delete"] }}</span>
