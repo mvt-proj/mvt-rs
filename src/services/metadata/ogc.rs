@@ -207,6 +207,11 @@ pub struct FeatureProperties {
     /// output", Work Unit 2). Always present, empty array when the record
     /// has no contacts.
     pub contacts: Vec<FeatureContact>,
+    /// `MD_TopicCategoryCode` (spec's `services::metadata::codelists::TOPIC_CATEGORY_CODES`).
+    #[serde(rename = "topicCategory", skip_serializing_if = "Option::is_none")]
+    pub topic_category: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lineage: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub purpose: Option<String>,
     #[serde(rename = "publicationDate", skip_serializing_if = "Option::is_none", with = "time::serde::rfc3339::option")]
@@ -219,6 +224,15 @@ pub struct FeatureProperties {
     pub credits: Option<String>,
     #[serde(rename = "supplementalInformation", skip_serializing_if = "Option::is_none")]
     pub supplemental_information: Option<String>,
+    /// Maps `MetadataRecord.restrictions` (`MD_LegalConstraints`) to the
+    /// OGC API - Records `license` property.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license: Option<String>,
+    /// `MD_SpatialRepresentationTypeCode`. Always `"vector"` — mvt-rs only
+    /// ever serves vector tiles, so this is a structural constant, not an
+    /// admin-entered or stored value (same treatment as `type_`/`"dataset"`).
+    #[serde(rename = "spatialRepresentationType")]
+    pub spatial_representation_type: String,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -362,12 +376,16 @@ pub fn record_to_feature(
             external_ids: vec![record.file_identifier.clone()],
             projection: autofill.projection,
             contacts: record.contacts.iter().map(metadata_contact_to_feature_contact).collect(),
+            topic_category: record.topic_category.clone(),
+            lineage: record.lineage.clone(),
             purpose: record.purpose.clone(),
             publication_date: record.publication_date,
             temporal_extent_start: record.temporal_extent_start,
             temporal_extent_end: record.temporal_extent_end,
             credits: record.credits.clone(),
             supplemental_information: record.supplemental_information.clone(),
+            license: record.restrictions.clone(),
+            spatial_representation_type: "vector".to_string(),
         },
         links,
     }
@@ -615,13 +633,10 @@ mod tests {
 
     #[test]
     fn record_to_feature_omits_unset_descriptive_properties() {
-        let feature = record_to_feature(
-            &test_record(),
-            &test_layer(),
-            None,
-            "layers",
-            "http://localhost:5887",
-        );
+        let mut record = test_record();
+        record.topic_category = None;
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
         let json = serde_json::to_value(&feature.properties).unwrap();
 
         for key in [
@@ -631,9 +646,53 @@ mod tests {
             "publicationDate",
             "temporalExtentStart",
             "temporalExtentEnd",
+            "topicCategory",
+            "lineage",
+            "license",
         ] {
             assert!(json.get(key).is_none(), "expected {key} to be omitted when unset");
         }
+    }
+
+    #[test]
+    fn record_to_feature_exposes_restrictions_as_license_when_set() {
+        let mut record = test_record();
+        record.restrictions = Some("CC-BY 4.0".to_string());
+
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let json = serde_json::to_value(&feature.properties).unwrap();
+
+        assert_eq!(json["license"], "CC-BY 4.0");
+    }
+
+    #[test]
+    fn record_to_feature_always_reports_spatial_representation_type_as_vector() {
+        // mvt-rs only ever serves vector tiles — this is a structural
+        // constant, not admin-entered, so it must be present regardless of
+        // what the record contains (design mirrors "type": "dataset").
+        let feature = record_to_feature(
+            &test_record(),
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
+        assert_eq!(feature.properties.spatial_representation_type, "vector");
+    }
+
+    #[test]
+    fn record_to_feature_includes_topic_category_and_lineage_when_set() {
+        let mut record = test_record();
+        record.topic_category = Some("boundaries".to_string());
+        record.lineage = Some("Digitized from cadastral survey plans.".to_string());
+
+        let feature =
+            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let json = serde_json::to_value(&feature.properties).unwrap();
+
+        assert_eq!(json["topicCategory"], "boundaries");
+        assert_eq!(json["lineage"], "Digitized from cadastral survey plans.");
     }
 
     #[test]
