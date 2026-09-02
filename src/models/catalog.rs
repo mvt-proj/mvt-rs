@@ -147,6 +147,14 @@ impl Layer {
                 encode_safe(&self.name)
             ),
         );
+        rows += &row(
+            "Style reference",
+            &format!(
+                "mvt://services/tiles/{}:{}/{{z}}/{{x}}/{{y}}.pbf",
+                encode_safe(&self.category.name),
+                encode_safe(&self.name)
+            ),
+        );
         rows += &row("Name", &encode_safe(&self.name));
         rows += &row("Alias", &encode_safe(&self.alias));
         rows += &row("Database", &encode_safe(&self.database_id));
@@ -360,5 +368,57 @@ impl Catalog {
 
     pub fn remove_layer_by_name(&mut self, target_name: &str) {
         self.layers.retain(|layer| layer.name != target_name);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_layer() -> Layer {
+        Layer {
+            id: "layer-1".to_string(),
+            category: Category {
+                id: "cat-1".to_string(),
+                name: "public".to_string(),
+                description: "".to_string(),
+            },
+            geometry: "polygons".to_string(),
+            name: "parcels".to_string(),
+            alias: "Parcels".to_string(),
+            description: "Cadastral parcels".to_string(),
+            database_id: "default".to_string(),
+            schema: "public".to_string(),
+            table_name: "parcels".to_string(),
+            fields: vec!["gid".to_string()],
+            filter: None,
+            srid: None,
+            geom: None,
+            label_layer: false,
+            sql_mode: None,
+            buffer: None,
+            extent: None,
+            zmin: None,
+            zmax: None,
+            zmax_do_not_simplify: None,
+            buffer_do_not_simplify: None,
+            extent_do_not_simplify: None,
+            clip_geom: None,
+            delete_cache_on_start: None,
+            max_cache_age: None,
+            max_records: None,
+            published: true,
+            url: None,
+            groups: None,
+        }
+    }
+
+    #[test]
+    fn info_html_includes_mvt_style_reference_token() {
+        let html = test_layer().info_html();
+        assert!(
+            html.contains("mvt://services/tiles/public:parcels/{z}/{x}/{y}.pbf"),
+            "expected the mvt:// style-reference token in {html}"
+        );
     }
 }

@@ -89,3 +89,55 @@ pub async fn page_glyphs(res: &mut Response, depot: &mut Depot) -> AppResult<()>
     res.render(Text::Html(template.render()?));
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::i18n::I18n;
+
+    fn test_base() -> BaseTemplateData {
+        let i18n = I18n::new();
+        BaseTemplateData {
+            is_auth: true,
+            is_admin: true,
+            translate: i18n.get_all_translations("en-US"),
+            version: "0.0.0-test",
+        }
+    }
+
+    #[test]
+    fn sprites_template_shows_mvt_token_alongside_the_direct_url() {
+        let template = SpritesTemplate {
+            base: test_base(),
+            sprites: vec!["fa-brand".to_string()],
+        };
+        let html = template.render().expect("sprites/index.html must render");
+
+        assert!(
+            html.contains("mvt://services/map_assets/sprites/fa-brand/sprite"),
+            "expected the mvt:// style-reference token in {html}"
+        );
+        assert!(
+            html.contains("/services/map_assets/sprites/fa-brand/sprite"),
+            "expected the direct URL to remain in {html}"
+        );
+    }
+
+    #[test]
+    fn glyphs_template_shows_mvt_token_alongside_the_direct_url() {
+        let template = GlyphsTemplate {
+            base: test_base(),
+            glyphs: vec![],
+        };
+        let html = template.render().expect("glyphs/index.html must render");
+
+        assert!(
+            html.contains("mvt://services/map_assets/glyphs/{fontstack}/{range}.pbf"),
+            "expected the mvt:// style-reference token in {html}"
+        );
+        assert!(
+            html.contains("/services/map_assets/glyphs/{fontstack}/{range}.pbf"),
+            "expected the direct URL to remain in {html}"
+        );
+    }
+}

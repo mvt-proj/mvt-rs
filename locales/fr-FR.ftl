@@ -106,6 +106,8 @@ toast-save-failed = Échec de l'enregistrement.
 toast-required-fields = Veuillez remplir les champs obligatoires.
 open-json = Ouvrir le JSON
 open-png = Ouvrir le PNG
+url-direct = URL directe
+url-style-reference = Référence pour les styles
 
 # Maps
 zoom-level = Niveau de zoom

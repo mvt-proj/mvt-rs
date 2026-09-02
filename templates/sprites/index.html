@@ -20,9 +20,18 @@
           <span class="font-semibold">{{ sprite }}</span>
         </td>
         <td class="text-blue-500">
-          <span id="url-{{ sprite }}">
-            <span class="server"></span>/services/map_assets/sprites/{{ sprite }}/sprite
-          </span>
+          <div class="flex flex-col space-y-1">
+            <span>
+              <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ base.translate["url-direct"] }}:</span>
+              <span id="url-{{ sprite }}">
+                <span class="server"></span>/services/map_assets/sprites/{{ sprite }}/sprite
+              </span>
+            </span>
+            <span>
+              <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ base.translate["url-style-reference"] }}:</span>
+              <span id="url-token-{{ sprite }}">mvt://services/map_assets/sprites/{{ sprite }}/sprite</span>
+            </span>
+          </div>
         </td>
 
         <td class="text-right relative">
@@ -50,10 +59,22 @@
                       class="flex w-full items-center px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 space-x-2"
                       onclick='copyToClipboard("url-{{ sprite }}"); closeDropdown("{{ sprite }}")'
                       role="menuitem"
-                      title='{{ base.translate["copy"] }}'
+                      title='{{ base.translate["url-direct"] }}'
                     >
               <span class="w-5"><i class="fas fa-copy"></i></span>
-              <span class="truncate">{{ base.translate["copy"] }}</span>
+              <span class="truncate">{{ base.translate["url-direct"] }}</span>
+            </button>
+          </li>
+
+          <li>
+            <button
+              class="flex w-full items-center px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 space-x-2"
+              onclick='copyToClipboard("url-token-{{ sprite }}"); closeDropdown("{{ sprite }}")'
+              role="menuitem"
+              title='{{ base.translate["url-style-reference"] }}'
+            >
+              <span class="w-5"><i class="fas fa-copy"></i></span>
+              <span class="truncate">{{ base.translate["url-style-reference"] }}</span>
             </button>
           </li>
 

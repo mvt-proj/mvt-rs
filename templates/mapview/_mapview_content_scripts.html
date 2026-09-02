@@ -13,7 +13,7 @@
 <script>
   let map = new maplibregl.Map({
     container: 'map',
-    style: JSON.parse('{{ style.style|safe }}')
+    style: JSON.parse('{{ resolved_style_json|safe }}')
   });
 
   let zoomLevelElement = document.getElementById('zoom-level');

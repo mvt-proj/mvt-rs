@@ -3,6 +3,7 @@ use crate::db::metadata::{Extent, query_extent};
 use crate::get_catalog;
 use crate::models::catalog::{Layer, StateLayer};
 use crate::models::styles::Style;
+use crate::services::{styles::resolve_style_json, tilejson::base_url_from_request};
 use askama::Template;
 use salvo::prelude::*;
 
@@ -43,6 +44,7 @@ impl MapLayerTemplateKind<'_> {
 struct MapViewTemplate {
     base: BaseTemplateData,
     style: Style,
+    resolved_style_json: String,
 }
 
 #[derive(Template)]
@@ -50,6 +52,7 @@ struct MapViewTemplate {
 struct MapViewMinimalTemplate {
     base: BaseTemplateData,
     style: Style,
+    resolved_style_json: String,
 }
 
 enum MapTemplate {
@@ -153,10 +156,23 @@ pub async fn page_map_view(
         .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?;
     let (base, _) = make_base(depot).await;
 
+    let base_url = base_url_from_request(req);
+    let resolved_style_json = resolve_style_json(&style.style, &base_url)
+        .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?
+        .to_string();
+
     let template = if is_minimal {
-        MapTemplate::Minimal(MapViewMinimalTemplate { base, style })
+        MapTemplate::Minimal(MapViewMinimalTemplate {
+            base,
+            style,
+            resolved_style_json,
+        })
     } else {
-        MapTemplate::Full(MapViewTemplate { base, style })
+        MapTemplate::Full(MapViewTemplate {
+            base,
+            style,
+            resolved_style_json,
+        })
     };
 
     res.render(Text::Html(
@@ -165,4 +181,77 @@ pub async fn page_map_view(
             .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?,
     ));
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::i18n::I18n;
+    use crate::models::category::Category;
+
+    fn test_base() -> BaseTemplateData {
+        let i18n = I18n::new();
+        BaseTemplateData {
+            is_auth: true,
+            is_admin: true,
+            translate: i18n.get_all_translations("en-US"),
+            version: "0.0.0-test",
+        }
+    }
+
+    fn test_style() -> Style {
+        Style {
+            id: "style-1".to_string(),
+            name: "arrendamiento_rural_2024_token_mvt".to_string(),
+            category: Category {
+                id: "cat-1".to_string(),
+                name: "arrendamientos".to_string(),
+                description: "".to_string(),
+            },
+            description: "".to_string(),
+            style: r#"{
+                "version": 8,
+                "glyphs": "mvt://services/map_assets/glyphs/{fontstack}/{range}.pbf",
+                "sources": {
+                    "src_arrendamientos": {
+                        "type": "vector",
+                        "tiles": ["mvt://services/tiles/category/arrendamientos/{z}/{x}/{y}.pbf"]
+                    }
+                }
+            }"#
+            .to_string(),
+        }
+    }
+
+    /// Regression test: the map preview used to embed `style.style` (the raw
+    /// stored document) directly, so `mvt://` tokens never got resolved and
+    /// MapLibre tried to fetch tiles over a scheme the browser can't request
+    /// — see the CORS errors the user hit loading a real style preview.
+    #[test]
+    fn mapview_template_embeds_resolved_urls_not_raw_mvt_tokens() {
+        let style = test_style();
+        let resolved_style_json = resolve_style_json(&style.style, "http://127.0.0.1:5887")
+            .expect("style JSON must parse")
+            .to_string();
+
+        let template = MapViewTemplate {
+            base: test_base(),
+            style,
+            resolved_style_json,
+        };
+        let html = template.render().expect("mapview.html must render");
+
+        assert!(
+            !html.contains("mvt://"),
+            "resolved style must not leak raw mvt:// tokens into the preview page: {html}"
+        );
+        assert!(
+            html.contains("http://127.0.0.1:5887/services/tiles/category/arrendamientos/{z}/{x}/{y}.pbf"),
+            "expected the resolved tile URL in {html}"
+        );
+        assert!(
+            html.contains("http://127.0.0.1:5887/services/map_assets/glyphs/{fontstack}/{range}.pbf"),
+            "expected the resolved glyphs URL in {html}"
+        );
+    }
 }
