@@ -1,7 +1,4 @@
-use argon2::{
-    Argon2,
-    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
-};
+use argon2::{Argon2, password_hash::PasswordHasher};
 use sqlx::{SqlitePool, migrate::Migrator};
 use std::path::Path;
 
@@ -41,10 +38,9 @@ pub async fn init_sqlite(db_path: &str) -> AppResult<SqlitePool> {
         let initial_password =
             std::env::var("INITIAL_USER_PASSWORD").unwrap_or_else(|_| "admin".to_string());
 
-        let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
         let password_hash = argon2
-            .hash_password(initial_password.as_bytes(), &salt)
+            .hash_password(initial_password.as_bytes())
             .unwrap()
             .to_string();
         let admin_role_id = "7091390e-5cec-47d7-9d39-4f068d945788";

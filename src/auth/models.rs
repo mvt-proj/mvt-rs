@@ -1,7 +1,4 @@
-use argon2::{
-    Argon2, PasswordHash, PasswordVerifier,
-    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
-};
+use argon2::{Argon2, PasswordHash, PasswordVerifier, password_hash::PasswordHasher};
 use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -270,14 +267,14 @@ impl Auth {
     }
 
     pub fn get_encrypt_psw(&self, psw: String) -> Result<String, argon2::password_hash::Error> {
-        let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(psw.as_bytes(), &salt)?.to_string();
+        let password_hash = argon2.hash_password(psw.as_bytes())?.to_string();
         Ok(password_hash)
     }
 
     fn validate_psw(&self, user: User, psw: &str) -> AppResult<bool> {
-        let parsed_hash = PasswordHash::new(&user.password)?;
+        let parsed_hash =
+            PasswordHash::new(&user.password).map_err(argon2::password_hash::Error::from)?;
         Argon2::default().verify_password(psw.as_bytes(), &parsed_hash)?;
         Ok(true)
     }

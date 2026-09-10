@@ -49,7 +49,7 @@ pub enum AppError {
     JwtEncodeError(#[from] jsonwebtoken::errors::Error),
 
     #[error("Failed to hash password: `{0}`")]
-    PasswordHashError(#[from] argon2::password_hash::errors::Error),
+    PasswordHashError(#[from] argon2::password_hash::Error),
 
     #[error("Redis pool error: {0}")]
     RedisPoolError(#[from] RunError<RedisError>),

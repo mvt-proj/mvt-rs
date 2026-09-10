@@ -9,7 +9,7 @@ authors = ["Jose Jachuf <jjachuf@gmail.com>"]
 [dependencies]
 uuid = { version = "1.26", features = ["v4", "fast-rng"] }
 bytes = "1.12"
-argon2 = { version = "0.5", features = ["std"] }
+argon2 = "0.6"
 askama = "0.16"
 thiserror = "2"
 base64 = "0.23"
