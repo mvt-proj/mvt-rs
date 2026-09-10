@@ -61,27 +61,6 @@ mlua = { version = "0.12", features = ["lua55", "vendored", "send"] }
 name = "integration"
 path = "tests/integration/main.rs"
 
-[build-dependencies]
-
-# salvo-oapi 0.96.0 (matching the pinned `salvo` 0.96.0) is not yet published
-# to crates.io as of 2026-08 — crates.io tops out at 0.95.2 while `salvo`
-# itself already released 0.96.0. Pin the git tag directly (same monorepo,
-# same release commit) until the crates.io publish catches up.
-#
-# salvo-oapi's own workspace deps (salvo_core, salvo_macros,
-# salvo-serde-util) must be patched to the SAME git tag too — otherwise
-# Cargo resolves them as a second, distinct instance of each crate
-# (git-workspace-local vs. the crates.io ones `salvo` itself already uses),
-# which fails to compile with "multiple different versions of crate
-# `salvo_core` in the dependency graph" at any point salvo-oapi and salvo
-# types meet (e.g. `Router`).
-[patch.crates-io]
-salvo-oapi = { git = "https://github.com/salvo-rs/salvo.git", tag = "v0.96.0" }
-salvo_core = { git = "https://github.com/salvo-rs/salvo.git", tag = "v0.96.0" }
-salvo_macros = { git = "https://github.com/salvo-rs/salvo.git", tag = "v0.96.0" }
-salvo-serde-util = { git = "https://github.com/salvo-rs/salvo.git", tag = "v0.96.0" }
-
-
 [profile.release]
 # opt-level = 'z' # Optimize for size
 # lto = true
