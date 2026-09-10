@@ -210,7 +210,7 @@ plugin-category = Categoría
 show-code = Ver código
 
 # Codelists de metadatos (ISO 19115 MD_TopicCategoryCode / MD_ProgressCode)
-topic-category-farming = Agricultura
+topic-category-farming = Agropecuario
 topic-category-biota = Biota
 topic-category-boundaries = Límites
 topic-category-climatologyMeteorologyAtmosphere = Climatología, meteorología y atmósfera
