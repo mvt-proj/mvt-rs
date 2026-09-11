@@ -27,6 +27,7 @@ Capas, mapas, estilos, leyendas, glifos y sprites se publican, organizan y opera
 | 📖 Leyendas | Leyendas dinámicas |
 | 🔤 Glifos | Hosting de fuentes |
 | 🎯 Sprites | Hosting de íconos |
+| 🗂 Registros de Metadatos | Metadatos por capa inspirados en ISO 19115, servidos como una colección OGC API - Records (`/services/records`) con documento OpenAPI navegable |
 
 Cada recurso de la tabla anterior se gestiona desde la misma interfaz web — creado, versionado y servido sin tocar un archivo de configuración.
 
