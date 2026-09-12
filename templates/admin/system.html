@@ -1,0 +1,15 @@
+{% extends "admin/layout_admin.html" %} {% block admin_content %}
+<h1 class="title text-center mb-6">{{ base.translate["system"] }}</h1>
+
+<div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 p-6 space-y-4">
+  <div>
+    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1">{{ base.translate["sqlite-path"] }}:</p>
+    <code class="block px-3 py-2 rounded bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-sm break-all">{{ sqlite_path }}</code>
+  </div>
+
+  <a href="/admin/system/backup" class="button inline-flex items-center gap-2 w-fit">
+    <i class="fas fa-download"></i>
+    {{ base.translate["download-backup"] }}
+  </a>
+</div>
+{% endblock %}

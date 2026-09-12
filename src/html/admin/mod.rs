@@ -6,4 +6,5 @@ pub mod groups;
 pub mod metadata;
 pub mod plugins;
 pub mod styles;
+pub mod system;
 pub mod users;

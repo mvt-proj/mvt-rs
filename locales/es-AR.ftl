@@ -110,6 +110,9 @@ url-direct = URL directa
 url-style-reference = Referencia para styles
 url-ogc-records = OGC API - Records
 url-openapi-scalar = OpenAPI (Scalar)
+system = Sistema
+sqlite-path = Ruta de la base de datos de configuración
+download-backup = Descargar backup
 
 
 # Maps

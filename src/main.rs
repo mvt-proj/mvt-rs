@@ -50,6 +50,12 @@ pub fn get_cf_pool() -> &'static SqlitePool {
     SQLITE_CONF.get().unwrap()
 }
 
+static SQLITE_PATH: OnceLock<String> = OnceLock::new();
+#[inline]
+pub fn get_sqlite_path() -> &'static str {
+    SQLITE_PATH.get().map(|s| s.as_str()).unwrap_or("")
+}
+
 static MAP_ASSETS_DIR: OnceLock<String> = OnceLock::new();
 #[inline]
 pub fn get_map_assets() -> &'static String {
@@ -314,6 +320,7 @@ async fn main() -> AppResult<()> {
         // Existing standalone/shared/owner init path.
         let config_path = Path::new(&settings.paths.config).join(&settings.database.sqlite_path);
         let db_conn = config_path.to_str().expect("Invalid configuration path");
+        SQLITE_PATH.set(db_conn.to_string()).unwrap();
         let cf_pool = config::db::init_sqlite(db_conn).await?;
 
         let auth = initialize_auth(&settings.paths.config, &cf_pool).await?;

@@ -236,6 +236,13 @@ fn build_admin_database_routes() -> Router {
         .push(Router::with_path("spatial_index").get(html::admin::database::spatial_index))
 }
 
+fn build_admin_system_routes() -> Router {
+    Router::with_path("system")
+        .hoop(auth::require_user_admin)
+        .get(html::admin::system::index)
+        .push(Router::with_path("backup").get(html::admin::system::backup))
+}
+
 fn build_admin_monitor_routes() -> Router {
     Router::with_path("monitor")
         .push(Router::with_path("dashboard").get(monitor::handlers::dashboard))
@@ -253,6 +260,7 @@ fn build_admin_routes() -> Router {
         .push(build_admin_metadata_routes())
         .push(build_admin_catalog_routes())
         .push(build_admin_database_routes())
+        .push(build_admin_system_routes())
         .push(build_admin_monitor_routes())
         .push(Router::with_path("plugins").get(html::admin::plugins::index))
 }
