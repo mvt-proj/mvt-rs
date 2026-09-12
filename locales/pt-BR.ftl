@@ -108,6 +108,8 @@ open-json = Abrir JSON
 open-png = Abrir PNG
 url-direct = URL direta
 url-style-reference = Referência para estilos
+url-ogc-records = OGC API - Records
+url-openapi-scalar = OpenAPI (Scalar)
 
 # Maps
 zoom-level = Nível de zoom

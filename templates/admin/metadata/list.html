@@ -1,15 +1,37 @@
 {% extends "admin/layout_admin.html" %} {% block admin_content %}
 <h1 class="title text-center mb-6">Metadatos</h1>
 
-<div class="flex justify-between items-center bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 py-4 px-5 mb-8 space-x-2">
-  <span id="url-records" class="text-blue-500">
-    <span class="server"></span>/services/records/collections/layers
+<div class="flex justify-between items-center bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 py-4 px-5 mb-4 space-x-2">
+  <span class="text-blue-500">
+    <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ base.translate["url-ogc-records"] }}:</span>
+    <span id="url-records">
+      <span class="server"></span>/services/records/collections/layers
+    </span>
   </span>
 
   <button
     class="flex items-center justify-center w-10 h-10 rounded text-zinc-900 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
     title="{{ base.translate["copy"] }}"
     onclick="copyToClipboard('url-records')"
+  >
+    <span class="icon">
+      <i class="fas fa-copy"></i>
+    </span>
+  </button>
+</div>
+
+<div class="flex justify-between items-center bg-white dark:bg-zinc-800 rounded-lg border border-zinc-300 dark:border-zinc-700 py-4 px-5 mb-8 space-x-2">
+  <span class="text-blue-500">
+    <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ base.translate["url-openapi-scalar"] }}:</span>
+    <span id="url-openapi">
+      <span class="server"></span>/services/records/scalar
+    </span>
+  </span>
+
+  <button
+    class="flex items-center justify-center w-10 h-10 rounded text-zinc-900 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
+    title="{{ base.translate["copy"] }}"
+    onclick="copyToClipboard('url-openapi')"
   >
     <span class="icon">
       <i class="fas fa-copy"></i>
