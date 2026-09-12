@@ -27,6 +27,7 @@ Layers, maps, styles, legends, glyphs and sprites are all published, organized a
 | 📖 Legends | Dynamic legends |
 | 🔤 Glyphs | Font hosting |
 | 🎯 Sprites | Icon hosting |
+| 🗂 Metadata Records | ISO 19115-inspired metadata per layer, served as an OGC API - Records collection (`/services/records`) with a discoverable OpenAPI document |
 
 Every resource above is managed through the same web interface — created, versioned and served without touching a config file.
 
