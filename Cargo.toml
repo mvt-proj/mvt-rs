@@ -16,7 +16,7 @@ base64 = "0.23"
 time = { version = "0.3", features = ["serde"] }
 jsonwebtoken = { version = "11.0", features = ["rust_crypto"] }
 
-salvo = { version = "0.96", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session", "rate-limiter", "test", "oapi"] }
+salvo = { version = "1.0.1", features = ["affix-state", "cors", "logging", "cache", "basic-auth", "jwt-auth", "sse", "serve-static", "session", "rate-limiter", "test", "oapi"] }
 tokio = { version = "1", features = ["macros", "signal"] }
 tracing = "0.1"
 tracing-subscriber = {version="0.3", features = ["json", "env-filter"] }
@@ -29,7 +29,7 @@ bb8 = "0.9"
 bb8-redis = "0.26"
 include_dir = {version = "0.7.4", features = ["glob"] }
 regex = "1.13"
-html-escape = "0.2"
+html-escape = "0.3"
 config = "0.15"
 
 fluent = "0.17"
@@ -44,7 +44,7 @@ accept-language = "3.1"
 # maplibre-legend = { path = "../maplibre-legend"}
 qml2maplibre = "0.2.4"
 sld2maplibre = "0.2.4"
-maplibre-legend = "0.5.2"
+maplibre-legend = "0.5.3"
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-native-certs"] }
 
 tokio-stream = { version = "0.1", features = ["net"] }
