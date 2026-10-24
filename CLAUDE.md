@@ -8,14 +8,17 @@ MVT-RS is a high-performance vector tile server written in Rust. It serves Mapbo
 
 | Layer | Technology |
 |---|---|
-| Web framework | [Salvo](https://salvo.rs/) 0.93 |
+| Web framework | [Salvo](https://salvo.rs/) 1.0 |
 | Async runtime | Tokio 1 |
-| DB driver | SQLx 0.8 (PostgreSQL + SQLite) |
+| DB driver | SQLx 0.9 (PostgreSQL + SQLite) |
 | Cache | Redis (bb8) or disk |
 | Templates | Askama (compile-time HTML) |
 | Auth | JWT (jsonwebtoken) + Argon2 passwords + sessions |
 | i18n | Fluent |
 | Metrics | Prometheus |
+| Plugin scripting | Lua 5.5 (mlua, vendored) — sandboxed per-layer/category SQL `WHERE` filters, see `docs/plugins.md` |
+
+Check `Cargo.toml` for exact pinned versions; the table above gives the rough shape, not the source of truth.
 
 ## Project structure
 
@@ -29,7 +32,9 @@ src/
 ├── api/                 # JSON REST API handlers
 │   ├── catalog.rs       # GET/POST /api/catalog/layer
 │   ├── users.rs         # POST /api/users/login, GET/POST /api/admin/users
-│   └── database.rs      # GET /api/admin/database/...
+│   ├── database.rs      # GET /api/admin/database/...
+│   ├── categories.rs, groups.rs, metadata.rs, styles.rs  # Admin CRUD endpoints
+│   └── plugins.rs       # Lua plugin admin endpoints
 │
 ├── auth/
 │   ├── models.rs        # Auth, User, Group structs + login/password logic
@@ -41,14 +46,20 @@ src/
 │   ├── redis.rs         # Redis cache backend
 │   └── disk.rs          # Disk cache backend
 │
+├── cluster/             # Multi-instance config sync (standalone|shared|owner|client), see docs/clustering.md
+│   ├── bootstrap.rs     # Startup: pulls config from the owner (client mode)
+│   ├── watcher.rs       # Background poll for config changes (start_config_watcher, wired in main.rs)
+│   ├── backend.rs, api.rs, snapshot.rs  # Internal /internal/config/* sync API
+│
 ├── config/
 │   ├── settings.rs      # Settings struct (YAML + env vars via config crate)
 │   ├── db.rs            # SQLite init for config storage
-│   └── {users,groups,categories,layers,styles}.rs  # CRUD for SQLite config tables
+│   ├── system_settings.rs  # Singleton settings row (e.g. plugins_version for hot-reload)
+│   └── {users,groups,categories,layers,styles,metadata}.rs  # CRUD for SQLite config tables
 │
 ├── db/
 │   ├── connection.rs    # DbRegistry — manages named PgPool instances
-│   └── metadata.rs      # Schema/table/field/SRID/extent queries
+│   └── metadata.rs      # Schema/table/field/SRID/extent queries, spatial index check
 │
 ├── filters/             # Query parameter parsing → safe SQL WHERE clauses
 ├── html/                # HTML page handlers (Askama templates)
@@ -56,8 +67,13 @@ src/
 │   └── ...
 ├── models/              # Catalog, Category, Style data models
 ├── monitor/             # Prometheus metrics + SSE dashboard
+├── plugins/             # Lua plugin registry (mlua) — LuaPluginRegistry::call_filter() per layer/category
+│   ├── mod.rs
+│   └── watcher.rs       # Hot-reload poll, NOT currently wired into the module tree (dead code, no `mod watcher;` in mod.rs)
 └── services/
     ├── tiles/           # Tile generation pipeline (single, multi-layer, category)
+    ├── health.rs        # /health endpoint
+    ├── mvt_url.rs       # Rewrites the `mvt://` placeholder scheme to absolute URLs when serving a style
     ├── styles.rs        # Style JSON endpoint
     ├── tilejson.rs      # TileJSON 3.0.0 documents (per layer + index)
     ├── legends.rs       # Legend endpoint
@@ -66,17 +82,25 @@ src/
 
 ## Global state pattern
 
-Application state is stored in `OnceLock` / `OnceCell` statics in `main.rs`, initialized once at startup. Access via inline getter functions:
+Application state is stored in statics in `main.rs`, initialized once at startup. Two flavors:
 
+- **`std::sync::OnceLock`** for values set once at startup and never reloaded — sync getters, no `.await`:
 ```rust
-get_db_registry()    // &'static DbRegistry
-get_cf_pool()        // &'static SqlitePool  (config DB)
-get_auth()           // &'static RwLock<Auth>
-get_catalog()        // &'static RwLock<Catalog>
-get_categories()     // &'static RwLock<Vec<Category>>
-get_cache_wrapper()  // &'static CacheWrapper
-get_jwt_secret()     // &'static String
-get_map_assets()     // &'static String  (path)
+get_db_registry()              // &'static DbRegistry
+get_cf_pool()                   // &'static SqlitePool  (config DB)
+get_cache_wrapper()             // &'static CacheWrapper
+get_plugin_registry()           // &'static plugins::LuaPluginRegistry
+get_jwt_secret()                // &'static String
+get_cluster_secret()            // &'static str
+get_map_assets()                // &'static String  (path)
+get_sqlite_path(), get_config_dir(), get_public_url(), get_cache_invalidation_delay()
+```
+- **`tokio::sync::OnceCell<RwLock<T>>`** for in-memory state that gets reloaded at runtime (admin edits a layer/user/style) — async getters, need `.await`, then `.read()`/`.write()` on the inner `RwLock`:
+```rust
+get_catalog().await      // &'static RwLock<Catalog>
+get_categories().await   // &'static RwLock<Vec<Category>>
+get_auth().await         // &'static RwLock<Auth>
+get_styles_cache().await // &'static RwLock<Vec<Style>>
 ```
 
 ## Error handling
@@ -89,7 +113,7 @@ Config is loaded in priority order: CLI args > YAML file > Environment variables
 
 - YAML: `config/config.yaml` (path overridable with `--config`)
 - Env vars: `MVT_SERVER__PORT=5887`, `MVT_POSTGRES_DATABASES__DEFAULT=postgres://...`
-- See `.env.example` for all available variables
+- See `config.example.yaml` for all available settings and their env var equivalents
 
 **Required at startup:**
 - `postgres_databases.default` must exist
@@ -102,6 +126,8 @@ Config is loaded in priority order: CLI args > YAML file > Environment variables
 **Optional server settings:**
 - `server.public_url` — public base URL for absolute URLs in TileJSON responses (default: derived from request headers). Env var: `MVT_SERVER__PUBLIC_URL`
 
+**Clustering (optional):** `cluster.mode` (`standalone` | `shared` | `owner` | `client`) keeps the in-memory config (catalog, categories, users, groups, styles) fresh across several instances behind a load balancer. Non-standalone modes require a shared Redis cache. See `config.example.yaml`'s `cluster:` section and `docs/clustering.md`.
+
 ## Running locally
 
 ```bash
@@ -111,8 +137,8 @@ cargo run
 # With a specific config file
 cargo run -- --config /path/to/config.yaml
 
-# With docker-compose (includes PostGIS + Redis)
-docker-compose up -d
+# With docker-compose (includes PostGIS + Redis) — see docker-example/DOCKER_README.md
+cd docker-example && docker-compose up -d
 ```
 
 ## Common workflows
