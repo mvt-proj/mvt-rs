@@ -1,16 +1,18 @@
-version: '3.8'
-
 services:
   # Aplicación MVT-RS
   mvt-server:
-    build: .
+    # Contexto = raíz del repo (este Dockerfile hace COPY de Cargo.toml, src/,
+    # migrations/, etc., que viven ahí, no dentro de docker-example/).
+    build:
+      context: ..
+      dockerfile: docker-example/Dockerfile
     ports:
       - "5880:5887"
     environment:
       # Configuración de base de datos
       MVT_POSTGRES_DATABASES__DEFAULT: "postgres://mvtuser:mvtpass@postgres:5432/mvtdb"
-      MVT_DATABASE__POOL_MIN: 5
-      MVT_DATABASE__POOL_MAX: 20
+      MVT_POSTGRES_DATABASES__POOL_MIN: 5
+      MVT_POSTGRES_DATABASES__POOL_MAX: 20
 
       # Configuración de Redis (opcional)
       MVT_DATABASE__REDIS_URL: "redis://redis:6379"
@@ -40,7 +42,7 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
 
   # Base de datos PostgreSQL con PostGIS

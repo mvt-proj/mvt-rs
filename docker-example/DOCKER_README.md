@@ -11,14 +11,20 @@ Este proyecto incluye configuración completa de Docker para ejecutar MVT-RS con
 
 ```
 mvt-rs/
-├── Dockerfile                # Imagen multi-stage para MVT-RS
-├── docker-compose.yml       # Orquestación de servicios
-├── .dockerignore           # Archivos excluidos del build
-├── config/                 # Configuraciones de la aplicación
-├── cache/                  # Directorio de caché
-├── map_assets/            # Recursos de mapas
-└── DOCKER_README.md       # Este archivo
+├── .dockerignore              # Archivos excluidos del build (raíz del repo)
+├── src/, Cargo.toml, ...      # Código fuente (contexto del build)
+└── docker-example/
+    ├── Dockerfile              # Imagen multi-stage para MVT-RS
+    ├── docker-compose.yml      # Orquestación de servicios
+    ├── DOCKER_README.md        # Este archivo
+    ├── config/                 # Configuraciones de la aplicación (se crea al iniciar)
+    ├── cache/                  # Directorio de caché (se crea al iniciar)
+    └── map_assets/              # Recursos de mapas (se crea al iniciar)
 ```
+
+Todos los comandos de este documento se ejecutan parado en `docker-example/`.
+El `docker-compose.yml` apunta el contexto de build a la raíz del repo
+(`context: ..`), así que no hace falta mover ni copiar archivos.
 
 ## Servicios incluidos
 

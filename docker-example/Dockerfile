@@ -1,10 +1,10 @@
 # Multi-stage build para optimizar el tamaño final
-FROM rust:1.95 as builder
+FROM rust:1.99-trixie AS builder
 
 # Instalar dependencias del sistema
+# (sqlx y reqwest usan rustls, no OpenSSL: no hace falta libssl-dev)
 RUN apt-get update && apt-get install -y \
     pkg-config \
-    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Establecer directorio de trabajo
@@ -34,12 +34,11 @@ RUN rm -f target/release/mvt-server target/release/deps/mvt_server* target/relea
 RUN touch src/main.rs && cargo build --release
 
 # Etapa final - imagen más pequeña
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 # Instalar dependencias runtime
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear usuario no-root
@@ -75,8 +74,8 @@ ENV MVT_SERVER__PORT=5887
 ENV MVT_PATHS__CONFIG=/app/config
 ENV MVT_PATHS__CACHE=/app/cache
 ENV MVT_PATHS__ASSETS=/app/map_assets
-ENV MVT_DATABASE__POOL_MIN=5
-ENV MVT_DATABASE__POOL_MAX=20
+ENV MVT_POSTGRES_DATABASES__POOL_MIN=5
+ENV MVT_POSTGRES_DATABASES__POOL_MAX=20
 
 # Comando para ejecutar la aplicación
 CMD ["./mvt-server"]
