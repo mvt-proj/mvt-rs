@@ -74,6 +74,31 @@ https://github.com/user-attachments/assets/220999be-fb03-4c8d-85c0-b520a4037eb7
 
 ---
 
+## Getting Started
+
+Download a prebuilt binary from the [latest release](https://github.com/mvt-proj/mvt-rs/releases/latest) (Linux, macOS, Windows, FreeBSD):
+
+```sh
+curl -LO https://github.com/mvt-proj/mvt-rs/releases/latest/download/mvt-server-linux-gnu-x86_64.zip
+unzip mvt-server-linux-gnu-x86_64.zip
+./mvt-server --config config/config.yaml
+```
+
+Or build from source:
+
+```sh
+git clone https://github.com/mvt-proj/mvt-rs.git
+cd mvt-rs
+cargo build --release
+./target/release/mvt-server --config config/config.yaml
+```
+
+Then open the web administration interface at `http://localhost:5887` to connect your PostGIS database and publish your first layer.
+
+See [TUTORIAL.md](TUTORIAL.md) for full installation, configuration, publishing layers, MapLibre styles, QGIS integration, monitoring and clustering instructions.
+
+---
+
 ## Deployment
 
 MVT Server supports both **Standalone** and **Cluster** deployments.
@@ -162,31 +187,6 @@ Beyond *what* MVT Server publishes (see the table above), this is *how* it opera
 - Enable gzip for vector tiles.
 - Configure cache per layer.
 - Use Redis when running multiple instances.
-
----
-
-## Getting Started
-
-Download a prebuilt binary from the [latest release](https://github.com/mvt-proj/mvt-rs/releases/latest) (Linux, macOS, Windows, FreeBSD):
-
-```sh
-curl -LO https://github.com/mvt-proj/mvt-rs/releases/latest/download/mvt-server-linux-gnu-x86_64.zip
-unzip mvt-server-linux-gnu-x86_64.zip
-./mvt-server --config config/config.yaml
-```
-
-Or build from source:
-
-```sh
-git clone https://github.com/mvt-proj/mvt-rs.git
-cd mvt-rs
-cargo build --release
-./target/release/mvt-server --config config/config.yaml
-```
-
-Then open the web administration interface at `http://localhost:5887` to connect your PostGIS database and publish your first layer.
-
-See [TUTORIAL.md](TUTORIAL.md) for full installation, configuration, publishing layers, MapLibre styles, QGIS integration, monitoring and clustering instructions.
 
 ---
 

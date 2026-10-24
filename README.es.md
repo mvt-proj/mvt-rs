@@ -74,6 +74,31 @@ https://github.com/user-attachments/assets/220999be-fb03-4c8d-85c0-b520a4037eb7
 
 ---
 
+## Primeros pasos
+
+Descargá un binario precompilado desde el [último release](https://github.com/mvt-proj/mvt-rs/releases/latest) (Linux, macOS, Windows, FreeBSD):
+
+```sh
+curl -LO https://github.com/mvt-proj/mvt-rs/releases/latest/download/mvt-server-linux-gnu-x86_64.zip
+unzip mvt-server-linux-gnu-x86_64.zip
+./mvt-server --config config/config.yaml
+```
+
+O compilalo desde el código fuente:
+
+```sh
+git clone https://github.com/mvt-proj/mvt-rs.git
+cd mvt-rs
+cargo build --release
+./target/release/mvt-server --config config/config.yaml
+```
+
+Luego abrí la interfaz de administración web en `http://localhost:5887` para conectar tu base de datos PostGIS y publicar tu primera capa.
+
+Ver [TUTORIAL.es.md](TUTORIAL.es.md) para instrucciones completas de instalación, configuración, publicación de capas, estilos MapLibre, integración con QGIS, monitoreo y clustering.
+
+---
+
 ## Despliegue
 
 MVT Server soporta despliegues tanto **Standalone** como en **Cluster**.
@@ -162,31 +187,6 @@ Más allá de *qué* publica MVT Server (ver la tabla anterior), esto es *cómo*
 - Habilitá gzip para los vector tiles.
 - Configurá la caché por capa.
 - Usá Redis cuando corras múltiples instancias.
-
----
-
-## Primeros pasos
-
-Descargá un binario precompilado desde el [último release](https://github.com/mvt-proj/mvt-rs/releases/latest) (Linux, macOS, Windows, FreeBSD):
-
-```sh
-curl -LO https://github.com/mvt-proj/mvt-rs/releases/latest/download/mvt-server-linux-gnu-x86_64.zip
-unzip mvt-server-linux-gnu-x86_64.zip
-./mvt-server --config config/config.yaml
-```
-
-O compilalo desde el código fuente:
-
-```sh
-git clone https://github.com/mvt-proj/mvt-rs.git
-cd mvt-rs
-cargo build --release
-./target/release/mvt-server --config config/config.yaml
-```
-
-Luego abrí la interfaz de administración web en `http://localhost:5887` para conectar tu base de datos PostGIS y publicar tu primera capa.
-
-Ver [TUTORIAL.es.md](TUTORIAL.es.md) para instrucciones completas de instalación, configuración, publicación de capas, estilos MapLibre, integración con QGIS, monitoreo y clustering.
 
 ---
 
