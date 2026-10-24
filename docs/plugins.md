@@ -1,6 +1,6 @@
 # MVT Server plugin system
 
-MVT Server supports a Lua scripting engine that lets sysadmins inject custom SQL `WHERE` clauses into tile queries at runtime — without modifying server code or restarting the process... (wait: plugins are loaded at startup; a restart is needed to pick up new/changed files).
+MVT Server supports a Lua scripting engine that lets sysadmins inject custom SQL `WHERE` clauses into tile queries at runtime, without modifying server code. Plugins are loaded at startup, so picking up a new or changed plugin file requires restarting the process.
 
 ## Overview
 
