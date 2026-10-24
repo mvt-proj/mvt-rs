@@ -19,7 +19,7 @@ pub async fn tables(req: &mut Request) -> AppResult<Json<Vec<Table>>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
-    let schema = req.query::<String>("schema").unwrap_or_default();
+    let schema = req.param::<String>("schema").unwrap_or_default();
     Ok(Json(query_tables(&db_id, schema).await?))
 }
 
@@ -28,8 +28,8 @@ pub async fn fields(req: &mut Request) -> AppResult<Json<Vec<Field>>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
-    let schema = req.query::<String>("schema").unwrap_or_default();
-    let table = req.query::<String>("table").unwrap_or_default();
+    let schema = req.param::<String>("schema").unwrap_or_default();
+    let table = req.param::<String>("table").unwrap_or_default();
     Ok(Json(query_fields(&db_id, schema, table).await?))
 }
 
@@ -38,9 +38,9 @@ pub async fn srid(req: &mut Request) -> AppResult<Json<Srid>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
-    let schema = req.query::<String>("schema").unwrap_or_default();
-    let table = req.query::<String>("table").unwrap_or_default();
-    let geometry = req.query::<String>("geometry").unwrap_or_default();
+    let schema = req.param::<String>("schema").unwrap_or_default();
+    let table = req.param::<String>("table").unwrap_or_default();
+    let geometry = req.param::<String>("geometry").unwrap_or_default();
     Ok(Json(query_srid(&db_id, schema, table, geometry).await?))
 }
 
@@ -49,9 +49,9 @@ pub async fn spatial_index(req: &mut Request) -> AppResult<Json<SpatialIndex>> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());
-    let schema = req.query::<String>("schema").unwrap_or_default();
-    let table = req.query::<String>("table").unwrap_or_default();
-    let geometry = req.query::<String>("geometry").unwrap_or_default();
+    let schema = req.param::<String>("schema").unwrap_or_default();
+    let table = req.param::<String>("table").unwrap_or_default();
+    let geometry = req.param::<String>("geometry").unwrap_or_default();
     Ok(Json(
         query_has_spatial_index(&db_id, schema, table, geometry).await?,
     ))
