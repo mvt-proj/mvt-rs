@@ -9,6 +9,8 @@ It is an open source platform designed to publish vector maps directly from Post
 ## Typical Workflow
 ![MVT-Server](docs/mvt-server.svg)
 
+> New to MVT Server? [docs/concepts.md](docs/concepts.md) walks through the five core ideas (Database, Layer, Style, Map, Client) in under two minutes.
+
 ## Table of Contents
 1. [Requirements](#requirements)
 2. [Installation](#installation)

@@ -9,6 +9,8 @@ Es una plataforma de código abierto diseñada para publicar mapas vectoriales d
 ## Flujo de Trabajo Típico
 ![MVT-Server](docs/mvt-server.svg)
 
+> ¿Recién llegás a MVT Server? [docs/concepts.es.md](docs/concepts.es.md) repasa las cinco ideas centrales (Base de datos, Capa, Estilo, Mapa, Cliente) en menos de dos minutos.
+
 ## Índice
 1. [Requisitos](#requisitos)
 2. [Instalación](#instalación)
