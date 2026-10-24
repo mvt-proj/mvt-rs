@@ -1,85 +1,87 @@
+🌐 **English** | [Español](DOCKER_README.es.md)
+
 # MVT-Server Docker Setup
 
-Este proyecto incluye configuración completa de Docker para ejecutar MVT-RS con PostgreSQL+PostGIS y Redis.
+This directory includes a complete Docker setup to run MVT-RS with PostgreSQL+PostGIS and Redis.
 
-## Requisitos
+## Requirements
 
 - Docker
 - Docker Compose
 
-## Estructura de archivos
+## File layout
 
 ```
 mvt-rs/
-├── .dockerignore              # Archivos excluidos del build (raíz del repo)
-├── src/, Cargo.toml, ...      # Código fuente (contexto del build)
+├── .dockerignore              # Files excluded from the build (repo root)
+├── src/, Cargo.toml, ...      # Source code (build context)
 └── docker-example/
-    ├── Dockerfile              # Imagen multi-stage para MVT-RS
-    ├── docker-compose.yml      # Orquestación de servicios
-    ├── DOCKER_README.md        # Este archivo
-    ├── config/                 # Configuraciones de la aplicación (se crea al iniciar)
-    ├── cache/                  # Directorio de caché (se crea al iniciar)
-    └── map_assets/              # Recursos de mapas (se crea al iniciar)
+    ├── Dockerfile              # Multi-stage image for MVT-RS
+    ├── docker-compose.yml      # Service orchestration
+    ├── DOCKER_README.md        # This file
+    ├── config/                 # Application config (created on first run)
+    ├── cache/                  # Tile cache directory (created on first run)
+    └── map_assets/              # Map assets (created on first run)
 ```
 
-Todos los comandos de este documento se ejecutan parado en `docker-example/`.
-El `docker-compose.yml` apunta el contexto de build a la raíz del repo
-(`context: ..`), así que no hace falta mover ni copiar archivos.
+Every command in this document is run from inside `docker-example/`.
+`docker-compose.yml` points its build context at the repo root
+(`context: ..`), so there's no need to move or copy any files.
 
-## Servicios incluidos
+## Included services
 
 ### 1. mvt-server
-- **Puerto interno**: 5887 (mapeado externamente a 5880 en docker-compose.yml)
-- **Descripción**: Aplicación principal MVT-RS
-- **Dependencias**: PostgreSQL, Redis
+- **Internal port**: 5887 (mapped to 5880 externally in docker-compose.yml)
+- **Description**: The main MVT-RS application
+- **Depends on**: PostgreSQL, Redis
 
 ### 2. postgres
-- **Puerto**: 5432
-- **Imagen**: postgis/postgis:15-3.4
-- **Base de datos**: mvtdb
-- **Usuario**: mvtuser
-- **Contraseña**: mvtpass
+- **Port**: 5432
+- **Image**: postgis/postgis:15-3.4
+- **Database**: mvtdb
+- **User**: mvtuser
+- **Password**: mvtpass
 
 ### 3. redis
-- **Puerto**: 6379
-- **Imagen**: redis:7-alpine
-- **Funcionalidad**: Caché para tiles
+- **Port**: 6379
+- **Image**: redis:7-alpine
+- **Purpose**: Tile cache
 
-### 4. adminer (opcional)
-- **Puerto**: 8080
-- **Funcionalidad**: Administrador web de base de datos
+### 4. adminer (optional)
+- **Port**: 8080
+- **Purpose**: Web-based database admin
 
-## Comandos básicos
+## Basic commands
 
-### Iniciar todos los servicios
+### Start all services
 ```bash
 docker-compose up -d
 ```
 
-### Ver logs
+### View logs
 ```bash
-# Todos los servicios
+# All services
 docker-compose logs -f
 
-# Solo MVT-RS
+# MVT-RS only
 docker-compose logs -f mvt-server
 
-# Solo PostgreSQL
+# PostgreSQL only
 docker-compose logs -f postgres
 ```
 
-### Detener servicios
+### Stop services
 ```bash
 docker-compose down
 ```
 
-### Reconstruir la aplicación
+### Rebuild the application
 ```bash
 docker-compose build --no-cache mvt-server
 docker-compose up -d
 ```
 
-### Acceder al contenedor
+### Access a container
 ```bash
 # MVT-RS
 docker-compose exec mvt-server bash
@@ -88,11 +90,20 @@ docker-compose exec mvt-server bash
 docker-compose exec postgres psql -U mvtuser -d mvtdb
 ```
 
-## Configuración
+## Configuration
 
-Starting with version `0.18.0`, MVT Server uses a centralized `config.yaml` file instead of environment variables. 
+MVT Server supports both a centralized `config.yaml` file and environment
+variables, and the two can be combined: the priority order is `config.yaml` >
+environment variables > defaults. This example's `docker-compose.yml`
+configures everything through environment variables (the `environment:`
+section of the `mvt-server` service) so it works out of the box with no
+extra steps.
 
-Ensure you have a `config/config.yaml` file mounted or present in the container:
+If you'd rather centralize configuration in a file instead of env vars, copy
+`config.example.yaml` (at the repo root) to `docker-example/config/config.yaml`
+and adjust the values — since it's mounted at `/app/config/config.yaml` inside
+the container, it takes priority over the environment variables set in the
+compose file:
 
 ```yaml
 server:
@@ -100,7 +111,7 @@ server:
   port: 5887
 
 database:
-  sqlite_path: "/app/config/mvtrs.db"
+  sqlite_path: "mvtrs.db"
   redis_url: "redis://redis:6379"
 
 postgres_databases:
@@ -118,58 +129,36 @@ paths:
   assets: "/app/map_assets"
 ```
 
-Update your `docker-compose.yml` to mount this file:
+### Customization
 
-```yaml
-services:
-  mvt-server:
-    build: .
-    volumes:
-      - ./config:/app/config
-      - ./cache:/app/cache
-      - ./map_assets:/app/map_assets
-```
+To tweak individual values without touching the `Dockerfile` or a
+`config.yaml`, edit the `environment:` section of the `mvt-server` service
+directly in `docker-example/docker-compose.yml` (for example, to change the
+JWT/session secrets or the Postgres connection string).
 
-### Personalización
+## Accessing the services
 
-Para personalizar la configuración:
-
-1. **Crear archivo `.env`** (opcional):
-```bash
-# Copiar el ejemplo
-cp .env.example .env
-# Editar con tus valores
-```
-
-2. **Modificar docker-compose.yml** para usar el archivo `.env`:
-```yaml
-env_file:
-  - .env
-```
-
-## Acceso a los servicios
-
-Una vez iniciados los servicios:
+Once the services are up:
 
 - **MVT-RS**: http://localhost:5880
 - **Adminer**: http://localhost:8080
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
 
-## Configuración de datos geoespaciales
+## Setting up geospatial data
 
-### Conectar a PostgreSQL y configurar datos
+### Connect to PostgreSQL and configure data
 
-1. Accede a Adminer: http://localhost:8080
-   - **Sistema**: PostgreSQL
-   - **Servidor**: postgres
-   - **Usuario**: mvtuser
-   - **Contraseña**: mvtpass
-   - **Base de datos**: mvtdb
+1. Open Adminer: http://localhost:8080
+   - **System**: PostgreSQL
+   - **Server**: postgres
+   - **User**: mvtuser
+   - **Password**: mvtpass
+   - **Database**: mvtdb
 
-2. Crear tabla de ejemplo:
+2. Create a sample table:
 ```sql
--- Crear tabla de ejemplo
+-- Create a sample table
 CREATE TABLE public.example_points (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100),
@@ -177,85 +166,85 @@ CREATE TABLE public.example_points (
     geom GEOMETRY(POINT, 4326)
 );
 
--- Insertar datos de ejemplo
+-- Insert sample data
 INSERT INTO public.example_points (name, description, geom) VALUES 
-('Punto 1', 'Descripción del punto 1', ST_GeomFromText('POINT(-58.3816 -34.6037)', 4326)),
-('Punto 2', 'Descripción del punto 2', ST_GeomFromText('POINT(-58.3700 -34.6100)', 4326));
+('Point 1', 'Description of point 1', ST_GeomFromText('POINT(-58.3816 -34.6037)', 4326)),
+('Point 2', 'Description of point 2', ST_GeomFromText('POINT(-58.3700 -34.6100)', 4326));
 
--- Crear índice espacial
+-- Create a spatial index
 CREATE INDEX idx_example_points_geom ON public.example_points USING GIST (geom);
 ```
 
-### Configurar capa en MVT-RS
+### Configure a layer in MVT-RS
 
-1. Accede a la interfaz web: http://localhost:5880
-2. Configura una nueva capa con los datos de ejemplo
-3. Publica la capa como vector tiles
+1. Open the web UI: http://localhost:5880
+2. Configure a new layer using the sample data
+3. Publish the layer as vector tiles
 
-## Volúmenes persistentes
+## Persistent volumes
 
-Los datos se mantienen en volúmenes Docker:
+Data is kept in Docker volumes:
 
-- `postgres_data`: Datos de PostgreSQL
-- `redis_data`: Datos de Redis
-- `./config`: Configuraciones de MVT-RS
-- `./cache`: Caché de tiles
-- `./map_assets`: Recursos de mapas
+- `postgres_data`: PostgreSQL data
+- `redis_data`: Redis data
+- `./config`: MVT-RS configuration
+- `./cache`: Tile cache
+- `./map_assets`: Map assets
 
-## Problemas comunes
+## Common issues
 
-### 1. Puerto ocupado
+### 1. Port already in use
 ```bash
-# Verificar puertos en uso
+# Check which ports are in use
 netstat -tlnp | grep :5880
 
-# Cambiar el puerto externo en docker-compose.yml (el interno siempre es 5887)
+# Change the external port in docker-compose.yml (the internal one is always 5887)
 ports:
-  - "5881:5887"  # Cambiar 5880 por otro puerto externo
+  - "5881:5887"  # Change 5880 to another external port
 ```
 
-### 2. Problemas de permisos
+### 2. Permission issues
 ```bash
-# Dar permisos a directorios
+# Grant permissions on the directories
 chmod -R 755 config cache map_assets
 ```
 
-### 3. Reiniciar servicios
+### 3. Restart services
 ```bash
-# Reiniciar solo MVT-RS
+# Restart MVT-RS only
 docker-compose restart mvt-server
 
-# Reiniciar todo
+# Restart everything
 docker-compose restart
 ```
 
-## Producción
+## Production
 
-Para producción, asegúrate de:
+For production, make sure to:
 
-1. **Cambiar secretos** en `docker-compose.yml`
-2. **Usar variables de entorno** en lugar de valores hardcodeados
-3. **Configurar proxy reverso** (nginx, traefik)
-4. **Habilitar SSL/TLS**
-5. **Configurar backups** de PostgreSQL
-6. **Monitorear recursos** y logs
+1. **Change the secrets** used in `docker-compose.yml`
+2. **Use environment variables** instead of hardcoded values
+3. **Set up a reverse proxy** (nginx, traefik)
+4. **Enable SSL/TLS**
+5. **Set up PostgreSQL backups**
+6. **Monitor resources** and logs
 
-### Ejemplo de producción con nginx
+### Production example with nginx
 
 ```yaml
-# docker-compose.prod.yml
-version: '3.8'
-
+# docker-compose.prod.yml (run from docker-example/)
 services:
   mvt-server:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker-example/Dockerfile
     environment:
-      DBCONN: "${DB_CONNECTION_STRING}"
-      JWTSECRET: "${JWT_SECRET}"
-      SESSIONSECRET: "${SESSION_SECRET}"
+      MVT_POSTGRES_DATABASES__DEFAULT: "${DB_CONNECTION_STRING}"
+      MVT_SECURITY__JWT_SECRET: "${JWT_SECRET}"
+      MVT_SECURITY__SESSION_SECRET: "${SESSION_SECRET}"
     networks:
       - internal
-    # No exponer puertos directamente
+    # Don't expose ports directly
     
   nginx:
     image: nginx:alpine
@@ -275,11 +264,11 @@ networks:
     driver: bridge
 ```
 
-## Soporte
+## Support
 
-Si tienes problemas:
+If you run into trouble:
 
-1. Revisa los logs: `docker-compose logs -f`
-2. Verifica el estado: `docker-compose ps`
-3. Consulta la documentación original del proyecto
-4. Abre un issue en el repositorio del proyecto
+1. Check the logs: `docker-compose logs -f`
+2. Check the status: `docker-compose ps`
+3. Check the project's main documentation
+4. Open an issue in the project's repository
