@@ -14,6 +14,8 @@
 
 Capas, mapas, estilos, leyendas, glifos y sprites se publican, organizan y operan desde un solo lugar: un único binario en Rust con una interfaz de administración web moderna detrás. Sin archivos de configuración editados a mano, sin usar herramientas distintas para cada recurso.
 
+> ¿Recién llegás a MVT Server? [docs/concepts.es.md](docs/concepts.es.md) repasa las cinco ideas centrales (Base de datos, Capa, Estilo, Mapa, Cliente) en menos de dos minutos.
+
 ---
 
 ## ¿Qué puede publicar MVT Server?
@@ -146,6 +148,14 @@ MVT Server está diseñado para integrarse naturalmente con tecnologías como:
 - Prometheus
 
 Su objetivo no es reemplazar las herramientas existentes, sino simplificar la publicación y administración de servicios de mapas vectoriales.
+
+---
+
+## Integración con asistentes de IA (MCP)
+
+[mvt-server-mcp](https://github.com/mvt-proj/mvt-server-mcp) es un servidor [Model Context Protocol](https://modelcontextprotocol.io) complementario que permite a asistentes de IA gestionar capas, categorías y estilos MapLibre en MVT Server — por ejemplo, "creame un estilo graduado de blanco a rojo con cortes en 3, 7, 9 y 12" o "armame un mapa con una capa base satelital más las capas A, B y C, cada una con un estilo distinto".
+
+Es un binario Rust separado que se conecta a MVT Server con credenciales de administrador existentes — sin requerir cambios del lado de MVT Server — y funciona con cualquier host compatible con MCP, incluyendo Claude Desktop, Claude Code y Antigravity CLI.
 
 ---
 

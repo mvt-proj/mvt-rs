@@ -14,6 +14,8 @@
 
 Layers, maps, styles, legends, glyphs and sprites are all published, organized and operated from one place: a single Rust binary with a modern web administration interface behind it. No hand-edited config files, no juggling separate tools for each resource.
 
+> New to MVT Server? [docs/concepts.md](docs/concepts.md) walks through the five core ideas (Database, Layer, Style, Map, Client) in under two minutes.
+
 ---
 
 ## What Can MVT Server Publish?
@@ -146,6 +148,14 @@ MVT Server is designed to integrate naturally with technologies such as:
 - Prometheus
 
 Its goal is not to replace existing tools, but to simplify the publication and administration of vector map services.
+
+---
+
+## AI Assistant Integration (MCP)
+
+[mvt-server-mcp](https://github.com/mvt-proj/mvt-server-mcp) is a companion [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants manage layers, categories and MapLibre styles on MVT Server — for example, "create a graduated style from white to red with breaks at 3, 7, 9 and 12" or "build a map with a satellite base layer plus layers A, B and C, each styled differently."
+
+It's a separate Rust binary that connects to MVT Server with existing admin credentials — no changes required on the MVT Server side — and works with any MCP-compatible host, including Claude Desktop, Claude Code and Antigravity CLI.
 
 ---
 
