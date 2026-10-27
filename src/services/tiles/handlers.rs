@@ -234,10 +234,8 @@ pub async fn get_single_layer_tile(
         res.headers_mut()
             .insert("X-Cache", HeaderValue::from_static("BYPASS"));
 
-        if has_plugin {
-            if let Ok(v) = HeaderValue::from_str("no-store, no-cache") {
-                res.headers_mut().insert("Cache-Control", v);
-            }
+        if has_plugin && let Ok(v) = HeaderValue::from_str("no-store, no-cache") {
+            res.headers_mut().insert("Cache-Control", v);
         }
 
         res.body(salvo::http::ResBody::Once(tile));
@@ -352,14 +350,12 @@ pub async fn get_composite_layers_tile(
     let mut cache_hits = 0;
     let mut cache_misses = 0;
 
-    for result in results {
-        if let Ok((tile, via)) = result {
-            match via {
-                Via::Database => cache_misses += 1,
-                Via::Cache => cache_hits += 1,
-            }
-            output_data.push(tile);
+    for (tile, via) in results.into_iter().flatten() {
+        match via {
+            Via::Database => cache_misses += 1,
+            Via::Cache => cache_hits += 1,
         }
+        output_data.push(tile);
     }
 
     let final_output = Bytes::from(output_data.concat());
@@ -476,14 +472,12 @@ pub async fn get_category_layers_tile(
     let mut cache_hits = 0;
     let mut cache_misses = 0;
 
-    for result in results {
-        if let Ok((tile, via)) = result {
-            match via {
-                Via::Database => cache_misses += 1,
-                Via::Cache => cache_hits += 1,
-            }
-            output_data.push(tile);
+    for (tile, via) in results.into_iter().flatten() {
+        match via {
+            Via::Database => cache_misses += 1,
+            Via::Cache => cache_hits += 1,
         }
+        output_data.push(tile);
     }
 
     let final_output = Bytes::from(output_data.concat());

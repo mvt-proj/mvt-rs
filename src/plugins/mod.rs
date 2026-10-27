@@ -190,15 +190,15 @@ impl LuaPluginRegistry {
         }
 
         let mut clauses: Vec<String> = Vec::new();
-        if let Some(s) = cat_result {
-            if !s.is_empty() {
-                clauses.push(s);
-            }
+        if let Some(s) = cat_result
+            && !s.is_empty()
+        {
+            clauses.push(s);
         }
-        if let Some(s) = layer_result {
-            if !s.is_empty() {
-                clauses.push(s);
-            }
+        if let Some(s) = layer_result
+            && !s.is_empty()
+        {
+            clauses.push(s);
         }
 
         Some(if clauses.is_empty() {

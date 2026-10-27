@@ -254,13 +254,11 @@ pub async fn get_request_user(
     }
 
     let (is_auth, user) = get_session_data(depot).await;
-    if is_auth {
-        if let Some(user) = user {
-            return (
-                Some(user.username.clone()),
-                Some(user.groups_as_vec_string()),
-            );
-        }
+    if is_auth && let Some(user) = user {
+        return (
+            Some(user.username.clone()),
+            Some(user.groups_as_vec_string()),
+        );
     }
 
     (None, None)

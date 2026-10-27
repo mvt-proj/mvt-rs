@@ -292,14 +292,13 @@ pub async fn get_tile(
     if let Some(lua_filter) = get_plugin_registry()
         .call_filter(name, category, &ctx)
         .await
+        && !lua_filter.is_empty()
     {
-        if !lua_filter.is_empty() {
-            validate_filter(&lua_filter)?;
-            if !local_where_clause.is_empty() {
-                local_where_clause.push_str(" AND ");
-            }
-            local_where_clause.push_str(&lua_filter);
+        validate_filter(&lua_filter)?;
+        if !local_where_clause.is_empty() {
+            local_where_clause.push_str(" AND ");
         }
+        local_where_clause.push_str(&lua_filter);
     }
     // --- end Lua plugin ---
 

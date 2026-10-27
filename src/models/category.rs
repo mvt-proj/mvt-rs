@@ -46,7 +46,7 @@ impl Category {
         let mut categories = get_categories().await.write().await;
 
         categories.push(category.clone());
-        categories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        categories.sort_by_key(|a| a.name.to_lowercase());
 
         Ok(category)
     }
@@ -93,7 +93,7 @@ impl Category {
             layer.category = category.clone();
         }
 
-        categories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        categories.sort_by_key(|a| a.name.to_lowercase());
 
         crate::reload_styles_cache().await?;
 
