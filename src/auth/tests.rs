@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
     use super::super::models::{
-        Auth, Group, JwtClaims, User, count_group_references, resolve_updated_password,
+        Auth, Group, JwtClaims, User, count_group_references, refresh_group_references,
+        resolve_updated_password,
     };
     use super::super::utils::decode_basic_auth;
     use argon2::{Argon2, PasswordHash, PasswordVerifier};
@@ -162,6 +163,80 @@ mod tests {
     #[test]
     fn test_count_group_references_empty_input() {
         assert_eq!(count_group_references("target", &[], &[]), (0, 0));
+    }
+
+    fn group(id: &str, name: &str) -> Group {
+        Group {
+            id: id.to_string(),
+            name: name.to_string(),
+            description: String::new(),
+        }
+    }
+
+    #[test]
+    fn test_refresh_group_references_renames_copies_in_users_and_layers() {
+        let auth = create_test_auth();
+        let mut users = vec![create_test_user(
+            &auth,
+            "u1",
+            "u1@test.com",
+            "pw",
+            vec![group("target", "prueba"), group("other", "other")],
+        )];
+        let mut layers = vec![test_layer("l1", Some(vec![group("target", "prueba")]))];
+        let renamed = Group {
+            id: "target".to_string(),
+            name: "agro".to_string(),
+            description: "Agro".to_string(),
+        };
+
+        refresh_group_references(&renamed, &mut users, &mut layers);
+
+        assert_eq!(users[0].groups[0].name, "agro");
+        assert_eq!(users[0].groups[0].description, "Agro");
+        assert_eq!(users[0].groups[1].name, "other");
+        assert_eq!(layers[0].groups.as_ref().unwrap()[0].name, "agro");
+    }
+
+    #[test]
+    fn test_refresh_group_references_leaves_unrelated_and_groupless_entries_alone() {
+        let auth = create_test_auth();
+        let mut users = vec![create_test_user(
+            &auth,
+            "u1",
+            "u1@test.com",
+            "pw",
+            vec![group("other", "other")],
+        )];
+        let mut layers = vec![
+            test_layer("l1", None),
+            test_layer("l2", Some(vec![group("other", "other")])),
+        ];
+
+        refresh_group_references(&group("target", "agro"), &mut users, &mut layers);
+
+        assert_eq!(users[0].groups[0].name, "other");
+        assert!(layers[0].groups.is_none());
+        assert_eq!(layers[1].groups.as_ref().unwrap()[0].name, "other");
+    }
+
+    #[test]
+    fn test_has_group_id_matches_by_id_even_when_the_copied_name_is_stale() {
+        let auth = create_test_auth();
+        let user = create_test_user(
+            &auth,
+            "u1",
+            "u1@test.com",
+            "pw",
+            vec![group("target", "prueba")],
+        );
+        let layer = test_layer("l1", Some(vec![group("target", "prueba")]));
+
+        assert!(user.has_group_id("target"));
+        assert!(!user.has_group_id("other"));
+        assert!(layer.has_group_id("target"));
+        assert!(!layer.has_group_id("other"));
+        assert!(!test_layer("l2", None).has_group_id("target"));
     }
 
     #[test]

@@ -209,6 +209,12 @@ impl Layer {
             .unwrap_or_default()
     }
 
+    pub fn has_group_id(&self, id: &str) -> bool {
+        self.groups
+            .as_ref()
+            .is_some_and(|groups| groups.iter().any(|group| group.id == id))
+    }
+
     pub fn is_admin(&self) -> bool {
         self.groups_as_vec_string().contains(&"admin".to_string())
     }

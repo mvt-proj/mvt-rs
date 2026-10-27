@@ -106,6 +106,14 @@ impl Group {
             }
         }
 
+        refresh_group_references(&group, &mut auth.users, &mut []);
+        drop(auth);
+
+        // Taken only after the auth lock is released, as delete_group does,
+        // so the two locks are never held together.
+        let mut catalog = get_catalog().await.write().await;
+        refresh_group_references(&group, &mut [], &mut catalog.layers);
+
         Ok(group)
     }
 
@@ -161,6 +169,22 @@ pub fn count_group_references(group_id: &str, users: &[User], layers: &[Layer]) 
     (user_count, layer_count)
 }
 
+/// Users and layers each hold their own copy of a group, so a rename must
+/// reach those copies too, matched by id. Pure, like
+/// `count_group_references`, so it can be unit-tested without global state.
+pub fn refresh_group_references(group: &Group, users: &mut [User], layers: &mut [Layer]) {
+    let user_groups = users.iter_mut().flat_map(|user| user.groups.iter_mut());
+    let layer_groups = layers
+        .iter_mut()
+        .filter_map(|layer| layer.groups.as_mut())
+        .flat_map(|groups| groups.iter_mut());
+    for copy in user_groups.chain(layer_groups) {
+        if copy.id == group.id {
+            *copy = group.clone();
+        }
+    }
+}
+
 /// Resolves the password hash to persist on a user update. `None` (the
 /// password field omitted from the request) keeps the existing hash;
 /// `Some(pw)` hashes the new password. Takes `&Auth` (rather than being an
@@ -204,6 +228,10 @@ impl User {
             .iter()
             .map(|group| group.name.clone())
             .collect::<Vec<String>>()
+    }
+
+    pub fn has_group_id(&self, id: &str) -> bool {
+        self.groups.iter().any(|group| group.id == id)
     }
 
     pub fn is_admin(&self) -> bool {

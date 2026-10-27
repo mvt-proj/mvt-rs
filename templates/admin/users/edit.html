@@ -94,7 +94,7 @@
           <div class="select is-multiple">
             <select name="groups" id="groups" multiple size="8" required>
               {% for group in groups %} {% if
-              user.groups_as_vec_string().contains(group.name) %}
+              user.has_group_id(group.id) %}
               <option value="{{group.name}}" selected>{{group.name}}</option>
               {% else %}
               <option value="{{group.name}}">{{group.name}}</option>
