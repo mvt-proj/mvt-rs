@@ -31,33 +31,55 @@ pub const TOPIC_CATEGORY_CODES: &[CodelistEntry] = &[
     CodelistEntry { code: "farming" },
     CodelistEntry { code: "biota" },
     CodelistEntry { code: "boundaries" },
-    CodelistEntry { code: "climatologyMeteorologyAtmosphere" },
+    CodelistEntry {
+        code: "climatologyMeteorologyAtmosphere",
+    },
     CodelistEntry { code: "economy" },
     CodelistEntry { code: "elevation" },
-    CodelistEntry { code: "environment" },
-    CodelistEntry { code: "geoscientificInformation" },
+    CodelistEntry {
+        code: "environment",
+    },
+    CodelistEntry {
+        code: "geoscientificInformation",
+    },
     CodelistEntry { code: "health" },
-    CodelistEntry { code: "imageryBaseMapsEarthCover" },
-    CodelistEntry { code: "intelligenceMilitary" },
-    CodelistEntry { code: "inlandWaters" },
+    CodelistEntry {
+        code: "imageryBaseMapsEarthCover",
+    },
+    CodelistEntry {
+        code: "intelligenceMilitary",
+    },
+    CodelistEntry {
+        code: "inlandWaters",
+    },
     CodelistEntry { code: "location" },
     CodelistEntry { code: "oceans" },
-    CodelistEntry { code: "planningCadastre" },
+    CodelistEntry {
+        code: "planningCadastre",
+    },
     CodelistEntry { code: "society" },
     CodelistEntry { code: "structure" },
-    CodelistEntry { code: "transportation" },
-    CodelistEntry { code: "utilitiesCommunication" },
+    CodelistEntry {
+        code: "transportation",
+    },
+    CodelistEntry {
+        code: "utilitiesCommunication",
+    },
 ];
 
 /// `MD_ProgressCode` — the core ISO 19115 progress codes.
 pub const PROGRESS_CODES: &[CodelistEntry] = &[
     CodelistEntry { code: "completed" },
-    CodelistEntry { code: "historicalArchive" },
+    CodelistEntry {
+        code: "historicalArchive",
+    },
     CodelistEntry { code: "obsolete" },
     CodelistEntry { code: "onGoing" },
     CodelistEntry { code: "planned" },
     CodelistEntry { code: "required" },
-    CodelistEntry { code: "underDevelopment" },
+    CodelistEntry {
+        code: "underDevelopment",
+    },
 ];
 
 fn translate_key_for(table: &[CodelistEntry], prefix: &str, code: &str) -> Option<String> {
@@ -99,8 +121,12 @@ pub fn is_valid_progress_code(code: &str) -> bool {
 /// enforcement", Work Unit 2).
 pub const ROLE_CODES: &[CodelistEntry] = &[
     CodelistEntry { code: "originator" },
-    CodelistEntry { code: "pointOfContact" },
-    CodelistEntry { code: "metadataAuthor" },
+    CodelistEntry {
+        code: "pointOfContact",
+    },
+    CodelistEntry {
+        code: "metadataAuthor",
+    },
     CodelistEntry { code: "custodian" },
     CodelistEntry { code: "publisher" },
     CodelistEntry { code: "processor" },
@@ -122,8 +148,10 @@ pub fn is_valid_role_code(code: &str) -> bool {
 /// closed-vocabulary shape as the codelists above for consistency with the
 /// admin form/validation pattern. Gates public OGC API - Records visibility;
 /// see `MetadataRecord::workflow_status`.
-pub const WORKFLOW_STATUS_CODES: &[CodelistEntry] =
-    &[CodelistEntry { code: "draft" }, CodelistEntry { code: "published" }];
+pub const WORKFLOW_STATUS_CODES: &[CodelistEntry] = &[
+    CodelistEntry { code: "draft" },
+    CodelistEntry { code: "published" },
+];
 
 /// Fluent translate key (`workflow-status-{code}`) for a `workflow_status`
 /// value, or `None` if unknown.
@@ -142,7 +170,11 @@ pub fn validate_workflow_status(workflow_status: &str) -> AppResult<()> {
     if is_valid_workflow_status(workflow_status) {
         Ok(())
     } else {
-        let valid = WORKFLOW_STATUS_CODES.iter().map(|entry| entry.code).collect::<Vec<_>>().join(", ");
+        let valid = WORKFLOW_STATUS_CODES
+            .iter()
+            .map(|entry| entry.code)
+            .collect::<Vec<_>>()
+            .join(", ");
         Err(AppError::InvalidInput(format!(
             "invalid workflow_status '{workflow_status}': must be one of {valid}"
         )))
@@ -158,7 +190,11 @@ pub fn validate_workflow_status(workflow_status: &str) -> AppResult<()> {
 pub fn validate_contacts(contacts: &[MetadataContact]) -> AppResult<()> {
     for contact in contacts {
         if !is_valid_role_code(&contact.role) {
-            let valid = ROLE_CODES.iter().map(|entry| entry.code).collect::<Vec<_>>().join(", ");
+            let valid = ROLE_CODES
+                .iter()
+                .map(|entry| entry.code)
+                .collect::<Vec<_>>()
+                .join(", ");
             return Err(AppError::InvalidInput(format!(
                 "invalid contact role '{}': must be one of {valid}",
                 contact.role
@@ -276,18 +312,26 @@ mod tests {
 
     #[test]
     fn validate_contacts_accepts_every_closed_role() {
-        let contacts: Vec<MetadataContact> =
-            ROLE_CODES.iter().map(|entry| contact_with_role(entry.code)).collect();
+        let contacts: Vec<MetadataContact> = ROLE_CODES
+            .iter()
+            .map(|entry| contact_with_role(entry.code))
+            .collect();
         assert!(validate_contacts(&contacts).is_ok());
     }
 
     #[test]
     fn validate_contacts_rejects_unknown_role_with_invalid_input_and_persists_nothing() {
-        let contacts = vec![contact_with_role("pointOfContact"), contact_with_role("reviewer")];
+        let contacts = vec![
+            contact_with_role("pointOfContact"),
+            contact_with_role("reviewer"),
+        ];
         let err = validate_contacts(&contacts).expect_err("role 'reviewer' is not in ROLE_CODES");
         match err {
             AppError::InvalidInput(message) => {
-                assert!(message.contains("reviewer"), "error must name the offending role: {message}");
+                assert!(
+                    message.contains("reviewer"),
+                    "error must name the offending role: {message}"
+                );
             }
             other => panic!("expected AppError::InvalidInput, got {other:?}"),
         }
@@ -329,10 +373,14 @@ mod tests {
 
     #[test]
     fn validate_workflow_status_rejects_unknown_value() {
-        let err = validate_workflow_status("archived").expect_err("must reject unknown workflow_status");
+        let err =
+            validate_workflow_status("archived").expect_err("must reject unknown workflow_status");
         match err {
             AppError::InvalidInput(message) => {
-                assert!(message.contains("archived"), "error must name the offending value: {message}");
+                assert!(
+                    message.contains("archived"),
+                    "error must name the offending value: {message}"
+                );
             }
             other => panic!("expected AppError::InvalidInput, got {other:?}"),
         }
@@ -354,8 +402,8 @@ mod tests {
     fn every_topic_category_and_progress_code_has_a_translate_key_in_every_locale() {
         for locale in LOCALES {
             let path = format!("{}/locales/{locale}.ftl", env!("CARGO_MANIFEST_DIR"));
-            let content =
-                std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("failed to read {path}: {e}"));
+            let content = std::fs::read_to_string(&path)
+                .unwrap_or_else(|e| panic!("failed to read {path}: {e}"));
             let keys = crate::i18n::extract_message_keys(&content);
 
             for entry in TOPIC_CATEGORY_CODES {

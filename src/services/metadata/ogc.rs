@@ -110,7 +110,11 @@ pub fn parse_datetime(raw: &str) -> AppResult<DatetimeFilter> {
         } else {
             Some(parse_rfc3339_side(start)?)
         };
-        let end = if end == ".." { None } else { Some(parse_rfc3339_side(end)?) };
+        let end = if end == ".." {
+            None
+        } else {
+            Some(parse_rfc3339_side(end)?)
+        };
 
         if start.is_none() && end.is_none() {
             return Err(AppError::InvalidInput(
@@ -214,15 +218,30 @@ pub struct FeatureProperties {
     pub lineage: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub purpose: Option<String>,
-    #[serde(rename = "publicationDate", skip_serializing_if = "Option::is_none", with = "time::serde::rfc3339::option")]
+    #[serde(
+        rename = "publicationDate",
+        skip_serializing_if = "Option::is_none",
+        with = "time::serde::rfc3339::option"
+    )]
     pub publication_date: Option<OffsetDateTime>,
-    #[serde(rename = "temporalExtentStart", skip_serializing_if = "Option::is_none", with = "time::serde::rfc3339::option")]
+    #[serde(
+        rename = "temporalExtentStart",
+        skip_serializing_if = "Option::is_none",
+        with = "time::serde::rfc3339::option"
+    )]
     pub temporal_extent_start: Option<OffsetDateTime>,
-    #[serde(rename = "temporalExtentEnd", skip_serializing_if = "Option::is_none", with = "time::serde::rfc3339::option")]
+    #[serde(
+        rename = "temporalExtentEnd",
+        skip_serializing_if = "Option::is_none",
+        with = "time::serde::rfc3339::option"
+    )]
     pub temporal_extent_end: Option<OffsetDateTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credits: Option<String>,
-    #[serde(rename = "supplementalInformation", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "supplementalInformation",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub supplemental_information: Option<String>,
     /// Maps `MetadataRecord.restrictions` (`MD_LegalConstraints`) to the
     /// OGC API - Records `license` property.
@@ -375,7 +394,11 @@ pub fn record_to_feature(
             language: record.language.clone(),
             external_ids: vec![record.file_identifier.clone()],
             projection: autofill.projection,
-            contacts: record.contacts.iter().map(metadata_contact_to_feature_contact).collect(),
+            contacts: record
+                .contacts
+                .iter()
+                .map(metadata_contact_to_feature_contact)
+                .collect(),
             topic_category: record.topic_category.clone(),
             lineage: record.lineage.clone(),
             purpose: record.purpose.clone(),
@@ -497,14 +520,25 @@ mod tests {
     fn record_to_feature_derives_projection_from_layer_srid() {
         let mut layer = test_layer();
         layer.srid = Some(3857);
-        let feature = record_to_feature(&test_record(), &layer, None, "layers", "http://localhost:5887");
+        let feature = record_to_feature(
+            &test_record(),
+            &layer,
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
         assert_eq!(feature.properties.projection, "EPSG:3857");
     }
 
     #[test]
     fn record_to_feature_projection_defaults_to_epsg_4326_when_srid_is_unset() {
-        let feature =
-            record_to_feature(&test_record(), &test_layer(), None, "layers", "http://localhost:5887");
+        let feature = record_to_feature(
+            &test_record(),
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
         assert_eq!(feature.properties.projection, "EPSG:4326");
     }
 
@@ -522,8 +556,14 @@ mod tests {
         assert!(feature.bbox.is_none());
 
         let json = serde_json::to_value(&feature).unwrap();
-        assert!(json.get("geometry").is_none(), "None geometry must be omitted, not null");
-        assert!(json.get("bbox").is_none(), "None bbox must be omitted, not null");
+        assert!(
+            json.get("geometry").is_none(),
+            "None geometry must be omitted, not null"
+        );
+        assert!(
+            json.get("bbox").is_none(),
+            "None bbox must be omitted, not null"
+        );
     }
 
     #[test]
@@ -558,30 +598,58 @@ mod tests {
             "layers",
             "http://localhost:5887",
         );
-        assert_eq!(feature.properties.created, datetime!(2026-08-27 12:00:00 UTC));
-        assert_eq!(feature.properties.updated, datetime!(2026-08-27 12:00:00 UTC));
+        assert_eq!(
+            feature.properties.created,
+            datetime!(2026-08-27 12:00:00 UTC)
+        );
+        assert_eq!(
+            feature.properties.updated,
+            datetime!(2026-08-27 12:00:00 UTC)
+        );
     }
 
     #[test]
     fn record_to_feature_created_uses_creation_date_when_set() {
         let mut record = test_record();
         record.creation_date = Some(datetime!(2026-01-10 00:00:00 UTC));
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
-        assert_eq!(feature.properties.created, datetime!(2026-01-10 00:00:00 UTC));
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
+        assert_eq!(
+            feature.properties.created,
+            datetime!(2026-01-10 00:00:00 UTC)
+        );
         // updated still falls back — revision_date was not set on this record
-        assert_eq!(feature.properties.updated, datetime!(2026-08-27 12:00:00 UTC));
+        assert_eq!(
+            feature.properties.updated,
+            datetime!(2026-08-27 12:00:00 UTC)
+        );
     }
 
     #[test]
     fn record_to_feature_updated_uses_revision_date_when_set() {
         let mut record = test_record();
         record.revision_date = Some(datetime!(2026-02-01 00:00:00 UTC));
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
-        assert_eq!(feature.properties.updated, datetime!(2026-02-01 00:00:00 UTC));
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
+        assert_eq!(
+            feature.properties.updated,
+            datetime!(2026-02-01 00:00:00 UTC)
+        );
         // created still falls back — creation_date was not set on this record
-        assert_eq!(feature.properties.created, datetime!(2026-08-27 12:00:00 UTC));
+        assert_eq!(
+            feature.properties.created,
+            datetime!(2026-08-27 12:00:00 UTC)
+        );
     }
 
     #[test]
@@ -589,10 +657,21 @@ mod tests {
         let mut record = test_record();
         record.creation_date = Some(datetime!(2026-01-10 00:00:00 UTC));
         record.revision_date = Some(datetime!(2026-02-01 00:00:00 UTC));
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
-        assert_eq!(feature.properties.created, datetime!(2026-01-10 00:00:00 UTC));
-        assert_eq!(feature.properties.updated, datetime!(2026-02-01 00:00:00 UTC));
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
+        assert_eq!(
+            feature.properties.created,
+            datetime!(2026-01-10 00:00:00 UTC)
+        );
+        assert_eq!(
+            feature.properties.updated,
+            datetime!(2026-02-01 00:00:00 UTC)
+        );
     }
 
     #[test]
@@ -619,8 +698,13 @@ mod tests {
         record.temporal_extent_start = Some(datetime!(2020-01-01 00:00:00 UTC));
         record.temporal_extent_end = Some(datetime!(2026-01-01 00:00:00 UTC));
 
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
         let json = serde_json::to_value(&feature.properties).unwrap();
 
         assert_eq!(json["purpose"], "Zoning reference");
@@ -635,8 +719,13 @@ mod tests {
     fn record_to_feature_omits_unset_descriptive_properties() {
         let mut record = test_record();
         record.topic_category = None;
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
         let json = serde_json::to_value(&feature.properties).unwrap();
 
         for key in [
@@ -650,7 +739,10 @@ mod tests {
             "lineage",
             "license",
         ] {
-            assert!(json.get(key).is_none(), "expected {key} to be omitted when unset");
+            assert!(
+                json.get(key).is_none(),
+                "expected {key} to be omitted when unset"
+            );
         }
     }
 
@@ -659,8 +751,13 @@ mod tests {
         let mut record = test_record();
         record.restrictions = Some("CC-BY 4.0".to_string());
 
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
         let json = serde_json::to_value(&feature.properties).unwrap();
 
         assert_eq!(json["license"], "CC-BY 4.0");
@@ -687,8 +784,13 @@ mod tests {
         record.topic_category = Some("boundaries".to_string());
         record.lineage = Some("Digitized from cadastral survey plans.".to_string());
 
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
         let json = serde_json::to_value(&feature.properties).unwrap();
 
         assert_eq!(json["topicCategory"], "boundaries");
@@ -719,8 +821,13 @@ mod tests {
             },
         ];
 
-        let feature =
-            record_to_feature(&record, &test_layer(), None, "layers", "http://localhost:5887");
+        let feature = record_to_feature(
+            &record,
+            &test_layer(),
+            None,
+            "layers",
+            "http://localhost:5887",
+        );
 
         assert_eq!(feature.properties.contacts.len(), 2);
 
@@ -729,7 +836,12 @@ mod tests {
         assert_eq!(first.organization, Some("IGN".to_string()));
         assert_eq!(first.position, Some("GIS Analyst".to_string()));
         assert_eq!(first.roles, vec!["pointOfContact".to_string()]);
-        assert_eq!(first.emails, vec![ContactValue { value: "ana@example.com".to_string() }]);
+        assert_eq!(
+            first.emails,
+            vec![ContactValue {
+                value: "ana@example.com".to_string()
+            }]
+        );
         assert_eq!(first.phones, Vec::<ContactValue>::new());
 
         let second = &feature.properties.contacts[1];
@@ -738,14 +850,28 @@ mod tests {
         assert_eq!(second.position, None);
         assert_eq!(second.roles, vec!["custodian".to_string()]);
         assert_eq!(second.emails, Vec::<ContactValue>::new());
-        assert_eq!(second.phones, vec![ContactValue { value: "+54 11 5555-5555".to_string() }]);
+        assert_eq!(
+            second.phones,
+            vec![ContactValue {
+                value: "+54 11 5555-5555".to_string()
+            }]
+        );
 
         // nulls skipped in JSON, not serialized as `null`
         let json = serde_json::to_value(&feature).unwrap();
         let second_json = &json["properties"]["contacts"][1];
-        assert!(second_json.get("name").is_none(), "None name must be omitted, not null");
-        assert!(second_json.get("position").is_none(), "None position must be omitted, not null");
-        assert!(second_json.get("emails").is_none(), "empty emails must be omitted, not null");
+        assert!(
+            second_json.get("name").is_none(),
+            "None name must be omitted, not null"
+        );
+        assert!(
+            second_json.get("position").is_none(),
+            "None position must be omitted, not null"
+        );
+        assert!(
+            second_json.get("emails").is_none(),
+            "empty emails must be omitted, not null"
+        );
     }
 
     #[test]
@@ -772,7 +898,10 @@ mod tests {
         );
 
         assert!(
-            feature.links.iter().any(|l| l.href == "https://example.com/wms"),
+            feature
+                .links
+                .iter()
+                .any(|l| l.href == "https://example.com/wms"),
             "must include the admin-entered OGC:WMS link"
         );
         assert!(
@@ -787,7 +916,10 @@ mod tests {
     #[test]
     fn parse_q_trims_and_returns_none_for_blank_input() {
         assert_eq!(parse_q("  ").unwrap(), None);
-        assert_eq!(parse_q("  catastro  ").unwrap(), Some("catastro".to_string()));
+        assert_eq!(
+            parse_q("  catastro  ").unwrap(),
+            Some("catastro".to_string())
+        );
     }
 
     #[test]
@@ -824,7 +956,10 @@ mod tests {
     #[test]
     fn parse_datetime_accepts_a_single_rfc3339_instant() {
         let parsed = parse_datetime("2026-08-27T12:00:00Z").unwrap();
-        assert_eq!(parsed, DatetimeFilter::Instant(datetime!(2026-08-27 12:00:00 UTC)));
+        assert_eq!(
+            parsed,
+            DatetimeFilter::Instant(datetime!(2026-08-27 12:00:00 UTC))
+        );
     }
 
     #[test]
@@ -868,7 +1003,10 @@ mod tests {
 
     #[test]
     fn known_protocols_table_contains_all_four_constants() {
-        assert_eq!(KNOWN_PROTOCOLS, [PROTOCOL_WMS, PROTOCOL_WFS, PROTOCOL_WCS, PROTOCOL_WWW_LINK]);
+        assert_eq!(
+            KNOWN_PROTOCOLS,
+            [PROTOCOL_WMS, PROTOCOL_WFS, PROTOCOL_WCS, PROTOCOL_WWW_LINK]
+        );
     }
 
     #[test]
@@ -882,7 +1020,8 @@ mod tests {
     #[test]
     fn conformance_classes_omit_oas30_until_the_openapi_document_is_actually_3_0() {
         assert!(
-            !CONFORMANCE_CLASSES.contains(&"http://www.opengis.net/spec/ogcapi-records-1/1.0/conf/oas30"),
+            !CONFORMANCE_CLASSES
+                .contains(&"http://www.opengis.net/spec/ogcapi-records-1/1.0/conf/oas30"),
             "oas30 asserts an OpenAPI 3.0 document; the served document is 3.1 (salvo-oapi 0.96.0 \
              has no 3.0 output mode) — declaring it now would fail conformance, not fix it"
         );

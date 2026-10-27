@@ -197,7 +197,9 @@ pub fn resolve_updated_password(
     new_password: Option<String>,
 ) -> AppResult<String> {
     match new_password {
-        Some(pw) => auth.get_encrypt_psw(pw).map_err(AppError::PasswordHashError),
+        Some(pw) => auth
+            .get_encrypt_psw(pw)
+            .map_err(AppError::PasswordHashError),
         None => Ok(existing_password.to_string()),
     }
 }

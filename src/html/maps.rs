@@ -132,11 +132,9 @@ pub async fn page_map_layer(
         })
     };
 
-    res.render(Text::Html(
-        template
-            .render()
-            .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?,
-    ));
+    res.render(Text::Html(template.render().map_err(|e| {
+        StatusError::internal_server_error().cause(e.to_string())
+    })?));
     Ok(())
 }
 
@@ -175,11 +173,9 @@ pub async fn page_map_view(
         })
     };
 
-    res.render(Text::Html(
-        template
-            .render()
-            .map_err(|e| StatusError::internal_server_error().cause(e.to_string()))?,
-    ));
+    res.render(Text::Html(template.render().map_err(|e| {
+        StatusError::internal_server_error().cause(e.to_string())
+    })?));
     Ok(())
 }
 
@@ -246,11 +242,15 @@ mod tests {
             "resolved style must not leak raw mvt:// tokens into the preview page: {html}"
         );
         assert!(
-            html.contains("http://127.0.0.1:5887/services/tiles/category/arrendamientos/{z}/{x}/{y}.pbf"),
+            html.contains(
+                "http://127.0.0.1:5887/services/tiles/category/arrendamientos/{z}/{x}/{y}.pbf"
+            ),
             "expected the resolved tile URL in {html}"
         );
         assert!(
-            html.contains("http://127.0.0.1:5887/services/map_assets/glyphs/{fontstack}/{range}.pbf"),
+            html.contains(
+                "http://127.0.0.1:5887/services/map_assets/glyphs/{fontstack}/{range}.pbf"
+            ),
             "expected the resolved glyphs URL in {html}"
         );
     }

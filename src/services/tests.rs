@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::services::utils::{validate_filter, normalize_name, validate_style_json};
     use crate::error::AppError;
+    use crate::services::utils::{normalize_name, validate_filter, validate_style_json};
 
     #[test]
     fn test_validate_filter_empty() {
@@ -116,12 +116,18 @@ mod tests {
 
     #[test]
     fn test_normalize_name_already_normalized_passthrough() {
-        assert_eq!(normalize_name("departamentos_capital").unwrap(), "departamentos_capital");
+        assert_eq!(
+            normalize_name("departamentos_capital").unwrap(),
+            "departamentos_capital"
+        );
     }
 
     #[test]
     fn test_normalize_name_other_whitespace() {
-        assert_eq!(normalize_name("foo\u{a0}bar\r\nbaz").unwrap(), "foo_bar_baz");
+        assert_eq!(
+            normalize_name("foo\u{a0}bar\r\nbaz").unwrap(),
+            "foo_bar_baz"
+        );
     }
 
     #[test]

@@ -9,11 +9,7 @@ use super::builder::{Via, get_tile};
 use crate::services::utils::{get_request_user, validate_user_groups};
 use crate::{
     error::{AppError, AppResult},
-    filters,
-    get_cache_wrapper,
-    get_catalog,
-    get_db_registry,
-    get_plugin_registry,
+    filters, get_cache_wrapper, get_catalog, get_db_registry, get_plugin_registry,
     models::catalog::StateLayer,
     monitor::record_latency,
 };
@@ -157,18 +153,29 @@ pub async fn get_single_layer_tile(
 
         let start_time = Instant::now();
 
-        let (tile, via) =
-            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings, req_user.clone(), req_groups.clone()).await {
-                Ok(result) => result,
-                Err(e) => {
-                    res.status_code(StatusCode::BAD_REQUEST);
-                    res.render(Json(serde_json::json!({
-                        "error": "Invalid filter",
-                        "message": e.to_string()
-                    })));
-                    return Ok(());
-                }
-            };
+        let (tile, via) = match get_tile(
+            pg_pool,
+            layer.clone(),
+            x,
+            y,
+            z,
+            where_clause,
+            bindings,
+            req_user.clone(),
+            req_groups.clone(),
+        )
+        .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                res.status_code(StatusCode::BAD_REQUEST);
+                res.render(Json(serde_json::json!({
+                    "error": "Invalid filter",
+                    "message": e.to_string()
+                })));
+                return Ok(());
+            }
+        };
 
         let elapsed_time = start_time.elapsed();
         record_latency(elapsed_time.as_secs_f64());
@@ -192,18 +199,29 @@ pub async fn get_single_layer_tile(
         // Filtered or plugin-driven request: always hits the DB, no server cache, no ETag.
         let start_time = Instant::now();
 
-        let (tile, _) =
-            match get_tile(pg_pool, layer.clone(), x, y, z, where_clause, bindings, req_user, req_groups).await {
-                Ok(result) => result,
-                Err(e) => {
-                    res.status_code(StatusCode::BAD_REQUEST);
-                    res.render(Json(serde_json::json!({
-                        "error": "Invalid filter",
-                        "message": e.to_string()
-                    })));
-                    return Ok(());
-                }
-            };
+        let (tile, _) = match get_tile(
+            pg_pool,
+            layer.clone(),
+            x,
+            y,
+            z,
+            where_clause,
+            bindings,
+            req_user,
+            req_groups,
+        )
+        .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                res.status_code(StatusCode::BAD_REQUEST);
+                res.render(Json(serde_json::json!({
+                    "error": "Invalid filter",
+                    "message": e.to_string()
+                })));
+                return Ok(());
+            }
+        };
 
         let elapsed_time = start_time.elapsed();
         record_latency(elapsed_time.as_secs_f64());
@@ -213,7 +231,8 @@ pub async fn get_single_layer_tile(
             HeaderValue::from_str(&elapsed_time.as_millis().to_string())
                 .unwrap_or_else(|_| HeaderValue::from_static("0")),
         );
-        res.headers_mut().insert("X-Cache", HeaderValue::from_static("BYPASS"));
+        res.headers_mut()
+            .insert("X-Cache", HeaderValue::from_static("BYPASS"));
 
         if has_plugin {
             if let Ok(v) = HeaderValue::from_str("no-store, no-cache") {
@@ -314,7 +333,17 @@ pub async fn get_composite_layers_tile(
             Some(pool) => pool.clone(),
             None => continue,
         };
-        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new(), req_user.clone(), req_groups.clone()));
+        futures.push(get_tile(
+            pg_pool,
+            layer,
+            x,
+            y,
+            z,
+            String::new(),
+            Vec::new(),
+            req_user.clone(),
+            req_groups.clone(),
+        ));
     }
 
     let results = futures::future::join_all(futures).await;
@@ -428,7 +457,17 @@ pub async fn get_category_layers_tile(
             Some(pool) => pool.clone(),
             None => continue,
         };
-        futures.push(get_tile(pg_pool, layer, x, y, z, String::new(), Vec::new(), req_user.clone(), req_groups.clone()));
+        futures.push(get_tile(
+            pg_pool,
+            layer,
+            x,
+            y,
+            z,
+            String::new(),
+            Vec::new(),
+            req_user.clone(),
+            req_groups.clone(),
+        ));
     }
 
     let results = futures::future::join_all(futures).await;

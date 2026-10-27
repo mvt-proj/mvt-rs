@@ -23,7 +23,9 @@ impl DbRegistry {
         }
 
         if db_pools.is_empty() {
-            return Err(AppError::DatabaseError("No database connections configured.".to_string()));
+            return Err(AppError::DatabaseError(
+                "No database connections configured.".to_string(),
+            ));
         }
 
         Ok(Self { pools: db_pools })

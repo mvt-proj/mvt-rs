@@ -158,7 +158,10 @@ mod tests {
         assert_eq!(parsed.temporal_extent_end, record.temporal_extent_end);
         assert_eq!(parsed.purpose, record.purpose);
         assert_eq!(parsed.credits, record.credits);
-        assert_eq!(parsed.supplemental_information, record.supplemental_information);
+        assert_eq!(
+            parsed.supplemental_information,
+            record.supplemental_information
+        );
         assert_eq!(parsed.keywords, record.keywords);
         assert_eq!(parsed.links, record.links);
         assert_eq!(parsed.contacts, record.contacts);

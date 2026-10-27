@@ -17,9 +17,19 @@ pub struct Category {
 /// Counts how many layers and styles still reference `category_id`. Pure so
 /// it can be unit-tested without the global `Catalog`/`STYLES` state that
 /// `Category::delete_category` reads it from.
-pub fn count_category_references(category_id: &str, layers: &[Layer], styles: &[Style]) -> (usize, usize) {
-    let layer_count = layers.iter().filter(|l| l.category.id == category_id).count();
-    let style_count = styles.iter().filter(|s| s.category.id == category_id).count();
+pub fn count_category_references(
+    category_id: &str,
+    layers: &[Layer],
+    styles: &[Style],
+) -> (usize, usize) {
+    let layer_count = layers
+        .iter()
+        .filter(|l| l.category.id == category_id)
+        .count();
+    let style_count = styles
+        .iter()
+        .filter(|s| s.category.id == category_id)
+        .count();
     (layer_count, style_count)
 }
 
@@ -184,7 +194,10 @@ mod tests {
     fn test_count_category_references_none() {
         let layers = vec![test_layer_with_category("l1", "other")];
         let styles = vec![test_style_with_category("s1", "other")];
-        assert_eq!(count_category_references("target", &layers, &styles), (0, 0));
+        assert_eq!(
+            count_category_references("target", &layers, &styles),
+            (0, 0)
+        );
     }
 
     #[test]
@@ -195,7 +208,10 @@ mod tests {
             test_layer_with_category("l3", "other"),
         ];
         let styles = vec![test_style_with_category("s1", "target")];
-        assert_eq!(count_category_references("target", &layers, &styles), (2, 1));
+        assert_eq!(
+            count_category_references("target", &layers, &styles),
+            (2, 1)
+        );
     }
 
     #[test]

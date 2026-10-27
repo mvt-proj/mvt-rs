@@ -237,20 +237,29 @@ pub async fn get_request_user(
         ) {
             let auth = get_auth().await.read().await;
             if let Some(user) = auth.get_user_by_id(&data.claims.id) {
-                return (Some(user.username.clone()), Some(user.groups_as_vec_string()));
+                return (
+                    Some(user.username.clone()),
+                    Some(user.groups_as_vec_string()),
+                );
             }
         }
     } else if !authorization.is_empty() {
         let auth = get_auth().await.read().await;
         if let Ok(Some(user)) = auth.get_user_by_authorization(authorization) {
-            return (Some(user.username.clone()), Some(user.groups_as_vec_string()));
+            return (
+                Some(user.username.clone()),
+                Some(user.groups_as_vec_string()),
+            );
         }
     }
 
     let (is_auth, user) = get_session_data(depot).await;
     if is_auth {
         if let Some(user) = user {
-            return (Some(user.username.clone()), Some(user.groups_as_vec_string()));
+            return (
+                Some(user.username.clone()),
+                Some(user.groups_as_vec_string()),
+            );
         }
     }
 

@@ -1,5 +1,5 @@
-use crate::get_cf_pool;
 use crate::config::system_settings::bump_config_version;
+use crate::get_cf_pool;
 use crate::models::{category::Category, styles::Style};
 use sqlx::{Row, sqlite::SqlitePool};
 

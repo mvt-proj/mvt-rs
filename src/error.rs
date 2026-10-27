@@ -146,16 +146,36 @@ impl AppError {
 impl oapi::EndpointOutRegister for AppError {
     fn register(_components: &mut Components, operation: &mut Operation) {
         for (code, description) in [
-            (StatusCode::BAD_REQUEST, "Invalid input, request parameters, or a rejected SQL-injection attempt."),
+            (
+                StatusCode::BAD_REQUEST,
+                "Invalid input, request parameters, or a rejected SQL-injection attempt.",
+            ),
             (StatusCode::UNAUTHORIZED, "Missing or invalid credentials."),
-            (StatusCode::FORBIDDEN, "Authenticated but not permitted to perform this action."),
-            (StatusCode::NOT_FOUND, "The requested resource does not exist."),
-            (StatusCode::CONFLICT, "The request conflicts with existing state."),
+            (
+                StatusCode::FORBIDDEN,
+                "Authenticated but not permitted to perform this action.",
+            ),
+            (
+                StatusCode::NOT_FOUND,
+                "The requested resource does not exist.",
+            ),
+            (
+                StatusCode::CONFLICT,
+                "The request conflicts with existing state.",
+            ),
             (StatusCode::REQUEST_TIMEOUT, "The request timed out."),
-            (StatusCode::SERVICE_UNAVAILABLE, "A dependency is temporarily unavailable."),
-            (StatusCode::INTERNAL_SERVER_ERROR, "An unexpected server error occurred."),
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "A dependency is temporarily unavailable.",
+            ),
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "An unexpected server error occurred.",
+            ),
         ] {
-            operation.responses.insert(code.as_str(), oapi::Response::new(description));
+            operation
+                .responses
+                .insert(code.as_str(), oapi::Response::new(description));
         }
     }
 }

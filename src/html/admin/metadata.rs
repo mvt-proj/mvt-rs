@@ -43,9 +43,10 @@ use crate::{
     services::{
         metadata::{
             codelists::{
-                CodelistEntry, PROGRESS_CODES, ROLE_CODES, TOPIC_CATEGORY_CODES, WORKFLOW_STATUS_CODES,
-                progress_code_translate_key, role_code_translate_key, topic_category_translate_key,
-                validate_contacts, validate_workflow_status, workflow_status_translate_key,
+                CodelistEntry, PROGRESS_CODES, ROLE_CODES, TOPIC_CATEGORY_CODES,
+                WORKFLOW_STATUS_CODES, progress_code_translate_key, role_code_translate_key,
+                topic_category_translate_key, validate_contacts, validate_workflow_status,
+                workflow_status_translate_key,
             },
             ogc::KNOWN_PROTOCOLS,
             rules::{derive_autofill, guard_layer_published},
@@ -151,7 +152,10 @@ fn codelist_options(
             let label = translate_key(entry.code)
                 .and_then(|key| translate.get(&key).cloned())
                 .unwrap_or_else(|| entry.code.to_string());
-            CodelistOption { code: entry.code, label }
+            CodelistOption {
+                code: entry.code,
+                label,
+            }
         })
         .collect()
 }
@@ -283,7 +287,11 @@ fn parse_optional_date(raw: Option<&str>) -> AppResult<Option<OffsetDateTime>> {
 /// Zips the three parallel link-row vectors submitted by the repeatable
 /// external-links sub-form (design decision #6) into `MetadataLink`s. Rows
 /// with an empty `url` are dropped (an admin can leave trailing blank rows).
-fn build_links(protocols: Vec<String>, urls: Vec<String>, labels: Vec<String>) -> Vec<MetadataLink> {
+fn build_links(
+    protocols: Vec<String>,
+    urls: Vec<String>,
+    labels: Vec<String>,
+) -> Vec<MetadataLink> {
     protocols
         .into_iter()
         .zip(urls)
@@ -319,29 +327,49 @@ fn build_contacts(
         .into_iter()
         .enumerate()
         .map(|(i, role)| {
-            let individual_name = individual_names.get(i).cloned().filter(|s| !s.trim().is_empty());
-            let organisation_name = organisation_names.get(i).cloned().filter(|s| !s.trim().is_empty());
-            let position_name = position_names.get(i).cloned().filter(|s| !s.trim().is_empty());
+            let individual_name = individual_names
+                .get(i)
+                .cloned()
+                .filter(|s| !s.trim().is_empty());
+            let organisation_name = organisation_names
+                .get(i)
+                .cloned()
+                .filter(|s| !s.trim().is_empty());
+            let position_name = position_names
+                .get(i)
+                .cloned()
+                .filter(|s| !s.trim().is_empty());
             let email = emails.get(i).cloned().filter(|s| !s.trim().is_empty());
             let phone = phones.get(i).cloned().filter(|s| !s.trim().is_empty());
-            (individual_name, organisation_name, position_name, email, phone, role)
-        })
-        .filter(|(individual_name, organisation_name, position_name, email, phone, _)| {
-            individual_name.is_some()
-                || organisation_name.is_some()
-                || position_name.is_some()
-                || email.is_some()
-                || phone.is_some()
-        })
-        .map(
-            |(individual_name, organisation_name, position_name, email, phone, role)| MetadataContact {
-                id: Uuid::new_v4().to_string(),
+            (
                 individual_name,
                 organisation_name,
                 position_name,
                 email,
                 phone,
                 role,
+            )
+        })
+        .filter(
+            |(individual_name, organisation_name, position_name, email, phone, _)| {
+                individual_name.is_some()
+                    || organisation_name.is_some()
+                    || position_name.is_some()
+                    || email.is_some()
+                    || phone.is_some()
+            },
+        )
+        .map(
+            |(individual_name, organisation_name, position_name, email, phone, role)| {
+                MetadataContact {
+                    id: Uuid::new_v4().to_string(),
+                    individual_name,
+                    organisation_name,
+                    position_name,
+                    email,
+                    phone,
+                    role,
+                }
             },
         )
         .collect()
@@ -352,7 +380,11 @@ fn build_contacts(
 /// existing row's values on update (`file_identifier` is stable across
 /// edits per `models::metadata::MetadataRecord`'s own doc comment).
 /// `metadata_date` is always "now" — it tracks last edit, not user input.
-fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppResult<MetadataRecord> {
+fn build_record(
+    id: String,
+    file_identifier: String,
+    form: MetadataForm,
+) -> AppResult<MetadataRecord> {
     let contacts = build_contacts(
         form.contact_individual_name,
         form.contact_organisation_name,
@@ -363,7 +395,8 @@ fn build_record(id: String, file_identifier: String, form: MetadataForm) -> AppR
     );
     validate_contacts(&contacts)?;
 
-    let workflow_status = non_empty(form.workflow_status).unwrap_or_else(|| "published".to_string());
+    let workflow_status =
+        non_empty(form.workflow_status).unwrap_or_else(|| "published".to_string());
     validate_workflow_status(&workflow_status)?;
 
     Ok(MetadataRecord {
@@ -442,7 +475,10 @@ pub async fn list_metadata(res: &mut Response, depot: &mut Depot) -> AppResult<(
         return Ok(());
     };
 
-    let template = ListMetadataTemplate { current_user: &current_user, base };
+    let template = ListMetadataTemplate {
+        current_user: &current_user,
+        base,
+    };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
@@ -451,12 +487,21 @@ pub async fn list_metadata(res: &mut Response, depot: &mut Depot) -> AppResult<(
 /// filter keystroke — mirrors `html::catalog::render_catalog_table`'s
 /// filter/query shape.
 #[handler]
-pub async fn table_metadata(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn table_metadata(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     let filter = req.query::<String>("filter");
 
     let published_layers: Vec<Layer> = {
         let catalog = get_catalog().await.read().await;
-        catalog.layers.iter().filter(|l| l.published).cloned().collect()
+        catalog
+            .layers
+            .iter()
+            .filter(|l| l.published)
+            .cloned()
+            .collect()
     };
 
     let mut rows = Vec::with_capacity(published_layers.len());
@@ -485,7 +530,11 @@ pub async fn table_metadata(req: &mut Request, res: &mut Response, depot: &mut D
 }
 
 #[handler]
-pub async fn new_metadata_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn new_metadata_page(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     let (base, _) = make_base(depot).await;
     let layer_id = req
         .param::<String>("layer_id")
@@ -504,10 +553,19 @@ pub async fn new_metadata_page(req: &mut Request, res: &mut Response, depot: &mu
     }
 
     let projection = derive_autofill(&layer, &base_url_from_request(req)).projection;
-    let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &base.translate);
-    let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
+    let topic_categories = codelist_options(
+        TOPIC_CATEGORY_CODES,
+        topic_category_translate_key,
+        &base.translate,
+    );
+    let progress_codes =
+        codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
     let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &base.translate);
-    let workflow_statuses = codelist_options(WORKFLOW_STATUS_CODES, workflow_status_translate_key, &base.translate);
+    let workflow_statuses = codelist_options(
+        WORKFLOW_STATUS_CODES,
+        workflow_status_translate_key,
+        &base.translate,
+    );
     let record = blank_record(&layer_id);
     let template = MetadataFormTemplate {
         creation_date_value: format_date_input(record.creation_date),
@@ -531,7 +589,11 @@ pub async fn new_metadata_page(req: &mut Request, res: &mut Response, depot: &mu
 }
 
 #[handler]
-pub async fn edit_metadata_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn edit_metadata_page(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     let (base, _) = make_base(depot).await;
     let layer_id = req
         .param::<String>("layer_id")
@@ -548,10 +610,19 @@ pub async fn edit_metadata_page(req: &mut Request, res: &mut Response, depot: &m
     };
 
     let projection = derive_autofill(&layer, &base_url_from_request(req)).projection;
-    let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &base.translate);
-    let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
+    let topic_categories = codelist_options(
+        TOPIC_CATEGORY_CODES,
+        topic_category_translate_key,
+        &base.translate,
+    );
+    let progress_codes =
+        codelist_options(PROGRESS_CODES, progress_code_translate_key, &base.translate);
     let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &base.translate);
-    let workflow_statuses = codelist_options(WORKFLOW_STATUS_CODES, workflow_status_translate_key, &base.translate);
+    let workflow_statuses = codelist_options(
+        WORKFLOW_STATUS_CODES,
+        workflow_status_translate_key,
+        &base.translate,
+    );
     let template = MetadataFormTemplate {
         creation_date_value: format_date_input(record.creation_date),
         publication_date_value: format_date_input(record.publication_date),
@@ -607,7 +678,9 @@ pub async fn update_metadata(res: &mut Response, form: MetadataForm) -> AppResul
     let existing = get_metadata_record_by_layer_id(None, &layer.id)
         .await
         .map_err(AppError::from)?
-        .ok_or_else(|| AppError::NotFound(format!("No metadata record for layer '{}'", layer.id)))?;
+        .ok_or_else(|| {
+            AppError::NotFound(format!("No metadata record for layer '{}'", layer.id))
+        })?;
 
     let record = build_record(existing.id, existing.file_identifier, form)?;
     update_metadata_record(None, &record).await?;
@@ -630,10 +703,14 @@ pub async fn delete_metadata(req: &mut Request, res: &mut Response) -> AppResult
         .is_none()
     {
         res.status_code(StatusCode::NOT_FOUND);
-        return Err(AppError::NotFound(format!("No metadata record for layer '{layer_id}'")));
+        return Err(AppError::NotFound(format!(
+            "No metadata record for layer '{layer_id}'"
+        )));
     }
 
-    delete_metadata_record(None, &layer_id).await.map_err(AppError::from)?;
+    delete_metadata_record(None, &layer_id)
+        .await
+        .map_err(AppError::from)?;
 
     res.headers_mut()
         .insert("content-type", "text/html".parse()?);
@@ -697,7 +774,10 @@ mod tests {
 
     #[test]
     fn non_empty_trims_and_converts_blank_to_none() {
-        assert_eq!(non_empty(Some("  hello  ".to_string())), Some("hello".to_string()));
+        assert_eq!(
+            non_empty(Some("  hello  ".to_string())),
+            Some("hello".to_string())
+        );
         assert_eq!(non_empty(Some("   ".to_string())), None);
         assert_eq!(non_empty(None), None);
     }
@@ -705,7 +785,10 @@ mod tests {
     #[test]
     fn parse_optional_date_accepts_a_plain_date() {
         let parsed = parse_optional_date(Some("2026-01-15")).unwrap();
-        assert_eq!(parsed, OffsetDateTime::parse("2026-01-15T00:00:00Z", &Rfc3339).ok());
+        assert_eq!(
+            parsed,
+            OffsetDateTime::parse("2026-01-15T00:00:00Z", &Rfc3339).ok()
+        );
     }
 
     #[test]
@@ -777,7 +860,10 @@ mod tests {
             vec![String::new()],
             vec!["custodian".to_string()],
         );
-        assert!(contacts.is_empty(), "an all-blank trailing row must be dropped");
+        assert!(
+            contacts.is_empty(),
+            "an all-blank trailing row must be dropped"
+        );
     }
 
     #[test]
@@ -790,7 +876,11 @@ mod tests {
             vec![String::new()],
             vec!["custodian".to_string()],
         );
-        assert_eq!(contacts.len(), 1, "a row with even one identity field set must survive");
+        assert_eq!(
+            contacts.len(),
+            1,
+            "a row with even one identity field set must survive"
+        );
         assert_eq!(contacts[0].organisation_name, Some("IGN".to_string()));
     }
 
@@ -806,7 +896,11 @@ mod tests {
             vec![],
             vec!["pointOfContact".to_string(), "custodian".to_string()],
         );
-        assert_eq!(contacts.len(), 1, "only the row with a set identity field survives");
+        assert_eq!(
+            contacts.len(),
+            1,
+            "only the row with a set identity field survives"
+        );
         assert_eq!(contacts[0].individual_name, Some("Ana Perez".to_string()));
         assert_eq!(contacts[0].role, "pointOfContact");
     }
@@ -827,12 +921,16 @@ mod tests {
 
     #[test]
     fn build_record_maps_form_and_preserves_supplied_id_and_file_identifier() {
-        let record = build_record("rec-1".to_string(), "file-1".to_string(), form("layer-1")).unwrap();
+        let record =
+            build_record("rec-1".to_string(), "file-1".to_string(), form("layer-1")).unwrap();
         assert_eq!(record.id, "rec-1");
         assert_eq!(record.file_identifier, "file-1");
         assert_eq!(record.layer_id, "layer-1");
         assert_eq!(record.character_set, Some("utf8".to_string()));
-        assert_eq!(record.keywords, vec!["catastro".to_string(), "limites".to_string()]);
+        assert_eq!(
+            record.keywords,
+            vec!["catastro".to_string(), "limites".to_string()]
+        );
         assert_eq!(record.links.len(), 1);
         assert_eq!(record.links[0].protocol, "OGC:WMS");
         assert_eq!(record.purpose, None);
@@ -889,7 +987,10 @@ mod tests {
             OffsetDateTime::parse("2026-02-01T00:00:00Z", &Rfc3339).ok()
         );
         assert_eq!(record.credits, Some("Instituto Geografico".to_string()));
-        assert_eq!(record.supplemental_information, Some("See appendix A".to_string()));
+        assert_eq!(
+            record.supplemental_information,
+            Some("See appendix A".to_string())
+        );
     }
 
     #[test]
@@ -921,7 +1022,10 @@ mod tests {
 
         let record = build_record("rec-1".to_string(), "file-1".to_string(), submitted).unwrap();
         assert_eq!(record.contacts.len(), 1);
-        assert_eq!(record.contacts[0].individual_name, Some("Ana Perez".to_string()));
+        assert_eq!(
+            record.contacts[0].individual_name,
+            Some("Ana Perez".to_string())
+        );
         assert_eq!(record.contacts[0].role, "pointOfContact");
     }
 
@@ -939,8 +1043,15 @@ mod tests {
     #[test]
     fn codelist_options_resolves_translated_label_when_key_present() {
         let mut translate = HashMap::new();
-        translate.insert("topic-category-boundaries".to_string(), "Boundaries".to_string());
-        let options = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &translate);
+        translate.insert(
+            "topic-category-boundaries".to_string(),
+            "Boundaries".to_string(),
+        );
+        let options = codelist_options(
+            TOPIC_CATEGORY_CODES,
+            topic_category_translate_key,
+            &translate,
+        );
         let boundaries = options.iter().find(|o| o.code == "boundaries").unwrap();
         assert_eq!(boundaries.label, "Boundaries");
     }
@@ -972,7 +1083,10 @@ mod tests {
 
     #[test]
     fn layer_matches_filter_rejects_unrelated_text() {
-        assert!(!layer_matches_filter(&test_layer("layer-1"), "nonexistent-term"));
+        assert!(!layer_matches_filter(
+            &test_layer("layer-1"),
+            "nonexistent-term"
+        ));
     }
 
     #[test]
@@ -988,7 +1102,11 @@ mod tests {
     fn test_layer(id: &str) -> Layer {
         Layer {
             id: id.to_string(),
-            category: Category { id: "cat-1".to_string(), name: "public".to_string(), description: String::new() },
+            category: Category {
+                id: "cat-1".to_string(),
+                name: "public".to_string(),
+                description: String::new(),
+            },
             geometry: "polygons".to_string(),
             name: "parcels".to_string(),
             alias: "Parcels".to_string(),
@@ -1044,11 +1162,14 @@ mod tests {
             ("add-metadata", "Add"),
             ("confirm-delete-metadata", "Delete this layer's metadata?"),
             ("metadata-empty-title", "No published layers."),
-            ("metadata-empty-subtitle", "Publish a layer in the catalog to add metadata to it."),
+            (
+                "metadata-empty-subtitle",
+                "Publish a layer in the catalog to add metadata to it.",
+            ),
         ]
         .into_iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect()
     }
 
     /// Phase 4.7: the shell template must render instantly with the
@@ -1062,23 +1183,50 @@ mod tests {
         // `translate[...]` keys not otherwise relevant to this test.
         let i18n = I18n::new();
         let translate = i18n.get_all_translations("es-AR");
-        let base = BaseTemplateData { is_auth: true, is_admin: true, translate, version: "0.0.0-test" };
+        let base = BaseTemplateData {
+            is_auth: true,
+            is_admin: true,
+            translate,
+            version: "0.0.0-test",
+        };
         let user = test_user();
-        let template = ListMetadataTemplate { current_user: &user, base };
-        let html = template.render().expect("list.html shell must render without panicking or erroring");
+        let template = ListMetadataTemplate {
+            current_user: &user,
+            base,
+        };
+        let html = template
+            .render()
+            .expect("list.html shell must render without panicking or erroring");
 
-        assert!(html.contains("id=\"url-records\""), "copy-URL banner must survive the shell split");
-        assert!(html.contains("id=\"filter\""), "shell must include the filter input");
-        assert!(html.contains("hx-get=\"/admin/metadata/table\""), "shell must HTMX-load the table fragment");
-        assert!(!html.contains("No hay capas publicadas"), "row table content must have moved to table.html");
+        assert!(
+            html.contains("id=\"url-records\""),
+            "copy-URL banner must survive the shell split"
+        );
+        assert!(
+            html.contains("id=\"filter\""),
+            "shell must include the filter input"
+        );
+        assert!(
+            html.contains("hx-get=\"/admin/metadata/table\""),
+            "shell must HTMX-load the table fragment"
+        );
+        assert!(
+            !html.contains("No hay capas publicadas"),
+            "row table content must have moved to table.html"
+        );
     }
 
     /// Phase 4.7: the table fragment renders the empty state when there are
     /// no matching rows.
     #[test]
     fn table_metadata_fragment_renders_empty_state_for_no_rows() {
-        let template = MetadataTableTemplate { rows: vec![], translate: full_table_translate() };
-        let html = template.render().expect("table.html fragment must render without panicking or erroring");
+        let template = MetadataTableTemplate {
+            rows: vec![],
+            translate: full_table_translate(),
+        };
+        let html = template
+            .render()
+            .expect("table.html fragment must render without panicking or erroring");
         assert!(html.contains("No published layers"));
     }
 
@@ -1086,9 +1234,17 @@ mod tests {
     /// when a record exists, and reflects the layer's category/name/alias.
     #[test]
     fn table_metadata_fragment_renders_row_with_record() {
-        let rows = vec![MetadataRow { layer: test_layer("layer-1"), has_record: true }];
-        let template = MetadataTableTemplate { rows, translate: full_table_translate() };
-        let html = template.render().expect("table.html fragment must render without panicking or erroring");
+        let rows = vec![MetadataRow {
+            layer: test_layer("layer-1"),
+            has_record: true,
+        }];
+        let template = MetadataTableTemplate {
+            rows,
+            translate: full_table_translate(),
+        };
+        let html = template
+            .render()
+            .expect("table.html fragment must render without panicking or erroring");
         assert!(html.contains("Parcels"));
         assert!(html.contains("/admin/metadata/edit/layer-1"));
     }
@@ -1102,23 +1258,47 @@ mod tests {
     fn table_metadata_fragment_localizes_record_status_labels() {
         fn rows() -> Vec<MetadataRow> {
             vec![
-                MetadataRow { layer: test_layer("layer-1"), has_record: true },
-                MetadataRow { layer: test_layer("layer-2"), has_record: false },
+                MetadataRow {
+                    layer: test_layer("layer-1"),
+                    has_record: true,
+                },
+                MetadataRow {
+                    layer: test_layer("layer-2"),
+                    has_record: false,
+                },
             ]
         }
         let i18n = I18n::new();
 
-        let en_html = MetadataTableTemplate { rows: rows(), translate: i18n.get_all_translations("en-US") }
-            .render()
-            .expect("table.html fragment must render without panicking or erroring");
-        assert!(en_html.contains("With record"), "en-US must show the English 'with record' label");
-        assert!(en_html.contains("Without record"), "en-US must show the English 'without record' label");
-        assert!(!en_html.contains("Con registro"), "en-US must not leak the hardcoded Spanish label");
-        assert!(!en_html.contains("Sin registro"), "en-US must not leak the hardcoded Spanish label");
+        let en_html = MetadataTableTemplate {
+            rows: rows(),
+            translate: i18n.get_all_translations("en-US"),
+        }
+        .render()
+        .expect("table.html fragment must render without panicking or erroring");
+        assert!(
+            en_html.contains("With record"),
+            "en-US must show the English 'with record' label"
+        );
+        assert!(
+            en_html.contains("Without record"),
+            "en-US must show the English 'without record' label"
+        );
+        assert!(
+            !en_html.contains("Con registro"),
+            "en-US must not leak the hardcoded Spanish label"
+        );
+        assert!(
+            !en_html.contains("Sin registro"),
+            "en-US must not leak the hardcoded Spanish label"
+        );
 
-        let es_html = MetadataTableTemplate { rows: rows(), translate: i18n.get_all_translations("es-AR") }
-            .render()
-            .expect("table.html fragment must render without panicking or erroring");
+        let es_html = MetadataTableTemplate {
+            rows: rows(),
+            translate: i18n.get_all_translations("es-AR"),
+        }
+        .render()
+        .expect("table.html fragment must render without panicking or erroring");
         assert!(es_html.contains("Con registro"));
         assert!(es_html.contains("Sin registro"));
     }
@@ -1131,25 +1311,58 @@ mod tests {
     fn table_metadata_fragment_localizes_remaining_static_text() {
         let i18n = I18n::new();
 
-        let en_empty = MetadataTableTemplate { rows: vec![], translate: i18n.get_all_translations("en-US") }
-            .render()
-            .expect("table.html fragment must render without panicking or erroring");
-        assert!(en_empty.contains("No published layers"), "en-US empty state title must be translated");
-        assert!(!en_empty.contains("No hay capas publicadas"), "en-US must not leak the hardcoded Spanish empty state");
+        let en_empty = MetadataTableTemplate {
+            rows: vec![],
+            translate: i18n.get_all_translations("en-US"),
+        }
+        .render()
+        .expect("table.html fragment must render without panicking or erroring");
+        assert!(
+            en_empty.contains("No published layers"),
+            "en-US empty state title must be translated"
+        );
+        assert!(
+            !en_empty.contains("No hay capas publicadas"),
+            "en-US must not leak the hardcoded Spanish empty state"
+        );
 
-        let rows_without_record = vec![MetadataRow { layer: test_layer("layer-1"), has_record: false }];
-        let en_html = MetadataTableTemplate { rows: rows_without_record, translate: i18n.get_all_translations("en-US") }
-            .render()
-            .expect("table.html fragment must render without panicking or erroring");
-        assert!(en_html.contains("Status"), "en-US column header must be translated");
-        assert!(!en_html.contains(">Estado<"), "en-US must not leak the hardcoded Spanish column header");
-        assert!(en_html.contains(">Add<"), "en-US dropdown action must be translated");
-        assert!(!en_html.contains(">Agregar<"), "en-US must not leak the hardcoded Spanish dropdown action");
+        let rows_without_record = vec![MetadataRow {
+            layer: test_layer("layer-1"),
+            has_record: false,
+        }];
+        let en_html = MetadataTableTemplate {
+            rows: rows_without_record,
+            translate: i18n.get_all_translations("en-US"),
+        }
+        .render()
+        .expect("table.html fragment must render without panicking or erroring");
+        assert!(
+            en_html.contains("Status"),
+            "en-US column header must be translated"
+        );
+        assert!(
+            !en_html.contains(">Estado<"),
+            "en-US must not leak the hardcoded Spanish column header"
+        );
+        assert!(
+            en_html.contains(">Add<"),
+            "en-US dropdown action must be translated"
+        );
+        assert!(
+            !en_html.contains(">Agregar<"),
+            "en-US must not leak the hardcoded Spanish dropdown action"
+        );
 
-        let rows_with_record = vec![MetadataRow { layer: test_layer("layer-1"), has_record: true }];
-        let en_delete_html = MetadataTableTemplate { rows: rows_with_record, translate: i18n.get_all_translations("en-US") }
-            .render()
-            .expect("table.html fragment must render without panicking or erroring");
+        let rows_with_record = vec![MetadataRow {
+            layer: test_layer("layer-1"),
+            has_record: true,
+        }];
+        let en_delete_html = MetadataTableTemplate {
+            rows: rows_with_record,
+            translate: i18n.get_all_translations("en-US"),
+        }
+        .render()
+        .expect("table.html fragment must render without panicking or erroring");
         assert!(
             en_delete_html.contains("Are you sure you want to delete the metadata for this layer?"),
             "en-US delete confirmation must be translated"
@@ -1168,11 +1381,25 @@ mod tests {
     fn render_form_html(lang: &str) -> String {
         let i18n = I18n::new();
         let translate = i18n.get_all_translations(lang);
-        let topic_categories = codelist_options(TOPIC_CATEGORY_CODES, topic_category_translate_key, &translate);
-        let progress_codes = codelist_options(PROGRESS_CODES, progress_code_translate_key, &translate);
+        let topic_categories = codelist_options(
+            TOPIC_CATEGORY_CODES,
+            topic_category_translate_key,
+            &translate,
+        );
+        let progress_codes =
+            codelist_options(PROGRESS_CODES, progress_code_translate_key, &translate);
         let role_codes = codelist_options(ROLE_CODES, role_code_translate_key, &translate);
-        let workflow_statuses = codelist_options(WORKFLOW_STATUS_CODES, workflow_status_translate_key, &translate);
-        let base = BaseTemplateData { is_auth: true, is_admin: true, translate, version: "0.0.0-test" };
+        let workflow_statuses = codelist_options(
+            WORKFLOW_STATUS_CODES,
+            workflow_status_translate_key,
+            &translate,
+        );
+        let base = BaseTemplateData {
+            is_auth: true,
+            is_admin: true,
+            translate,
+            version: "0.0.0-test",
+        };
         let template = MetadataFormTemplate {
             layer: test_layer("layer-1"),
             record: blank_record("layer-1"),
@@ -1190,7 +1417,9 @@ mod tests {
             protocols: known_protocols(),
             base,
         };
-        template.render().expect("form.html must render without panicking or erroring")
+        template
+            .render()
+            .expect("form.html must render without panicking or erroring")
     }
 
     /// Spec/Phase 2.5.7: the topic_category and status selects must show
@@ -1199,15 +1428,27 @@ mod tests {
     #[test]
     fn form_renders_translated_codelist_labels_for_es_ar() {
         let html = render_form_html("es-AR");
-        assert!(html.contains("Límites"), "topic-category-boundaries must render translated in es-AR");
-        assert!(html.contains("En curso"), "progress-code-onGoing must render translated in es-AR");
+        assert!(
+            html.contains("Límites"),
+            "topic-category-boundaries must render translated in es-AR"
+        );
+        assert!(
+            html.contains("En curso"),
+            "progress-code-onGoing must render translated in es-AR"
+        );
     }
 
     /// Same as above for `en-US`.
     #[test]
     fn form_renders_translated_codelist_labels_for_en_us() {
         let html = render_form_html("en-US");
-        assert!(html.contains("Boundaries"), "topic-category-boundaries must render translated in en-US");
-        assert!(html.contains("On Going"), "progress-code-onGoing must render translated in en-US");
+        assert!(
+            html.contains("Boundaries"),
+            "topic-category-boundaries must render translated in en-US"
+        );
+        assert!(
+            html.contains("On Going"),
+            "progress-code-onGoing must render translated in en-US"
+        );
     }
 }

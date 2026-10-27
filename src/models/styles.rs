@@ -147,7 +147,9 @@ impl Style {
 /// Finds a style in a slice by its category name and style name. Pure so it can
 /// be unit-tested without the global cache.
 pub fn find_style<'a>(styles: &'a [Style], category: &str, name: &str) -> Option<&'a Style> {
-    styles.iter().find(|s| s.category.name == category && s.name == name)
+    styles
+        .iter()
+        .find(|s| s.category.name == category && s.name == name)
 }
 
 #[cfg(test)]
@@ -159,7 +161,11 @@ mod tests {
         Style {
             id: format!("{cat}-{name}"),
             name: name.into(),
-            category: Category { id: cat.into(), name: cat.into(), description: String::new() },
+            category: Category {
+                id: cat.into(),
+                name: cat.into(),
+                description: String::new(),
+            },
             description: String::new(),
             style: "{}".into(),
         }
@@ -168,7 +174,10 @@ mod tests {
     #[test]
     fn find_style_matches_category_name_and_style_name() {
         let styles = vec![style("roads", "default"), style("water", "blue")];
-        assert_eq!(find_style(&styles, "water", "blue").unwrap().id, "water-blue");
+        assert_eq!(
+            find_style(&styles, "water", "blue").unwrap().id,
+            "water-blue"
+        );
         assert!(find_style(&styles, "water", "default").is_none());
         assert!(find_style(&styles, "nope", "blue").is_none());
     }

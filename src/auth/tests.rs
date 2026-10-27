@@ -5,10 +5,10 @@ mod tests {
         resolve_updated_password,
     };
     use super::super::utils::decode_basic_auth;
-    use argon2::{Argon2, PasswordHash, PasswordVerifier};
-    use base64::{Engine as _, engine::general_purpose};
     use crate::models::catalog::Layer;
     use crate::models::category::Category;
+    use argon2::{Argon2, PasswordHash, PasswordVerifier};
+    use base64::{Engine as _, engine::general_purpose};
 
     fn create_test_auth() -> Auth {
         Auth {

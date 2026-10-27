@@ -39,7 +39,9 @@ struct UpdateCategoryRequest {
 #[handler]
 pub async fn update(res: &mut Response, data: UpdateCategoryRequest) -> AppResult<()> {
     let category = Category::from_id(&data.id).await?;
-    let updated = category.update_category(data.name, data.description).await?;
+    let updated = category
+        .update_category(data.name, data.description)
+        .await?;
     res.render(Json(&updated));
     Ok(())
 }

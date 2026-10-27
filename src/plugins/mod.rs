@@ -89,15 +89,24 @@ impl LuaPluginRegistry {
         let dir = Path::new(plugins_dir);
 
         if !dir.exists() {
-            info!("Plugins directory '{}' not found — no plugins loaded", plugins_dir);
-            return Self { plugins, info: plugin_list };
+            info!(
+                "Plugins directory '{}' not found — no plugins loaded",
+                plugins_dir
+            );
+            return Self {
+                plugins,
+                info: plugin_list,
+            };
         }
 
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
             Err(e) => {
                 warn!("Cannot read plugins directory '{}': {}", plugins_dir, e);
-                return Self { plugins, info: plugin_list };
+                return Self {
+                    plugins,
+                    info: plugin_list,
+                };
             }
         };
 
@@ -124,7 +133,11 @@ impl LuaPluginRegistry {
                 Ok(lua) => {
                     info!("Loaded Lua plugin: '{}' ({:?})", key, path);
                     let doc = parse_doc(&source);
-                    plugin_list.push(PluginInfo { key: key.clone(), source, doc });
+                    plugin_list.push(PluginInfo {
+                        key: key.clone(),
+                        source,
+                        doc,
+                    });
                     plugins.insert(key, Mutex::new(lua));
                 }
                 Err(e) => {
@@ -134,7 +147,10 @@ impl LuaPluginRegistry {
         }
 
         plugin_list.sort_by(|a, b| a.key.cmp(&b.key));
-        Self { plugins, info: plugin_list }
+        Self {
+            plugins,
+            info: plugin_list,
+        }
     }
 
     fn load_plugin(key: &str, script: &str) -> LuaResult<Lua> {
@@ -235,7 +251,10 @@ impl LuaPluginRegistry {
                 Err(e) => panic!("Test plugin '{}' failed to load: {}", key, e),
             }
         }
-        Self { plugins, info: Vec::new() }
+        Self {
+            plugins,
+            info: Vec::new(),
+        }
     }
 }
 
@@ -278,10 +297,8 @@ mod tests {
 
     #[test]
     fn has_plugin_returns_true_for_category_plugin() {
-        let registry = LuaPluginRegistry::from_scripts(&[(
-            "mycat",
-            "function filter(ctx) return '' end",
-        )]);
+        let registry =
+            LuaPluginRegistry::from_scripts(&[("mycat", "function filter(ctx) return '' end")]);
         assert!(registry.has_plugin("mycat_mylayer", "mycat"));
     }
 
@@ -290,7 +307,9 @@ mod tests {
     #[tokio::test]
     async fn call_filter_returns_none_when_no_plugin() {
         let registry = LuaPluginRegistry::from_scripts(&[]);
-        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
         assert!(result.is_none());
     }
 
@@ -302,7 +321,9 @@ mod tests {
             "mycat_mylayer",
             "function filter(ctx) return '' end",
         )]);
-        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
         assert_eq!(result, Some(String::new()));
     }
 
@@ -312,7 +333,9 @@ mod tests {
             "mycat_mylayer",
             "function filter(ctx) return \"population > 1000\" end",
         )]);
-        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
         assert_eq!(result, Some("population > 1000".to_string()));
     }
 
@@ -328,10 +351,14 @@ mod tests {
         "#;
         let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
 
-        let low_zoom = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 8)).await;
+        let low_zoom = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 8))
+            .await;
         assert_eq!(low_zoom, Some("area > 5000".to_string()));
 
-        let high_zoom = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 14)).await;
+        let high_zoom = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 14))
+            .await;
         assert_eq!(high_zoom, Some(String::new()));
     }
 
@@ -343,7 +370,9 @@ mod tests {
             end
         "#;
         let registry = LuaPluginRegistry::from_scripts(&[("pub_roads", script)]);
-        let result = registry.call_filter("pub_roads", "pub", &ctx("roads", "pub", 12)).await;
+        let result = registry
+            .call_filter("pub_roads", "pub", &ctx("roads", "pub", 12))
+            .await;
         assert_eq!(result, Some("pub_roads_12".to_string()));
     }
 
@@ -356,8 +385,12 @@ mod tests {
             "function filter(ctx) return \"active = true\" end",
         )]);
 
-        let r1 = registry.call_filter("mycat_layer1", "mycat", &ctx("layer1", "mycat", 10)).await;
-        let r2 = registry.call_filter("mycat_layer2", "mycat", &ctx("layer2", "mycat", 10)).await;
+        let r1 = registry
+            .call_filter("mycat_layer1", "mycat", &ctx("layer1", "mycat", 10))
+            .await;
+        let r2 = registry
+            .call_filter("mycat_layer2", "mycat", &ctx("layer2", "mycat", 10))
+            .await;
 
         assert_eq!(r1, Some("active = true".to_string()));
         assert_eq!(r2, Some("active = true".to_string()));
@@ -369,7 +402,9 @@ mod tests {
             "mycat",
             "function filter(ctx) return \"active = true\" end",
         )]);
-        let result = registry.call_filter("othercat_layer", "othercat", &ctx("layer", "othercat", 10)).await;
+        let result = registry
+            .call_filter("othercat_layer", "othercat", &ctx("layer", "othercat", 10))
+            .await;
         assert!(result.is_none());
     }
 
@@ -378,20 +413,33 @@ mod tests {
     #[tokio::test]
     async fn category_and_layer_clauses_are_combined_with_and() {
         let registry = LuaPluginRegistry::from_scripts(&[
-            ("mycat",        "function filter(ctx) return \"active = true\" end"),
-            ("mycat_roads",  "function filter(ctx) return \"type = 'primary'\" end"),
+            ("mycat", "function filter(ctx) return \"active = true\" end"),
+            (
+                "mycat_roads",
+                "function filter(ctx) return \"type = 'primary'\" end",
+            ),
         ]);
-        let result = registry.call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10)).await;
-        assert_eq!(result, Some("active = true AND type = 'primary'".to_string()));
+        let result = registry
+            .call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10))
+            .await;
+        assert_eq!(
+            result,
+            Some("active = true AND type = 'primary'".to_string())
+        );
     }
 
     #[tokio::test]
     async fn combined_result_skips_empty_clauses() {
         let registry = LuaPluginRegistry::from_scripts(&[
-            ("mycat",       "function filter(ctx) return \"\" end"),
-            ("mycat_roads", "function filter(ctx) return \"type = 'primary'\" end"),
+            ("mycat", "function filter(ctx) return \"\" end"),
+            (
+                "mycat_roads",
+                "function filter(ctx) return \"type = 'primary'\" end",
+            ),
         ]);
-        let result = registry.call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10)).await;
+        let result = registry
+            .call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10))
+            .await;
         // category returns "", layer returns clause → only the clause, no leading AND
         assert_eq!(result, Some("type = 'primary'".to_string()));
     }
@@ -400,10 +448,12 @@ mod tests {
     async fn both_plugins_return_empty_gives_some_empty_string() {
         // Some("") != None: plugin exists (cache bypass) but no WHERE added
         let registry = LuaPluginRegistry::from_scripts(&[
-            ("mycat",       "function filter(ctx) return \"\" end"),
+            ("mycat", "function filter(ctx) return \"\" end"),
             ("mycat_roads", "function filter(ctx) return \"\" end"),
         ]);
-        let result = registry.call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10)).await;
+        let result = registry
+            .call_filter("mycat_roads", "mycat", &ctx("roads", "mycat", 10))
+            .await;
         assert_eq!(result, Some(String::new()));
     }
 
@@ -415,7 +465,9 @@ mod tests {
             "mycat_mylayer",
             "function filter(ctx) return \"1=0\" end",
         )]);
-        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
         assert_eq!(result, Some("1=0".to_string()));
     }
 
@@ -437,18 +489,20 @@ mod tests {
         "#;
         let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
         // Runtime error → None (logged as warning, does not crash the request)
-        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
         assert!(result.is_none());
     }
 
     #[tokio::test]
     async fn missing_filter_function_returns_none() {
         // Script loads but defines no filter() function
-        let registry = LuaPluginRegistry::from_scripts(&[(
-            "mycat_mylayer",
-            "-- no filter function defined",
-        )]);
-        let result = registry.call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10)).await;
+        let registry =
+            LuaPluginRegistry::from_scripts(&[("mycat_mylayer", "-- no filter function defined")]);
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
         assert!(result.is_none());
     }
 
@@ -475,7 +529,11 @@ mod tests {
         "#;
         let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
         let result = registry
-            .call_filter("mycat_mylayer", "mycat", &ctx_with_user("mylayer", "mycat", "alice", &[]))
+            .call_filter(
+                "mycat_mylayer",
+                "mycat",
+                &ctx_with_user("mylayer", "mycat", "alice", &[]),
+            )
             .await;
         assert_eq!(result, Some("alice".to_string()));
     }
@@ -512,12 +570,20 @@ mod tests {
         let registry = LuaPluginRegistry::from_scripts(&[("mycat_mylayer", script)]);
 
         let premium = registry
-            .call_filter("mycat_mylayer", "mycat", &ctx_with_user("mylayer", "mycat", "alice", &["viewer", "premium"]))
+            .call_filter(
+                "mycat_mylayer",
+                "mycat",
+                &ctx_with_user("mylayer", "mycat", "alice", &["viewer", "premium"]),
+            )
             .await;
         assert_eq!(premium, Some(String::new()));
 
         let regular = registry
-            .call_filter("mycat_mylayer", "mycat", &ctx_with_user("mylayer", "mycat", "bob", &["viewer"]))
+            .call_filter(
+                "mycat_mylayer",
+                "mycat",
+                &ctx_with_user("mylayer", "mycat", "bob", &["viewer"]),
+            )
             .await;
         assert_eq!(regular, Some("public = true".to_string()));
     }

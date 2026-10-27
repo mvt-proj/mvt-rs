@@ -7,8 +7,7 @@ use crate::services::utils::{convert_fields, validate_filter};
 use crate::{
     config::consts::*,
     error::AppResult,
-    get_cache_wrapper,
-    get_plugin_registry,
+    get_cache_wrapper, get_plugin_registry,
     models::catalog::Layer,
     monitor::{record_cache_hit, record_cache_miss, record_request, record_tile_latency},
     plugins::PluginContext,
@@ -262,7 +261,8 @@ pub async fn get_tile(
     let category = &layer_conf.category.name;
     let has_plugin = get_plugin_registry().has_plugin(name, category);
 
-    if local_where_clause.is_empty() && !has_plugin
+    if local_where_clause.is_empty()
+        && !has_plugin
         && let Some(tile) = cache_wrapper.get_tile(name, z, x, y, max_cache_age).await
     {
         record_cache_hit();
@@ -289,7 +289,10 @@ pub async fn get_tile(
         user,
         groups,
     };
-    if let Some(lua_filter) = get_plugin_registry().call_filter(name, category, &ctx).await {
+    if let Some(lua_filter) = get_plugin_registry()
+        .call_filter(name, category, &ctx)
+        .await
+    {
         if !lua_filter.is_empty() {
             validate_filter(&lua_filter)?;
             if !local_where_clause.is_empty() {

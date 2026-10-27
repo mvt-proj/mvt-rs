@@ -171,11 +171,23 @@ impl Layer {
         rows += &row("Extent", &self.get_extent().to_string());
         rows += &row("Zoom min", &self.get_zmin().to_string());
         rows += &row("Zoom max", &self.get_zmax().to_string());
-        rows += &row("Zmax no-simplify", &self.get_zmax_do_not_simplify().to_string());
-        rows += &row("Buffer no-simplify", &self.get_buffer_do_not_simplify().to_string());
-        rows += &row("Extent no-simplify", &self.get_extent_do_not_simplify().to_string());
+        rows += &row(
+            "Zmax no-simplify",
+            &self.get_zmax_do_not_simplify().to_string(),
+        );
+        rows += &row(
+            "Buffer no-simplify",
+            &self.get_buffer_do_not_simplify().to_string(),
+        );
+        rows += &row(
+            "Extent no-simplify",
+            &self.get_extent_do_not_simplify().to_string(),
+        );
         rows += &row("Clip geom", &badge(&self.get_clip_geom().to_string()));
-        rows += &row("Delete cache on start", &badge(&self.get_delete_cache_on_start().to_string()));
+        rows += &row(
+            "Delete cache on start",
+            &badge(&self.get_delete_cache_on_start().to_string()),
+        );
         rows += &row("Max cache age (s)", &self.get_max_cache_age().to_string());
         rows += &row("Max records", &self.get_max_records().to_string());
         rows += &row("Published", &badge(&self.published.to_string()));

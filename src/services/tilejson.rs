@@ -193,10 +193,7 @@ async fn layer_fields(layer: &Layer) -> BTreeMap<String, String> {
         }
     };
 
-    let by_name: HashMap<String, _> = columns
-        .into_iter()
-        .map(|c| (c.name.clone(), c))
-        .collect();
+    let by_name: HashMap<String, _> = columns.into_iter().map(|c| (c.name.clone(), c)).collect();
 
     configured_fields(layer)
         .into_iter()
@@ -404,7 +401,10 @@ mod tests {
         assert_eq!(vl.description.as_deref(), Some("Cadastral parcels"));
         assert_eq!(vl.minzoom, 4);
         assert_eq!(vl.maxzoom, 14);
-        assert_eq!(vl.fields.get("owner").map(String::as_str), Some("Owner full name"));
+        assert_eq!(
+            vl.fields.get("owner").map(String::as_str),
+            Some("Owner full name")
+        );
     }
 
     #[test]
@@ -412,7 +412,12 @@ mod tests {
         let mut layer = test_layer();
         layer.label_layer = true;
 
-        let doc = build_tilejson(&layer, [-60.0, -40.0, -50.0, -30.0], BTreeMap::new(), "http://h");
+        let doc = build_tilejson(
+            &layer,
+            [-60.0, -40.0, -50.0, -30.0],
+            BTreeMap::new(),
+            "http://h",
+        );
 
         assert_eq!(doc.vector_layers.len(), 2);
         assert_eq!(doc.vector_layers[0].id, "parcels");
@@ -425,7 +430,12 @@ mod tests {
         layer.geometry = "points".to_string();
         layer.label_layer = true;
 
-        let doc = build_tilejson(&layer, [-60.0, -40.0, -50.0, -30.0], BTreeMap::new(), "http://h");
+        let doc = build_tilejson(
+            &layer,
+            [-60.0, -40.0, -50.0, -30.0],
+            BTreeMap::new(),
+            "http://h",
+        );
 
         assert_eq!(doc.vector_layers.len(), 1);
     }
@@ -442,7 +452,10 @@ mod tests {
         assert!(doc.description.is_none());
 
         let json = serde_json::to_value(&doc).unwrap();
-        assert!(json.get("description").is_none(), "None must be omitted, not null");
+        assert!(
+            json.get("description").is_none(),
+            "None must be omitted, not null"
+        );
         assert!(json.get("tilejson").is_some());
         assert!(json.get("tiles").is_some());
         assert!(json.get("vector_layers").is_some());

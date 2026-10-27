@@ -20,7 +20,10 @@ struct SystemTemplate {
 #[handler]
 pub async fn index(res: &mut Response, depot: &mut Depot) -> AppResult<()> {
     let (base, _) = make_base(depot).await;
-    let template = SystemTemplate { base, sqlite_path: get_sqlite_path().to_string() };
+    let template = SystemTemplate {
+        base,
+        sqlite_path: get_sqlite_path().to_string(),
+    };
     res.render(Text::Html(template.render()?));
     Ok(())
 }
@@ -49,9 +52,12 @@ pub async fn backup(res: &mut Response) -> AppResult<()> {
     // The target path is server-generated (UUID, no user input), so
     // interpolating it into the SQL literal is safe — VACUUM INTO doesn't
     // support a bound parameter for its target filename.
-    sqlx::query(sqlx::AssertSqlSafe(format!("VACUUM INTO '{}'", tmp_path.display())))
-        .execute(get_cf_pool())
-        .await?;
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "VACUUM INTO '{}'",
+        tmp_path.display()
+    )))
+    .execute(get_cf_pool())
+    .await?;
 
     let bytes = tokio::fs::read(&tmp_path).await?;
     let _ = tokio::fs::remove_file(&tmp_path).await;

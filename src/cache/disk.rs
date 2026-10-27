@@ -285,8 +285,14 @@ mod tests {
         let fresh_path = dir.join("cat_new").join("0").join("0").join("0.pbf");
         let forever_path = dir.join("cat_forever").join("0").join("0").join("0.pbf");
 
-        cache.write_tile_to_file(&stale_path, b"tile").await.unwrap();
-        cache.write_tile_to_file(&fresh_path, b"tile").await.unwrap();
+        cache
+            .write_tile_to_file(&stale_path, b"tile")
+            .await
+            .unwrap();
+        cache
+            .write_tile_to_file(&fresh_path, b"tile")
+            .await
+            .unwrap();
         cache
             .write_tile_to_file(&forever_path, b"tile")
             .await

@@ -236,17 +236,12 @@ mod tests {
 
     #[tokio::test]
     async fn initialize_cache_disabled_skips_disk_setup() {
-        let untouched_dir =
-            std::env::temp_dir().join("mvt-rs-test-no-cache-untouched");
+        let untouched_dir = std::env::temp_dir().join("mvt-rs-test-no-cache-untouched");
 
-        let wrapper = CacheWrapper::initialize_cache(
-            None,
-            untouched_dir.clone(),
-            empty_catalog(),
-            true,
-        )
-        .await
-        .expect("disabled cache should initialize without a backend");
+        let wrapper =
+            CacheWrapper::initialize_cache(None, untouched_dir.clone(), empty_catalog(), true)
+                .await
+                .expect("disabled cache should initialize without a backend");
 
         assert_eq!(wrapper.cache_dir(), PathBuf::new());
         assert!(!untouched_dir.exists());

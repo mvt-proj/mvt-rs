@@ -256,7 +256,9 @@ mod tests {
     async fn require_api_admin_rejects_missing_token() {
         ensure_jwt_secret();
         let service = Service::new(protected_router());
-        let res = TestClient::get("http://127.0.0.1:5800/").send(&service).await;
+        let res = TestClient::get("http://127.0.0.1:5800/")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::FORBIDDEN);
     }
 
@@ -309,7 +311,9 @@ mod tests {
     async fn require_api_metadata_admin_rejects_missing_token() {
         ensure_jwt_secret();
         let service = Service::new(metadata_protected_router());
-        let res = TestClient::get("http://127.0.0.1:5800/").send(&service).await;
+        let res = TestClient::get("http://127.0.0.1:5800/")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::FORBIDDEN);
     }
 

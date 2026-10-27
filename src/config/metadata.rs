@@ -102,7 +102,10 @@ async fn insert_contacts(
 /// decision #3): deterministic and semantically grouped, unlike `links`'
 /// plain `ORDER BY id` — UUID `id` ordering alone would scramble
 /// admin-entered order on every reload.
-async fn fetch_contacts(pool: &SqlitePool, record_id: &str) -> Result<Vec<MetadataContact>, sqlx::Error> {
+async fn fetch_contacts(
+    pool: &SqlitePool,
+    record_id: &str,
+) -> Result<Vec<MetadataContact>, sqlx::Error> {
     let rows = sqlx::query("SELECT * FROM metadata_contacts WHERE record_id = ? ORDER BY role, id")
         .bind(record_id)
         .fetch_all(pool)
@@ -493,7 +496,10 @@ mod tests {
         assert_eq!(found.temporal_extent_start, record.temporal_extent_start);
         assert_eq!(found.temporal_extent_end, record.temporal_extent_end);
         assert_eq!(found.credits, record.credits);
-        assert_eq!(found.supplemental_information, record.supplemental_information);
+        assert_eq!(
+            found.supplemental_information,
+            record.supplemental_information
+        );
         // fetch_contacts orders by `role, id` (design decision #3), not
         // insertion order, so compare a role-sorted clone of what we wrote.
         let mut expected_contacts = record.contacts.clone();
@@ -536,9 +542,17 @@ mod tests {
 
         assert_eq!(found_after_update.purpose, None);
         assert_eq!(found_after_update.creation_date, None);
-        assert_eq!(found_after_update.credits, Some("Updated credits".to_string()));
+        assert_eq!(
+            found_after_update.credits,
+            Some("Updated credits".to_string())
+        );
         assert_eq!(found_after_update.contacts.len(), 2);
-        assert!(found_after_update.contacts.iter().all(|c| c.role == "custodian"));
+        assert!(
+            found_after_update
+                .contacts
+                .iter()
+                .all(|c| c.role == "custodian")
+        );
     }
 
     #[tokio::test]
@@ -611,7 +625,9 @@ mod tests {
             .await
             .unwrap();
 
-        delete_metadata_record(Some(&pool), "layer-1").await.unwrap();
+        delete_metadata_record(Some(&pool), "layer-1")
+            .await
+            .unwrap();
 
         let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1")
             .await
@@ -627,7 +643,9 @@ mod tests {
             .await
             .unwrap();
 
-        delete_metadata_record(Some(&pool), "layer-1").await.unwrap();
+        delete_metadata_record(Some(&pool), "layer-1")
+            .await
+            .unwrap();
 
         let orphan_contacts: i64 = sqlx::query("SELECT COUNT(*) AS c FROM metadata_contacts")
             .fetch_one(&pool)

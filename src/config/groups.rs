@@ -1,6 +1,6 @@
 use crate::auth::Group;
-use crate::get_cf_pool;
 use crate::config::system_settings::bump_config_version;
+use crate::get_cf_pool;
 use sqlx::{Row, sqlite::SqlitePool};
 
 pub async fn get_groups(pool: Option<&SqlitePool>) -> Result<Vec<Group>, sqlx::Error> {
@@ -83,7 +83,9 @@ mod tests {
     #[tokio::test]
     async fn delete_group_bumps_version() {
         let pool = in_memory_pool().await;
-        delete_group("nonexistent".to_string(), Some(&pool)).await.unwrap();
+        delete_group("nonexistent".to_string(), Some(&pool))
+            .await
+            .unwrap();
         assert_eq!(get_config_version(&pool).await.unwrap(), 1);
     }
 }

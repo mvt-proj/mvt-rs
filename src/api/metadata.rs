@@ -74,8 +74,10 @@ fn render_problem(res: &mut Response, status: StatusCode, detail: String) {
         "status": status.as_u16(),
         "detail": detail,
     })));
-    res.headers_mut()
-        .insert(header::CONTENT_TYPE, HeaderValue::from_static("application/problem+json"));
+    res.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/problem+json"),
+    );
 }
 
 fn generic_link(rel: &str, href: String, media_type: &str, title: Option<&str>) -> FeatureLink {
@@ -93,7 +95,9 @@ fn require_known_collection(collection_id: &str) -> AppResult<()> {
     if collection_id == COLLECTION_ID {
         Ok(())
     } else {
-        Err(AppError::NotFound(format!("Collection '{collection_id}' not found")))
+        Err(AppError::NotFound(format!(
+            "Collection '{collection_id}' not found"
+        )))
     }
 }
 
@@ -194,7 +198,9 @@ fn build_record(id: String, payload: MetadataPayload) -> AppResult<MetadataRecor
     Ok(MetadataRecord {
         id,
         layer_id: payload.layer_id,
-        file_identifier: payload.file_identifier.unwrap_or_else(|| Uuid::new_v4().to_string()),
+        file_identifier: payload
+            .file_identifier
+            .unwrap_or_else(|| Uuid::new_v4().to_string()),
         language: payload.language,
         character_set: payload.character_set,
         topic_category: payload.topic_category,
@@ -214,7 +220,9 @@ fn build_record(id: String, payload: MetadataPayload) -> AppResult<MetadataRecor
         temporal_extent_end: payload.temporal_extent_end,
         credits: payload.credits,
         supplemental_information: payload.supplemental_information,
-        metadata_date: payload.metadata_date.unwrap_or_else(OffsetDateTime::now_utc),
+        metadata_date: payload
+            .metadata_date
+            .unwrap_or_else(OffsetDateTime::now_utc),
         workflow_status,
         links: payload
             .links
@@ -255,7 +263,9 @@ async fn update_record_for_layer(
     let existing = get_metadata_record_by_layer_id(pool, &layer.id)
         .await
         .map_err(AppError::from)?
-        .ok_or_else(|| AppError::NotFound(format!("No metadata record for layer '{}'", layer.id)))?;
+        .ok_or_else(|| {
+            AppError::NotFound(format!("No metadata record for layer '{}'", layer.id))
+        })?;
 
     let record = build_record(existing.id, payload)?;
     update_metadata_record(pool, &record).await?;
@@ -321,10 +331,14 @@ pub async fn delete(req: &mut Request, res: &mut Response) -> AppResult<()> {
         .await
         .map_err(AppError::from)?;
     if existing.is_none() {
-        return Err(AppError::NotFound(format!("No metadata record for layer '{layer_id}'")));
+        return Err(AppError::NotFound(format!(
+            "No metadata record for layer '{layer_id}'"
+        )));
     }
 
-    delete_metadata_record(None, &layer_id).await.map_err(AppError::from)?;
+    delete_metadata_record(None, &layer_id)
+        .await
+        .map_err(AppError::from)?;
     res.render(Json(serde_json::json!({ "deleted": true })));
     Ok(())
 }
@@ -345,7 +359,12 @@ fn build_landing(base_url: &str) -> Landing {
         title: "MVT Server metadata catalog".to_string(),
         description: "OGC API - Records discovery for published layer metadata".to_string(),
         links: vec![
-            generic_link("self", format!("{base_url}{RECORDS_BASE_PATH}"), "application/json", None),
+            generic_link(
+                "self",
+                format!("{base_url}{RECORDS_BASE_PATH}"),
+                "application/json",
+                None,
+            ),
             generic_link(
                 "conformance",
                 format!("{base_url}{RECORDS_BASE_PATH}/conformance"),
@@ -494,8 +513,14 @@ struct FeatureCollectionResponse {
 /// argument — extracting the exclusion logic keeps IT directly
 /// unit-testable even though the group lookup is not (same testing
 /// boundary already established for `bbox_for_layer`).
-fn filter_visible_layers(layers: Vec<Layer>, mut is_visible: impl FnMut(&Layer) -> bool) -> Vec<Layer> {
-    layers.into_iter().filter(|l| l.published && is_visible(l)).collect()
+fn filter_visible_layers(
+    layers: Vec<Layer>,
+    mut is_visible: impl FnMut(&Layer) -> bool,
+) -> Vec<Layer> {
+    layers
+        .into_iter()
+        .filter(|l| l.published && is_visible(l))
+        .collect()
 }
 
 /// Whether `record` may appear in the public OGC API - Records `items`/`item`
@@ -511,11 +536,18 @@ fn is_publicly_visible(record: &MetadataRecord) -> bool {
 /// entered keywords/topic_category/file_identifier).
 fn record_matches_q(record: &MetadataRecord, layer: &Layer, q: &str) -> bool {
     let needle = q.to_lowercase();
-    let title = if layer.alias.is_empty() { &layer.name } else { &layer.alias };
+    let title = if layer.alias.is_empty() {
+        &layer.name
+    } else {
+        &layer.alias
+    };
 
     title.to_lowercase().contains(&needle)
         || layer.description.to_lowercase().contains(&needle)
-        || record.keywords.iter().any(|k| k.to_lowercase().contains(&needle))
+        || record
+            .keywords
+            .iter()
+            .any(|k| k.to_lowercase().contains(&needle))
         || record
             .topic_category
             .as_deref()
@@ -559,7 +591,13 @@ fn paginate(features: Vec<Feature>, limit: usize, offset: usize) -> (Vec<Feature
 /// and `datetime` only ever contain characters that are safe unencoded in a
 /// query string for this API (no `&`/`#`/spaces), so this stays a plain
 /// string builder instead of pulling in a percent-encoding dependency.
-fn items_query_string(q: &str, bbox: Option<&str>, datetime: Option<&str>, limit: usize, offset: usize) -> String {
+fn items_query_string(
+    q: &str,
+    bbox: Option<&str>,
+    datetime: Option<&str>,
+    limit: usize,
+    offset: usize,
+) -> String {
     let mut params = Vec::new();
     if !q.is_empty() {
         params.push(format!("q={q}"));
@@ -593,7 +631,10 @@ fn build_items_links(
 
     let mut links = vec![generic_link(
         "self",
-        format!("{items_url}?{}", items_query_string(q, bbox, datetime, limit, offset)),
+        format!(
+            "{items_url}?{}",
+            items_query_string(q, bbox, datetime, limit, offset)
+        ),
         "application/geo+json",
         None,
     )];
@@ -602,7 +643,10 @@ fn build_items_links(
         let prev_offset = offset.saturating_sub(limit);
         links.push(generic_link(
             "prev",
-            format!("{items_url}?{}", items_query_string(q, bbox, datetime, limit, prev_offset)),
+            format!(
+                "{items_url}?{}",
+                items_query_string(q, bbox, datetime, limit, prev_offset)
+            ),
             "application/geo+json",
             None,
         ));
@@ -611,7 +655,10 @@ fn build_items_links(
     if offset + number_returned < number_matched {
         links.push(generic_link(
             "next",
-            format!("{items_url}?{}", items_query_string(q, bbox, datetime, limit, offset + limit)),
+            format!(
+                "{items_url}?{}",
+                items_query_string(q, bbox, datetime, limit, offset + limit)
+            ),
             "application/geo+json",
             None,
         ));
@@ -728,7 +775,13 @@ pub async fn items(req: &mut Request, res: &mut Response, depot: &mut Depot) -> 
             continue;
         }
 
-        features.push(record_to_feature(&record, layer, Some(bbox), COLLECTION_ID, &base_url));
+        features.push(record_to_feature(
+            &record,
+            layer,
+            Some(bbox),
+            COLLECTION_ID,
+            &base_url,
+        ));
     }
 
     let (page, number_matched, number_returned) = paginate(features, limit, offset);
@@ -770,7 +823,9 @@ pub async fn item(req: &mut Request, res: &mut Response, depot: &mut Depot) -> A
     let collection_id = req.param::<String>("collection_id").unwrap_or_default();
     require_known_collection(&collection_id)?;
 
-    let id = req.param::<String>("id").ok_or(AppError::RequestParamError("id".to_string()))?;
+    let id = req
+        .param::<String>("id")
+        .ok_or(AppError::RequestParamError("id".to_string()))?;
     let (category, name) = id.split_once(':').unwrap_or(("", ""));
 
     let layer = {
@@ -807,7 +862,13 @@ pub async fn item(req: &mut Request, res: &mut Response, depot: &mut Depot) -> A
     let bbox = bbox_for_layer(&layer).await;
     let base_url = base_url_from_request(req);
 
-    res.render(Json(record_to_feature(&record, &layer, Some(bbox), COLLECTION_ID, &base_url)));
+    res.render(Json(record_to_feature(
+        &record,
+        &layer,
+        Some(bbox),
+        COLLECTION_ID,
+        &base_url,
+    )));
     Ok(())
 }
 
@@ -943,10 +1004,16 @@ mod tests {
 
         assert_eq!(record.id, "rec-1");
         assert_eq!(record.layer_id, "layer-1");
-        assert!(!record.file_identifier.is_empty(), "file_identifier must be generated");
+        assert!(
+            !record.file_identifier.is_empty(),
+            "file_identifier must be generated"
+        );
         assert_eq!(record.keywords, Vec::<String>::new());
         assert!(
-            (OffsetDateTime::now_utc() - record.metadata_date).whole_seconds().abs() < 5,
+            (OffsetDateTime::now_utc() - record.metadata_date)
+                .whole_seconds()
+                .abs()
+                < 5,
             "metadata_date must default to roughly now"
         );
     }
@@ -981,13 +1048,31 @@ mod tests {
         let record = build_record("rec-1".to_string(), payload).unwrap();
 
         assert_eq!(record.purpose, Some("Cadastral reference".to_string()));
-        assert_eq!(record.creation_date, Some(datetime!(2026-01-10 00:00:00 UTC)));
-        assert_eq!(record.publication_date, Some(datetime!(2026-01-15 00:00:00 UTC)));
-        assert_eq!(record.revision_date, Some(datetime!(2026-02-01 00:00:00 UTC)));
-        assert_eq!(record.temporal_extent_start, Some(datetime!(2020-01-01 00:00:00 UTC)));
-        assert_eq!(record.temporal_extent_end, Some(datetime!(2026-01-01 00:00:00 UTC)));
+        assert_eq!(
+            record.creation_date,
+            Some(datetime!(2026-01-10 00:00:00 UTC))
+        );
+        assert_eq!(
+            record.publication_date,
+            Some(datetime!(2026-01-15 00:00:00 UTC))
+        );
+        assert_eq!(
+            record.revision_date,
+            Some(datetime!(2026-02-01 00:00:00 UTC))
+        );
+        assert_eq!(
+            record.temporal_extent_start,
+            Some(datetime!(2020-01-01 00:00:00 UTC))
+        );
+        assert_eq!(
+            record.temporal_extent_end,
+            Some(datetime!(2026-01-01 00:00:00 UTC))
+        );
         assert_eq!(record.credits, Some("Instituto Geografico".to_string()));
-        assert_eq!(record.supplemental_information, Some("See appendix A".to_string()));
+        assert_eq!(
+            record.supplemental_information,
+            Some("See appendix A".to_string())
+        );
     }
 
     #[test]
@@ -1054,9 +1139,16 @@ mod tests {
         let record = build_record("rec-1".to_string(), payload).unwrap();
 
         assert_eq!(record.contacts.len(), 3);
-        assert!(record.contacts.iter().all(|c| !c.id.is_empty()), "every contact must get a generated id");
+        assert!(
+            record.contacts.iter().all(|c| !c.id.is_empty()),
+            "every contact must get a generated id"
+        );
         assert_eq!(
-            record.contacts.iter().filter(|c| c.role == "custodian").count(),
+            record
+                .contacts
+                .iter()
+                .filter(|c| c.role == "custodian")
+                .count(),
             2,
             "duplicate roles must both persist"
         );
@@ -1098,7 +1190,9 @@ mod tests {
             .expect_err("must reject an invalid contact role");
         assert!(matches!(err, AppError::InvalidInput(_)));
 
-        let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1").await.unwrap();
+        let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1")
+            .await
+            .unwrap();
         assert!(found.is_none(), "rejected create must not persist a row");
     }
 
@@ -1126,7 +1220,9 @@ mod tests {
             },
         ];
 
-        create_record_for_layer(Some(&pool), &layer, payload).await.unwrap();
+        create_record_for_layer(Some(&pool), &layer, payload)
+            .await
+            .unwrap();
 
         let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1")
             .await
@@ -1147,7 +1243,9 @@ mod tests {
             .expect_err("must reject create on an unpublished layer");
         assert!(matches!(err, AppError::InvalidInput(_)));
 
-        let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1").await.unwrap();
+        let found = get_metadata_record_by_layer_id(Some(&pool), "layer-1")
+            .await
+            .unwrap();
         assert!(found.is_none(), "rejected create must not persist a row");
     }
 
@@ -1223,7 +1321,10 @@ mod tests {
         let visible_ids: HashSet<String> = ["l-unpub".to_string()].into_iter().collect();
 
         let result = filter_visible_layers(vec![unpublished], |l| visible_ids.contains(&l.id));
-        assert!(result.is_empty(), "unpublished layers must never appear, even if group-visible");
+        assert!(
+            result.is_empty(),
+            "unpublished layers must never appear, even if group-visible"
+        );
     }
 
     #[test]
@@ -1232,7 +1333,10 @@ mod tests {
         let visible_ids: HashSet<String> = HashSet::new();
 
         let result = filter_visible_layers(vec![hidden], |l| visible_ids.contains(&l.id));
-        assert!(result.is_empty(), "group-restricted layers the caller can't see must be excluded");
+        assert!(
+            result.is_empty(),
+            "group-restricted layers the caller can't see must be excluded"
+        );
     }
 
     #[test]
@@ -1301,36 +1405,60 @@ mod tests {
 
     #[test]
     fn record_matches_q_matches_layer_title() {
-        assert!(record_matches_q(&test_record(), &test_layer("layer-1", true), "parcels"));
+        assert!(record_matches_q(
+            &test_record(),
+            &test_layer("layer-1", true),
+            "parcels"
+        ));
     }
 
     #[test]
     fn record_matches_q_matches_keyword_case_insensitively() {
-        assert!(record_matches_q(&test_record(), &test_layer("layer-1", true), "CATASTRO"));
+        assert!(record_matches_q(
+            &test_record(),
+            &test_layer("layer-1", true),
+            "CATASTRO"
+        ));
     }
 
     #[test]
     fn record_matches_q_rejects_unrelated_text() {
-        assert!(!record_matches_q(&test_record(), &test_layer("layer-1", true), "nonexistent-term"));
+        assert!(!record_matches_q(
+            &test_record(),
+            &test_layer("layer-1", true),
+            "nonexistent-term"
+        ));
     }
 
     // -- bbox_intersects / datetime_matches --------------------------------
 
     #[test]
     fn bbox_intersects_true_for_overlapping_boxes() {
-        assert!(bbox_intersects([-10.0, -10.0, 10.0, 10.0], [0.0, 0.0, 20.0, 20.0]));
+        assert!(bbox_intersects(
+            [-10.0, -10.0, 10.0, 10.0],
+            [0.0, 0.0, 20.0, 20.0]
+        ));
     }
 
     #[test]
     fn bbox_intersects_false_for_disjoint_boxes() {
-        assert!(!bbox_intersects([-10.0, -10.0, -5.0, -5.0], [5.0, 5.0, 10.0, 10.0]));
+        assert!(!bbox_intersects(
+            [-10.0, -10.0, -5.0, -5.0],
+            [5.0, 5.0, 10.0, 10.0]
+        ));
     }
 
     #[test]
     fn datetime_matches_instant_requires_exact_equality() {
         let instant = DatetimeFilter::Instant(datetime!(2026-08-27 12:00:00 UTC));
-        assert!(datetime_matches(datetime!(2026-08-27 12:00:00 UTC), &instant));
-        assert!(!datetime_matches(datetime!(2026-08-27 13:00:00 UTC), &instant));
+        assert!(datetime_matches(
+            datetime!(2026-08-27 12:00:00 UTC),
+            &instant
+        ));
+        assert!(!datetime_matches(
+            datetime!(2026-08-27 13:00:00 UTC),
+            &instant
+        ));
     }
 
     #[test]
@@ -1339,15 +1467,27 @@ mod tests {
             Some(datetime!(2026-01-01 00:00:00 UTC)),
             Some(datetime!(2026-12-31 00:00:00 UTC)),
         );
-        assert!(datetime_matches(datetime!(2026-06-01 00:00:00 UTC), &interval));
-        assert!(!datetime_matches(datetime!(2027-01-01 00:00:00 UTC), &interval));
+        assert!(datetime_matches(
+            datetime!(2026-06-01 00:00:00 UTC),
+            &interval
+        ));
+        assert!(!datetime_matches(
+            datetime!(2027-01-01 00:00:00 UTC),
+            &interval
+        ));
     }
 
     #[test]
     fn datetime_matches_open_start_interval_only_bounds_the_end() {
         let interval = DatetimeFilter::Interval(None, Some(datetime!(2026-12-31 00:00:00 UTC)));
-        assert!(datetime_matches(datetime!(2000-01-01 00:00:00 UTC), &interval));
-        assert!(!datetime_matches(datetime!(2027-01-01 00:00:00 UTC), &interval));
+        assert!(datetime_matches(
+            datetime!(2000-01-01 00:00:00 UTC),
+            &interval
+        ));
+        assert!(!datetime_matches(
+            datetime!(2027-01-01 00:00:00 UTC),
+            &interval
+        ));
     }
 
     // -- paginate ------------------------------------------------------
@@ -1359,7 +1499,10 @@ mod tests {
 
         assert_eq!(number_matched, 3);
         assert_eq!(number_returned, 2);
-        assert_eq!(page.iter().map(|f| f.id.as_str()).collect::<Vec<_>>(), vec!["b", "c"]);
+        assert_eq!(
+            page.iter().map(|f| f.id.as_str()).collect::<Vec<_>>(),
+            vec!["b", "c"]
+        );
     }
 
     #[test]
@@ -1377,7 +1520,8 @@ mod tests {
     #[test]
     fn require_known_collection_accepts_layers_and_rejects_others() {
         assert!(require_known_collection("layers").is_ok());
-        let err = require_known_collection("bogus").expect_err("must reject unknown collection ids");
+        let err =
+            require_known_collection("bogus").expect_err("must reject unknown collection ids");
         assert!(matches!(err, AppError::NotFound(_)));
     }
 
@@ -1400,8 +1544,14 @@ mod tests {
             .iter()
             .find(|l| l.rel == "service-desc")
             .expect("landing page must advertise a machine-readable API definition");
-        assert_eq!(service_desc.href, "http://localhost:5887/services/records/openapi");
-        assert_eq!(service_desc.media_type, "application/vnd.oai.openapi+json;version=3.1");
+        assert_eq!(
+            service_desc.href,
+            "http://localhost:5887/services/records/openapi"
+        );
+        assert_eq!(
+            service_desc.media_type,
+            "application/vnd.oai.openapi+json;version=3.1"
+        );
     }
 
     #[test]
@@ -1422,7 +1572,10 @@ mod tests {
     #[test]
     fn build_items_links_self_reflects_limit_and_offset() {
         let links = build_items_links("http://localhost:5887", "", None, None, 1, 0, 2, 1);
-        let self_link = links.iter().find(|l| l.rel == "self").expect("self link must be present");
+        let self_link = links
+            .iter()
+            .find(|l| l.rel == "self")
+            .expect("self link must be present");
         assert!(self_link.href.contains("limit=1"));
         assert!(self_link.href.contains("offset=0"));
     }
@@ -1430,7 +1583,10 @@ mod tests {
     #[test]
     fn build_items_links_includes_next_when_more_results_remain() {
         let links = build_items_links("http://localhost:5887", "", None, None, 1, 0, 2, 1);
-        let next_link = links.iter().find(|l| l.rel == "next").expect("next link must be present when more results remain");
+        let next_link = links
+            .iter()
+            .find(|l| l.rel == "next")
+            .expect("next link must be present when more results remain");
         assert!(next_link.href.contains("limit=1"));
         assert!(next_link.href.contains("offset=1"));
     }
@@ -1444,7 +1600,10 @@ mod tests {
     #[test]
     fn build_items_links_includes_prev_when_offset_is_positive() {
         let links = build_items_links("http://localhost:5887", "", None, None, 1, 1, 2, 1);
-        let prev_link = links.iter().find(|l| l.rel == "prev").expect("prev link must be present when offset > 0");
+        let prev_link = links
+            .iter()
+            .find(|l| l.rel == "prev")
+            .expect("prev link must be present when offset > 0");
         assert!(prev_link.href.contains("offset=0"));
     }
 
@@ -1457,7 +1616,10 @@ mod tests {
     #[test]
     fn build_items_links_prev_offset_does_not_go_negative() {
         let links = build_items_links("http://localhost:5887", "", None, None, 5, 2, 10, 5);
-        let prev_link = links.iter().find(|l| l.rel == "prev").expect("prev link must be present");
+        let prev_link = links
+            .iter()
+            .find(|l| l.rel == "prev")
+            .expect("prev link must be present");
         assert!(prev_link.href.contains("offset=0"));
     }
 
@@ -1476,7 +1638,11 @@ mod tests {
         let self_link = links.iter().find(|l| l.rel == "self").unwrap();
         assert!(self_link.href.contains("q=catastro"));
         assert!(self_link.href.contains("bbox=-64.3,-31.2,-63.9,-30.9"));
-        assert!(self_link.href.contains("datetime=2026-01-01T00:00:00Z/2026-12-31T23:59:59Z"));
+        assert!(
+            self_link
+                .href
+                .contains("datetime=2026-01-01T00:00:00Z/2026-12-31T23:59:59Z")
+        );
     }
 
     #[test]
@@ -1568,7 +1734,9 @@ mod tests {
     #[tokio::test]
     async fn landing_route_returns_ok_with_expected_links() {
         let service = Service::new(discovery_router());
-        let mut res = TestClient::get("http://127.0.0.1:5800/").send(&service).await;
+        let mut res = TestClient::get("http://127.0.0.1:5800/")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::OK);
         let body: serde_json::Value = res.take_json().await.unwrap();
         assert_eq!(body["title"], "MVT Server metadata catalog");
@@ -1578,7 +1746,9 @@ mod tests {
     #[tokio::test]
     async fn conformance_route_returns_ok_with_conforms_to() {
         let service = Service::new(discovery_router());
-        let mut res = TestClient::get("http://127.0.0.1:5800/conformance").send(&service).await;
+        let mut res = TestClient::get("http://127.0.0.1:5800/conformance")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::OK);
         let body: serde_json::Value = res.take_json().await.unwrap();
         assert!(body["conformsTo"].as_array().unwrap().len() == CONFORMANCE_CLASSES.len());
@@ -1587,7 +1757,9 @@ mod tests {
     #[tokio::test]
     async fn collections_route_returns_ok_with_the_layers_collection() {
         let service = Service::new(discovery_router());
-        let mut res = TestClient::get("http://127.0.0.1:5800/collections").send(&service).await;
+        let mut res = TestClient::get("http://127.0.0.1:5800/collections")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::OK);
         let body: serde_json::Value = res.take_json().await.unwrap();
         assert_eq!(body["collections"][0]["id"], "layers");
@@ -1596,14 +1768,18 @@ mod tests {
     #[tokio::test]
     async fn collection_route_returns_404_for_an_unknown_collection_id() {
         let service = Service::new(discovery_router());
-        let res = TestClient::get("http://127.0.0.1:5800/collections/bogus").send(&service).await;
+        let res = TestClient::get("http://127.0.0.1:5800/collections/bogus")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::NOT_FOUND);
     }
 
     #[tokio::test]
     async fn collection_route_returns_ok_for_the_known_collection() {
         let service = Service::new(discovery_router());
-        let res = TestClient::get("http://127.0.0.1:5800/collections/layers").send(&service).await;
+        let res = TestClient::get("http://127.0.0.1:5800/collections/layers")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::OK);
     }
 
@@ -1617,19 +1793,26 @@ mod tests {
             .await;
 
         assert_eq!(res.status_code.unwrap(), StatusCode::BAD_REQUEST);
-        let content_type = res.headers().get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok());
+        let content_type = res
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok());
         assert_eq!(content_type, Some("application/problem+json"));
     }
 
     #[tokio::test]
     async fn items_route_rejects_malformed_datetime_as_problem_json_without_touching_catalog() {
         let service = Service::new(discovery_router());
-        let res = TestClient::get("http://127.0.0.1:5800/collections/layers/items?datetime=not-a-date")
-            .send(&service)
-            .await;
+        let res =
+            TestClient::get("http://127.0.0.1:5800/collections/layers/items?datetime=not-a-date")
+                .send(&service)
+                .await;
 
         assert_eq!(res.status_code.unwrap(), StatusCode::BAD_REQUEST);
-        let content_type = res.headers().get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok());
+        let content_type = res
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok());
         assert_eq!(content_type, Some("application/problem+json"));
     }
 
@@ -1637,12 +1820,17 @@ mod tests {
     async fn items_route_rejects_oversized_q_as_problem_json_without_touching_catalog() {
         let service = Service::new(discovery_router());
         let too_long = "a".repeat(501);
-        let res = TestClient::get(format!("http://127.0.0.1:5800/collections/layers/items?q={too_long}"))
-            .send(&service)
-            .await;
+        let res = TestClient::get(format!(
+            "http://127.0.0.1:5800/collections/layers/items?q={too_long}"
+        ))
+        .send(&service)
+        .await;
 
         assert_eq!(res.status_code.unwrap(), StatusCode::BAD_REQUEST);
-        let content_type = res.headers().get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok());
+        let content_type = res
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok());
         assert_eq!(content_type, Some("application/problem+json"));
     }
 }

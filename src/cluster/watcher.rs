@@ -8,7 +8,11 @@ use crate::cluster::snapshot::apply_snapshot;
 /// advances when a higher version was observed AND the reload succeeded, so a
 /// failed reload is retried on the next tick.
 pub fn next_known_version(known: i64, current: i64, reload_ok: bool) -> i64 {
-    if current > known && reload_ok { current } else { known }
+    if current > known && reload_ok {
+        current
+    } else {
+        known
+    }
 }
 
 /// Spawns a background task that polls the config version every `interval` and,

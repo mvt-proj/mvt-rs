@@ -27,8 +27,12 @@ pub struct ServerConfig {
     pub public_url: Option<String>,
 }
 
-fn default_host() -> String { "0.0.0.0".to_string() }
-fn default_port() -> u16 { 5887 }
+fn default_host() -> String {
+    "0.0.0.0".to_string()
+}
+fn default_port() -> u16 {
+    5887
+}
 
 #[derive(Debug, Deserialize, Default)]
 pub struct ClusterConfig {
@@ -46,9 +50,15 @@ pub struct ClusterConfig {
     pub shared_secret: Option<String>,
 }
 
-fn default_cluster_mode() -> String { "standalone".to_string() }
-fn default_config_watch_interval() -> u64 { 10 }
-fn default_cache_invalidation_extra_delay() -> u64 { 5 }
+fn default_cluster_mode() -> String {
+    "standalone".to_string()
+}
+fn default_config_watch_interval() -> u64 {
+    10
+}
+fn default_cache_invalidation_extra_delay() -> u64 {
+    5
+}
 
 #[derive(Debug, Deserialize, Default)]
 pub struct DatabaseConfig {
@@ -67,41 +77,71 @@ pub struct PostgresDatabasesConfig {
     pub connections: HashMap<String, String>,
 }
 
-fn default_sqlite() -> String { "mvtrs.db".to_string() }
-fn default_pool_min() -> u32 { 5 }
-fn default_pool_max() -> u32 { 20 }
+fn default_sqlite() -> String {
+    "mvtrs.db".to_string()
+}
+fn default_pool_min() -> u32 {
+    5
+}
+fn default_pool_max() -> u32 {
+    20
+}
 
-fn default_session_duration() -> u64 { 20 }
+fn default_session_duration() -> u64 {
+    20
+}
 
 #[derive(Debug, Deserialize, Default)]
 pub struct SecurityConfig {
-    #[serde(default)] pub jwt_secret: String,
-    #[serde(default)] pub session_secret: String,
-    #[serde(default = "default_session_duration")] pub session_duration_minutes: u64,
+    #[serde(default)]
+    pub jwt_secret: String,
+    #[serde(default)]
+    pub session_secret: String,
+    #[serde(default = "default_session_duration")]
+    pub session_duration_minutes: u64,
 }
 
 #[derive(Debug, Deserialize, Default)]
 pub struct PathConfig {
-    #[serde(default = "default_config_path")]  pub config: String,
-    #[serde(default = "default_cache_path")]   pub cache: String,
-    #[serde(default = "default_assets_path")]  pub assets: String,
-    #[serde(default = "default_plugins_path")] pub plugins: String,
+    #[serde(default = "default_config_path")]
+    pub config: String,
+    #[serde(default = "default_cache_path")]
+    pub cache: String,
+    #[serde(default = "default_assets_path")]
+    pub assets: String,
+    #[serde(default = "default_plugins_path")]
+    pub plugins: String,
 }
 
-fn default_config_path() -> String { "config".to_string() }
-fn default_cache_path() -> String { "cache".to_string() }
-fn default_assets_path() -> String { "map_assets".to_string() }
-fn default_plugins_path() -> String { "plugins".to_string() }
+fn default_config_path() -> String {
+    "config".to_string()
+}
+fn default_cache_path() -> String {
+    "cache".to_string()
+}
+fn default_assets_path() -> String {
+    "map_assets".to_string()
+}
+fn default_plugins_path() -> String {
+    "plugins".to_string()
+}
 
 #[derive(Debug, Deserialize, Default)]
 pub struct Settings {
-    #[serde(default)] pub server: ServerConfig,
-    #[serde(default)] pub database: DatabaseConfig,
-    #[serde(default)] pub postgres_databases: PostgresDatabasesConfig,
-    #[serde(default)] pub security: SecurityConfig,
-    #[serde(default)] pub paths: PathConfig,
-    #[serde(default)] pub cluster: ClusterConfig,
-    #[serde(skip)] pub no_cache: bool,
+    #[serde(default)]
+    pub server: ServerConfig,
+    #[serde(default)]
+    pub database: DatabaseConfig,
+    #[serde(default)]
+    pub postgres_databases: PostgresDatabasesConfig,
+    #[serde(default)]
+    pub security: SecurityConfig,
+    #[serde(default)]
+    pub paths: PathConfig,
+    #[serde(default)]
+    pub cluster: ClusterConfig,
+    #[serde(skip)]
+    pub no_cache: bool,
 }
 
 impl Settings {
@@ -125,9 +165,7 @@ impl Settings {
             .set_default("cluster.mode", "standalone")?
             .set_default("cluster.config_watch_interval_secs", 10)?
             .set_default("cluster.cache_invalidation_extra_delay_secs", 5)?
-            .add_source(
-                config::File::new(&config_path, config::FileFormat::Yaml).required(false),
-            )
+            .add_source(config::File::new(&config_path, config::FileFormat::Yaml).required(false))
             .add_source(
                 config::Environment::with_prefix("MVT")
                     .prefix_separator("_")
@@ -183,7 +221,12 @@ impl Settings {
             );
         }
 
-        if self.database.redis_url.as_deref().is_some_and(|url| url.is_empty()) {
+        if self
+            .database
+            .redis_url
+            .as_deref()
+            .is_some_and(|url| url.is_empty())
+        {
             return Err(
                 "Configuration error: 'database.redis_url' is set but empty. \
                 Either provide a valid Redis URL or remove the key entirely."
@@ -194,19 +237,34 @@ impl Settings {
         match self.cluster.mode.as_str() {
             "standalone" | "shared" => {}
             "owner" => {
-                if self.cluster.shared_secret.as_deref().unwrap_or("").is_empty() {
+                if self
+                    .cluster
+                    .shared_secret
+                    .as_deref()
+                    .unwrap_or("")
+                    .is_empty()
+                {
                     return Err("Configuration error: cluster.mode = owner requires \
-                        cluster.shared_secret".to_string());
+                        cluster.shared_secret"
+                        .to_string());
                 }
             }
             "client" => {
                 if self.cluster.owner_url.as_deref().unwrap_or("").is_empty() {
                     return Err("Configuration error: cluster.mode = client requires \
-                        cluster.owner_url".to_string());
+                        cluster.owner_url"
+                        .to_string());
                 }
-                if self.cluster.shared_secret.as_deref().unwrap_or("").is_empty() {
+                if self
+                    .cluster
+                    .shared_secret
+                    .as_deref()
+                    .unwrap_or("")
+                    .is_empty()
+                {
                     return Err("Configuration error: cluster.mode = client requires \
-                        cluster.shared_secret".to_string());
+                        cluster.shared_secret"
+                        .to_string());
                 }
             }
             other => {
@@ -245,7 +303,11 @@ mod tests {
             "postgres://user:pass@localhost/db".to_string(),
         );
         Settings {
-            server: ServerConfig { host: "0.0.0.0".to_string(), port: 5887, public_url: None },
+            server: ServerConfig {
+                host: "0.0.0.0".to_string(),
+                port: 5887,
+                public_url: None,
+            },
             database: DatabaseConfig {
                 sqlite_path: "mvtrs.db".to_string(),
                 redis_url: None,
@@ -375,7 +437,10 @@ mod tests {
             s.cluster.owner_url = Some("https://owner:5887".to_string());
             s.cluster.shared_secret = Some("a-cluster-secret-value".to_string());
             let err = s.validate().unwrap_err();
-            assert!(err.contains("Redis"), "mode {mode} should require Redis: {err}");
+            assert!(
+                err.contains("Redis"),
+                "mode {mode} should require Redis: {err}"
+            );
         }
     }
 

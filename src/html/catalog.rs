@@ -176,7 +176,10 @@ mod tests {
     /// shows a "Metadatos" entry only for rows whose layer is `published`.
     #[test]
     fn admin_dropdown_shows_metadata_entry_only_for_published_layer() {
-        let layers = vec![test_layer("layer-published", true), test_layer("layer-unpublished", false)];
+        let layers = vec![
+            test_layer("layer-published", true),
+            test_layer("layer-unpublished", false),
+        ];
         let template = CatalogTableTemplate {
             layers: &layers,
             is_admin_context: true,

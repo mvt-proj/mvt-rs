@@ -60,7 +60,9 @@ mod tests {
         );
         assert_eq!(
             resolved,
-            Some("https://mvt.example.com/services/tiles/public:parcels/{z}/{x}/{y}.pbf".to_string())
+            Some(
+                "https://mvt.example.com/services/tiles/public:parcels/{z}/{x}/{y}.pbf".to_string()
+            )
         );
     }
 
@@ -114,7 +116,10 @@ mod tests {
         );
         assert_eq!(
             resolved,
-            Some("https://mvt.example.com/services/map_assets/glyphs/{fontstack}/{range}.pbf".to_string())
+            Some(
+                "https://mvt.example.com/services/map_assets/glyphs/{fontstack}/{range}.pbf"
+                    .to_string()
+            )
         );
     }
 
@@ -132,7 +137,13 @@ mod tests {
 
     #[test]
     fn resolve_mvt_token_returns_none_for_non_token_value() {
-        assert_eq!(resolve_mvt_token("https://mvt-dev.example.com/services/tiles/public:parcels/{z}/{x}/{y}.pbf", "https://mvt.example.com"), None);
+        assert_eq!(
+            resolve_mvt_token(
+                "https://mvt-dev.example.com/services/tiles/public:parcels/{z}/{x}/{y}.pbf",
+                "https://mvt.example.com"
+            ),
+            None
+        );
     }
 
     #[test]

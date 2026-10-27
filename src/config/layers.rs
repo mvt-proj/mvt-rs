@@ -1,6 +1,6 @@
 use crate::auth::Group;
-use crate::get_cf_pool;
 use crate::config::system_settings::bump_config_version;
+use crate::get_cf_pool;
 use crate::models::{catalog::Layer, category::Category};
 use sqlx::{Row, sqlite::SqlitePool};
 
@@ -395,7 +395,10 @@ mod tests {
             .await
             .unwrap()
             .get("c");
-        assert_eq!(orphan_records, 0, "no orphan metadata_records rows may remain");
+        assert_eq!(
+            orphan_records, 0,
+            "no orphan metadata_records rows may remain"
+        );
 
         let orphan_links: i64 = sqlx::query("SELECT COUNT(*) AS c FROM metadata_links")
             .fetch_one(&pool)
@@ -409,7 +412,10 @@ mod tests {
             .await
             .unwrap()
             .get("c");
-        assert_eq!(orphan_contacts, 0, "no orphan metadata_contacts rows may remain");
+        assert_eq!(
+            orphan_contacts, 0,
+            "no orphan metadata_contacts rows may remain"
+        );
     }
 
     fn test_layer(id: &str) -> Layer {

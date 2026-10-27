@@ -1,6 +1,6 @@
+use crate::config::system_settings::bump_config_version;
 use crate::get_cf_pool;
 use crate::models::category::Category;
-use crate::config::system_settings::bump_config_version;
 use sqlx::{Row, sqlite::SqlitePool};
 
 pub async fn get_categories(pool: Option<&SqlitePool>) -> Result<Vec<Category>, sqlx::Error> {
@@ -108,7 +108,11 @@ mod tests {
     use crate::config::test_support::in_memory_pool;
 
     fn cat(id: &str) -> Category {
-        Category { id: id.into(), name: format!("name-{id}"), description: "d".into() }
+        Category {
+            id: id.into(),
+            name: format!("name-{id}"),
+            description: "d".into(),
+        }
     }
 
     #[tokio::test]

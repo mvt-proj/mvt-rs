@@ -66,7 +66,11 @@ pub async fn new_group_page(res: &mut Response, depot: &mut Depot) -> AppResult<
 }
 
 #[handler]
-pub async fn edit_group_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn edit_group_page(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     let (base, _) = make_base(depot).await;
 
     let id = req

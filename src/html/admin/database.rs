@@ -153,7 +153,11 @@ pub async fn srid(req: &mut Request, res: &mut Response) -> AppResult<()> {
 }
 
 #[handler]
-pub async fn spatial_index(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn spatial_index(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     let db_id = req
         .query::<String>("database_id")
         .unwrap_or_else(|| "default".to_string());

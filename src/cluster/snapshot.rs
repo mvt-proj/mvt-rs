@@ -29,7 +29,12 @@ pub async fn build_snapshot(config_dir: &str, pool: &SqlitePool) -> AppResult<Co
 /// local instance's value and overrides whatever the snapshot's Auth carried,
 /// so a client does not inherit the owner's paths.
 pub async fn apply_snapshot(snapshot: ConfigSnapshot, config_dir: &str) {
-    let ConfigSnapshot { catalog, categories, mut auth, styles } = snapshot;
+    let ConfigSnapshot {
+        catalog,
+        categories,
+        mut auth,
+        styles,
+    } = snapshot;
     auth.config_dir = config_dir.to_string();
 
     *crate::get_catalog().await.write().await = catalog;

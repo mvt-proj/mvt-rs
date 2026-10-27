@@ -34,7 +34,11 @@ impl SyncBackend {
     pub async fn current_version(&self) -> AppResult<i64> {
         match self {
             SyncBackend::Local { pool } => Ok(get_config_version(pool).await?),
-            SyncBackend::Remote { owner_url, secret, client } => {
+            SyncBackend::Remote {
+                owner_url,
+                secret,
+                client,
+            } => {
                 let resp: VersionResponse = client
                     .get(format!("{owner_url}/internal/config/version"))
                     .header("x-cluster-secret", secret)
@@ -51,7 +55,11 @@ impl SyncBackend {
     pub async fn fetch_snapshot(&self, config_dir: &str) -> AppResult<ConfigSnapshot> {
         match self {
             SyncBackend::Local { pool } => build_snapshot(config_dir, pool).await,
-            SyncBackend::Remote { owner_url, secret, client } => {
+            SyncBackend::Remote {
+                owner_url,
+                secret,
+                client,
+            } => {
                 let snapshot: ConfigSnapshot = client
                     .get(format!("{owner_url}/internal/config/snapshot"))
                     .header("x-cluster-secret", secret)

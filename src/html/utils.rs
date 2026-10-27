@@ -49,5 +49,13 @@ pub async fn make_base(depot: &mut Depot) -> (BaseTemplateData, Option<User>) {
         .get::<HashMap<String, String>>("translate")
         .cloned()
         .unwrap_or_default();
-    (BaseTemplateData { is_auth, is_admin, translate, version: env!("CARGO_PKG_VERSION") }, user)
+    (
+        BaseTemplateData {
+            is_auth,
+            is_admin,
+            translate,
+            version: env!("CARGO_PKG_VERSION"),
+        },
+        user,
+    )
 }

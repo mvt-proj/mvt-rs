@@ -237,12 +237,15 @@ async fn main() -> AppResult<()> {
         start_system_monitor().await;
     });
 
-    let settings = Settings::new()
-        .map_err(|e| crate::error::AppError::ConfigurationError(e.to_string()))?;
+    let settings =
+        Settings::new().map_err(|e| crate::error::AppError::ConfigurationError(e.to_string()))?;
 
     // Strict validation
     if settings.security.session_secret.len() < 32 {
-        tracing::error!("CRITICAL: Session secret must be at least 32 bytes. Found: {}", settings.security.session_secret.len());
+        tracing::error!(
+            "CRITICAL: Session secret must be at least 32 bytes. Found: {}",
+            settings.security.session_secret.len()
+        );
         std::process::exit(1);
     }
 
@@ -265,11 +268,21 @@ async fn main() -> AppResult<()> {
         )),
         _ => None,
     };
-    CACHE_INVALIDATION_DELAY.set(cache_invalidation_delay).unwrap();
+    CACHE_INVALIDATION_DELAY
+        .set(cache_invalidation_delay)
+        .unwrap();
 
     if settings.cluster.mode == "client" {
-        let owner_url = settings.cluster.owner_url.clone().expect("client requires owner_url");
-        let secret = settings.cluster.shared_secret.clone().expect("client requires shared_secret");
+        let owner_url = settings
+            .cluster
+            .owner_url
+            .clone()
+            .expect("client requires owner_url");
+        let secret = settings
+            .cluster
+            .shared_secret
+            .clone()
+            .expect("client requires shared_secret");
         CLUSTER_SECRET.set(secret.clone()).unwrap();
 
         let snapshot = cluster::bootstrap::bootstrap_from_owner(
@@ -297,13 +310,17 @@ async fn main() -> AppResult<()> {
 
         DB_REGISTRY.set(db_registry).unwrap();
         MAP_ASSETS_DIR.set(settings.paths.assets.clone()).unwrap();
-        JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
+        JWT_SECRET
+            .set(settings.security.jwt_secret.clone())
+            .unwrap();
         CACHE_WRAPPER.set(cache_wrapper).unwrap();
         PLUGIN_REGISTRY.set(plugin_registry).unwrap();
 
         // Initialize the four in-memory states from the snapshot.
         CATALOG.set(RwLock::new(snapshot.catalog.clone())).unwrap();
-        CATEGORIES.set(RwLock::new(snapshot.categories.clone())).unwrap();
+        CATEGORIES
+            .set(RwLock::new(snapshot.categories.clone()))
+            .unwrap();
         STYLES.set(RwLock::new(snapshot.styles.clone())).unwrap();
         {
             let mut auth = snapshot.auth.clone();
@@ -347,10 +364,10 @@ async fn main() -> AppResult<()> {
 
         DB_REGISTRY.set(db_registry).unwrap();
         SQLITE_CONF.set(cf_pool).unwrap();
-        MAP_ASSETS_DIR
-            .set(settings.paths.assets.clone())
+        MAP_ASSETS_DIR.set(settings.paths.assets.clone()).unwrap();
+        JWT_SECRET
+            .set(settings.security.jwt_secret.clone())
             .unwrap();
-        JWT_SECRET.set(settings.security.jwt_secret.clone()).unwrap();
         if let Some(secret) = settings.cluster.shared_secret.clone() {
             CLUSTER_SECRET.set(secret).unwrap();
         }
@@ -363,7 +380,9 @@ async fn main() -> AppResult<()> {
 
         if settings.cluster.mode == "shared" {
             cluster::watcher::start_config_watcher(
-                cluster::backend::SyncBackend::Local { pool: get_cf_pool() },
+                cluster::backend::SyncBackend::Local {
+                    pool: get_cf_pool(),
+                },
                 Duration::from_secs(settings.cluster.config_watch_interval_secs),
                 settings.paths.config.clone(),
             );
@@ -379,7 +398,9 @@ async fn main() -> AppResult<()> {
         loop {
             ticker.tick().await;
             let catalog = get_catalog().await.read().await.clone();
-            get_cache_wrapper().cleanup_expired_disk_cache(&catalog).await;
+            get_cache_wrapper()
+                .cleanup_expired_disk_cache(&catalog)
+                .await;
         }
     });
 

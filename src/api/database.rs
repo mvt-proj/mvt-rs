@@ -1,8 +1,8 @@
 use salvo::prelude::*;
 
 use crate::db::metadata::{
-    Field, Schema, SpatialIndex, Srid, Table, query_fields, query_has_spatial_index,
-    query_schemas, query_srid, query_tables,
+    Field, Schema, SpatialIndex, Srid, Table, query_fields, query_has_spatial_index, query_schemas,
+    query_srid, query_tables,
 };
 use crate::error::AppResult;
 

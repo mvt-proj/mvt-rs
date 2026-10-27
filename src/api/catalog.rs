@@ -20,7 +20,9 @@ pub async fn list(req: &mut Request, res: &mut Response) -> AppResult<()> {
     let host = req
         .headers()
         .get("host")
-        .ok_or(AppError::RequestParamError("Missing host header".to_string()))?
+        .ok_or(AppError::RequestParamError(
+            "Missing host header".to_string(),
+        ))?
         .to_str()
         .map_err(|_| AppError::RequestParamError("Invalid host header encoding".to_string()))?;
 

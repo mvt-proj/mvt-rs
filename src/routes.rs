@@ -6,13 +6,17 @@ use salvo::cors::{self as cors, Cors};
 use salvo::http::header::CONTENT_DISPOSITION;
 use salvo::logging::Logger;
 use salvo::prelude::*;
-use salvo::rate_limiter::{BasicQuota, FixedGuard, MokaStore as RateMokaStore, RateLimiter, RemoteIpIssuer};
+use salvo::rate_limiter::{
+    BasicQuota, FixedGuard, MokaStore as RateMokaStore, RateLimiter, RemoteIpIssuer,
+};
 use salvo::session::{CookieStore, SessionHandler};
 use std::sync::Arc;
 use std::time::Duration;
 
 use crate::{
-    api, auth, config::settings::Settings, html,
+    api, auth,
+    config::settings::Settings,
+    html,
     i18n::{I18n, i18n_middleware},
     monitor,
     services::{health, legends, styles, tilejson, tiles::handlers as tiles},
@@ -58,10 +62,15 @@ fn build_cors_handler() -> impl Handler + Clone {
 }
 
 fn build_session_handler(settings: &Settings) -> SessionHandler<CookieStore> {
-    SessionHandler::builder(CookieStore::new(), settings.security.session_secret.as_bytes())
-        .session_ttl(Some(Duration::from_secs(60 * settings.security.session_duration_minutes)))
-        .build()
-        .expect("Failed to build session handler")
+    SessionHandler::builder(
+        CookieStore::new(),
+        settings.security.session_secret.as_bytes(),
+    )
+    .session_ttl(Some(Duration::from_secs(
+        60 * settings.security.session_duration_minutes,
+    )))
+    .build()
+    .expect("Failed to build session handler")
 }
 
 fn build_cache_middleware(ttl_secs: u64) -> Cache<MokaStore<String>, RequestIssuer> {
@@ -414,9 +423,11 @@ fn build_records_routes() -> Router {
     let openapi = OpenApi::new("MVT Server — OGC API - Records", env!("CARGO_PKG_VERSION"))
         .merge_router_with_base(&router, "/services");
 
-    router
-        .push(openapi.into_router("openapi"))
-        .push(Scalar::new("/services/records/openapi").title("MVT Server — OGC API - Records").into_router("scalar"))
+    router.push(openapi.into_router("openapi")).push(
+        Scalar::new("/services/records/openapi")
+            .title("MVT Server — OGC API - Records")
+            .into_router("scalar"),
+    )
 }
 
 fn build_services_routes(settings: &Settings, cache: impl Handler) -> Router {
@@ -535,11 +546,16 @@ mod tests {
     #[tokio::test]
     async fn records_openapi_route_returns_a_valid_document_with_expected_paths() {
         let service = Service::new(build_records_routes());
-        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi").send(&service).await;
+        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi")
+            .send(&service)
+            .await;
         assert_eq!(res.status_code.unwrap(), StatusCode::OK);
 
         let body: serde_json::Value = res.take_json().await.unwrap();
-        assert!(body["openapi"].is_string(), "must be a real OpenAPI document");
+        assert!(
+            body["openapi"].is_string(),
+            "must be a real OpenAPI document"
+        );
 
         let paths = body["paths"].as_object().expect("paths must be an object");
         for expected in [
@@ -550,7 +566,10 @@ mod tests {
             "/services/records/collections/{collection_id}/items",
             "/services/records/collections/{collection_id}/items/{id}",
         ] {
-            assert!(paths.contains_key(expected), "expected path '{expected}' in the OpenAPI document");
+            assert!(
+                paths.contains_key(expected),
+                "expected path '{expected}' in the OpenAPI document"
+            );
         }
     }
 
@@ -561,14 +580,25 @@ mod tests {
     #[tokio::test]
     async fn records_openapi_route_documents_every_path_parameter() {
         let service = Service::new(build_records_routes());
-        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi").send(&service).await;
+        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi")
+            .send(&service)
+            .await;
         let body: serde_json::Value = res.take_json().await.unwrap();
         let paths = body["paths"].as_object().expect("paths must be an object");
 
         let cases: &[(&str, &[&str])] = &[
-            ("/services/records/collections/{collection_id}", &["collection_id"]),
-            ("/services/records/collections/{collection_id}/items", &["collection_id"]),
-            ("/services/records/collections/{collection_id}/items/{id}", &["collection_id", "id"]),
+            (
+                "/services/records/collections/{collection_id}",
+                &["collection_id"],
+            ),
+            (
+                "/services/records/collections/{collection_id}/items",
+                &["collection_id"],
+            ),
+            (
+                "/services/records/collections/{collection_id}/items/{id}",
+                &["collection_id", "id"],
+            ),
         ];
 
         for (path, expected_params) in cases {
@@ -595,18 +625,25 @@ mod tests {
     #[tokio::test]
     async fn items_query_filters_are_declared_as_query_parameters() {
         let service = Service::new(build_records_routes());
-        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi").send(&service).await;
+        let mut res = TestClient::get("http://127.0.0.1:5800/records/openapi")
+            .send(&service)
+            .await;
         let body: serde_json::Value = res.take_json().await.unwrap();
 
         let get_op = &body["paths"]["/services/records/collections/{collection_id}/items"]["get"];
-        let params = get_op["parameters"].as_array().expect("parameters must be an array");
+        let params = get_op["parameters"]
+            .as_array()
+            .expect("parameters must be an array");
 
         for name in ["q", "bbox", "datetime", "limit", "offset"] {
             let param = params
                 .iter()
                 .find(|p| p["name"] == name)
                 .unwrap_or_else(|| panic!("expected declared parameter '{name}'"));
-            assert_eq!(param["in"], "query", "parameter '{name}' must be declared `in: query`, got {param}");
+            assert_eq!(
+                param["in"], "query",
+                "parameter '{name}' must be declared `in: query`, got {param}"
+            );
         }
     }
 }

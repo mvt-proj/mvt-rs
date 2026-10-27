@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     auth::User,
     error::{AppError, AppResult},
-    get_categories, get_catalog,
+    get_catalog, get_categories,
     html::utils::{BaseTemplateData, make_base},
-    models::{category::Category, catalog::Layer, styles::Style},
+    models::{catalog::Layer, category::Category, styles::Style},
 };
 
 #[derive(Template)]
@@ -94,7 +94,11 @@ pub async fn new_style_page(res: &mut Response, depot: &mut Depot) -> AppResult<
 }
 
 #[handler]
-pub async fn edit_style_page(req: &mut Request, res: &mut Response, depot: &mut Depot) -> AppResult<()> {
+pub async fn edit_style_page(
+    req: &mut Request,
+    res: &mut Response,
+    depot: &mut Depot,
+) -> AppResult<()> {
     let (base, _) = make_base(depot).await;
     let id = req
         .param::<String>("id")
