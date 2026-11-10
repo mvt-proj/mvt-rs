@@ -213,6 +213,9 @@ plugins-dir-hint = Place .lua files in the plugins directory to get started.
 plugin-layer = Layer
 plugin-category = Category
 show-code = Show code
+plugin-enable = Enable plugin
+plugin-disable = Disable plugin
+plugin-disabled = Disabled
 
 # Metadata codelists (ISO 19115 MD_TopicCategoryCode / MD_ProgressCode)
 topic-category-farming = Farming

@@ -215,6 +215,9 @@ plugins-dir-hint = Colocá archivos .lua en el directorio de plugins para comenz
 plugin-layer = Capa
 plugin-category = Categoría
 show-code = Ver código
+plugin-enable = Habilitar plugin
+plugin-disable = Deshabilitar plugin
+plugin-disabled = Deshabilitado
 
 # Codelists de metadatos (ISO 19115 MD_TopicCategoryCode / MD_ProgressCode)
 topic-category-farming = Agropecuario

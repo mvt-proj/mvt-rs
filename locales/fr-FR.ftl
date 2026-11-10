@@ -213,6 +213,9 @@ plugins-dir-hint = Placez des fichiers .lua dans le répertoire des plugins pour
 plugin-layer = Couche
 plugin-category = Catégorie
 show-code = Voir le code
+plugin-enable = Activer le plugin
+plugin-disable = Désactiver le plugin
+plugin-disabled = Désactivé
 
 # Listes de codes des métadonnées (ISO 19115 MD_TopicCategoryCode / MD_ProgressCode)
 topic-category-farming = Agriculture

@@ -1,6 +1,7 @@
 use mlua::prelude::*;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::RwLock;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
 
@@ -19,6 +20,8 @@ pub struct PluginInfo {
     pub key: String,
     pub source: String,
     pub doc: PluginDoc,
+    /// Current enabled/disabled state, filled in by `list_plugins_with_status`.
+    pub enabled: bool,
 }
 
 fn parse_doc(source: &str) -> PluginDoc {
@@ -64,6 +67,10 @@ pub struct PluginContext {
 pub struct LuaPluginRegistry {
     plugins: HashMap<String, Mutex<Lua>>,
     info: Vec<PluginInfo>,
+    /// In-memory enabled/disabled state per plugin key, independent of the
+    /// loaded Lua VMs so toggling doesn't require reloading anything. A key
+    /// absent from this map is treated as enabled (default-on).
+    enabled: RwLock<HashMap<String, bool>>,
 }
 
 impl std::fmt::Debug for LuaPluginRegistry {
@@ -77,6 +84,42 @@ impl std::fmt::Debug for LuaPluginRegistry {
 impl LuaPluginRegistry {
     pub fn list_plugins(&self) -> &[PluginInfo] {
         &self.info
+    }
+
+    /// Clones the loaded plugin list with each entry's `enabled` field
+    /// refreshed to the current in-memory state. Used by the admin UI.
+    pub fn list_plugins_with_status(&self) -> Vec<PluginInfo> {
+        self.info
+            .iter()
+            .cloned()
+            .map(|mut p| {
+                p.enabled = self.is_plugin_enabled(&p.key);
+                p
+            })
+            .collect()
+    }
+
+    /// A key absent from the map is enabled by default.
+    pub fn is_plugin_enabled(&self, key: &str) -> bool {
+        self.enabled
+            .read()
+            .unwrap()
+            .get(key)
+            .copied()
+            .unwrap_or(true)
+    }
+
+    pub fn set_plugin_enabled(&self, key: &str, enabled: bool) {
+        self.enabled
+            .write()
+            .unwrap()
+            .insert(key.to_string(), enabled);
+    }
+
+    /// Replaces the whole in-memory enabled/disabled map, e.g. right after
+    /// loading persisted state from the config DB at startup.
+    pub fn apply_enabled_state(&self, state: HashMap<String, bool>) {
+        *self.enabled.write().unwrap() = state;
     }
 }
 
@@ -96,6 +139,7 @@ impl LuaPluginRegistry {
             return Self {
                 plugins,
                 info: plugin_list,
+                enabled: RwLock::new(HashMap::new()),
             };
         }
 
@@ -106,6 +150,7 @@ impl LuaPluginRegistry {
                 return Self {
                     plugins,
                     info: plugin_list,
+                    enabled: RwLock::new(HashMap::new()),
                 };
             }
         };
@@ -137,6 +182,7 @@ impl LuaPluginRegistry {
                         key: key.clone(),
                         source,
                         doc,
+                        enabled: true,
                     });
                     plugins.insert(key, Mutex::new(lua));
                 }
@@ -150,6 +196,7 @@ impl LuaPluginRegistry {
         Self {
             plugins,
             info: plugin_list,
+            enabled: RwLock::new(HashMap::new()),
         }
     }
 
@@ -168,9 +215,11 @@ impl LuaPluginRegistry {
         Ok(lua)
     }
 
-    /// Returns true if a category-level or layer-level plugin exists for this layer.
+    /// Returns true if a category-level or layer-level plugin exists for this
+    /// layer and is currently enabled. A disabled plugin counts as absent.
     pub fn has_plugin(&self, layer_key: &str, category: &str) -> bool {
-        self.plugins.contains_key(layer_key) || self.plugins.contains_key(category)
+        (self.plugins.contains_key(layer_key) && self.is_plugin_enabled(layer_key))
+            || (self.plugins.contains_key(category) && self.is_plugin_enabled(category))
     }
 
     /// Calls `filter(ctx)` on the category plugin and/or the layer plugin.
@@ -210,6 +259,9 @@ impl LuaPluginRegistry {
 
     async fn call_single_filter(&self, key: &str, ctx: &PluginContext) -> Option<String> {
         let lua_mutex = self.plugins.get(key)?;
+        if !self.is_plugin_enabled(key) {
+            return None;
+        }
         let lua = lua_mutex.lock().await;
 
         let result = (|| -> LuaResult<String> {
@@ -243,17 +295,25 @@ impl LuaPluginRegistry {
     #[cfg(test)]
     fn from_scripts(scripts: &[(&str, &str)]) -> Self {
         let mut plugins = HashMap::new();
+        let mut info = Vec::new();
         for (key, script) in scripts {
             match Self::load_plugin(key, script) {
                 Ok(lua) => {
                     plugins.insert(key.to_string(), Mutex::new(lua));
+                    info.push(PluginInfo {
+                        key: key.to_string(),
+                        source: script.to_string(),
+                        doc: parse_doc(script),
+                        enabled: true,
+                    });
                 }
                 Err(e) => panic!("Test plugin '{}' failed to load: {}", key, e),
             }
         }
         Self {
             plugins,
-            info: Vec::new(),
+            info,
+            enabled: RwLock::new(HashMap::new()),
         }
     }
 }
@@ -600,5 +660,103 @@ mod tests {
             .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
             .await;
         assert_eq!(result, Some("0".to_string()));
+    }
+
+    // --- enabled / disabled state ---------------------------------------------
+
+    #[test]
+    fn is_plugin_enabled_defaults_to_true_for_unknown_key() {
+        let registry = LuaPluginRegistry::from_scripts(&[]);
+        assert!(registry.is_plugin_enabled("mycat_mylayer"));
+    }
+
+    #[test]
+    fn set_plugin_enabled_updates_state_immediately() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return '' end",
+        )]);
+        registry.set_plugin_enabled("mycat_mylayer", false);
+        assert!(!registry.is_plugin_enabled("mycat_mylayer"));
+
+        registry.set_plugin_enabled("mycat_mylayer", true);
+        assert!(registry.is_plugin_enabled("mycat_mylayer"));
+    }
+
+    #[test]
+    fn has_plugin_returns_false_when_layer_plugin_disabled() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return '' end",
+        )]);
+        registry.set_plugin_enabled("mycat_mylayer", false);
+        assert!(!registry.has_plugin("mycat_mylayer", "mycat"));
+    }
+
+    #[test]
+    fn has_plugin_still_true_when_category_plugin_enabled_and_layer_disabled() {
+        let registry = LuaPluginRegistry::from_scripts(&[
+            ("mycat", "function filter(ctx) return '' end"),
+            ("mycat_mylayer", "function filter(ctx) return '' end"),
+        ]);
+        registry.set_plugin_enabled("mycat_mylayer", false);
+        assert!(registry.has_plugin("mycat_mylayer", "mycat"));
+    }
+
+    #[tokio::test]
+    async fn call_filter_skips_disabled_layer_plugin() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return \"population > 1000\" end",
+        )]);
+        registry.set_plugin_enabled("mycat_mylayer", false);
+
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn call_filter_still_applies_enabled_category_plugin_when_layer_plugin_disabled() {
+        let registry = LuaPluginRegistry::from_scripts(&[
+            ("mycat", "function filter(ctx) return \"active = true\" end"),
+            (
+                "mycat_mylayer",
+                "function filter(ctx) return \"type = 'primary'\" end",
+            ),
+        ]);
+        registry.set_plugin_enabled("mycat_mylayer", false);
+
+        let result = registry
+            .call_filter("mycat_mylayer", "mycat", &ctx("mylayer", "mycat", 10))
+            .await;
+        assert_eq!(result, Some("active = true".to_string()));
+    }
+
+    #[test]
+    fn apply_enabled_state_replaces_in_memory_map() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return '' end",
+        )]);
+        let mut state = HashMap::new();
+        state.insert("mycat_mylayer".to_string(), false);
+        registry.apply_enabled_state(state);
+
+        assert!(!registry.is_plugin_enabled("mycat_mylayer"));
+    }
+
+    #[test]
+    fn list_plugins_with_status_reflects_disabled_state() {
+        let registry = LuaPluginRegistry::from_scripts(&[(
+            "mycat_mylayer",
+            "function filter(ctx) return '' end",
+        )]);
+        registry.set_plugin_enabled("mycat_mylayer", false);
+
+        let listed = registry.list_plugins_with_status();
+        assert_eq!(listed.len(), 1);
+        assert!(!listed[0].enabled);
     }
 }

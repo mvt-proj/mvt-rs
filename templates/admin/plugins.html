@@ -31,19 +31,31 @@
             {% if let Some(ver) = &plugin.doc.version %}
             <span class="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">v{{ ver }}</span>
             {% endif %}
+            {% if !plugin.enabled %}
+            <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-medium">{{ base.translate["plugin-disabled"] }}</span>
+            {% endif %}
           </div>
           {% if let Some(name) = &plugin.doc.name %}
           <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{{ name }}</p>
           {% endif %}
         </div>
       </div>
-      <button
-        class="button__outline text-sm shrink-0"
-        onclick="toggleCode('code-{{ loop.index }}')"
-        id="btn-{{ loop.index }}"
-      >
-        <i class="fas fa-code mr-2"></i>{{ base.translate["show-code"] }}
-      </button>
+      <div class="flex items-center gap-3 shrink-0">
+        <a
+          href="/admin/plugins/toggle/{{ plugin.key }}"
+          title="{% if plugin.enabled %}{{ base.translate["plugin-disable"] }}{% else %}{{ base.translate["plugin-enable"] }}{% endif %}"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {% if plugin.enabled %}bg-emerald-500{% else %}bg-zinc-300 dark:bg-zinc-600{% endif %}"
+        >
+          <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {% if plugin.enabled %}translate-x-6{% else %}translate-x-1{% endif %}"></span>
+        </a>
+        <button
+          class="button__outline text-sm"
+          onclick="toggleCode('code-{{ loop.index }}')"
+          id="btn-{{ loop.index }}"
+        >
+          <i class="fas fa-code mr-2"></i>{{ base.translate["show-code"] }}
+        </button>
+      </div>
     </div>
 
     <!-- Doc metadata -->

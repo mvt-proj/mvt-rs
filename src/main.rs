@@ -361,6 +361,8 @@ async fn main() -> AppResult<()> {
         .await?;
 
         let plugin_registry = plugins::LuaPluginRegistry::new(&settings.paths.plugins);
+        let plugins_enabled = config::plugins::get_plugins_enabled(Some(&cf_pool)).await?;
+        plugin_registry.apply_enabled_state(plugins_enabled);
 
         DB_REGISTRY.set(db_registry).unwrap();
         SQLITE_CONF.set(cf_pool).unwrap();
